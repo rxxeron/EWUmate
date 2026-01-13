@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "EWUMate",
+    "slug": "ewumate",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Icon/android/playstore-icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rxxeron.ewumate"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Icon/android/playstore-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.rxxeron.ewumate",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "scheme": "ewumate",
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you set your profile picture."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ba913bcd-738c-4a11-b3a4-1a0627252023"
+      }
+    }
+  }
+}

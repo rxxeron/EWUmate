@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Data: Strictly Owner Only
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Courses: Read-only for users (Wildcard for any semester)
+    match /courses_{semesterId}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Metadata (Departments, Course Catalog): Read-only for all, Write only by admin (manually via Console or Admin SDK)
+    match /metadata/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+
+    // Academic Events: Read-only for users
+    match /academic_events/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+    
+    // Calendar Data: Read-only for users (Wildcard for any semester)
+    match /calendar_{semesterId}/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Metadata: Public read access, write access for seeding
+    match /metadata/{docId} {
+      allow read: if true;
+      allow write: if true; // TEMPORARY: Enable for seeding
+    }
+
+    // Default: Deny all other access
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

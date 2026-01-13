@@ -1,1 +1,1 @@
-export const COURSE_CATALOG = [];
+export const COURSE_CATALOG = []; // encoding fix

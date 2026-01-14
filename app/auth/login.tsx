@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signInWithEmailAndPassword } from 'firebase/auth';
@@ -69,11 +69,16 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Student Portal</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
-        <TextInput 
-          placeholder="Username or Email" 
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"} 
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.content}>
+            <Text style={styles.title}>Student Portal</Text>
+            <Text style={styles.subtitle}>Sign in to continue</Text>
+            <TextInput 
+              placeholder="Username or Email"  
           style={styles.input} 
           value={identifier}
           onChangeText={setIdentifier}
@@ -89,18 +94,15 @@ export default function Login() {
           onChangeText={setPassword}
           placeholderTextColor="#666"
         />
-
-        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff"/> : <Text style={styles.buttonText}>Login</Text>}
-        </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push('/auth/register')}>
-            <Text style={styles.link}> Register</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account?</Text>
+              <TouchableOpacity onPress={() => router.push('/auth/register')}>
+                <Text style={styles.link}> Register</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -110,8 +112,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   content: {
-    flex: 1,
     padding: 24,
     justifyContent: 'center',
   },

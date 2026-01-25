@@ -50,10 +50,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/courses',
-        builder: (context, state) {
-          final sem = state.uri.queryParameters['semester'];
-          return CourseBrowserScreen(initialSemesterCode: sem);
-        },
+        builder: (context, state) => const CourseBrowserScreen(),
       ),
       GoRoute(
         path: '/tasks',

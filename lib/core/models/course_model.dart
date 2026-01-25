@@ -26,17 +26,6 @@ class CourseSession {
       faculty: data['faculty'] ?? '',
     );
   }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'type': type,
-      'day': day,
-      'startTime': startTime,
-      'endTime': endTime,
-      'room': room,
-      'faculty': faculty,
-    };
-  }
 }
 
 /// Represents a course with all its sessions
@@ -50,12 +39,12 @@ class Course {
   final String? semester;
   final List<CourseSession> sessions;
 
-  // Legacy fields for backward compatibility with old data format
+  // Legacy fields for backward compatibility. Populated from the FIRST theory session.
   final String? day;
   final String? startTime;
   final String? endTime;
-  final String? room;
   final String? faculty;
+  final String? room;
   final String? docId;
 
   Course({
@@ -77,9 +66,10 @@ class Course {
   });
 
   factory Course.fromFirestore(Map<String, dynamic> data, String id) {
-    // Parse sessions array if present (new format)
     List<CourseSession> sessionList = [];
+
     if (data['sessions'] != null && data['sessions'] is List) {
+      // New format with a sessions array
       sessionList = (data['sessions'] as List)
           .map((s) => CourseSession.fromMap(s as Map<String, dynamic>))
           .toList();
@@ -96,6 +86,9 @@ class Course {
         )
       ];
     }
+    
+    // Find the first theory session to populate legacy fields for backward compatibility
+    final theorySession = sessionList.where((s) => s.type == 'Theory').firstOrNull;
 
     return Course(
       id: id,
@@ -106,21 +99,19 @@ class Course {
       credits: data['credits']?.toString(),
       semester: data['semester'],
       sessions: sessionList,
-      // Legacy fields for backward compatibility
-      day: data['day'],
-      startTime: data['startTime'],
-      endTime: data['endTime'],
-      room: data['room'],
-      faculty: data['faculty'],
+      
+      // Populate legacy fields from the first theory session or root-level data
+      day: theorySession?.day ?? data['day'],
+      startTime: theorySession?.startTime ?? data['startTime'],
+      endTime: theorySession?.endTime ?? data['endTime'],
+      faculty: theorySession?.faculty ?? data['faculty'],
+      room: theorySession?.room ?? data['room'],
       docId: data['docId'],
     );
   }
 
-  /// Get all sessions for a specific day letter (S, M, T, W, R, F, A)
-  List<CourseSession> getSessionsForDay(String dayLetter) {
-    return sessions.where((s) {
-      final sessionDay = s.day.toUpperCase();
-      return sessionDay.contains(dayLetter);
-    }).toList();
+  // Helper to get the first session of a specific type
+  CourseSession? getFirstSession(String type) {
+    return sessions.where((s) => s.type == type).firstOrNull;
   }
 }

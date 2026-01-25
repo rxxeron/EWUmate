@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -143,6 +144,9 @@
                 <li class="nav-item">
                     <a class="nav-link" id="tab-files" onclick="switchTab('files')">📂 File Upload</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="tab-manual-triggers" onclick="switchTab('manual-triggers')">⚙️ Manual Triggers</a>
+                </li>
             </ul>
 
             <!-- Broadcast Form -->
@@ -215,210 +219,21 @@
                 </form>
             </div>
 
+            <!-- Manual Triggers Section -->
+            <div id="section-manual-triggers" class="d-none">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <button onclick="triggerFunction('recalculate_all_stats')" class="btn btn-secondary w-100">Recalculate All Stats</button>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <button onclick="triggerFunction('backfill_all_schedules')" class="btn btn-secondary w-100">Backfill All Schedules</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
-
-    <script>
-        const PROJECT_ID = "ewu-stu-togo";
-        const REGION = "us-central1";
-        const BASE_URL = `https://${REGION}-${PROJECT_ID}.cloudfunctions.net`;
-        const BROADCAST_URL = `${BASE_URL}/send_broadcast_notification`;
-        const UPLOAD_URL = `${BASE_URL}/upload_file_via_admin`;
-
-        // NO HARDCODED KEY - stored server-side in Firestore only
-        let currentKey = "";
-        const alertBox = document.getElementById('alertBox');
-
-        // === KEY VERIFICATION ===
-        // Key is verified server-side when making requests
-        // We just store it locally in session memory for API calls
-        async function verifyKey() {
-            const inputKey = document.getElementById('loginKey').value.trim();
-            const errorDiv = document.getElementById('loginError');
-            const btn = document.getElementById('loginBtn');
-
-            if (!inputKey) {
-                errorDiv.textContent = "❌ Please enter a key";
-                errorDiv.classList.remove('d-none');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "Verifying...";
-
-            // Test the key by making a simple request to the broadcast function
-            // If key is wrong, server will reject with UNAUTHENTICATED
-            try {
-                const res = await fetch(BROADCAST_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        data: {
-                            secret: inputKey,
-                            title: "__verify__",
-                            body: "__verify__"
-                        }
-                    })
-                });
-
-                const json = await res.json();
-
-                // If we get UNAUTHENTICATED error, key is wrong
-                if (json.error && json.error.message &&
-                    (json.error.message.includes("Invalid") || json.error.message.includes("UNAUTHENTICATED"))) {
-                    errorDiv.textContent = "❌ Invalid Admin Key";
-                    errorDiv.classList.remove('d-none');
-                    document.getElementById('loginKey').value = '';
-                } else {
-                    // Key is valid (or request succeeded)
-                    currentKey = inputKey;
-                    document.getElementById('loginSection').classList.add('d-none');
-                    document.getElementById('adminSection').classList.remove('d-none');
-                    errorDiv.classList.add('d-none');
-                }
-            } catch (err) {
-                // Network error or other issue, but we passed auth check
-                // Actually let's accept if no auth error
-                currentKey = inputKey;
-                document.getElementById('loginSection').classList.add('d-none');
-                document.getElementById('adminSection').classList.remove('d-none');
-                errorDiv.classList.add('d-none');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "🔓 Unlock Admin Panel";
-            }
-        }
-
-        // Enter key to submit
-        document.getElementById('loginKey').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') verifyKey();
-        });
-
-        function logout() {
-            currentKey = "";
-            document.getElementById('adminSection').classList.add('d-none');
-            document.getElementById('loginSection').classList.remove('d-none');
-            document.getElementById('loginKey').value = '';
-        }
-
-        // === TABS ===
-        function switchTab(tab) {
-            document.getElementById('section-broadcast').classList.toggle('d-none', tab !== 'broadcast');
-            document.getElementById('section-files').classList.toggle('d-none', tab !== 'files');
-
-            document.getElementById('tab-broadcast').classList.toggle('active', tab === 'broadcast');
-            document.getElementById('tab-files').classList.toggle('active', tab === 'files');
-
-            alertBox.classList.add('d-none');
-        }
-
-        // === BROADCAST LOGIC ===
-        const toggle = document.getElementById('scheduleToggle');
-        toggle.addEventListener('change', () => {
-            document.getElementById('scheduleInputs').classList.toggle('d-none', !toggle.checked);
-            if (!toggle.checked) document.getElementById('scheduleTime').value = '';
-        });
-
-        document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            setLoading(true, "Sending...");
-
-            const data = {
-                title: document.getElementById('title').value,
-                body: document.getElementById('body').value,
-                link: document.getElementById('link').value,
-                secret: currentKey  // Use verified key
-            };
-
-            const scheduledTime = document.getElementById('scheduleTime').value;
-            if (toggle.checked && scheduledTime) {
-                data.scheduledAt = new Date(scheduledTime).toISOString();
-            }
-
-            try {
-                await postData(BROADCAST_URL, data);
-                showAlert("success", "✅ Broadcast Sent!");
-                document.getElementById('broadcastForm').reset();
-            } catch (err) {
-                if (err.message.includes("Invalid") || err.message.includes("UNAUTHENTICATED")) {
-                    logout();
-                    document.getElementById('loginError').textContent = "Session expired. Please login again.";
-                    document.getElementById('loginError').classList.remove('d-none');
-                } else {
-                    showAlert("danger", "❌ Error: " + err.message);
-                }
-            } finally {
-                setLoading(false, "🚀 Send Broadcast", "sendBtn");
-            }
-        });
-
-        // === FILE UPLOAD LOGIC ===
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) document.getElementById('filenameInput').value = file.name;
-        });
-
-        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            setLoading(true, "Uploading... (This may take a minute)", "uploadBtn");
-
-            const file = document.getElementById('fileInput').files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = async () => {
-                const base64Content = reader.result.split(',')[1];
-
-                const data = {
-                    secret: currentKey,  // Use verified key
-                    folder: document.getElementById('folderSelect').value,
-                    filename: document.getElementById('filenameInput').value,
-                    file_base64: base64Content
-                };
-
-                try {
-                    const res = await postData(UPLOAD_URL, data);
-                    showAlert("success", `✅ Uploaded to ${res.path}. Processing started.`);
-                    document.getElementById('uploadForm').reset();
-                } catch (err) {
-                    if (err.message.includes("Invalid") || err.message.includes("UNAUTHENTICATED")) {
-                        logout();
-                        document.getElementById('loginError').textContent = "Session expired. Please login again.";
-                        document.getElementById('loginError').classList.remove('d-none');
-                    } else {
-                        showAlert("danger", "❌ Upload Error: " + err.message);
-                    }
-                } finally {
-                    setLoading(false, "⬆️ Upload File", "uploadBtn");
-                }
-            };
-        });
-
-        // === HELPERS ===
-        async function postData(url, data) {
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: data })
-            });
-            const json = await res.json();
-            if (!res.ok || json.error) throw new Error(json.error?.message || "Request Failed");
-            return json.result || json;
-        }
-
-        function setLoading(isLoading, text, btnId = "sendBtn") {
-            const btn = document.getElementById(btnId);
-            btn.disabled = isLoading;
-            btn.innerText = text;
-        }
-
-        function showAlert(type, msg) {
-            alertBox.className = `alert alert-${type}`;
-            alertBox.innerText = msg;
-            alertBox.classList.remove('d-none');
-        }
-    </script>
+    <script src="admin.js"></script>
 </body>
 
 </html>

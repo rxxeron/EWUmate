@@ -41,10 +41,7 @@ class TasksScreenState extends State<TasksScreen> {
   Future<void> _initData() async {
     if (FirebaseAuth.instance.currentUser == null) return;
     try {
-      // 1. Get Semester
       _semesterCode = await _academicRepo.getCurrentSemesterCode();
-
-      // 2. Fetch User's Enrolled Courses (for Dropdown & Exam Sync)
       final userData = await _courseRepo.fetchUserData();
       final enrolledIds = List<String>.from(userData['enrolledSections'] ?? []);
 
@@ -56,20 +53,12 @@ class TasksScreenState extends State<TasksScreen> {
         );
       }
 
-      // Deduplicate
       final uniqueCourses = <String, Course>{};
       for (var c in enrolled) {
         if (!uniqueCourses.containsKey(c.code)) uniqueCourses[c.code] = c;
       }
 
-      // 3. Auto-Sync Exams (Wait for tasks to be available? No, sync logic checks existing)
-      // Actually, sync logic needs existing tasks to avoid dupes.
-      // We'll run it in background after fetching tasks, OR let it generic fetch from repo internally?
-      // ExamSyncLogic takes (enrolled, existingTasks, semester).
-      // We can fetch tasks once here for the sync logic.
       final tasks = await _taskRepo.fetchTasks();
-
-      // Run Sync in background (fire and forget, or await if critical)
       await _examSyncLogic.syncExams(enrolled, tasks, _semesterCode);
 
       if (mounted) {
@@ -91,132 +80,131 @@ class TasksScreenState extends State<TasksScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Background Gradient handled by MainShell or parent, assumed transparent here
-          Container(color: Colors.transparent),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Container(color: Colors.transparent),
+            StreamBuilder<List<Task>>(
+              stream: _taskRepo.getTasksStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    _initializing) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.cyanAccent),
+                  );
+                }
 
-          StreamBuilder<List<Task>>(
-            stream: _taskRepo.getTasksStream(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  _initializing) {
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.cyanAccent),
-                );
-              }
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text(
+                      "Error: ${snapshot.error}",
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  );
+                }
 
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    "Error: ${snapshot.error}",
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                );
-              }
+                final tasks = snapshot.data ?? [];
+                tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
-              final tasks = snapshot.data ?? [];
-              tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+                final upcoming = tasks.where((t) => !t.isCompleted).toList();
+                final completed = tasks.where((t) => t.isCompleted).toList();
 
-              final upcoming = tasks.where((t) => !t.isCompleted).toList();
-              final completed = tasks.where((t) => t.isCompleted).toList();
-
-              return CustomScrollView(
-                slivers: [
-                  _buildAppBar(),
-                  if (tasks.isEmpty && !_initializing)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.task_alt,
-                              size: 64,
-                              color: Colors.white24,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "No tasks yet",
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
+                return CustomScrollView(
+                  slivers: [
+                    _buildAppBar(),
+                    if (tasks.isEmpty && !_initializing)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.task_alt,
+                                size: 64,
+                                color: Colors.white24,
                               ),
+                              const SizedBox(height: 16),
+                              Text(
+                                "No tasks yet",
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else ...[
+                      if (upcoming.isNotEmpty) ...[
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                          sliver: SliverToBoxAdapter(
+                            child: _buildSectionHeader(
+                              "Upcoming",
+                              upcoming.length,
                             ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else ...[
-                    if (upcoming.isNotEmpty) ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildSectionHeader(
-                            "Upcoming",
-                            upcoming.length,
                           ),
                         ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => _buildTaskItem(upcoming[i]),
-                            childCount: upcoming.length,
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (ctx, i) => _buildTaskItem(upcoming[i]),
+                              childCount: upcoming.length,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                    if (completed.isNotEmpty) ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 10),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildSectionHeader(
-                            "Completed",
-                            completed.length,
+                      ],
+                      if (completed.isNotEmpty) ...[
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 30, 20, 10),
+                          sliver: SliverToBoxAdapter(
+                            child: _buildSectionHeader(
+                              "Completed",
+                              completed.length,
+                            ),
                           ),
                         ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => _buildTaskItem(completed[i]),
-                            childCount: completed.length,
+                        SliverPadding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (ctx, i) => _buildTaskItem(completed[i]),
+                              childCount: completed.length,
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ],
                   ],
-                ],
-              );
-            },
-          ),
-
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: FloatingActionButton.extended(
-              onPressed: () => _showTaskEditor(null),
-              backgroundColor: Colors.cyanAccent.withValues(alpha: 0.2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: Colors.cyanAccent.withValues(alpha: 0.5),
+                );
+              },
+            ),
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: FloatingActionButton.extended(
+                onPressed: () => _showTaskEditor(null),
+                backgroundColor: Colors.cyanAccent.withValues(alpha: 0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: Colors.cyanAccent.withValues(alpha: 0.5),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.add, color: Colors.cyanAccent),
-              label: const Text(
-                "New Task",
-                style: TextStyle(
-                  color: Colors.cyanAccent,
-                  fontWeight: FontWeight.bold,
+                icon: const Icon(Icons.add, color: Colors.cyanAccent),
+                label: const Text(
+                  "New Task",
+                  style: TextStyle(
+                    color: Colors.cyanAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -306,7 +294,7 @@ class TasksScreenState extends State<TasksScreen> {
                     style: TextStyle(color: Colors.redAccent),
                   ),
                   onPressed: () {
-                    _taskRepo.deleteTask(task.id); // Fire and forget
+                    _taskRepo.deleteTask(task.id);
                     Navigator.pop(ctx, true);
                   },
                 ),
@@ -320,7 +308,7 @@ class TasksScreenState extends State<TasksScreen> {
           onStatusChange: (val) {
             _taskRepo.toggleTaskCompletion(task.id, val);
           },
-          onDelete: () {}, // Handled by dismissible
+          onDelete: () {},
         ),
       ),
     );
@@ -335,7 +323,6 @@ class TasksScreenState extends State<TasksScreen> {
         availableCourses: _enrolledCourses,
         taskToEdit: task,
         onTaskSaved: (savedTask) {
-          // Repository handles updates, stream handles UI
           if (task == null) {
             _taskRepo.addTask(savedTask);
           } else {

@@ -109,10 +109,24 @@ def backfill_all_schedules(req: https_fn.CallableRequest) -> any:
         raise https_fn.HttpsError(code=https_fn.FunctionsErrorCode.UNAUTHENTICATED, message="Invalid Secret")
 
     db = firestore.client()
-    users_ref = db.collection('users')
     
-    # Process in batches or simply iterate (for <1000 users iterate is fine for now)
-    # Cloud Functions have 540s timeout (9 mins). It should fit.
+    # Determine current semester from config
+    try:
+        config_doc = db.collection('config').document('app_info').get()
+        if config_doc.exists:
+            semester_id = config_doc.to_dict().get('currentSemester', '')
+        else:
+            semester_id = ''
+    except:
+        semester_id = ''
+    
+    if not semester_id:
+        raise https_fn.HttpsError(code=https_fn.FunctionsErrorCode.FAILED_PRECONDITION, message="No current semester configured.")
+
+    # Normalize semester ID (e.g., "Spring 2026" -> "Spring2026")
+    semester_id = semester_id.replace(' ', '')
+    
+    users_ref = db.collection('users')
     
     from schedule_logic import _generate_schedule_for_user
     
@@ -126,8 +140,8 @@ def backfill_all_schedules(req: https_fn.CallableRequest) -> any:
                 data = doc.to_dict()
                 sections = data.get('enrolledSections', [])
                 if sections:
-                    print(f"Backfilling schedule for {doc.id}...")
-                    _generate_schedule_for_user(db, doc.id, sections)
+                    print(f"Backfilling schedule for {doc.id} for semester {semester_id}...")
+                    _generate_schedule_for_user(db, doc.id, semester_id, set(sections))
                     count += 1
             except Exception as e:
                 print(f"Error backfilling {doc.id}: {e}")
@@ -213,67 +227,3 @@ def debug_user_data(req: https_fn.CallableRequest) -> any:
         }
         
     return result
-
-@https_fn.on_call(memory=options.MemoryOption.GB_1, timeout_sec=300)
-def fix_metadata_credits(req: https_fn.CallableRequest) -> any:
-    """
-    Iterates through 'metadata/courses'.
-    Parses 'credit' field (string) -> 'creditVal' (number).
-    Handles "3+1" -> 4.0.
-    """
-    secret = req.data.get('secret')
-    expected_secret = _get_admin_secret()
-    if not expected_secret or secret != expected_secret:
-        raise https_fn.HttpsError(code=https_fn.FunctionsErrorCode.UNAUTHENTICATED, message="Invalid Secret")
-
-    db = firestore.client()
-    meta_doc_ref = db.collection('metadata').document('courses')
-    doc = meta_doc_ref.get()
-    
-    if not doc.exists:
-        return {"success": False, "message": "No courses metadata found"}
-
-    data = doc.to_dict()
-    # Data structure: A map of "CODE": { ... } OR "list": [ ... ]
-    
-    updates = 0
-    new_list = []
-    
-    # CASE A: List Format
-    if "list" in data and isinstance(data["list"], list):
-        current_list = data["list"]
-        for item in current_list:
-            if not isinstance(item, dict): continue
-            
-            # Logic to parse
-            # Try 'credits' (plural) first, then 'credit' (singular)
-            c_str = str(item.get('credits', item.get('credit', '3.0')))
-            val = _parse_credit_string(c_str)
-            
-            # Update item
-            item['creditVal'] = val
-            new_list.append(item)
-            updates += 1
-            
-        # Write back
-        if updates > 0:
-            meta_doc_ref.update({"list": new_list})
-
-    # CASE B: Map Format (Legacy/Alternate)
-    else:
-        # It's a map of items?
-        pass # Assuming structure is "list" based on earlier view
-        
-    return {"success": True, "updates": updates}
-
-def _parse_credit_string(c_str):
-    try:
-        # Handle "3+1", "3+1.5"
-        if '+' in c_str:
-            parts = c_str.split('+')
-            return sum(float(p.strip()) for p in parts)
-        
-        # Handle "3.0"
-        return float(c_str)
-    except:
-        return 3.0 # Default fallback

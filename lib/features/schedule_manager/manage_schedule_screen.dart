@@ -208,18 +208,11 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
           ],
         ),
         trailing: isCancelled
-            ? (hasMakeup
-                ? IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orangeAccent),
-                    onPressed: () =>
-                        _showMakeupPicker(item, course, onUpdate, edit: true),
-                  )
-                : TextButton(
-                    onPressed: () => _showMakeupPicker(item, course, onUpdate),
-                    child: const Text("Add Makeup",
-                        style: TextStyle(
-                            color: Colors.orangeAccent, fontSize: 12)),
-                  ))
+            ? IconButton(
+                icon: const Icon(Icons.edit, color: Colors.orangeAccent),
+                onPressed: () =>
+                    _showMakeupPicker(item, course, onUpdate, edit: true),
+              )
             : const Icon(Icons.check_circle_outline, color: Colors.greenAccent),
         onTap: () {
           if (isCancelled) {
@@ -231,8 +224,6 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
       ),
     );
   }
-
-  // --- Logic ---
 
   Future<void> _showCancelDialog(
       _SessionItem item, Course course, VoidCallback onUpdate) async {
@@ -312,7 +303,7 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
-      initialDate: item.makeupDate ?? now,
+      initialDate: item.makeupDate ?? item.date,
       firstDate: now.subtract(const Duration(days: 30)),
       lastDate: now.add(const Duration(days: 90)),
       builder: (ctx, child) => Theme(
@@ -332,7 +323,7 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
     if (!mounted) return;
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(item.makeupDate ?? now),
+      initialTime: TimeOfDay.fromDateTime(item.makeupDate ?? item.date),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
@@ -347,11 +338,9 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
     );
     if (time == null) return;
 
-    String? room = item.makeupRoom ??
-        item.baseSession?.room; // Edit existing or Default to original room
+    String? room = item.makeupRoom ?? item.baseSession?.room;
     if (!mounted) return;
 
-    // Show Room Picker/Entry
     final roomController = TextEditingController(text: room);
     final roomConfirmed = await showDialog<String>(
       context: context,
@@ -407,15 +396,11 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
       'M': DateTime.monday,
       'T': DateTime.tuesday,
       'W': DateTime.wednesday,
-      'R': DateTime.thursday, // Thursday usually R
+      'R': DateTime.thursday,
       'F': DateTime.friday,
       'A': DateTime.saturday,
     };
 
-    // Find which weekdays this course has
-    // course.sessions might have multiple, e.g. M 10-11, W 10-11
-    final sessionDays = <int, CourseSession>{};
-    // Check for full names or 3-letter codes first
     final nameMap = {
       'sunday': DateTime.sunday,
       'monday': DateTime.monday,
@@ -433,11 +418,11 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
       'sat': DateTime.saturday,
     };
 
+    final sessionDays = <int, CourseSession>{};
     for (var s in course.sessions) {
       final lower = s.day.toLowerCase().trim();
       bool found = false;
 
-      // Try full/short names
       for (var entry in nameMap.entries) {
         if (lower.contains(entry.key)) {
           sessionDays[entry.value] = s;
@@ -446,7 +431,6 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
       }
 
       if (!found) {
-        // Fallback to single letter codes (STWRFA)
         final clean = s.day.replaceAll(' ', '').toUpperCase();
         for (var char in clean.split('')) {
           if (daysMap.containsKey(char)) {
@@ -456,19 +440,12 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
       }
     }
 
-    // Iterate
     DateTime current = _startDate!;
     while (!current.isAfter(_endDate!)) {
       if (sessionDays.containsKey(current.weekday)) {
-        // Check Exception
-        // Key: courseCode + date
-        // But exceptions list has all. Filter by courseCode then search date.
-
         final dateStr = current.toIso8601String().split('T')[0];
         Map<String, dynamic>? exception;
 
-        // Optimize: Convert _exceptions to Map if list is large?
-        // For < 100 exceptions, iteration is fine.
         for (var e in _exceptions) {
           if (e['courseCode'] == course.code && e['date'] == dateStr) {
             exception = e;
@@ -481,10 +458,10 @@ class _ManageScheduleScreenState extends State<ManageScheduleScreen> {
         String status = 'active';
 
         if (exception != null) {
-          final type = exception['type']; // 'cancel', 'makeup'
+          final type = exception['type'];
           if (type == 'cancel') status = 'cancelled';
           if (type == 'makeup') {
-            status = 'cancelled'; // Original slot cancelled
+            status = 'cancelled';
             if (exception['makeupDate'] != null) {
               makeup = DateTime.tryParse(exception['makeupDate']);
             }

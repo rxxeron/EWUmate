@@ -1,3 +1,4 @@
+
 import 'package:intl/intl.dart';
 import '../../core/models/course_model.dart';
 import '../../core/utils/time_utils.dart';
@@ -137,40 +138,43 @@ class DashboardLogic {
 
     // 4.5 Check for Exceptions (Cancellations / Makeup)
     final exceptions = cloudSchedule['exceptions'] as List<dynamic>? ?? [];
+    List<ScheduleItem> finalSchedule = [];
+
+    for (var item in daySchedule) {
+      bool isCancelled = false;
+      final matchingException = exceptions.firstWhere(
+        (ex) =>
+            ex['date'] == dateStr &&
+            (ex['courseCode'] ?? '').toString().replaceAll(' ', '').toUpperCase() ==
+                item.courseCode.replaceAll(' ', '').toUpperCase(),
+        orElse: () => null,
+      );
+
+      if (matchingException != null && matchingException['type'] == 'cancel') {
+        isCancelled = true;
+      }
+
+      finalSchedule.add(item.copyWith(isCancelled: isCancelled));
+    }
+    daySchedule = finalSchedule;
+
+    // Add makeup classes separately
     for (var ex in exceptions) {
-      if (ex['date'] == dateStr) {
-        final type = ex['type'];
-        final courseCode = ex['courseCode'];
-
-        if (type == 'cancel') {
-          // Find and mark as cancelled
-          for (var i = 0; i < daySchedule.length; i++) {
-            // Normalize spaces for comparison (e.g. "CSE 101" == "CSE101")
-            final sCode =
-                daySchedule[i].courseCode.replaceAll(' ', '').toUpperCase();
-            final eCode =
-                (courseCode ?? '').toString().replaceAll(' ', '').toUpperCase();
-
-            if (sCode == eCode) {
-              daySchedule[i] = daySchedule[i].copyWith(isCancelled: true);
-            }
-          }
-        } else if (type == 'makeup') {
-          // Add makeup class
-          daySchedule.add(ScheduleItem(
-            courseCode: courseCode ?? 'Extra',
-            courseName: ex['courseName'] ?? 'Makeup Class',
-            sessionType: 'Makeup',
-            day: targetDayName,
-            startTime: ex['startTime'] ?? '',
-            endTime: ex['endTime'] ?? '',
-            room: ex['room'] ?? 'TBA',
-            faculty: ex['faculty'] ?? '',
-            isMakeup: true,
-          ));
-        }
+      if (ex['date'] == dateStr && ex['type'] == 'makeup') {
+        daySchedule.add(ScheduleItem(
+          courseCode: ex['courseCode'] ?? 'Extra',
+          courseName: ex['courseName'] ?? 'Makeup Class',
+          sessionType: 'Makeup',
+          day: targetDayName,
+          startTime: ex['startTime'] ?? '',
+          endTime: ex['endTime'] ?? '',
+          room: ex['room'] ?? 'TBA',
+          faculty: ex['faculty'] ?? '',
+          isMakeup: true,
+        ));
       }
     }
+
 
     // 5. Sort by start time
     daySchedule.sort((a, b) {
@@ -248,8 +252,7 @@ class DashboardLogic {
     List<ScheduleItem> daySchedule = [];
 
     for (var course in courses) {
-      // Get sessions that match the target day
-      final sessionsForDay = course.getSessionsForDay(dayLetter);
+      final sessionsForDay = course.sessions.where((s) => s.day == dayLetter);
 
       for (var session in sessionsForDay) {
         daySchedule.add(ScheduleItem(

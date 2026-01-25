@@ -8,27 +8,135 @@ class CourseRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  Future<List<Course>> fetchCourses(String semester) async {
+  DocumentReference<Map<String, dynamic>>? _getAdvisingDocRef(String semester) {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('advising')
+        .doc(semester.replaceAll(' ', '_'));
+  }
+
+  Future<void> saveGeneratedSchedules(
+      String semester, List<List<Course>> schedules) async {
+    final docRef = _getAdvisingDocRef(semester);
+    if (docRef == null) return;
+
+    final scheduleIds = schedules
+        .map((schedule) => schedule.map((course) => course.id).toList())
+        .toList();
+
+    await docRef.set({'generatedSchedules': scheduleIds}, SetOptions(merge: true));
+  }
+
+  Future<List<List<Course>>> loadGeneratedSchedules(String semester) async {
+    final docRef = _getAdvisingDocRef(semester);
+    if (docRef == null) return [];
+
+    final doc = await docRef.get();
+    if (!doc.exists || doc.data() == null) return [];
+
+    final data = doc.data();
+    final scheduleIds = List<List<dynamic>>.from(data!['generatedSchedules'] ?? []);
+
+    if (scheduleIds.isEmpty) return [];
+
+    final allCourseIds = scheduleIds.expand((ids) => ids).toSet().toList();
+    if (allCourseIds.isEmpty) return [];
+    
+    final courses = await fetchCoursesByIds(semester, allCourseIds.cast<String>());
+    final courseMap = {for (var c in courses) c.id: c};
+
+    List<List<Course>> loadedSchedules = [];
+    for (final idList in scheduleIds) {
+      final schedule = idList.map((id) => courseMap[id]).whereType<Course>().toList();
+      if (schedule.length == idList.length) { 
+        loadedSchedules.add(schedule);
+      }
+    }
+    return loadedSchedules;
+  }
+  
+  Future<void> clearGeneratedSchedules(String semester) async {
+    final docRef = _getAdvisingDocRef(semester);
+    if (docRef == null) return;
+    await docRef.update({'generatedSchedules': FieldValue.delete()});
+  }
+
+  Future<Map<String, List<Course>>> fetchCourses(String semester) async {
     try {
-      debugPrint('[CourseRepo] Fetching from collection: courses_$semester');
       final snapshot = await _firestore.collection('courses_$semester').get();
-      debugPrint('[CourseRepo] Found ${snapshot.docs.length} documents');
-      return snapshot.docs
-          .map((doc) => Course.fromFirestore(doc.data(), doc.id))
-          .toList();
+      
+      final Map<String, List<Course>> groupedCourses = {};
+      for (var doc in snapshot.docs) {
+        final course = Course.fromFirestore(doc.data(), doc.id);
+        if (groupedCourses.containsKey(course.code)) {
+          groupedCourses[course.code]!.add(course);
+        } else {
+          groupedCourses[course.code] = [course];
+        }
+      }
+      return groupedCourses;
     } catch (e) {
       debugPrint('[CourseRepo] Error fetching courses: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<String>> fetchAllCourseCodes() async {
+    try {
+      final snapshot = await _firestore.collection('metadata').doc('courses').get();
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        if (data != null && data.containsKey('list')) {
+          return List<String>.from(data['list'].map((item) => item['code']));
+        }
+      }
       return [];
+    } catch (e) {
+      debugPrint('[CourseRepo] Error fetching all course codes: $e');
+      rethrow;
+    }
+  }
+  
+  Future<Map<String, List<Course>>> fetchCoursesByCode(
+      String semester, List<String> codes) async {
+    if (codes.isEmpty) return {};
+
+    try {
+      final Map<String, List<Course>> groupedCourses = {};
+      for (var i = 0; i < codes.length; i += AppConstants.firestoreWhereInLimit) {
+        final batch = codes.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
+        
+        final snapshot = await _firestore
+            .collection('courses_$semester')
+            .where('code', whereIn: batch)
+            .get();
+            
+        for (var doc in snapshot.docs) {
+          final course = Course.fromFirestore(doc.data(), doc.id);
+          if (groupedCourses.containsKey(course.code)) {
+            groupedCourses[course.code]!.add(course);
+          } else {
+            groupedCourses[course.code] = [course];
+          }
+        }
+      }
+      return groupedCourses;
+    } catch (e) {
+      debugPrint('[CourseRepo] Error fetching courses by code: $e');
+      rethrow;
     }
   }
 
   Future<List<Course>> searchCourses(String query, String semester) async {
     if (query.isEmpty) return [];
     try {
-      // For MVP: Fetch all and filter locally.
-      final all = await fetchCourses(semester);
+      final allCourses = await fetchCourses(semester);
+      final List<Course> flattenedCourses = allCourses.values.expand((sections) => sections).toList();
       final lower = query.toLowerCase();
-      return all
+      return flattenedCourses
           .where((c) {
             return c.code.toLowerCase().contains(lower) ||
                 c.courseName.toLowerCase().contains(lower);
@@ -41,25 +149,15 @@ class CourseRepository {
     }
   }
 
-  /// Fetches specific courses by their Firestore document IDs
-  /// Uses batch query (whereIn) for optimization - 1 call instead of N calls
   Future<List<Course>> fetchCoursesByIds(
       String semester, List<String> docIds) async {
     if (docIds.isEmpty) return [];
 
     try {
-      debugPrint(
-          '[CourseRepo] Fetching ${docIds.length} courses by ID from courses_$semester');
-
       final List<Course> courses = [];
-
-      // Firestore whereIn limit is 30, so batch if needed
-      for (var i = 0;
-          i < docIds.length;
-          i += AppConstants.firestoreWhereInLimit) {
-        final batch =
-            docIds.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
-
+      
+      for (var i = 0; i < docIds.length; i += AppConstants.firestoreWhereInLimit) {
+        final batch = docIds.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
         final snapshot = await _firestore
             .collection('courses_$semester')
             .where(FieldPath.documentId, whereIn: batch)
@@ -69,9 +167,6 @@ class CourseRepository {
           courses.add(Course.fromFirestore(doc.data(), doc.id));
         }
       }
-
-      debugPrint(
-          '[CourseRepo] Successfully fetched ${courses.length} courses in batch');
       return courses;
     } catch (e) {
       debugPrint('[CourseRepo] Error fetching courses by IDs: $e');
@@ -84,10 +179,7 @@ class CourseRepository {
     if (user == null) return {};
 
     final docSnap = await _firestore.collection('users').doc(user.uid).get();
-    if (docSnap.exists) {
-      return docSnap.data() ?? {};
-    }
-    return {};
+    return docSnap.data() ?? {};
   }
 
   Future<void> toggleEnrolled(String courseId, bool shouldEnroll,
@@ -103,9 +195,8 @@ class CourseRepository {
         'completedCourses': FieldValue.arrayRemove([courseId]),
       });
 
-      // Also write to semesterProgress for Cloud Function trigger
       if (semesterCode != null) {
-        final safeSem = semesterCode.replaceAll(' ', '');
+        final safeSem = semesterCode.replaceAll(' ', '_');
         final courseDoc = _firestore
             .collection('users')
             .doc(user.uid)
@@ -122,7 +213,6 @@ class CourseRepository {
           'quizStrategy': 'bestN',
         }, SetOptions(merge: true));
 
-        // Touch parent to trigger schedule generation
         await _firestore
             .collection('users')
             .doc(user.uid)
@@ -138,9 +228,8 @@ class CourseRepository {
         'enrolledSections': FieldValue.arrayRemove([courseId]),
       });
 
-      // Also remove from semesterProgress
       if (semesterCode != null) {
-        final safeSem = semesterCode.replaceAll(' ', '');
+        final safeSem = semesterCode.replaceAll(' ', '_');
         await _firestore
             .collection('users')
             .doc(user.uid)
@@ -150,7 +239,6 @@ class CourseRepository {
             .doc(courseId)
             .delete();
 
-        // Touch parent to trigger schedule regeneration
         await _firestore
             .collection('users')
             .doc(user.uid)

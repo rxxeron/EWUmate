@@ -27,16 +27,16 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   String _nextSemesterCode = '';
 
   // Data
-  List<Course> _allCourses = [];
-  List<Course> _filteredCourses = [];
+  List<String> _allCourseCodes = [];
+  Map<String, List<Course>> _groupedCourses = {};
 
   // Manual Plan State
   final List<Course> _selectedSections = [];
 
   // Generator State
   final Set<String> _selectedCodes = {};
-
-  // Search
+  final List<List<Course>> _generatedHistory = [];
+  bool _isGenerating = false;
 
   @override
   void initState() {
@@ -48,7 +48,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   Future<void> _initData() async {
     try {
       final currentCode = await _academicRepo.getCurrentSemesterCode();
-      // Simple next semester calculation
       _nextSemesterCode = _calculateNextSemester(currentCode);
 
       final advisingDate =
@@ -66,22 +65,26 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           _isLocked = false;
         }
       } else {
-        // Fallback if no date set
         _isLocked = false;
       }
 
       if (!_isLocked) {
-        await _loadCourses();
+        await _loadInitialData();
       }
     } catch (e) {
       debugPrint("Advising Init Error: $e");
+       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Error initializing advising data. Please try again later."),
+          backgroundColor: Colors.redAccent,
+        ));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
   String _calculateNextSemester(String current) {
-    // Basic rotation logic: Spring -> Summer -> Fall
     final match = RegExp(r'([a-zA-Z]+)(\d{4})').firstMatch(current);
     if (match != null) {
       final season = match.group(1)!;
@@ -90,83 +93,65 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       if (season.contains('Summer')) return 'Fall$year';
       if (season.contains('Fall')) return 'Spring${year + 1}';
     }
-    return current; // Fallback
+    return current;
   }
 
-  Future<void> _loadCourses() async {
-    // Fetch courses for NEXT semester
-    final courses = await _courseRepo.fetchCourses(_nextSemesterCode);
-    setState(() {
-      _allCourses = courses;
-      _filteredCourses = courses;
-    });
-  }
-
-  void _search(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredCourses = _allCourses;
-      } else {
-        _filteredCourses = _allCourses
-            .where((c) =>
-                c.code.toLowerCase().contains(query.toLowerCase()) ||
-                c.courseName.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
+  Future<void> _loadInitialData() async {
+    _allCourseCodes = await _courseRepo.fetchAllCourseCodes();
+    _groupedCourses = await _courseRepo.fetchCourses(_nextSemesterCode);
+    final loadedSchedules = await _courseRepo.loadGeneratedSchedules(_nextSemesterCode);
+    if(mounted) {
+      setState(() {
+        _generatedHistory.addAll(loadedSchedules);
+      });
+    }
   }
 
   // --- Logic: Overlap Check ---
   bool _hasOverlap(Course newCourse) {
     for (final existing in _selectedSections) {
-      // 1. Same Course Code? (Can't take two sections of same course usually)
       if (existing.code == newCourse.code) return true;
-
-      // 2. Time Overlap
-      if (_checkTimeOverlap(existing, newCourse)) return true;
+      for (final newSession in newCourse.sessions) {
+        for (final existingSession in existing.sessions) {
+          if (_checkTimeOverlap(newSession, existingSession)) return true;
+        }
+      }
     }
     return false;
   }
 
-  bool _checkTimeOverlap(Course a, Course b) {
-    if (a.day != b.day) return false;
+  bool _checkTimeOverlap(CourseSession a, CourseSession b) {
+    if (a.day == b.day) {
+       final startA = _parseTime(a.startTime);
+      final endA = _parseTime(a.endTime);
+      final startB = _parseTime(b.startTime);
+      final endB = _parseTime(b.endTime);
 
-    // Parse times "08:00 AM" -> minutes from midnight
-    final startA = _parseTime(a.startTime);
-    final endA = _parseTime(a.endTime);
-    final startB = _parseTime(b.startTime);
-    final endB = _parseTime(b.endTime);
-
-    if (startA == null || endA == null || startB == null || endB == null) {
-      // Fallback: Exact string match if parsing fails
-      return a.startTime == b.startTime;
+      if (startA != null && endA != null && startB != null && endB != null) {
+        return startA < endB && startB < endA;
+      }
     }
-
-    // Overlap if (StartA < EndB) and (StartB < EndA)
-    return startA < endB && startB < endA;
+    return false;
   }
 
   int? _parseTime(String? timeStr) {
-    if (timeStr == null) return null;
+    if (timeStr == null || timeStr.isEmpty) return null;
     try {
-      // Expected format: "hh:mm a" e.g., "08:00 AM"
       final format = DateFormat("hh:mm a");
-      // Current date dummy
-      // final now = DateTime.now();
-      final dt = format.parse(timeStr.trim().toUpperCase());
-      return dt.hour * 60 + dt.minute;
+      return format.parse(timeStr.trim().toUpperCase()).millisecondsSinceEpoch;
     } catch (e) {
+      debugPrint("Error parsing time: $timeStr, Error: $e");
       return null;
     }
   }
 
   void _toggleSection(Course course) {
-    final isSelected = _selectedSections.contains(course);
+    final isSelected = _selectedSections.any((c) => c.id == course.id);
 
     if (isSelected) {
-      setState(() => _selectedSections.remove(course));
+      setState(() =>
+          _selectedSections.removeWhere((c) => c.id == course.id));
     } else {
-      // Check Overlap
       if (_hasOverlap(course)) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
@@ -190,6 +175,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+       backgroundColor: const Color(0xFF0F2027),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -278,7 +264,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   Widget _buildPlannerView() {
     return Column(
       children: [
-        // Tabs
         TabBar(
           controller: _tabController,
           indicatorColor: Colors.cyanAccent,
@@ -289,7 +274,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             Tab(text: "Smart Generator"),
           ],
         ),
-
         Expanded(
           child: TabBarView(
             controller: _tabController,
@@ -304,41 +288,22 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   }
 
   // --- Manual Tab ---
-
   Widget _buildManualTab() {
+    final courseCodes = _groupedCourses.keys.toList()..sort();
     return Column(
       children: [
-        // Search
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            onChanged: _search,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: "Search courses...",
-              hintStyle: const TextStyle(color: Colors.white38),
-              prefixIcon: const Icon(Icons.search, color: Colors.white38),
-              filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.1),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none),
-            ),
-          ),
-        ),
-
         // Selected Summary
         if (_selectedSections.isNotEmpty)
-          Container(
+          SizedBox(
             height: 60,
-            margin: const EdgeInsets.symmetric(horizontal: 16),
             child: ListView(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               children: _selectedSections
                   .map((c) => Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
-                          label: Text("${c.code}-${c.section}"),
+                          label: Text("${c.code} - ${c.section}"),
                           backgroundColor: Colors.cyanAccent,
                           onDeleted: () => _toggleSection(c),
                         ),
@@ -350,10 +315,13 @@ class _AdvisingScreenState extends State<AdvisingScreen>
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: _filteredCourses.length,
+            itemCount: courseCodes.length,
             itemBuilder: (context, index) {
-              final course = _filteredCourses[index];
-              return _buildCourseCard(course, isManual: true);
+              final courseCode = courseCodes[index];
+              final sections = _groupedCourses[courseCode]!;
+              final courseName = sections.first.courseName;
+
+              return _buildGroupedCourseCard(courseCode, courseName, sections);
             },
           ),
         ),
@@ -362,116 +330,90 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   }
 
   // --- Generator Tab ---
-
   Widget _buildGeneratorTab() {
-    // Get unique codes
-    final uniqueCodes = _allCourses.map((c) => c.code).toSet().toList();
-    uniqueCodes.sort();
+    _allCourseCodes.sort();
 
     return Column(
       children: [
-        // Selection Area
-        Container(
-          height: MediaQuery.of(context).size.height * 0.35, // Limit height
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        // Course Selection
+        Expanded(
+          flex: 2, // Gives more space to the course list
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _allCourseCodes.length,
+            itemBuilder: (context, index) {
+              final code = _allCourseCodes[index];
+              final isSelected = _selectedCodes.contains(code);
+              return CheckboxListTile(
+                title: Text(code, style: const TextStyle(color: Colors.white)),
+                value: isSelected,
+                onChanged: (val) => _toggleGeneratorCode(code),
+                activeColor: Colors.cyanAccent,
+                checkColor: Colors.black,
+                side: const BorderSide(color: Colors.white38),
+                 controlAffinity: ListTileControlAffinity.leading,
+              );
+            },
+          ),
+        ),
+        
+        // Action Buttons
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  "Select Subjects (${_selectedCodes.length})",
-                  style: const TextStyle(
-                      color: Colors.cyanAccent, fontWeight: FontWeight.bold),
-                ),
-              ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: uniqueCodes.length,
-                  itemBuilder: (context, index) {
-                    final code = uniqueCodes[index];
-                    final isSelected = _selectedCodes.contains(code);
-                    return GestureDetector(
-                      onTap: () => _toggleGeneratorCode(code),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.cyanAccent.withValues(alpha: 0.2)
-                                : Colors.white10,
-                            border: Border.all(
-                                color: isSelected
-                                    ? Colors.cyanAccent
-                                    : Colors.transparent),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(code,
-                                style: const TextStyle(color: Colors.white)),
-                            if (isSelected)
-                              const Icon(Icons.check,
-                                  color: Colors.cyanAccent, size: 16)
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.cyanAccent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                  onPressed: (_selectedCodes.isEmpty || _isGenerating)
+                      ? null
+                      : _runGenerator,
+                  child: _isGenerating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black))
+                      : const Text("Generate",
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
+              const SizedBox(width: 10),
+              if (_generatedHistory.isNotEmpty) IconButton(
+                icon: const Icon(Icons.clear_all, color: Colors.redAccent),
+                onPressed: _clearGeneratedSchedules,
+                tooltip: 'Clear Generated Schedules',
+              )
             ],
           ),
         ),
+        
+        const Divider(color: Colors.white24, height: 32),
 
-        // Action Button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.cyanAccent,
-                  foregroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12))),
-              onPressed: (_selectedCodes.isEmpty || _isGenerating)
-                  ? null
-                  : _runGenerator,
-              child: _isGenerating
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.black))
-                  : const Text("Generate Schedules",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ),
-
-        const Divider(color: Colors.white24),
-
-        // History List
+        // Generated Schedules View
         Expanded(
-          child: _generatedHistory.isEmpty
+          flex: 3, // Gives more space to the results
+          child: _generatedHistory.isEmpty 
               ? const Center(
-                  child: Text("No generated schedules yet.",
+                  child: Text('Generated schedules will appear here.',
                       style: TextStyle(color: Colors.white38)))
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _generatedHistory.length,
                   itemBuilder: (context, index) {
-                    final schedule = _generatedHistory[index];
-                    return _buildScheduleCard(index, schedule);
+                    return _buildScheduleCard(index, _generatedHistory[index]);
                   },
                 ),
-        )
+        ),
       ],
     );
   }
-
+  
   Widget _buildScheduleCard(int index, List<Course> schedule) {
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: 16),
@@ -485,44 +427,38 @@ class _AdvisingScreenState extends State<AdvisingScreen>
               Text("Option ${index + 1} (${schedule.length} Courses)",
                   style: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold)),
-              IconButton(
-                icon:
-                    const Icon(Icons.delete, color: Colors.redAccent, size: 20),
-                onPressed: () {
-                  setState(() {
-                    _generatedHistory.removeAt(index);
-                  });
-                },
-              )
             ],
           ),
-          const Divider(color: Colors.white12),
-          ...schedule.map((c) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
+          const Divider(color: Colors.white12, height: 16),
+          ...schedule.map((course) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
                     SizedBox(
-                        width: 60,
-                        child: Text(c.code,
+                        width: 70,
+                        child: Text(course.code,
                             style: const TextStyle(
                                 color: Colors.cyanAccent,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold))),
                     Expanded(
-                        child: Text(
-                            "Sec ${c.section} • ${c.day} ${c.startTime}",
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12))),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: course.sessions.map((s) => Text(
+                          "${s.type}: ${s.day} ${s.startTime} - ${s.endTime}",
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        )).toList(),
+                      ),
+                    ),
                   ],
                 ),
               )),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             height: 36,
             child: OutlinedButton(
               onPressed: () {
-                // Apply this schedule to Manual Plan?
                 setState(() {
                   _selectedSections.clear();
                   _selectedSections.addAll(schedule);
@@ -532,9 +468,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                     content: Text("Schedule applied to Manual Plan")));
               },
               style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.white24)),
+                  side: const BorderSide(color: Colors.cyanAccent)),
               child: const Text("Use This Schedule",
-                  style: TextStyle(color: Colors.white)),
+                  style: TextStyle(color: Colors.cyanAccent)),
             ),
           )
         ],
@@ -542,128 +478,136 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     );
   }
 
-  // Generator Result State
-  // Storing list of schedules (each schedule is a List<Course>)
-  final List<List<Course>> _generatedHistory = [];
-  bool _isGenerating = false;
 
-  // Cache for recursion
-  Map<String, List<Course>> candidatesCache = {};
-
-  void _runGenerator() async {
-    setState(() => _isGenerating = true);
-    await Future.delayed(const Duration(milliseconds: 100)); // UI release
-
-    candidatesCache = {};
-    for (var code in _selectedCodes) {
-      final sections = _allCourses.where((c) {
-        if (c.code != code) return false;
-        // Capacity Check: Ignore "0/0"
-        if (c.capacity == "0/0" ||
-            (c.capacity != null && c.capacity!.endsWith("/0"))) {
-          return false;
-        }
-        return true;
-      }).toList();
-
-      if (sections.isNotEmpty) candidatesCache[code] = sections;
-    }
-
-    final keys = candidatesCache.keys.toList();
-    final results = <List<Course>>[];
-
-    // Recursive Backtracking
-    void solve(int idx, List<Course> path) {
-      if (results.length >= 10) return;
-      // Base Case
-      if (idx == keys.length) {
-        results.add(List.from(path));
-        return;
-      }
-
-      final code = keys[idx];
-      final possible = candidatesCache[code]!;
-
-      for (var s in possible) {
-        // Overlap check
-        bool conflict = path.any((p) => _checkTimeOverlap(p, s));
-        if (!conflict) {
-          path.add(s);
-          solve(idx + 1, path);
-          path.removeLast();
-          if (results.length >= 10) return;
-        }
-      }
-    }
-
-    solve(0, []);
-
-    setState(() {
-      _isGenerating = false;
-      if (results.isNotEmpty) {
-        // Add unique results to history (prepend)
-        _generatedHistory.insertAll(0, results);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Generated ${results.length} schedules.")));
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("No conflict-free schedules found.")));
-      }
-    });
+  Widget _buildGroupedCourseCard(
+      String courseCode, String courseName, List<Course> sections) {
+    return Card(
+      color: Colors.white.withAlpha(10),
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ExpansionTile(
+        title: Text(courseCode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        subtitle: Text(courseName, style: const TextStyle(color: Colors.white70)),
+        children: sections.map((section) => _buildCourseSection(section)).toList(),
+      ),
+    );
   }
 
-  // Update the Tab Build to show history
-  // ... (Will do in a separate replacement chunk for the Widget)
-
-  Widget _buildCourseCard(Course course, {required bool isManual}) {
-    final isSelected = _selectedSections.contains(course);
-
-    return GlassContainer(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      borderColor: isSelected ? Colors.cyanAccent : Colors.white10,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildCourseSection(Course section) {
+    final isSelected = _selectedSections.any((c) => c.id == section.id);
+    return Container(
+       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+       decoration: BoxDecoration(
+         color: isSelected ? Colors.cyanAccent.withAlpha(20) : Colors.transparent,
+       ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("${course.code} - Sec ${course.section}",
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16)),
-              if (isManual)
-                Transform.scale(
-                  scale: 0.8,
-                  child: Switch(
-                    value: isSelected,
-                    activeTrackColor: Colors.cyanAccent,
-                    onChanged: (_) => _toggleSection(course),
-                  ),
-                )
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Section ${section.section}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                ...section.sessions.map((sessionInfo) {
+                  return Text(
+                    "${sessionInfo.type}: ${sessionInfo.day} ${sessionInfo.startTime} - ${sessionInfo.endTime} (${sessionInfo.faculty})",
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  );
+                }),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Text(course.courseName,
-              style: const TextStyle(color: Colors.white70)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.person, size: 14, color: Colors.white38),
-              const SizedBox(width: 4),
-              Expanded(
-                  child: Text(course.faculty ?? 'TBA',
-                      style: const TextStyle(
-                          color: Colors.white54, fontSize: 13))),
-              const Icon(Icons.schedule, size: 14, color: Colors.white38),
-              const SizedBox(width: 4),
-              Text("${course.day} ${course.startTime}",
-                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
-            ],
-          )
+          Switch(
+            value: isSelected,
+            onChanged: (_) => _toggleSection(section),
+            activeTrackColor: Colors.cyanAccent.withAlpha(100),
+            inactiveTrackColor: Colors.white10,
+            thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.cyanAccent;
+                }
+                return Colors.white60;
+            }),
+          ),
         ],
       ),
     );
+  }
+
+  // --- Generator Logic ---
+  void _runGenerator() async {
+    setState(() => _isGenerating = true);
+    final List<List<Course>> results = [];
+
+    try {
+      final candidates = await _courseRepo.fetchCoursesByCode(
+          _nextSemesterCode, _selectedCodes.toList());
+
+      void solve(int courseIndex, List<Course> currentSchedule) {
+        if (results.length >= 5) return; // Limit to 5 results for performance
+
+        if (courseIndex == _selectedCodes.length) {
+          results.add(List.from(currentSchedule));
+          return;
+        }
+
+        final code = _selectedCodes.elementAt(courseIndex);
+        final sectionsForCourse = candidates[code] ?? [];
+
+        for (final section in sectionsForCourse) {
+          bool hasConflict = currentSchedule.any((scheduled) => _checkSectionOverlap(scheduled, section));
+          
+          if (!hasConflict) {
+            currentSchedule.add(section);
+            solve(courseIndex + 1, currentSchedule);
+            currentSchedule.removeLast();
+          }
+        }
+      }
+
+      solve(0, []);
+
+      _generatedHistory.clear();
+      _generatedHistory.addAll(results);
+      await _courseRepo.saveGeneratedSchedules(_nextSemesterCode, _generatedHistory);
+      
+      if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(results.isEmpty ? "No conflict-free schedules found." : "Generated ${results.length} schedules.")));
+      }
+
+    } catch (e) {
+      debugPrint("Error running generator: $e");
+       if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("An error occurred while generating schedules."), backgroundColor: Colors.redAccent,));
+       }
+    } finally {
+       if(mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
+  }
+  
+  void _clearGeneratedSchedules() async {
+    await _courseRepo.clearGeneratedSchedules(_nextSemesterCode);
+    if (!mounted) return; // Guard against async gaps
+    setState(() {
+      _generatedHistory.clear();
+    });
+     ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Cleared generated schedules.")));
+  }
+
+  bool _checkSectionOverlap(Course a, Course b) {
+    for (final sessionA in a.sessions) {
+      for (final sessionB in b.sessions) {
+        if (_checkTimeOverlap(sessionA, sessionB)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

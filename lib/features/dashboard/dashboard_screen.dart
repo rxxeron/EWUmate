@@ -27,7 +27,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  // Removed direct Firestore reference
   final AcademicRepository _academicRepo = AcademicRepository();
   final TaskRepository _taskRepo = TaskRepository();
   final DashboardRepository _dashboardRepo = DashboardRepository();
@@ -35,7 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   User? get user => _auth.currentUser;
   String _semesterCode = "";
-  bool _loadingInit = true; // Initial loading for semester code
+  bool _loadingInit = true;
   List<Task> _tasks = [];
   List<Course> _enrolledCourses = [];
 
@@ -48,12 +47,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _initDashboard() async {
     if (user == null) return;
     try {
-      // 1. Get Semester Code
       final code = await _academicRepo.getCurrentSemesterCode();
-      // 2. Load Tasks (One-time fetch for now, or stream if preferred)
       final tasks = await _taskRepo.fetchTasks();
-
-      // 3. Load Courses
       final userData = await _courseRepo.fetchUserData();
       final enrolledIds = List<String>.from(userData['enrolledSections'] ?? []);
       List<Course> enrolled = [];
@@ -122,9 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 }
 
-                // Treat null data as empty map to handle "first load" gracefully
                 final data = snapshot.data;
-                // Process Data using Logic
                 final processed = DashboardLogic.getScheduleFromCloud(data);
 
                 return RefreshIndicator(
@@ -145,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         _buildScheduleSection(processed),
                         const SizedBox(height: 30),
                         _buildTasksSection(),
-                        const SizedBox(height: 100), // Bottom padding
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
@@ -248,13 +241,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildScheduleSection(Map<String, dynamic> data) {
-    final status = data['status']; // 'normal', 'holiday', 'chill'
+    final status = data['status'];
     final reason = data['reason'] ?? "";
     final displayDate = data['displayDate'] ?? "";
     final schedule = data['schedule'] as List<ScheduleItem>? ?? [];
     final targetDate = data['targetDate'] as DateTime;
 
-    // Determine title based on date
     final isTomorrow = targetDate.day != DateTime.now().day;
     final title = isTomorrow ? "Tomorrow's Schedule" : "Today's Schedule";
 
@@ -322,7 +314,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Time
           Column(
             children: [
               Text(
@@ -378,7 +369,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           decoration: item.isCancelled
                               ? TextDecoration.lineThrough
                               : null,
-                          decorationThickness: 2.5, // Bold strikethrough
+                          decorationThickness: 2.5,
                           color: Colors.white,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -475,6 +466,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTasksSection() {
+    final upcomingTasks = _tasks.where((task) => !task.isCompleted).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -499,7 +492,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 10),
-        if (_tasks.isEmpty)
+        if (upcomingTasks.isEmpty)
           _buildHeroCard(
             Icons.task_alt,
             "All Done!",
@@ -508,7 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             iconMode: true,
           )
         else
-          ..._tasks.take(3).map(
+          ...upcomingTasks.take(3).map(
                 (t) => TaskCard(
                   task: t,
                   onTap: () => _showTaskEditor(t),

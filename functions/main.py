@@ -17,10 +17,9 @@ from scheduler import check_reminders, process_scheduled_broadcasts
 from advising_logic import on_schedule_update  # check_advising_alerts moved to TypeScript
 from academic_logic import calculate_academic_stats 
 from semester_progress_logic import calculate_semester_progress
-from schedule_logic import generate_user_schedule, on_enrollment_change
+from schedule_logic import generate_user_schedule, on_enrollment_change, regenerate_all_schedules
 from notifications import send_broadcast_notification
-from triggers import on_app_info_updated
-from admin_tools import upload_file_via_admin, backfill_all_schedules, bootstrap_config, recalculate_all_stats, fix_metadata_credits
+from admin_tools import upload_file_via_admin, backfill_all_schedules, bootstrap_config, recalculate_all_stats
 from advising_notifications import check_advising_windows
 
 import firebase_functions.options as options

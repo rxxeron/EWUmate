@@ -23,12 +23,18 @@ class ScheduleManagerRepository {
       if (enrolledIds.isEmpty) return [];
 
       // 2. Fetch course details
-      // We can reuse CourseRepo's access pattern, explicitly fetching by IDs would be efficient
-      // but CourseRepo.fetchCourses fetches ALL.
-      // Let's rely on fetchCourses for now as it caches well typically, or optimize later.
       final allCourses = await _courseRepo.fetchCourses(semesterCode);
 
-      return allCourses.where((c) => enrolledIds.contains(c.id)).toList();
+      final List<Course> enrolledCourses = [];
+      for (var courseList in allCourses.values) {
+        for (var course in courseList) {
+          if (enrolledIds.contains(course.id)) {
+            enrolledCourses.add(course);
+          }
+        }
+      }
+
+      return enrolledCourses;
     } catch (e) {
       // print("Error fetching enrolled courses: $e");
       return [];

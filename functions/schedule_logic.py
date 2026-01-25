@@ -3,7 +3,7 @@ Cloud Function: Personalized Schedule Generation
 Trigger: Firestore Document Write on user's enrolled courses
 Output: Schedule document with weekly template, holidays, and day swaps
 """
-from firebase_functions import firestore_fn, options
+from firebase_functions import firestore_fn, https_fn, options
 from firebase_admin import firestore
 import re
 from datetime import datetime
@@ -16,6 +16,63 @@ def _get_admin_secret():
     if doc.exists:
         return doc.to_dict().get('secret_key', '')
     return ''
+
+
+@https_fn.on_request(region="us-central1", memory=options.MemoryOption.MB_512, timeout_sec=540)
+def regenerate_all_schedules(req: https_fn.Request) -> https_fn.Response:
+    """
+    HTTP Trigger to manually regenerate the schedule for ALL users
+    for the currently configured semester.
+    """
+    db = firestore.client()
+    
+    # 1. Get current semester
+    try:
+        config_doc = db.collection('config').document('app_info').get()
+        if config_doc.exists:
+            semester_id = config_doc.to_dict().get('currentSemester', '')
+        else:
+            semester_id = ''
+    except Exception as e:
+        print(f"Error getting config: {e}")
+        return https_fn.Response(f"Error getting config: {e}", status=500)
+
+    if not semester_id:
+        msg = "No current semester configured in config/app_info."
+        print(msg)
+        return https_fn.Response(msg, status=400)
+    
+    semester_id_normalized = semester_id.replace(' ', '')
+    print(f"Starting schedule regeneration for all users for semester: {semester_id_normalized}")
+
+    # 2. Get all users
+    try:
+        users_stream = db.collection("users").stream()
+        user_count = 0
+        for user_doc in users_stream:
+            user_id = user_doc.id
+            user_data = user_doc.to_dict()
+            enrolled_sections = set(user_data.get("enrolledSections", []))
+            
+            if not enrolled_sections:
+                print(f"Skipping user {user_id}: no enrolled sections.")
+                continue
+
+            print(f"Processing user {user_id} with {len(enrolled_sections)} sections...")
+            try:
+                # 3. Call the internal logic for each user
+                _generate_schedule_for_user(db, user_id, semester_id_normalized, enrolled_sections)
+                user_count += 1
+            except Exception as e:
+                print(f"!!! FAILED to generate schedule for user {user_id}: {e}")
+
+        final_msg = f"Successfully regenerated schedules for {user_count} users for semester {semester_id}."
+        print(final_msg)
+        return https_fn.Response(final_msg)
+
+    except Exception as e:
+        print(f"An error occurred during user iteration: {e}")
+        return https_fn.Response(f"An error occurred: {e}", status=500)
 
 
 @firestore_fn.on_document_written(
@@ -238,7 +295,8 @@ def _generate_schedule_for_user(db, user_id: str, semester_id: str, enrolled_sec
     # Fetch course details
     collection_name = f"courses_{semester_id}"
     master_courses_ref = db.collection(collection_name)
-    
+    all_courses_stream = master_courses_ref.stream() # Fetch all courses once
+
     weekly_template = {
         "Sunday": [], "Monday": [], "Tuesday": [], "Wednesday": [],
         "Thursday": [], "Friday": [], "Saturday": []
@@ -254,12 +312,15 @@ def _generate_schedule_for_user(db, user_id: str, semester_id: str, enrolled_sec
         "A": "Saturday", "SA": "Saturday", "SAT": "Saturday"
     }
     
-    for section_id in enrolled_section_ids:
+    # Create a list from the stream to allow multiple iterations if needed
+    all_courses_list = list(all_courses_stream)
+
+    for course_doc in all_courses_list:
+        # Check if the doc ID is in the user's enrolled sections
+        if course_doc.id not in enrolled_section_ids:
+            continue
+
         try:
-            course_doc = master_courses_ref.document(section_id).get()
-            if not course_doc.exists:
-                continue
-            
             course_data = course_doc.to_dict()
             code = course_data.get("code", "").upper()
             sessions = course_data.get("sessions", [])
@@ -279,8 +340,8 @@ def _generate_schedule_for_user(db, user_id: str, semester_id: str, enrolled_sec
                         "faculty": session.get("faculty", "")
                     })
         except Exception as e:
-            print(f"Error fetching section {section_id}: {e}")
-    
+            print(f"Error processing section {course_doc.id}: {e}")
+
     # Sort each day by start time
     for day in weekly_template:
         weekly_template[day].sort(key=lambda x: _time_to_minutes(x.get("startTime", "")))
@@ -301,7 +362,6 @@ def _generate_schedule_for_user(db, user_id: str, semester_id: str, enrolled_sec
             if "holiday" in title:
                 holidays.append({"date": date_str, "name": event_data.get("title", "Holiday")})
             
-            import re
             swap_match = re.search(r"regular\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\s+class", title)
             if swap_match:
                 day_swaps.append({
@@ -325,28 +385,42 @@ def _generate_schedule_for_user(db, user_id: str, semester_id: str, enrolled_sec
 
 
 def _parse_days(day_str: str, day_map: dict) -> list:
-    """Parse day string like 'MW', 'T R', 'Sunday' into list of day names."""
-    days = []
-    
-    # Try full day name first
-    for abbr, full in day_map.items():
-        if full.upper() == day_str:
-            return [full]
-    
-    # Split by space if multiple
+    """
+    Parse day string like 'MW', 'T R', 'Sunday', 'SAT' into a list of day names.
+    Correctly handles multi-letter abbreviations.
+    """
+    days = set()
+    day_str = day_str.upper().strip()
+
+    # Create a sorted list of abbreviations, longest first, to ensure "SUN" is checked before "SU" or "S"
+    sorted_abbrs = sorted(day_map.keys(), key=len, reverse=True)
+
+    # First, handle space-separated abbreviations like "T R"
     tokens = day_str.split()
+
     if len(tokens) > 1:
+        # If we have spaces, assume each token is a day
         for token in tokens:
-            token = token.strip().upper()
             if token in day_map:
-                days.append(day_map[token])
+                days.add(day_map[token])
     else:
-        # Try each character (for "MW", "TR")
-        for char in day_str:
-            if char in day_map:
-                days.append(day_map[char])
-    
-    return list(set(days))  # Remove duplicates
+        # If no spaces, parse the string (e.g., "MWF", "SAT")
+        s = day_str
+        i = 0
+        while i < len(s):
+            found_match = False
+            # Check for longest possible match starting at index i
+            for abbr in sorted_abbrs:
+                if s[i:].startswith(abbr):
+                    days.add(day_map[abbr])
+                    i += len(abbr)
+                    found_match = True
+                    break # Move to the next position after the matched abbreviation
+            if not found_match:
+                # If no known abbreviation matches, just advance one character
+                i += 1
+                
+    return list(days)
 
 
 def _time_to_minutes(time_str: str) -> int:
@@ -360,4 +434,3 @@ def _time_to_minutes(time_str: str) -> int:
         return dt.hour * 60 + dt.minute
     except:
         return 0
-

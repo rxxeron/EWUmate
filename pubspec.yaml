@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # --- Core & Architecture ---
   flutter_riverpod: ^2.5.1
@@ -16,7 +18,7 @@ dependencies:
   go_router: ^14.2.0
   flutter_dotenv: ^5.1.0
   shared_preferences: ^2.2.3
-  intl: ^0.19.0
+  intl: ^0.20.0                  # FIX: Updated to match Flutter SDK requirement
   
   # --- Firebase Ecosystem ---
   firebase_core: ^3.3.0
@@ -24,11 +26,8 @@ dependencies:
   firebase_ui_auth: ^1.13.1
   cloud_firestore: ^5.1.0
   firebase_ui_firestore: ^1.6.2
-  
-  # FIX: Updated to ^13.0.0 to match the UI package requirement
   firebase_storage: ^13.0.0      
   firebase_ui_storage: ^3.0.0
-  
   firebase_database: ^11.0.5
   firebase_ui_database: ^1.4.1
   firebase_messaging: ^15.0.2

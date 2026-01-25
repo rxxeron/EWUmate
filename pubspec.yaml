@@ -21,13 +21,16 @@ dependencies:
   # --- Firebase Ecosystem ---
   firebase_core: ^3.3.0
   firebase_auth: ^5.1.4
-  firebase_ui_auth: ^1.13.1        # Updated to valid version
+  firebase_ui_auth: ^1.13.1
   cloud_firestore: ^5.1.0
-  firebase_ui_firestore: ^1.6.2    # Updated to valid version
-  firebase_storage: ^12.1.0
-  firebase_ui_storage: ^3.0.0      # FIX: Updated to valid version
+  firebase_ui_firestore: ^1.6.2
+  
+  # FIX: Updated to ^13.0.0 to match the UI package requirement
+  firebase_storage: ^13.0.0      
+  firebase_ui_storage: ^3.0.0
+  
   firebase_database: ^11.0.5
-  firebase_ui_database: ^1.4.1     # Updated to valid version
+  firebase_ui_database: ^1.4.1
   firebase_messaging: ^15.0.2
   firebase_app_check: ^0.3.0+2
   firebase_remote_config: ^5.1.0

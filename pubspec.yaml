@@ -18,24 +18,26 @@ dependencies:
   go_router: ^14.2.0
   flutter_dotenv: ^5.1.0
   shared_preferences: ^2.2.3
-  intl: ^0.20.0                  # FIX: Updated to match Flutter SDK requirement
+  intl: ^0.20.0
   
-  # --- Firebase Ecosystem ---
-  firebase_core: ^3.3.0
-  firebase_auth: ^5.1.4
-  firebase_ui_auth: ^1.13.1
-  cloud_firestore: ^5.1.0
-  firebase_ui_firestore: ^1.6.2
-  firebase_storage: ^13.0.0      
-  firebase_ui_storage: ^3.0.0
-  firebase_database: ^11.0.5
-  firebase_ui_database: ^1.4.1
-  firebase_messaging: ^15.0.2
-  firebase_app_check: ^0.3.0+2
-  firebase_remote_config: ^5.1.0
-  firebase_analytics: ^11.3.0
-  firebase_crashlytics: ^4.0.5
-  firebase_performance: ^0.10.0+5
+  # --- Firebase Ecosystem (Auto-Resolve Mode) ---
+  # We leave these blank to let Flutter pick the matching set
+  # compatible with Core v4.x
+  firebase_core: 
+  firebase_auth: 
+  firebase_ui_auth: 
+  cloud_firestore: 
+  firebase_ui_firestore: 
+  firebase_storage: 
+  firebase_ui_storage: 
+  firebase_database: 
+  firebase_ui_database: 
+  firebase_messaging: 
+  firebase_app_check: 
+  firebase_remote_config: 
+  firebase_analytics: 
+  firebase_crashlytics: 
+  firebase_performance: 
   google_sign_in: ^6.2.1
 
   # --- UI & Design ---

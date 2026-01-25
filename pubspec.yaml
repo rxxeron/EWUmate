@@ -15,12 +15,14 @@ dependencies:
   # --- Core & Architecture ---
   flutter_riverpod: ^2.5.1
   riverpod_annotation: ^2.3.5
+  provider: ^6.1.2               # FIX: Added back because your code uses it
   go_router: ^14.2.0
   flutter_dotenv: ^5.1.0
   shared_preferences: ^2.2.3
   intl: ^0.20.0
   
   # --- Firebase Ecosystem (Auto-Resolve) ---
+  # We leave versions blank so Flutter picks the compatible set
   firebase_core: 
   firebase_auth: 
   firebase_ui_auth: 

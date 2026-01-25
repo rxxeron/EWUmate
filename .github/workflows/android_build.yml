@@ -10,16 +10,31 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # 1. Setup Java (Required for Android Gradle Plugin)
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # 2. Setup Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.16.9' 
+          channel: 'stable' # Keeps you on the latest stable release
+          cache: true       # Speeds up subsequent builds
+
+      # 3. Create google-services.json (CRITICAL for Firebase)
+      # You must add the BASE64 encoded content of your file to GitHub Secrets
+      - name: Create google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
 
       - name: Install dependencies
         run: flutter pub get
 
+      # 4. Build APK (Note: This produces an unsigned release APK or debug-signed)
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

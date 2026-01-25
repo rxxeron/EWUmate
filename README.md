@@ -1,25 +1,30 @@
-# EWU Mate (Flutter V2)
+# EWUmate
 
-This is the new Flutter version of the EWU Mate application, designed to replace the legacy React Native implementation.
+This is a Flutter project with a Firebase backend.
 
-## Features
-- **Authentication**: Firebase Auth integration.
-- **Dashboard**: Smart schedule handling, holiday modes.
-- **Course Browser**: Firestore-backed course search and enrollment.
-- **Profile**: User profile management with image upload.
-- **Onboarding**: Program selection and course history tracking.
+## Project Structure
 
-## Setup
-1.  Ensure you have the Android SDK installed and configured.
-2.  Ensure `android/app/google-services.json` exists (from Firebase Console).
-3.  Run `flutter pub get` to install dependencies.
+The project is structured as follows:
 
-## Running
-```bash
-flutter run
-```
+*   `lib/`: Contains the Dart code for the Flutter application.
+*   `functions/`: Contains the Python Cloud Functions for the Firebase backend.
+*   `functions-node/`: Contains the Node.js Cloud Functions for the Firebase backend.
+*   `public/`: Contains the public assets for Firebase Hosting.
+*   `android/`: Contains the Android-specific project files.
+*   `ios/`: Contains the iOS-specific project files.
+*   `web/`: Contains the web-specific project files.
+*   `linux/`: Contains the Linux-specific project files.
+*   `windows/`: Contains the Windows-specific project files.
+*   `macos/`: Contains the macOS-specific project files.
 
-## Architecture
-- **State Management**: `Provider` (lightweight usage currently).
-- **Routing**: `go_router` for declarative navigation.
-- **Backend**: Firebase (Auth, Firestore, Storage).
+## How to Run the Project
+
+1.  **Set up Flutter:** Make sure you have the Flutter SDK installed and configured.
+2.  **Set up Firebase:** Create a Firebase project and configure the Firebase CLI.
+3.  **Install dependencies:**
+    *   Run `flutter pub get` to install the Flutter dependencies.
+    *   Run `npm install` in the `functions-node` directory to install the Node.js dependencies.
+    *   Run `pip install -r requirements.txt` in the `functions` directory to install the Python dependencies.
+4.  **Run the app:**
+    *   Run `flutter run` to run the app on a connected device or emulator.
+    *   Run `firebase deploy` to deploy the Cloud Functions and hosting.

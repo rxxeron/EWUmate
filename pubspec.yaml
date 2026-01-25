@@ -20,9 +20,7 @@ dependencies:
   shared_preferences: ^2.2.3
   intl: ^0.20.0
   
-  # --- Firebase Ecosystem (Auto-Resolve Mode) ---
-  # We leave these blank to let Flutter pick the matching set
-  # compatible with Core v4.x
+  # --- Firebase Ecosystem (Auto-Resolve) ---
   firebase_core: 
   firebase_auth: 
   firebase_ui_auth: 
@@ -59,8 +57,8 @@ dependencies:
   photo_view: ^0.15.0
   
   # --- PDF Viewer ---
-  syncfusion_flutter_pdfviewer: ^26.1.41 
-  syncfusion_flutter_core: ^26.1.41
+  syncfusion_flutter_pdfviewer: 
+  syncfusion_flutter_core: 
 
   # --- Utilities ---
   http: ^1.2.1
@@ -80,16 +78,17 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^4.0.0
   build_runner: ^2.4.11
-  
-  # --- Code Generation ---
   freezed: ^2.5.2
   json_serializable: ^6.8.0
   riverpod_generator: ^2.4.0
-  
-  # --- Linting ---
   custom_lint: ^0.6.4
   riverpod_lint: ^2.3.10
   flutter_launcher_icons: ^0.13.1
+
+# --- FORCE FIX SECTION ---
+dependency_overrides:
+  intl: ^0.20.0
+# -------------------------
 
 flutter_launcher_icons:
   android: "launcher_icon"

@@ -1,44 +1,26 @@
-name: Build Flutter App
+name: Android Build
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Java
-        uses: actions/setup-java@v3
+      - uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+          java-version: '11'
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true
-
-      # --- THIS IS THE CHANGED PART ---
-      # This takes the raw text from your secret and writes it to the file
-      # explicitly using an environment variable to avoid syntax errors.
-      - name: Create google-services.json
-        env:
-          GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: echo "$GOOGLE_JSON" > android/app/google-services.json
-      # --------------------------------
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - run: flutter pub get
+      - run: flutter build apk --release --build-name=1.0.1 --build-number=2
+      - uses: actions/upload-artifact@v2
         with:
-          name: app-release
+          name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk

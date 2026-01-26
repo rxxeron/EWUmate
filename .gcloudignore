@@ -1,0 +1,32 @@
+# This file specifies files and directories that should not be deployed to
+# Google Cloud.
+
+.git
+.gitignore
+.gcloudignore
+.DS_Store
+
+# Python virtual environments
+venv/
+functions/venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Node.js dependencies
+node_modules/
+functions-node/node_modules/
+
+# Test files
+*.test.js
+*.test.py
+.pytest_cache/
+
+# IDE settings
+.idea/
+.vscode/
+
+# Build artifacts
+build/
+dist/

@@ -27,17 +27,22 @@ def detect_session_type(start_time, end_time):
 def parse_course_pdf(pdf_path, semester_id, course_titles=None):
     course_map = {}
     
-    code_start_pattern = re.compile(r"^([A-Z]{2,4}\d{3,4}[A-Z]?)")
+    # Regex Patterns
+    # Matches course codes like CSE101, ENG101 (2-4 letters, 3-4 digits, optional suffix)
+    code_pattern = re.compile(r"^[A-Z]{2,4}\d{3,4}[A-Z]?$")
+    # Matches time ranges like 08:30 AM - 10:00 AM
     time_pattern = re.compile(r"(\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)\s*-\s*\d{1,2}:\d{2}\s*(?:AM|PM|am|pm))", re.IGNORECASE)
-    capacity_pattern = re.compile(r"(\d+/\d+)")
+    # Matches capacity like 30/40 or 0/0
+    capacity_token_pattern = re.compile(r"^(\d+)/(\d+)$")
 
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text = page.extract_text()
             if not text: continue
             
-            lines = text.split('\\n')
+            lines = text.split('\n')
             for line in lines:
+                # 1. Identify Time Range to split the line
                 time_match = time_pattern.search(line)
                 
                 code, section, faculty, capacity = "", "", "", "0/0"
@@ -48,52 +53,85 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
                     start_idx, end_idx = time_match.start(), time_match.end()
                     
                     pre_time_text = line[:start_idx].strip()
-                    post_time_text = line[end_idx:].strip()
+                    post_time_text = line[end_idx:].strip() # Room is usually after time
                     
+                    # Parse Time
                     time_parts = full_time.split('-')
                     if len(time_parts) == 2:
                         startTime = time_parts[0].strip().upper()
                         endTime = time_parts[1].strip().upper()
                         
+                    # Tokenize the left side: CODE SECTION FACULTY... CAPACITY DAY...
                     tokens = pre_time_text.split()
-                    
+                    if not tokens: continue
+
+                    # A. Extract Days from the END of the left side
                     day_tokens = []
-                    remaining_tokens = list(tokens)
-                    
-                    while remaining_tokens:
-                         curr = remaining_tokens[-1].replace(',', '').upper()
-                         if len(curr) <= 3 and all(c in 'SMTWRFA' for c in curr):
-                             day_tokens.insert(0, curr)
-                             remaining_tokens.pop()
-                         else:
-                             break
-                    
-                    day_str = " ".join(day_tokens)
-                    room = post_time_text.strip()
-                    
-                    if not remaining_tokens: continue
-                    
-                    code = remaining_tokens[0].upper()
-                    section = remaining_tokens[1] if len(remaining_tokens) > 1 else ""
-                    
-                    if len(remaining_tokens) > 2:
-                        faculty_capacity_str = " ".join(remaining_tokens[2:])
-                        cap_match = capacity_pattern.search(faculty_capacity_str)
-                        if cap_match:
-                            capacity = cap_match.group(1)
-                            faculty = faculty_capacity_str.replace(capacity, "").strip()
+                    while tokens:
+                        curr = tokens[-1].replace(',', '').upper()
+                        # specific check for day abbreviations
+                        if len(curr) <= 3 and all(c in 'SMTWRFA' for c in curr):
+                            day_tokens.insert(0, curr)
+                            tokens.pop()
                         else:
-                            faculty = faculty_capacity_str
-                            
+                            break
+                    day_str = " ".join(day_tokens) if day_tokens else "TBA"
+
+                    if not tokens: continue # Should have code/section left
+
+                    # B. Extract Code and Section from the START
+                    code = tokens[0].upper()
+                    if len(tokens) > 1:
+                        section = tokens[1]
+                        # Verify section is short (usually 1-2 chars) to avoid grabbing Faculty name part
+                        # But sometimes section is just '1'. 
+                        middle_tokens = tokens[2:]
+                    else:
+                        section = ""
+                        middle_tokens = []
+
+                    # C. Extract Capacity and Faculty from the MIDDLE
+                    # Search specifically for the capacity token (e.g. "30/40")
+                    capacity_idx = -1
+                    for i, tok in enumerate(middle_tokens):
+                        if capacity_token_pattern.match(tok):
+                            capacity_idx = i
+                            capacity = tok
+                            break
+                    
+                    if capacity_idx != -1:
+                        # Faculty is everything before capacity
+                        faculty_tokens = middle_tokens[:capacity_idx]
+                        faculty = " ".join(faculty_tokens)
+                    else:
+                        # Fallback: Regex search on the joined string if token split failed
+                        # e.g. "Dr.Smith30/40"
+                        joined_middle = " ".join(middle_tokens)
+                        cap_search = re.search(r"(\d+/\d+)", joined_middle)
+                        if cap_search:
+                            capacity = cap_search.group(1)
+                            faculty = joined_middle.replace(capacity, "").strip() # This is the fallback
+                        else:
+                            faculty = joined_middle
+
+                    # Extract Room from right side
+                    room = post_time_text.strip()
                     if not room: room = "TBA"
-                    if not day_str: day_str = "TBA"
 
                 else:
-                    tokens = line.split()
-                    if len(tokens) < 2: continue
-                    code, section = tokens[0].upper(), tokens[1]
-                    room, day_str = ("Online", "TBA") if "Online" in line else ("TBA", "TBA")
+                    # Line without time (e.g. header or just code info? or online?)
+                    # Handling "Online" cases if relevant
+                    if "Online" in line:
+                        tokens = line.split()
+                        if len(tokens) >= 2:
+                            code = tokens[0].upper()
+                            section = tokens[1]
+                            room = "Online"
+                            day_str = "TBA"
+                    else:
+                        continue # Skip malformed lines
 
+                # Build Session Object
                 session_type = "Theory"
                 if startTime and endTime:
                     session_type = detect_session_type(startTime, endTime)
@@ -103,9 +141,11 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
                     "endTime": endTime, "room": room, "faculty": faculty
                 }
 
+                # Add to Map
                 course_key = f"{code}_{section}"
                 if course_key not in course_map:
                     course_name, credits_val = "", 0.0
+                    # Metadata lookup (titles/credits)
                     if course_titles:
                            key_to_use = None
                            if code in course_titles:

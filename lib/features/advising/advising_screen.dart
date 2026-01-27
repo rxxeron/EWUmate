@@ -7,6 +7,7 @@ import '../../core/widgets/glass_kit.dart';
 import '../../core/models/course_model.dart';
 import '../course_browser/course_repository.dart';
 import '../calendar/academic_repository.dart';
+import 'advising_repository.dart';
 
 class AdvisingScreen extends StatefulWidget {
   const AdvisingScreen({super.key});
@@ -19,6 +20,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     with SingleTickerProviderStateMixin {
   final AcademicRepository _academicRepo = AcademicRepository();
   final CourseRepository _courseRepo = CourseRepository();
+  final AdvisingRepository _advisingRepo = AdvisingRepository();
 
   late TabController _tabController;
   StreamSubscription? _scheduleSubscription;
@@ -46,14 +48,16 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _manualSearchController = TextEditingController();
-  final TextEditingController _facultyFilterController = TextEditingController();
+  final TextEditingController _facultyFilterController =
+      TextEditingController();
   final Set<String> _excludedDays = {};
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _searchController.addListener(() => _filterSchedules(_searchController.text));
+    _searchController
+        .addListener(() => _filterSchedules(_searchController.text));
     _manualSearchController.addListener(() {
       _filterManualCourses(_manualSearchController.text);
     });
@@ -75,7 +79,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       final currentCode = await _academicRepo.getCurrentSemesterCode();
       _nextSemesterCode = _calculateNextSemester(currentCode);
 
-      final advisingDate = await _academicRepo.getOnlineAdvisingDate(currentCode);
+      final advisingDate =
+          await _academicRepo.getOnlineAdvisingDate(currentCode);
 
       if (advisingDate != null) {
         final plannerOpenDate = advisingDate.subtract(const Duration(days: 7));
@@ -99,7 +104,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       debugPrint("Advising Init Error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Error initializing advising data. Please try again later."),
+          content:
+              Text("Error initializing advising data. Please try again later."),
           backgroundColor: Colors.redAccent,
         ));
       }
@@ -122,13 +128,58 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   Future<void> _loadInitialData() async {
     _allCourseCodes = await _courseRepo.fetchAllCourseCodes();
-    _filteredCourseCodes = _allCourseCodes;
-    _groupedCourses = await _courseRepo.fetchCourses(_nextSemesterCode);
-    setState(() {
-      _filteredHistory = _generatedHistory;
+    final rawGrouped = await _courseRepo.fetchCourses(_nextSemesterCode);
+
+    // Automatically filter out full and 0/0 sections
+    _groupedCourses = {};
+    rawGrouped.forEach((code, sections) {
+      final availableSections = sections.where((s) {
+        final cap = s.capacity ?? "0/0";
+        try {
+          final parts = cap.split('/');
+          if (parts.length == 2) {
+            final enr = int.parse(parts[0]);
+            final tot = int.parse(parts[1]);
+            return tot > 0 && enr < tot;
+          }
+        } catch (_) {}
+        return false;
+      }).toList();
+
+      if (availableSections.isNotEmpty) {
+        _groupedCourses[code] = availableSections;
+      }
     });
+
+    _filteredCourseCodes = _groupedCourses.keys.toList()..sort();
+
+    // Persistent Generated History
+    _scheduleSubscription?.cancel();
+    _scheduleSubscription =
+        _courseRepo.streamLatestGeneratedSchedules().listen((schedules) {
+      if (mounted) {
+        setState(() {
+          _generatedHistory.clear();
+          _generatedHistory.addAll(schedules);
+          if (_searchController.text.isEmpty) {
+            _filteredHistory = List.from(schedules);
+          } else {
+            _filterSchedules(_searchController.text);
+          }
+          if (_isGenerating && schedules.isNotEmpty) {
+            _isGenerating = false;
+            _generationStatus = "Found ${schedules.length} combinations.";
+          } else if (!_isGenerating && schedules.isNotEmpty) {
+            _generationStatus =
+                "Latest saved schedule (${schedules.length} options)";
+          }
+        });
+      }
+    });
+
+    setState(() {});
   }
-  
+
   void _filterManualCourses(String query) {
     if (query.isEmpty) {
       setState(() {
@@ -175,7 +226,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     setState(() {
       _isGenerating = true;
       _generationStatus = 'Initializing generation...';
-      _generatedHistory.clear();
       _filteredHistory.clear();
     });
     _scheduleSubscription?.cancel();
@@ -198,22 +248,10 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       }
 
       setState(() {
-        _generationStatus = 'Processing... Waiting for schedules.';
+        _generationStatus = 'Processing... Waiting for cloud results.';
       });
-
-      _scheduleSubscription = _courseRepo.streamGeneratedSchedules(generationId).listen((schedules) {
-        setState(() {
-          _generatedHistory.clear();
-          _generatedHistory.addAll(schedules);
-          _filterSchedules(_searchController.text);
-          _generationStatus = 'Found ${_generatedHistory.length} combinations.';
-        });
-      }, onError: (err) {
-        setState(() {
-          _generationStatus = 'An error occurred while streaming results.';
-          _isGenerating = false;
-        });
-      });
+      // The _scheduleSubscription from _loadInitialData will pick up the results
+      // when the cloud function finishes and writes the document.
     } on FirebaseFunctionsException catch (e) {
       setState(() {
         _isGenerating = false;
@@ -243,6 +281,47 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       _isGenerating = false;
       _generationStatus = 'Generation cancelled.';
     });
+  }
+
+  void _saveManualPlan() async {
+    if (_selectedSections.isEmpty) return;
+    try {
+      final ids = _selectedSections.map((e) => e.id).toList();
+      await _advisingRepo.saveManualPlan(_nextSemesterCode, ids);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  "Plan saved! You can now apply it in the Next Semester screen.")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error saving: $e")),
+        );
+      }
+    }
+  }
+
+  void _savePlanOption(List<Course> schedule) async {
+    try {
+      final ids = schedule.map((e) => e.id).toList();
+      await _advisingRepo.saveManualPlan(_nextSemesterCode, ids);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+                  "Enrollment choice saved! Please finalize it in the Next Semester screen.")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error: $e")),
+        );
+      }
+    }
   }
 
   void _clearGeneratedSchedules() async {
@@ -277,7 +356,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
               Expanded(
                   child: _loading
                       ? const Center(
-                          child: CircularProgressIndicator(color: Colors.cyanAccent))
+                          child: CircularProgressIndicator(
+                              color: Colors.cyanAccent))
                       : _isLocked
                           ? _buildLockedView()
                           : _buildPlannerView()),
@@ -303,10 +383,13 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             children: [
               const Text("Advising Planner",
                   style: TextStyle(
-                      color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold)),
               if (_nextSemesterCode.isNotEmpty)
                 Text(_nextSemesterCode,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    style:
+                        const TextStyle(color: Colors.white70, fontSize: 14)),
             ],
           )
         ],
@@ -327,7 +410,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             const Text(
               "Planner Locked",
               style: TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
             ),
             const SizedBox(height: 10),
             Text(
@@ -385,30 +470,43 @@ class _AdvisingScreenState extends State<AdvisingScreen>
               prefixIcon: const Icon(Icons.search, color: Colors.white54),
               filled: true,
               fillColor: Colors.white.withAlpha(20),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none),
             ),
             style: const TextStyle(color: Colors.white),
           ),
         ),
         if (_selectedSections.isNotEmpty)
-          SizedBox(
-            height: 60,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              children: _selectedSections
-                  .map((c) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Chip(
-                          label: Text("${c.code} - ${c.section}"),
-                          backgroundColor: Colors.cyanAccent,
-                          onDeleted: () => _toggleSection(c),
-                        ),
-                      ))
-                  .toList(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _selectedSections
+                          .map((c) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: Chip(
+                                  label: Text("${c.code} - ${c.section}"),
+                                  backgroundColor: Colors.cyanAccent,
+                                  onDeleted: () => _toggleSection(c),
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.save, color: Colors.cyanAccent),
+                  onPressed: _saveManualPlan,
+                  tooltip: 'Save Plan for Enrollment',
+                )
+              ],
             ),
           ),
-
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
@@ -434,9 +532,12 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ExpansionTile(
         title: Text(courseCode,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text(courseName, style: const TextStyle(color: Colors.white70)),
-        children: sections.map((section) => _buildCourseSection(section)).toList(),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
+        subtitle:
+            Text(courseName, style: const TextStyle(color: Colors.white70)),
+        children:
+            sections.map((section) => _buildCourseSection(section)).toList(),
       ),
     );
   }
@@ -446,7 +547,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isSelected ? Colors.cyanAccent.withAlpha(20) : Colors.transparent,
+        color:
+            isSelected ? Colors.cyanAccent.withAlpha(20) : Colors.transparent,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -456,8 +558,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text("Section ${section.section}",
-                    style:
-                        const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
                 ...section.sessions.map((sessionInfo) {
                   return Text(
@@ -485,12 +587,11 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     );
   }
 
-   void _toggleSection(Course course) {
+  void _toggleSection(Course course) {
     final isSelected = _selectedSections.any((c) => c.id == course.id);
 
     if (isSelected) {
-      setState(() =>
-          _selectedSections.removeWhere((c) => c.id == course.id));
+      setState(() => _selectedSections.removeWhere((c) => c.id == course.id));
     } else {
       if (_hasOverlap(course)) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -502,7 +603,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     }
   }
 
-   bool _hasOverlap(Course newCourse) {
+  bool _hasOverlap(Course newCourse) {
     for (final existing in _selectedSections) {
       if (existing.code == newCourse.code) return true;
       for (final newSession in newCourse.sessions) {
@@ -516,7 +617,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   bool _checkTimeOverlap(CourseSession a, CourseSession b) {
     if (a.day == b.day) {
-       final startA = _parseTime(a.startTime);
+      final startA = _parseTime(a.startTime);
       final endA = _parseTime(a.endTime);
       final startB = _parseTime(b.startTime);
       final endB = _parseTime(b.endTime);
@@ -555,11 +656,10 @@ class _AdvisingScreenState extends State<AdvisingScreen>
         ),
         const Divider(color: Colors.white24, height: 16),
         if (_isGenerating || _generatedHistory.isNotEmpty)
-            Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildSearchResultsHeader(),
-            ),
-
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: _buildSearchResultsHeader(),
+          ),
         Expanded(
           flex: 3,
           child: _buildResultsView(),
@@ -567,7 +667,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       ],
     );
   }
-  
+
   Widget _buildCourseSelectionList() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -587,12 +687,18 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       },
     );
   }
-  
+
   void _toggleGeneratorCode(String code) {
     setState(() {
       if (_selectedCodes.contains(code)) {
         _selectedCodes.remove(code);
       } else {
+        if (_selectedCodes.length >= 5) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Maximum 5 courses allowed.")),
+          );
+          return;
+        }
         _selectedCodes.add(code);
       }
     });
@@ -600,7 +706,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   Widget _buildFilterControls() {
     return ExpansionTile(
-      title: const Text("Filters & Options", style: TextStyle(color: Colors.white)),
+      title: const Text("Filters & Options",
+          style: TextStyle(color: Colors.white)),
       leading: const Icon(Icons.filter_list, color: Colors.white),
       children: [
         Padding(
@@ -609,22 +716,24 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             controller: _facultyFilterController,
             decoration: InputDecoration(
               labelText: 'Exclude Faculty (comma separated)',
-              labelStyle: const TextStyle(color: Colors.white70),
+              labelStyle: const TextStyle(color: Colors.white70, fontSize: 14),
               filled: true,
               fillColor: Colors.white.withAlpha(20),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            style: const TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Wrap(
             spacing: 8.0,
-            children: ['Sat', 'Sun', 'Fri'].map((day) {
+            children:
+                ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) {
               final isSelected = _excludedDays.contains(day);
               return FilterChip(
-                label: Text('No $day'),
+                label: Text(day, style: const TextStyle(fontSize: 12)),
                 selected: isSelected,
                 onSelected: (selected) {
                   setState(() {
@@ -644,29 +753,54 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       ],
     );
   }
-  
+
   Widget _buildGeneratorActions() {
-    return Row(
+    final canGenerate =
+        _selectedCodes.length >= 3 && _selectedCodes.length <= 5;
+
+    return Column(
       children: [
-        Expanded(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: _isGenerating ? Colors.grey : Colors.cyanAccent,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            onPressed: _selectedCodes.isEmpty ? null : _runGenerator,
-            child: _isGenerating
-                ? const Text("Generating...", style: TextStyle(fontWeight: FontWeight.bold))
-                : const Text("Generate", style: TextStyle(fontWeight: FontWeight.bold)),
+        if (_selectedCodes.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              "${_selectedCodes.length} courses selected (Need 3-5)",
+              style: TextStyle(
+                color: canGenerate ? Colors.cyanAccent : Colors.orangeAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: (_isGenerating || !canGenerate)
+                        ? Colors.grey
+                        : Colors.cyanAccent,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12))),
+                onPressed:
+                    (!canGenerate || _isGenerating) ? null : _runGenerator,
+                child: _isGenerating
+                    ? const Text("Generating...",
+                        style: TextStyle(fontWeight: FontWeight.bold))
+                    : const Text("Generate Combinations",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            if (_isGenerating) ...[
+              const SizedBox(width: 10),
+              IconButton(
+                  icon: const Icon(Icons.cancel, color: Colors.redAccent),
+                  onPressed: _cancelGenerator,
+                  tooltip: 'Cancel'),
+            ]
+          ],
         ),
-        if (_isGenerating) ...[
-            const SizedBox(width: 10),
-            IconButton(
-                icon: const Icon(Icons.cancel, color: Colors.redAccent),
-                onPressed: _cancelGenerator, tooltip: 'Cancel'),
-        ]
       ],
     );
   }
@@ -674,9 +808,10 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   Widget _buildSearchResultsHeader() {
     return Column(
       children: [
-         Padding(
+        Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: Text(_generationStatus, style: const TextStyle(color: Colors.white70)),
+          child: Text(_generationStatus,
+              style: const TextStyle(color: Colors.white70)),
         ),
         Row(
           children: [
@@ -689,7 +824,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                   prefixIcon: const Icon(Icons.search, color: Colors.white54),
                   filled: true,
                   fillColor: Colors.white.withAlpha(20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none),
                 ),
                 style: const TextStyle(color: Colors.white),
               ),
@@ -706,39 +843,40 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   }
 
   Widget _buildResultsView() {
-      if (_isGenerating && _filteredHistory.isEmpty) {
-          return const Center(child: CircularProgressIndicator(color: Colors.cyanAccent));
-      }
+    if (_isGenerating && _filteredHistory.isEmpty) {
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.cyanAccent));
+    }
 
-      if (_filteredHistory.isEmpty) {
-          return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Generated schedules will appear here.',
-                      style: TextStyle(color: Colors.white38)),
-                  if (_generatedHistory.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _filteredHistory = _generatedHistory;
-                        });
-                      },
-                      child: const Text("Show History"),
-                    )
-                  ]
-                ],
-              ));
-      }
+    if (_filteredHistory.isEmpty) {
+      return Center(
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('Generated schedules will appear here.',
+              style: TextStyle(color: Colors.white38)),
+          if (_generatedHistory.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _filteredHistory = _generatedHistory;
+                });
+              },
+              child: const Text("Show History"),
+            )
+          ]
+        ],
+      ));
+    }
 
-      return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _filteredHistory.length,
-          itemBuilder: (context, index) {
-              return _buildScheduleCard(index, _filteredHistory[index]);
-          },
-      );
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _filteredHistory.length,
+      itemBuilder: (context, index) {
+        return _buildScheduleCard(index, _filteredHistory[index]);
+      },
+    );
   }
 
   Widget _buildScheduleCard(int index, List<Course> schedule) {
@@ -769,7 +907,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sec: ${course.section} - ${course.faculty}',
+                            'Sec ${course.section} • ${course.faculty} • Cap: ${course.capacity}',
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -778,7 +916,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                           const SizedBox(height: 2),
                           ...course.sessions.map((s) => Text(
                                 "${s.type}: ${s.day} ${s.startTime} - ${s.endTime}",
-                                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 11),
                               )),
                         ],
                       ),
@@ -797,13 +936,26 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                   _selectedSections.addAll(schedule);
                   _tabController.animateTo(0);
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Schedule applied to Manual Plan")));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("Schedule applied to Manual Plan")));
               },
               style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.cyanAccent)),
-              child: const Text("Use This Schedule",
+              child: const Text("Modify in Manual Tab",
                   style: TextStyle(color: Colors.cyanAccent)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: ElevatedButton(
+              onPressed: () => _savePlanOption(schedule),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.cyanAccent,
+                  foregroundColor: Colors.black),
+              child: const Text("Enroll in this Option",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           )
         ],

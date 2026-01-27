@@ -91,4 +91,47 @@ class AdvisingRepository {
       return [];
     }
   }
+
+  // Save a specific manual plan or a selected option from generator
+  Future<void> saveManualPlan(String semester, List<String> sectionIds) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('planner')
+        .doc(semester.replaceAll(' ', ''))
+        .set({
+      'sectionIds': sectionIds,
+      'semester': semester,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Fetch the saved planner draft
+  Future<List<String>> getManualPlanIds(String semester) async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+    final doc = await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('planner')
+        .doc(semester.replaceAll(' ', ''))
+        .get();
+    if (!doc.exists) return [];
+    return List<String>.from(doc.data()?['sectionIds'] ?? []);
+  }
+
+  // Finalize Enrollment: Move from Planner to Official Enrolled Sections
+  Future<void> finalizeEnrollment(String semester) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final planIds = await getManualPlanIds(semester);
+    if (planIds.isEmpty) return;
+
+    await _firestore.collection('users').doc(user.uid).update({
+      'enrolledSections': planIds,
+    });
+  }
 }

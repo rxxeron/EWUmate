@@ -14,8 +14,8 @@ class CourseRepository {
 
   // --- NEW: Backend Schedule Generation ---
 
-  Future<String?> triggerScheduleGeneration(
-      String semester, List<String> courseCodes, Map<String, dynamic> filters) async {
+  Future<String?> triggerScheduleGeneration(String semester,
+      List<String> courseCodes, Map<String, dynamic> filters) async {
     try {
       final callable = _functions.httpsCallable('generate_schedules_kickoff');
       final result = await callable.call({
@@ -35,24 +35,42 @@ class CourseRepository {
         .collection('schedule_generations')
         .doc(generationId)
         .snapshots()
-        .map((doc) {
-      if (!doc.exists || doc.data() == null) return [];
+        .map((doc) => _parseGeneration(doc.data(), doc.id));
+  }
 
-      final data = doc.data()!;
-      final combinations = List<List<dynamic>>.from(data['combinations'] ?? []);
+  Stream<List<List<Course>>> streamLatestGeneratedSchedules() {
+    final user = _auth.currentUser;
+    if (user == null) return Stream.value([]);
 
-      List<List<Course>> resultSchedules = [];
-      for (final scheduleData in combinations) {
-        List<Course> schedule = [];
-        for (final courseData in scheduleData) {
-          schedule.add(Course.fromFirestore(courseData, courseData['id']));
-        }
-        if (schedule.isNotEmpty) {
-          resultSchedules.add(schedule);
-        }
-      }
-      return resultSchedules;
+    return _firestore
+        .collection('schedule_generations')
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return [];
+      return _parseGeneration(
+          snapshot.docs.first.data(), snapshot.docs.first.id);
     });
+  }
+
+  List<List<Course>> _parseGeneration(Map<String, dynamic>? data, String id) {
+    if (data == null) return [];
+
+    final combinations = List<List<dynamic>>.from(data['combinations'] ?? []);
+    List<List<Course>> resultSchedules = [];
+
+    for (final scheduleData in combinations) {
+      List<Course> schedule = [];
+      for (final courseData in scheduleData) {
+        schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
+      }
+      if (schedule.isNotEmpty) {
+        resultSchedules.add(schedule);
+      }
+    }
+    return resultSchedules;
   }
 
   Future<void> clearAllGeneratedSchedules() async {
@@ -106,8 +124,11 @@ class CourseRepository {
     try {
       final List<Course> courses = [];
 
-      for (var i = 0; i < docIds.length; i += AppConstants.firestoreWhereInLimit) {
-        final batch = docIds.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
+      for (var i = 0;
+          i < docIds.length;
+          i += AppConstants.firestoreWhereInLimit) {
+        final batch =
+            docIds.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
         final snapshot = await _firestore
             .collection('courses_$semester')
             .where(FieldPath.documentId, whereIn: batch)
@@ -123,7 +144,7 @@ class CourseRepository {
       return [];
     }
   }
-  
+
   // --- Existing Methods ---
 
   Future<Map<String, List<Course>>> fetchCourses(String semester) async {
@@ -148,7 +169,8 @@ class CourseRepository {
 
   Future<List<String>> fetchAllCourseCodes() async {
     try {
-      final snapshot = await _firestore.collection('metadata').doc('courses').get();
+      final snapshot =
+          await _firestore.collection('metadata').doc('courses').get();
       if (snapshot.exists) {
         final data = snapshot.data();
         if (data != null && data.containsKey('list')) {

@@ -66,6 +66,29 @@ class ExceptionRepository {
     });
   }
 
+  /// Update an existing makeup class exception
+  Future<void> updateMakeupClass({
+    required String id,
+    required String date,
+    required String startTime,
+    required String endTime,
+    required String room,
+  }) async {
+    if (_uid == null) return;
+    await _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('schedule_exceptions')
+        .doc(id)
+        .update({
+      'date': date,
+      'startTime': startTime,
+      'endTime': endTime,
+      'room': room,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   /// Remove an exception (e.g. undo cancel)
   Future<void> removeException(String id) async {
     if (_uid == null) return;

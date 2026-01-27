@@ -1,0 +1,38 @@
+[
+  {
+    "docId": "EXAM_Spring2026_ST",
+    "class_days": "ST",
+    "last_class_date": "21 April 2026",
+    "exam_day": "Sunday",
+    "exam_date": "26 April 2026",
+    "semester": "Spring2026",
+    "type": "EXAM_SCHEDULE"
+  },
+  {
+    "docId": "EXAM_Spring2026_TR",
+    "class_days": "TR",
+    "last_class_date": "23 April 2026",
+    "exam_day": "Tuesday",
+    "exam_date": "28 April 2026",
+    "semester": "Spring2026",
+    "type": "EXAM_SCHEDULE"
+  },
+  {
+    "docId": "EXAM_Spring2026_MW",
+    "class_days": "MW",
+    "last_class_date": "22 April 2026",
+    "exam_day": "Wednesday",
+    "exam_date": "29 April 2026",
+    "semester": "Spring2026",
+    "type": "EXAM_SCHEDULE"
+  },
+  {
+    "docId": "EXAM_Spring2026_SR",
+    "class_days": "SR",
+    "last_class_date": "22 April 2026",
+    "exam_day": "Thursday",
+    "exam_date": "30 April 2026",
+    "semester": "Spring2026",
+    "type": "EXAM_SCHEDULE"
+  }
+]

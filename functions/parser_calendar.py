@@ -1,94 +1,130 @@
 import re
+import hashlib
+import pdfplumber
 
-def parse_calendar_pdf(pdf_path, semester_id):
-    import pdfplumber
+def parse_calendar_pdf(pdf_path, semester_id, debug=False):
     events = []
-    current_month_context = ""
     
+    # Improved Regex for Date:
+    # Captures "Jan 12", "January 12", "Jan 12-14", "Jan 12, 14"
+    # Case insensitive
+    month_regex = r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
+    date_regex = r"\d{1,2}(?:[-–,]\d{1,2})*" 
+    full_date_pattern = re.compile(rf"^({month_regex})\s+({date_regex})", re.IGNORECASE)
+    
+    # Regex for just a date number at start of line (continuation of month)
+    # e.g. "15" or "15-16"
+    day_only_pattern = re.compile(r"^(\d{1,2}(?:[-–]\d{1,2})?)\s+")
+
+    current_month_context = ""
+    current_event = None
+
+    def finalize_event(evt):
+        if not evt: return
+        # Generate ID based on deterministic content
+        unique_str = f"{evt['semester']}|{evt['date']}|{evt['event'].strip()}"
+        event_hash = hashlib.md5(unique_str.encode()).hexdigest()[:12]
+        evt['docId'] = f"event_{event_hash}"
+        evt['event'] = evt['event'].strip() # Clean cleanup
+        events.append(evt)
+        if debug:
+            print(f"[DEBUG] Finalized event: {evt['date']} - {evt['event'][:30]}...")
+
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        for page_num, page in enumerate(pdf.pages):
             text = page.extract_text()
             if not text: continue
             
             lines = text.split('\n')
-            current_event = None
+            if debug:
+                print(f"[DEBUG] Page {page_num+1} - {len(lines)} lines found.")
             
             for line in lines:
                 line = line.strip()
                 if not line: continue
                 
-                # Regex for Date: "May 12", "May 20-22"
-                month_match = re.match(r"^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{1,2}(?:-\d{1,2})?)", line, re.IGNORECASE)
-                day_only_match = re.match(r"^(\d{1,2}(?:-\d{1,2})?)\s+", line)
-
+                # Try to detect a new date line
+                match_full = full_date_pattern.match(line)
+                match_day = day_only_pattern.match(line)
+                
                 new_date_found = False
                 date_str = ""
                 remainder_text = ""
                 
-                if month_match:
-                    current_month_context = month_match.group(1)
-                    date_str = month_match.group(0)
-                    remainder_text = line[len(date_str):].strip()
+                if match_full:
+                    current_month_context = match_full.group(1) # e.g. "May"
+                    date_part = match_full.group(0) # e.g. "May 12"
+                    date_str = date_part
+                    remainder_text = line[len(date_part):].strip()
                     new_date_found = True
-                elif day_only_match and current_month_context:
-                    day_part = day_only_match.group(1)
-                    # Simple check if valid day number
+                    if debug:
+                        print(f"[DEBUG] Match Full Date: {date_str}")
+                    
+                elif match_day and current_month_context:
+                    # heuristic: only treat as date if it's a small number
+                    day_part = match_day.group(1)
                     try:
-                        if int(day_part.split('-')[0]) <= 31:
+                        first_num = int(re.split(r'[-–]', day_part)[0])
+                        if 1 <= first_num <= 31:
                             date_str = f"{current_month_context} {day_part}"
                             remainder_text = line[len(day_part):].strip()
                             new_date_found = True
-                    except: pass
+                            if debug:
+                                print(f"[DEBUG] Match Day Only: {date_str} (Context: {current_month_context})")
+                    except:
+                        pass
 
                 if new_date_found:
+                    # Close previous event
                     if current_event:
-                        import hashlib
-                        unique_str = f"{current_event['semester']}{current_event['date']}{current_event['event']}"
-                        event_hash = hashlib.md5(unique_str.encode()).hexdigest()[:10]
-                        current_event['docId'] = f"event_{event_hash}"
-                        events.append(current_event)
+                        finalize_event(current_event)
+                        current_event = None
                     
-                    # Parse Day Token
+                    # Parse Day of Week from the START of remainder tokens
+                    # Usually "Sunday Event Description" or "Sun-Mon Orientation"
+                    tokens = remainder_text.split()
                     day_tokens = []
-                    event_tokens = remainder_text.split()
-                    valid_day_names = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-                    valid_separators = ['-', '–', 'to', '&', ',']
+                    
+                    # Day heuristics
+                    valid_days = {'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 
+                                  'sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'}
                     
                     idx = 0
-                    while idx < len(event_tokens):
-                        token = event_tokens[idx]
-                        clean_token = token.lower().replace(',', '').replace('.', '').replace(';', '')
-                        is_day = False
-                        sub_parts = re.split(r'[-–]', clean_token)
-                        if all((part in valid_day_names or part == '') for part in sub_parts if part):
-                            is_day = True
+                    while idx < len(tokens):
+                        tok_clean = tokens[idx].lower().replace(',', '').replace(';', '')
+                        # Check "Sun" or "Sun-Mon"
+                        is_day_like = False
+                        parts = re.split(r'[-–]', tok_clean)
+                        if all(p in valid_days for p in parts if p):
+                            is_day_like = True
                         
-                        if clean_token in valid_day_names or clean_token in valid_separators or is_day:
-                            day_tokens.append(token)
+                        # Also skip connectors like "to" if they are between days? 
+                        # simplicity: just grab if it looks like a day
+                        if is_day_like:
+                            day_tokens.append(tokens[idx])
                             idx += 1
                         else:
+                            # Stop at first non-day token
                             break
-                            
+                    
                     day_str = " ".join(day_tokens)
-                    event_desc = " ".join(event_tokens[idx:])
+                    event_desc = " ".join(tokens[idx:])
                     
                     current_event = {
                         "date": date_str,
                         "day": day_str,
                         "event": event_desc,
                         "semester": semester_id,
-                        "type": "CALENDAR_EVENT",
-
+                        "type": "CALENDAR_EVENT"
                     }
+                
                 else:
+                    # Continuation of previous event
                     if current_event:
                         current_event["event"] += " " + line
             
-            if current_event:
-                import hashlib
-                unique_str = f"{current_event['semester']}{current_event['date']}{current_event['event']}"
-                event_hash = hashlib.md5(unique_str.encode()).hexdigest()[:10]
-                current_event['docId'] = f"event_{event_hash}"
-                events.append(current_event)
+    # Finalize last event
+    if current_event:
+        finalize_event(current_event)
             
     return events

@@ -63,6 +63,15 @@ functions-node/node_modules/
 
 # Temp Files
 *.pdf
+parsed_results.json
+parsed_results.txt
+calendar_results.json
+calendar_results.txt
+exam_results.txt
+grade_sheet_content.txt
+scholarship_reqs_content.txt
 
-
-
+# Environments & Backups
+venv/
+legacy_functions/
+.env

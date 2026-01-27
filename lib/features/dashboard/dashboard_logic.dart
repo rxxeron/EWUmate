@@ -1,4 +1,3 @@
-
 import 'package:intl/intl.dart';
 import '../../core/models/course_model.dart';
 import '../../core/utils/time_utils.dart';
@@ -15,7 +14,12 @@ class ScheduleItem {
   final String room;
   final String faculty;
 
+  final String id; // Unique ID (e.g. exception doc ID)
+  final bool isCancelled;
+  final bool isMakeup;
+
   ScheduleItem({
+    required this.id,
     required this.courseCode,
     required this.courseName,
     required this.sessionType,
@@ -28,11 +32,9 @@ class ScheduleItem {
     this.isMakeup = false,
   });
 
-  final bool isCancelled;
-  final bool isMakeup;
-
-  ScheduleItem copyWith({bool? isCancelled, bool? isMakeup}) {
+  ScheduleItem copyWith({String? id, bool? isCancelled, bool? isMakeup}) {
     return ScheduleItem(
+      id: id ?? this.id,
       courseCode: courseCode,
       courseName: courseName,
       sessionType: sessionType,
@@ -124,12 +126,15 @@ class DashboardLogic {
 
     List<ScheduleItem> daySchedule = [];
     for (var cls in dayClasses) {
+      final code = cls['courseCode']?.toString() ?? '';
+      final startTime = cls['startTime']?.toString() ?? '';
       daySchedule.add(ScheduleItem(
-        courseCode: cls['courseCode']?.toString() ?? '',
+        id: "base_${code}_${targetDayName}_$startTime".replaceAll(' ', ''),
+        courseCode: code,
         courseName: cls['courseName']?.toString() ?? '',
         sessionType: cls['type']?.toString() ?? 'Class',
         day: targetDayName,
-        startTime: cls['startTime']?.toString() ?? '',
+        startTime: startTime,
         endTime: cls['endTime']?.toString() ?? '',
         room: cls['room']?.toString() ?? 'TBA',
         faculty: cls['faculty']?.toString() ?? '',
@@ -145,7 +150,10 @@ class DashboardLogic {
       final matchingException = exceptions.firstWhere(
         (ex) =>
             ex['date'] == dateStr &&
-            (ex['courseCode'] ?? '').toString().replaceAll(' ', '').toUpperCase() ==
+            (ex['courseCode'] ?? '')
+                    .toString()
+                    .replaceAll(' ', '')
+                    .toUpperCase() ==
                 item.courseCode.replaceAll(' ', '').toUpperCase(),
         orElse: () => null,
       );
@@ -162,6 +170,7 @@ class DashboardLogic {
     for (var ex in exceptions) {
       if (ex['date'] == dateStr && ex['type'] == 'makeup') {
         daySchedule.add(ScheduleItem(
+          id: ex['id']?.toString() ?? "makeup_${ex['courseCode']}_$dateStr",
           courseCode: ex['courseCode'] ?? 'Extra',
           courseName: ex['courseName'] ?? 'Makeup Class',
           sessionType: 'Makeup',
@@ -175,6 +184,29 @@ class DashboardLogic {
       }
     }
 
+    // After adding makeup, for cancellations we need the exception ID to allow "Undo"
+    final finalSems = daySchedule.map((item) {
+      if (item.isMakeup) return item;
+      final matchingCancel = exceptions.firstWhere(
+        (ex) =>
+            ex['date'] == dateStr &&
+            ex['type'] == 'cancel' &&
+            (ex['courseCode'] ?? '')
+                    .toString()
+                    .replaceAll(' ', '')
+                    .toUpperCase() ==
+                item.courseCode.replaceAll(' ', '').toUpperCase(),
+        orElse: () => null,
+      );
+      if (matchingCancel != null) {
+        return item.copyWith(
+          id: matchingCancel['id']?.toString() ?? item.id,
+          isCancelled: true,
+        );
+      }
+      return item;
+    }).toList();
+    daySchedule = finalSems;
 
     // 5. Sort by start time
     daySchedule.sort((a, b) {
@@ -256,6 +288,7 @@ class DashboardLogic {
 
       for (var session in sessionsForDay) {
         daySchedule.add(ScheduleItem(
+          id: "legacy_${course.code}_${session.day}_${session.startTime}",
           courseCode: course.code,
           courseName: course.courseName,
           sessionType: session.type,

@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class CourseSession {
   final String type;
   final String day;
@@ -82,7 +80,7 @@ class Course {
         )
       ];
     }
-    
+
     final theorySession = sessionList.isNotEmpty ? sessionList.first : null;
 
     return Course(
@@ -94,7 +92,6 @@ class Course {
       credits: data['credits']?.toString(),
       semester: data['semester'],
       sessions: sessionList,
-      
       day: theorySession?.day ?? data['day'],
       startTime: theorySession?.startTime ?? data['startTime'],
       endTime: theorySession?.endTime ?? data['endTime'],

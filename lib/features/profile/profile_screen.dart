@@ -30,6 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loading = false;
   String? _photoUrl;
   bool _morningAlarmEnabled = true;
+  Map<String, dynamic> _stats = {};
+  String? _advisingSlot;
+  String? _department;
+  String? _admittedSemester;
 
   @override
   void initState() {
@@ -84,7 +88,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _nicknameCtrl.text = data['nickname'] ?? '';
       _idCtrl.text = data['studentId'] ?? '';
       _phoneCtrl.text = data['phone'] ?? '';
-      _photoUrl = data['profilePicture'];
+      _photoUrl = data['profilePicture'] ?? data['photoURL'];
+      _stats = data['statistics'] ?? {};
+      _advisingSlot = data['advisingSlot']?['displayTime'];
+      _department = data['department'];
+      _admittedSemester = data['admittedSemester'];
     });
   }
 
@@ -342,7 +350,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _emailCtrl.text,
               style: const TextStyle(color: Colors.white54, fontSize: 14),
             ),
-            const SizedBox(height: 40),
+            if (_department != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _department!,
+                  style:
+                      const TextStyle(color: Colors.cyanAccent, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            if (_admittedSemester != null)
+              Text(
+                "Started: $_admittedSemester",
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+                textAlign: TextAlign.center,
+              ),
+            const SizedBox(height: 30),
+
+            // Academic Snapshot
+            _buildAcademicSnapshot(),
+            const SizedBox(height: 20),
+
+            // Advising Slot
+            if (_advisingSlot != null) _buildAdvisingCard(),
+
+            const SizedBox(height: 30),
 
             // Form Fields
             _buildSectionHeader("Personal Info"),
@@ -447,6 +480,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 50),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAcademicSnapshot() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            _buildStatCard("CGPA", _stats['cgpa']?.toString() ?? "N/A",
+                Icons.star_border_purple500),
+            const SizedBox(width: 12),
+            _buildStatCard("Earned", _stats['totalCredits']?.toString() ?? "0",
+                Icons.school_outlined),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildStatCard(
+                "Completed",
+                _stats['coursesCompleted']?.toString() ?? "0",
+                Icons.check_circle_outline),
+            const SizedBox(width: 12),
+            _buildStatCard(
+                "Remaining",
+                _stats['remainedCredits']?.toString() ?? "0",
+                Icons.hourglass_empty_outlined),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon) {
+    return Expanded(
+      child: GlassContainer(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        borderRadius: 16,
+        color: Colors.white.withValues(alpha: 0.05),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.cyanAccent, size: 20),
+            const SizedBox(height: 8),
+            Text(value,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            Text(label,
+                style: const TextStyle(color: Colors.white54, fontSize: 10)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdvisingCard() {
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 16,
+      borderColor: Colors.cyanAccent.withValues(alpha: 0.3),
+      color: Colors.cyanAccent.withValues(alpha: 0.05),
+      child: Row(
+        children: [
+          const Icon(Icons.event_note, color: Colors.cyanAccent),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text("Your Advising Slot",
+                    style: TextStyle(
+                        color: Colors.cyanAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(_advisingSlot!,
+                    style: const TextStyle(color: Colors.white, fontSize: 13)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

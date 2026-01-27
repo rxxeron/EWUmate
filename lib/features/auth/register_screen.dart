@@ -22,6 +22,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmController = TextEditingController();
   final _fullNameController = TextEditingController();
   final _nicknameController = TextEditingController();
+  final _studentIdController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   final StorageService _storageService = StorageService();
 
@@ -66,6 +68,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'email': _emailController.text.trim(),
         'fullName': _fullNameController.text.trim(),
         'nickname': _nicknameController.text.trim(),
+        'studentId': _studentIdController.text.trim(),
+        'phone': _phoneController.text.trim(),
         'photoURL': photoURL,
         'createdAt': FieldValue.serverTimestamp(),
         'onboardingStatus': 'registered',
@@ -191,6 +195,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelStyle:
                                   const TextStyle(color: Colors.white70),
                               prefixIcon: const Icon(Icons.face,
+                                  size: 20, color: Colors.cyanAccent),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.1))),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: Colors.cyanAccent)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.05)),
+                          validator: (v) => v!.isEmpty ? "Required" : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _studentIdController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                              labelText: "Student ID",
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                              prefixIcon: const Icon(Icons.badge_outlined,
+                                  size: 20, color: Colors.cyanAccent),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.1))),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: Colors.cyanAccent)),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white.withValues(alpha: 0.05)),
+                          validator: (v) => v!.isEmpty ? "Required" : null,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                              labelText: "Phone",
+                              labelStyle:
+                                  const TextStyle(color: Colors.white70),
+                              prefixIcon: const Icon(Icons.phone_outlined,
                                   size: 20, color: Colors.cyanAccent),
                               enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),

@@ -96,18 +96,16 @@ class CourseMarks {
   Map<String, double> getRequiredFinalMarks() {
     // EWU grading scale (out of 100)
     final targets = {
-      'A+': 90.0,
-      'A': 85.0,
-      'A-': 80.0,
-      'B+': 75.0,
-      'B': 70.0,
-      'B-': 65.0,
-      'C+': 60.0,
-      'C': 55.0,
-      'C-': 50.0,
-      'D+': 45.0,
+      'A+': 80.0,
+      'A': 75.0,
+      'A-': 70.0,
+      'B+': 65.0,
+      'B': 60.0,
+      'B-': 55.0,
+      'C+': 50.0,
+      'C': 45.0,
       'D': 40.0,
-      'F': 0.0, // Below 40 is F
+      'F': 0.0,
     };
     final results = <String, double>{};
 
@@ -135,16 +133,14 @@ class CourseMarks {
   /// Gets the current predicted grade based on total obtained
   String get predictedGrade {
     final total = totalObtained;
-    if (total >= 90) return 'A+';
-    if (total >= 85) return 'A';
-    if (total >= 80) return 'A-';
-    if (total >= 75) return 'B+';
-    if (total >= 70) return 'B';
-    if (total >= 65) return 'B-';
-    if (total >= 60) return 'C+';
-    if (total >= 55) return 'C';
-    if (total >= 50) return 'C-';
-    if (total >= 45) return 'D+';
+    if (total >= 80) return 'A+';
+    if (total >= 75) return 'A';
+    if (total >= 70) return 'A-';
+    if (total >= 65) return 'B+';
+    if (total >= 60) return 'B';
+    if (total >= 55) return 'B-';
+    if (total >= 50) return 'C+';
+    if (total >= 45) return 'C';
     if (total >= 40) return 'D';
     return 'F';
   }

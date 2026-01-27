@@ -209,7 +209,45 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
                     ],
                   ),
                 ),
-                if (!item.isCancelled)
+                if (item.isMakeup)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.cyanAccent),
+                        onPressed: () => _scheduleMakeup(item),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline,
+                            color: Colors.redAccent),
+                        onPressed: () => _deleteExceptionById(item.id),
+                      ),
+                    ],
+                  )
+                else if (item.isCancelled)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => _scheduleMakeup(item),
+                        icon: const Icon(Icons.edit_calendar,
+                            size: 14, color: Colors.orangeAccent),
+                        label: const Text("Makeup",
+                            style: TextStyle(
+                                color: Colors.orangeAccent, fontSize: 12)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.orangeAccent),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.undo, color: Colors.white54),
+                        onPressed: () => _deleteExceptionById(item.id),
+                        tooltip: "Undo Cancel",
+                      ),
+                    ],
+                  )
+                else
                   ElevatedButton(
                     onPressed: () => _cancelClass(dateId, item),
                     style: ElevatedButton.styleFrom(
@@ -218,18 +256,6 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
                       elevation: 0,
                     ),
                     child: const Text("Cancel"),
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: () => _scheduleMakeup(item),
-                    icon: const Icon(Icons.edit_calendar,
-                        size: 14, color: Colors.orangeAccent),
-                    label: const Text("Reschedule",
-                        style: TextStyle(
-                            color: Colors.orangeAccent, fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.orangeAccent),
-                    ),
                   )
               ],
             ),
@@ -347,10 +373,13 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
   }
 
   Future<void> _deleteException(Map<String, dynamic> exception) async {
-    try {
-      final id = exception['id'] as String?;
-      if (id == null) return;
+    final id = exception['id'] as String?;
+    if (id != null) await _deleteExceptionById(id);
+  }
 
+  Future<void> _deleteExceptionById(String id) async {
+    try {
+      if (id.isEmpty) return;
       await _exceptionRepo.removeException(id);
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -459,19 +488,33 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         return "$oh:$mStr $suffix";
       }
 
-      await _exceptionRepo.addMakeupClass(
-        date: DateFormat('yyyy-MM-dd').format(date),
-        courseCode: item.courseCode,
-        courseName: item.courseName,
-        startTime: fmt(startDt),
-        endTime: fmt(endDt),
-        room: roomController.text,
-      );
+      if (item.isMakeup) {
+        // Update existing
+        await _exceptionRepo.updateMakeupClass(
+          id: item.id,
+          date: DateFormat('yyyy-MM-dd').format(date),
+          startTime: fmt(startDt),
+          endTime: fmt(endDt),
+          room: roomController.text,
+        );
+      } else {
+        // Add new
+        await _exceptionRepo.addMakeupClass(
+          date: DateFormat('yyyy-MM-dd').format(date),
+          courseCode: item.courseCode,
+          courseName: item.courseName,
+          startTime: fmt(startDt),
+          endTime: fmt(endDt),
+          room: roomController.text,
+        );
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Makeup class scheduled!")));
-        _loadData(); // Refresh list to see the update
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(item.isMakeup
+                ? "Makeup details updated!"
+                : "Makeup class scheduled!")));
+        _loadData();
       }
     }
   }

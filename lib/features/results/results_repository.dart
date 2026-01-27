@@ -139,7 +139,15 @@ class ResultsRepository {
         department: (userData['department'] ?? 'N/A').toString(),
         totalCoursesCompleted: _readCoursesCompleted(userData),
         remainedCredits: _readRemainedCredits(userData),
-        scholarshipStatus: (userData['scholarshipStatus'] ?? '').toString(),
+        scholarshipStatus: _calculateScholarship(
+          userData['studentId']?.toString() ?? '',
+          userData['programName']?.toString() ??
+              userData['programId']?.toString() ??
+              '',
+          _readCgpa(userData),
+          semesters.reversed
+              .toList(), // calculate expects oldest->newest usually? let's check input
+        ),
       );
     });
   }
@@ -502,7 +510,6 @@ class ResultsRepository {
     double finalTotalCredits = 0.0;
     int finalCoursesCompleted = 0;
     double finalRemained = 0.0;
-    String scholarship = "";
 
     if (data['statistics'] != null) {
       final stats = data['statistics'];
@@ -519,9 +526,7 @@ class ResultsRepository {
       }
     }
 
-    if (data['scholarshipStatus'] != null) {
-      scholarship = data['scholarshipStatus'].toString();
-    }
+    // Scholarship extraction moved to dynamic calculation below
 
     // Sort valid semesters (if cloud didn't) - usually cloud sends list in order but let's trust cloud list order
     // Cloud list in 'profile' doc is usually sorted.
@@ -531,16 +536,18 @@ class ResultsRepository {
     // Assuming cloud sends historical order.
 
     return AcademicProfile(
-        semesters: semesters.reversed.toList(),
-        cgpa: finalCGPA,
-        totalCreditsEarned: finalTotalCredits,
-        studentName: studentName,
-        studentId: studentId,
-        program: program,
-        department: dept,
-        totalCoursesCompleted: finalCoursesCompleted,
-        remainedCredits: finalRemained,
-        scholarshipStatus: scholarship);
+      semesters: semesters.reversed.toList(),
+      cgpa: finalCGPA,
+      totalCreditsEarned: finalTotalCredits,
+      studentName: studentName,
+      studentId: studentId,
+      program: program,
+      department: dept,
+      totalCoursesCompleted: finalCoursesCompleted,
+      remainedCredits: finalRemained,
+      scholarshipStatus: _calculateScholarship(
+          studentId, program, finalCGPA, semesters.reversed.toList()),
+    );
   }
 
   // --- EDITING CAPABILITIES ---
@@ -569,8 +576,22 @@ class ResultsRepository {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
+    // Recalculate completed courses based on the new history
+    final Set<String> completed = {};
+    history.forEach((semester, courses) {
+      if (courses is Map) {
+        courses.forEach((code, grade) {
+          final g = grade.toString().toUpperCase();
+          if (g != 'W' && g != 'I' && g != 'F' && g != 'ONGOING') {
+            completed.add(code.toString().toUpperCase());
+          }
+        });
+      }
+    });
+
     await _firestore.collection('users').doc(user.uid).set({
       'courseHistory': history,
+      'completedCourses': completed.toList(),
       'lastTouch': FieldValue.serverTimestamp(), // Trigger function
     }, SetOptions(merge: true));
   }
@@ -774,5 +795,163 @@ class ResultsRepository {
     }
     if (programId.length <= 4) return programId.toUpperCase();
     return programId;
+  }
+
+  // --- SCHOLARSHIP CALCULATION ENGINE ---
+
+  String _calculateScholarship(
+    String studentId,
+    String programName,
+    double cgpa,
+    List<SemesterResult> semesters,
+  ) {
+    if (cgpa < 3.50) return "";
+
+    // 1. Parse Admission Info
+    final (admissionTerm, admissionYear) = _parseAdmissionFromId(studentId);
+    if (admissionYear == 0) return ""; // Cannot determine rules
+
+    // 2. Determine Rule Set (Credits & CGPA) based on Admission
+    // Rule Breakpoints:
+    // - Spring 2026 (New CGPA Rules)
+    // - Fall 2024 / Spring 2025 (New Credit Rules for some programs)
+
+    bool isNewCGPARules = false;
+    if (admissionYear > 2025) {
+      isNewCGPARules = true;
+    } else if (admissionYear == 2026 && admissionTerm >= 1) {
+      isNewCGPARules = true; // Spring 2026+
+    }
+
+    // 3. Check CGPA Requirements
+    String potentialScholarship = "";
+    if (isNewCGPARules) {
+      // Spring 2026+ Rules
+      if (cgpa >= 3.95) {
+        potentialScholarship = "100% Merit Scholarship";
+      } else if (cgpa >= 3.85) {
+        potentialScholarship = "Dean’s List Scholarship";
+      } else if (cgpa >= 3.75) {
+        potentialScholarship = "Medha Lalon Scholarship";
+      }
+    } else {
+      // Old Rules (up to Fall 2025)
+      if (cgpa >= 3.90) {
+        potentialScholarship = "100% Merit Scholarship";
+      } else if (cgpa >= 3.75) {
+        potentialScholarship = "Dean’s List Scholarship";
+      } else if (cgpa >= 3.50) {
+        potentialScholarship = "Medha Lalon Scholarship";
+      }
+    }
+
+    if (potentialScholarship.isEmpty) return "";
+
+    // 4. Calculate Credits in Last 1 Year (Last 3 Completed Semesters)
+    // Filter out "Ongoing" or current semester if incomplete
+    // Sort semesters Descending (Newest First) to grab top 3
+    final completedSemesters = semesters.where((s) {
+      // Heuristic: If it has GPA > 0.0 or explicitly not ongoing
+      // But we often default 0.0 for first sem.
+      // Better: check if any course has a grade other than 'Ongoing'/'I'/'W'
+      return s.courses
+          .any((c) => c.grade != 'Ongoing' && c.grade != 'I' && c.grade != 'W');
+    }).toList();
+
+    // Sort Newest -> Oldest
+    completedSemesters
+        .sort((a, b) => _compareSemesterName(b.semesterName, a.semesterName));
+
+    double creditsLastYear = 0.0;
+    int acceptedSems = 0;
+
+    for (var sem in completedSemesters) {
+      if (acceptedSems >= 3) break;
+      creditsLastYear += sem.totalCredits; // Use totalCredits (earned)
+      acceptedSems++;
+    }
+
+    // 5. Determine Required Credits for Program
+    final requiredCredits = _getRequiredCredits(
+      programName,
+      admissionYear,
+      admissionTerm,
+    );
+
+    if (creditsLastYear >= requiredCredits) {
+      return potentialScholarship;
+    }
+
+    return "";
+  }
+
+  /// Parses EWU ID format: YYYY-T-XX-PPP (e.g. 2023-1-60-012)
+  (int, int) _parseAdmissionFromId(String id) {
+    if (id.isEmpty) return (0, 0);
+    final parts = id.split('-');
+    if (parts.length >= 2) {
+      final year = int.tryParse(parts[0]) ?? 0;
+      final term = int.tryParse(parts[1]) ?? 0;
+      return (term, year);
+    }
+    return (0, 0);
+  }
+
+  double _getRequiredCredits(String programName, int admYear, int admTerm) {
+    final p = programName.toLowerCase();
+
+    // Normalize Logic
+    bool afterFall2024 = (admYear > 2024) || (admYear == 2024 && admTerm >= 3);
+    bool afterSpring2025 =
+        (admYear > 2025) || (admYear == 2025 && admTerm >= 1);
+    bool afterSpring2026 =
+        (admYear > 2026) || (admYear == 2026 && admTerm >= 1);
+
+    // --- SCIENCE / ENG ---
+    if (p.contains('cse') || p.contains('computer science')) return 35;
+    if (p.contains('ice') || p.contains('information & comm')) return 35;
+    if (p.contains('eee') || p.contains('electrical')) return 35;
+    if (p.contains('civil') || p.contains('ce')) {
+      return afterSpring2026
+          ? 35
+          : 37; // "Admitted from Spring 2026": 35, else 37
+    }
+    if (p.contains('pharm')) return 39;
+    if (p.contains('math')) return 33;
+    if (p.contains('dsa') || p.contains('data science')) return 33;
+    if (p.contains('geb') || p.contains('genetic')) {
+      // Admitted from Spring 2026: 35, else 33
+      return afterSpring2026 ? 35 : 33;
+    }
+
+    // --- BUSINESS ---
+    if (p.contains('bba') || p.contains('business admin')) {
+      // Admitted from Spring 2025: 33, else 30
+      return afterSpring2025 ? 33 : 30;
+    }
+    if (p.contains('economics')) {
+      // Admitted from Fall 2024: 33, else 30
+      return afterFall2024 ? 33 : 30;
+    }
+
+    // --- ARTS / SOCIAL ---
+    if (p.contains('english')) {
+      // Admitted from Fall 2024: 33, else 30
+      return afterFall2024 ? 33 : 30;
+    }
+    if (p.contains('soc') || p.contains('sociology')) {
+      // Admitted from Spring 2025: 33, else 30
+      return afterSpring2025 ? 33 : 30;
+    }
+    if (p.contains('information studies') || p.contains('info studies'))
+      return 30;
+    if (p.contains('law') || p.contains('ll.b')) return 33;
+    if (p.contains('pphs') || p.contains('population')) {
+      // Admitted from Fall 2024: 33, else 30
+      return afterFall2024 ? 33 : 30;
+    }
+
+    // Default Fallback
+    return 30;
   }
 }

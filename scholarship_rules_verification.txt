@@ -1,0 +1,38 @@
+
+SCHOLARSHIP RULES VERIFICATION
+==============================
+
+I have extracted the following information from the PDF, but some numbers were unclear. 
+Please correct the values below so I can code the logic accurately.
+
+1. MERIT SCHOLARSHIP (100%)
+   - CGPA Requirement: 4.00 (Is this correct?)
+   - Credit Requirement (Last Year): 
+     * Engineering (CSE, ICE, EEE): 35 credits?
+     * Others: 30-33 credits?
+
+2. DEAN'S LIST SCHOLARSHIP
+   - CGPA Range: _______ (e.g., 3.85 - 3.99?)
+   - Waiver %: _______ (e.g., 50%?)
+
+3. MEDHA LALON SCHOLARSHIP
+   - CGPA Range: _______ (e.g., 3.50 - 3.84?)
+   - Waiver %: _______ (e.g., 25%?)
+
+4. CREDIT REQUIREMENTS BY PROGRAM (Total for Degree)
+   - CSE, ICE, EEE: 140
+   - B.Pharm: 158
+   - B.Sc. Math/DSA: 130
+   - Info Studies: 123
+   - Economics/English/PPHS: 123 (up to Sp24) / 130 (from Fa24)
+   - BBA/SOC: 123 (up to Fa24) / 130 (from Sp25)
+   - GEB: 133 (up to Fa25) / 140 (from Sp26)
+   - CE: 156.5 (up to Fa24) / 145 (from Sp25) -- *Is this drop correct?*
+
+5. GRADUATE SCHOLARSHIPS (Spring 2024 onward)
+   - CGPA 4.00: 100% Waiver
+   - CGPA 3.90-3.99: 75% Waiver
+   - CGPA 3.80-3.89: 50% Waiver
+   - Maintenance Requirement: CGPA 3.50+ each semester
+
+Please modify this file with the correct numbers.

@@ -1,6 +1,7 @@
-/// Represents a single session (theory or lab) within a course
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class CourseSession {
-  final String type; // "Theory" or "Lab"
+  final String type;
   final String day;
   final String startTime;
   final String endTime;
@@ -28,7 +29,6 @@ class CourseSession {
   }
 }
 
-/// Represents a course with all its sessions
 class Course {
   final String id;
   final String code;
@@ -39,7 +39,6 @@ class Course {
   final String? semester;
   final List<CourseSession> sessions;
 
-  // Legacy fields for backward compatibility. Populated from the FIRST theory session.
   final String? day;
   final String? startTime;
   final String? endTime;
@@ -56,7 +55,6 @@ class Course {
     this.credits,
     this.semester,
     this.sessions = const [],
-    // Legacy fields
     this.day,
     this.startTime,
     this.endTime,
@@ -69,12 +67,10 @@ class Course {
     List<CourseSession> sessionList = [];
 
     if (data['sessions'] != null && data['sessions'] is List) {
-      // New format with a sessions array
       sessionList = (data['sessions'] as List)
           .map((s) => CourseSession.fromMap(s as Map<String, dynamic>))
           .toList();
     } else if (data['day'] != null) {
-      // Legacy format: single session stored directly on course
       sessionList = [
         CourseSession(
           type: 'Theory',
@@ -87,8 +83,7 @@ class Course {
       ];
     }
     
-    // Find the first theory session to populate legacy fields for backward compatibility
-    final theorySession = sessionList.where((s) => s.type == 'Theory').firstOrNull;
+    final theorySession = sessionList.isNotEmpty ? sessionList.first : null;
 
     return Course(
       id: id,
@@ -100,7 +95,6 @@ class Course {
       semester: data['semester'],
       sessions: sessionList,
       
-      // Populate legacy fields from the first theory session or root-level data
       day: theorySession?.day ?? data['day'],
       startTime: theorySession?.startTime ?? data['startTime'],
       endTime: theorySession?.endTime ?? data['endTime'],
@@ -110,7 +104,6 @@ class Course {
     );
   }
 
-  // Helper to get the first session of a specific type
   CourseSession? getFirstSession(String type) {
     return sessions.where((s) => s.type == type).firstOrNull;
   }

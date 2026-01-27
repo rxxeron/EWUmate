@@ -1,215 +1,119 @@
-import os
-import re
-from firebase_functions import storage_fn, https_fn
-from firebase_admin import initialize_app, firestore, storage as admin_storage
 
-# Initialize App FIRST (Before importing modules that use it)
-try:
-    initialize_app()
-except ValueError:
-    pass # Already initialized
+import firebase_admin
+from firebase_admin import firestore
+from firebase_functions import https_fn
+import itertools
+from datetime import datetime
 
-import parser_course
-import parser_calendar
-import parser_exam
-import parser_advising
-from scheduler import check_reminders, process_scheduled_broadcasts 
-from advising_logic import on_schedule_update  # check_advising_alerts moved to TypeScript
-from academic_logic import calculate_academic_stats 
-from semester_progress_logic import calculate_semester_progress
-from schedule_logic import generate_user_schedule, on_enrollment_change, regenerate_all_schedules
-from notifications import send_broadcast_notification
-from admin_tools import upload_file_via_admin, backfill_all_schedules, bootstrap_config, recalculate_all_stats
-from advising_notifications import check_advising_windows
+firebase_admin.initialize_app()
 
-import firebase_functions.options as options
+@https_fn.on_call()
+def generate_schedules_kickoff(req: https_fn.CallableRequest):
+    semester = req.data.get('semester')
+    course_codes = req.data.get('courses')
+    filters = req.data.get('filters', {})
+    user_id = req.auth.uid if req.auth else None
 
-@storage_fn.on_object_finalized(memory=options.MemoryOption.GB_1, timeout_sec=300)
-def process_uploaded_file(event: storage_fn.CloudEvent[storage_fn.StorageObjectData]):
-    """
-    Triggers when a file is uploaded to Storage.
-    Routes to specific parsers based on folder path.
-    """
-    file_path = event.data.name
-    bucket_name = event.data.bucket
-    
-    _process_file_internal(file_path, bucket_name)
+    if not all([semester, course_codes, user_id]):
+        raise https_fn.HttpsError(
+            https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+            "Missing required parameters: semester, courses, or user ID."
+        )
 
-@https_fn.on_request(memory=options.MemoryOption.GB_1, timeout_sec=540)
-def refresh_storage_files(req: https_fn.Request) -> https_fn.Response:
-    """
-    HTTP Trigger to manually re-process all files in watched folders.
-    Useful for applying new parser logic to existing files.
-    """
-    bucket = admin_storage.bucket() # Default bucket
-    bucket_name = bucket.name
-    
-    watched_folders = [
-        "facultylist/",
-        "academiccalendar/",
-        "examschedule/",
-        "advisingschedule/"
-    ]
-    
-    processed_count = 0
-    errors = []
-    
-    for folder in watched_folders:
-        blobs = bucket.list_blobs(prefix=folder)
-        for blob in blobs:
-            if blob.name.endswith("/"): continue # Skip folder itself
-            
-            try:
-                print(f"Refinement: Reprocessing {blob.name}...")
-                _process_file_internal(blob.name, bucket_name)
-                processed_count += 1
-            except Exception as e:
-                print(f"Error reprocessing {blob.name}: {e}")
-                errors.append(f"{blob.name}: {str(e)}")
-                
-    return https_fn.Response(f"Processed {processed_count} files. Errors: {len(errors)}")
-
-def _process_file_internal(file_path: str, bucket_name: str):
-    """
-    Core logic to determine file type, download, parse, and write to Firestore.
-    """
     db = firestore.client()
-    path_lower = file_path.lower()
-    
-    # Supported Types
-    is_pdf = path_lower.endswith('.pdf')
-    is_eml = path_lower.endswith('.eml')
-    
-    if not (is_pdf or is_eml):
-        print(f"Skipping unsupported file: {file_path}")
-        return
 
-    # Determine Type based on Folder
-    doc_type = None
-    collection_prefix = ""
-    
-    if path_lower.startswith("facultylist/"):
-        doc_type = "COURSE"
-        collection_prefix = "courses_"
-    elif path_lower.startswith("academiccalendar/"):
-        doc_type = "CALENDAR"
-        collection_prefix = "calendar_"
-    elif path_lower.startswith("examschedule/"):
-        doc_type = "EXAM"
-        collection_prefix = "exams_"
-    elif path_lower.startswith("advisingschedule/") and is_eml:
-        doc_type = "ADVISING"
-        collection_prefix = "advising_schedules" # Not prefix, direct collection
-    else:
-        print(f"File {file_path} is not in a watched folder. Skipping.")
-        return
-
-    # Extract Semester ID
-    filename = os.path.basename(file_path)
-    semester_id = "Unknown"
-    
-    match = re.search(r"(Spring|Summer|Fall)[-_\s]?(\d{4})", filename, re.IGNORECASE)
-    if match:
-        semester_id = f"{match.group(1).capitalize()} {match.group(2)}"
-    else:
-        print(f"Could not extract semester from filename: {filename}. Defaulting to 'Unknown'.")
-    
-    print(f"Processing {filename} as {doc_type} for {semester_id}...")
-
-    # Download file to temp
-    bucket = admin_storage.bucket(bucket_name)
-    blob = bucket.blob(file_path)
-    temp_local_path = f"/tmp/{filename}"
-    
-    # Ensure tmp directory exists
-    os.makedirs(os.path.dirname(temp_local_path), exist_ok=True)
-    
     try:
-        blob.download_to_filename(temp_local_path)
+        all_sections = []
+        for code in course_codes:
+            query = db.collection(f"courses_{semester}").where("code", "==", code)
+            docs = query.stream()
+            all_sections.extend([doc.to_dict() for doc in docs])
         
-        extracted_data = []
-        
-        # Helper for metadata logic (Course only)
-        course_titles = {}
-        if doc_type == "COURSE":
-            try:
-                meta_doc = db.collection("metadata").document("courses").get()
-                if meta_doc.exists:
-                    data = meta_doc.to_dict()
-                    if "list" in data and isinstance(data["list"], list):
-                        for item in data["list"]:
-                            if isinstance(item, dict):
-                                code = str(item.get("code", "")).replace(" ", "").upper()
-                                if code: course_titles[code] = item
-                    else:
-                        course_titles = data
-            except Exception as e:
-                print(f"Error fetching course metadata: {e}")
+        valid_sections_by_course = {}
+        for section in all_sections:
+            if is_section_valid(section, filters):
+                code = section.get("code")
+                if code not in valid_sections_by_course:
+                    valid_sections_by_course[code] = []
+                valid_sections_by_course[code].append(section)
 
-        if doc_type == "COURSE":
-            extracted_data = parser_course.parse_course_pdf(temp_local_path, semester_id, course_titles)
-        elif doc_type == "CALENDAR":
-            extracted_data = parser_calendar.parse_calendar_pdf(temp_local_path, semester_id)
-        elif doc_type == "EXAM":
-            extracted_data = parser_exam.parse_exam_pdf(temp_local_path, semester_id)
-        elif doc_type == "ADVISING":
-            extracted_data = parser_advising.parse_advising_eml(temp_local_path, semester_id)
-            
-        print(f"Extracted {len(extracted_data)} items.")
-        
-        if extracted_data:
-            if doc_type == "ADVISING":
-                # Advising follows different collection pattern (generic collection, not per-semester collection)
-                write_to_firestore(extracted_data, "advising_schedules")
-            else:
-                collection_name = f"{collection_prefix}{semester_id.replace(' ', '')}"
-                write_to_firestore(extracted_data, collection_name)
-            
+        if len(valid_sections_by_course) != len(course_codes):
+            missing_courses = set(course_codes) - set(valid_sections_by_course.keys())
+            # Optionally, you can return an error or a message about missing courses.
+            pass
+
+        all_combinations = list(itertools.product(*valid_sections_by_course.values()))
+
+        final_schedules = []
+        for combo in all_combinations:
+            if not has_time_conflict(combo):
+                final_schedules.append(combo)
+
+        generation_id = db.collection("schedule_generations").document().id
+        db.collection("schedule_generations").document(generation_id).set({
+            "userId": user_id,
+            "createdAt": firestore.SERVER_TIMESTAMP,
+            "semester": semester,
+            "courses": course_codes,
+            "filters": filters,
+            "combinations": final_schedules, # Storing the full section data
+            "status": "completed",
+        })
+
+        return {"generationId": generation_id}
+
     except Exception as e:
-        print(f"Error processing File: {e}")
-        # We don't raise here for batch processing so one failure doesn't stop others
-        # but we print it clearly.
-        
-    finally:
-        if os.path.exists(temp_local_path):
-            try:
-                os.remove(temp_local_path)
-            except Exception:
-                pass
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INTERNAL, str(e))
 
-def write_to_firestore(data_list, collection_name):
-    """
-    Writes a list of dicts to Firestore in batches.
-    """
-    # Ensure db is available
-    if 'db' not in globals():
-        db = firestore.client()
-        
-    batch = db.batch()
-    count = 0
-    total = 0
-    
-    print(f"Writing to collection: {collection_name}")
-    
-    for item in data_list:
-        # Use 'docId' if present, otherwise auto-id
-        if "docId" in item and item["docId"]:
-            doc_ref = db.collection(collection_name).document(item["docId"])
-        else:
-            doc_ref = db.collection(collection_name).document()
-            
-        batch.set(doc_ref, item)
-        count += 1
-        
-        if count >= 400:
-            batch.commit()
-            batch = db.batch()
-            total += count
-            count = 0
-            print(f"Committed {total} records...")
-            
-    if count > 0:
-        batch.commit()
-        total += count
-        
-    print(f"Finished writing {total} records to {collection_name}.")
+def is_section_valid(section, filters):
+    # Capacity Check
+    capacity_str = section.get("capacity", "0/0")
+    try:
+        enrolled, total = map(int, capacity_str.split('/'))
+        if total > 0 and enrolled >= total:
+            return False
+    except (ValueError, IndexError):
+        pass # Ignore if capacity is not in the expected format
+
+    # Day Exclusion
+    excluded_days = filters.get('exclude_days', [])
+    day_map = {'Sat': 'S', 'Sun': 'U', 'Mon': 'M', 'Tue': 'T', 'Wed': 'W', 'Thu': 'R', 'Fri': 'F'}
+    excluded_short_days = {day_map.get(day) for day in excluded_days if day_map.get(day)}
+
+    if section.get("sessions"):
+        for session in section.get("sessions"):
+            session_days = set(session.get("day", "").upper())
+            if not session_days.isdisjoint(excluded_short_days):
+                return False
+
+    # Faculty Exclusion
+    excluded_faculty = filters.get('exclude_faculty', [])
+    if excluded_faculty and section.get("sessions"):
+        for session in section.get("sessions"):
+            faculty = session.get("faculty", "").strip().lower()
+            if faculty and any(ex_fac.strip().lower() in faculty for ex_fac in excluded_faculty if ex_fac.strip()):
+                return False
+    return True
+
+def has_time_conflict(schedule):
+    for i in range(len(schedule)):
+        for j in range(i + 1, len(schedule)):
+            if courses_conflict(schedule[i], schedule[j]):
+                return True
+    return False
+
+def courses_conflict(course1, course2):
+    for s1 in course1.get("sessions", []):
+        for s2 in course2.get("sessions", []):
+            if s1.get("day") == s2.get("day") and s1.get("startTime") and s2.get("startTime"):
+                start1, end1 = parse_time(s1["startTime"]), parse_time(s1["endTime"])
+                start2, end2 = parse_time(s2["startTime"]), parse_time(s2["endTime"])
+                if start1 and end1 and start2 and end2 and max(start1, start2) < min(end1, end2):
+                    return True
+    return False
+
+def parse_time(time_str):
+    try:
+        return datetime.strptime(time_str.strip(), '%I:%M %p')
+    except ValueError:
+        return None

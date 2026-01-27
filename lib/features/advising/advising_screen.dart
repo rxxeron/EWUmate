@@ -31,6 +31,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   // Data
   List<String> _allCourseCodes = [];
+  List<String> _filteredCourseCodes = [];
   Map<String, List<Course>> _groupedCourses = {};
 
   // Manual Plan State
@@ -44,6 +45,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   String _generationStatus = '';
 
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _manualSearchController = TextEditingController();
   final TextEditingController _facultyFilterController = TextEditingController();
   final Set<String> _excludedDays = {};
 
@@ -52,6 +54,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _searchController.addListener(() => _filterSchedules(_searchController.text));
+    _manualSearchController.addListener(() {
+      _filterManualCourses(_manualSearchController.text);
+    });
     _initData();
   }
 
@@ -59,6 +64,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _manualSearchController.dispose();
     _facultyFilterController.dispose();
     _scheduleSubscription?.cancel();
     super.dispose();
@@ -116,9 +122,25 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   Future<void> _loadInitialData() async {
     _allCourseCodes = await _courseRepo.fetchAllCourseCodes();
+    _filteredCourseCodes = _allCourseCodes;
     _groupedCourses = await _courseRepo.fetchCourses(_nextSemesterCode);
     setState(() {
       _filteredHistory = _generatedHistory;
+    });
+  }
+  
+  void _filterManualCourses(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredCourseCodes = _allCourseCodes;
+      });
+      return;
+    }
+    final lowerCaseQuery = query.toLowerCase();
+    setState(() {
+      _filteredCourseCodes = _allCourseCodes.where((code) {
+        return code.toLowerCase().contains(lowerCaseQuery);
+      }).toList();
     });
   }
 
@@ -345,10 +367,29 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     );
   }
 
-    Widget _buildManualTab() {
+  Widget _buildManualTab() {
     final courseCodes = _groupedCourses.keys.toList()..sort();
+    final displayedCodes = courseCodes.where((code) {
+      return _filteredCourseCodes.contains(code);
+    }).toList();
+
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            controller: _manualSearchController,
+            decoration: InputDecoration(
+              hintText: 'Search courses...',
+              hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon: const Icon(Icons.search, color: Colors.white54),
+              filled: true,
+              fillColor: Colors.white.withAlpha(20),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
         if (_selectedSections.isNotEmpty)
           SizedBox(
             height: 60,
@@ -371,9 +412,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: courseCodes.length,
+            itemCount: displayedCodes.length,
             itemBuilder: (context, index) {
-              final courseCode = courseCodes[index];
+              final courseCode = displayedCodes[index];
               final sections = _groupedCourses[courseCode]!;
               final courseName = sections.first.courseName;
 
@@ -432,8 +473,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             onChanged: (_) => _toggleSection(section),
             activeTrackColor: Colors.cyanAccent.withAlpha(100),
             inactiveTrackColor: Colors.white10,
-            thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
-              if (states.contains(WidgetState.selected)) {
+            thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
+              if (states.contains(MaterialState.selected)) {
                 return Colors.cyanAccent;
               }
               return Colors.white60;
@@ -530,9 +571,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   Widget _buildCourseSelectionList() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _allCourseCodes.length,
+      itemCount: _filteredCourseCodes.length,
       itemBuilder: (context, index) {
-        final code = _allCourseCodes[index];
+        final code = _filteredCourseCodes[index];
         final isSelected = _selectedCodes.contains(code);
         return CheckboxListTile(
           title: Text(code, style: const TextStyle(color: Colors.white)),
@@ -670,9 +711,25 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       }
 
       if (_filteredHistory.isEmpty) {
-          return const Center(
-              child: Text('Generated schedules will appear here.',
-                  style: TextStyle(color: Colors.white38)));
+          return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Generated schedules will appear here.',
+                      style: TextStyle(color: Colors.white38)),
+                  if (_generatedHistory.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _filteredHistory = _generatedHistory;
+                        });
+                      },
+                      child: const Text("Show History"),
+                    )
+                  ]
+                ],
+              ));
       }
 
       return ListView.builder(

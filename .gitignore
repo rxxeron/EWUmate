@@ -62,7 +62,6 @@ functions/node_modules/
 functions-node/node_modules/
 
 # Temp Files
-*.pdf
 parsed_results.json
 parsed_results.txt
 calendar_results.json
@@ -73,5 +72,5 @@ scholarship_reqs_content.txt
 
 # Environments & Backups
 venv/
-legacy_functions/
+
 .env

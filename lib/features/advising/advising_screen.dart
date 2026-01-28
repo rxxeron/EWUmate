@@ -575,8 +575,8 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             onChanged: (_) => _toggleSection(section),
             activeTrackColor: Colors.cyanAccent.withAlpha(100),
             inactiveTrackColor: Colors.white10,
-            thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-              if (states.contains(MaterialState.selected)) {
+            thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+              if (states.contains(WidgetState.selected)) {
                 return Colors.cyanAccent;
               }
               return Colors.white60;

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/auth/login_screen.dart';
@@ -15,9 +16,14 @@ import '../../features/auth/check_auth_screen.dart';
 import '../../features/degree_progress/degree_progress_screen.dart';
 import '../../features/dashboard/schedule_manager_screen.dart';
 import '../../features/transition/next_semester_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
 
 class AppRouter {
+  static final GlobalKey<NavigatorState> rootNavigatorKey =
+      GlobalKey<NavigatorState>();
+
   static final router = GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     routes: [
       GoRoute(
@@ -75,6 +81,10 @@ class AppRouter {
       GoRoute(
         path: '/schedule-manager',
         builder: (context, state) => const ScheduleManagerScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
     redirect: (context, state) {

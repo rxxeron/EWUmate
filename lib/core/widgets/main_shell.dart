@@ -119,6 +119,10 @@ class _MainShellState extends State<MainShell> {
                       _buildDrawerItem(Icons.person_outline, "Profile",
                           () => context.push('/profile')),
                       _buildDrawerItem(
+                          Icons.notifications_outlined,
+                          "Notifications",
+                          () => context.push('/notifications')),
+                      _buildDrawerItem(
                           Icons.bar_chart_rounded,
                           "Degree Progress",
                           () => context.push('/degree-progress')),

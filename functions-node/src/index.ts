@@ -1,8 +1,8 @@
 import functions from "firebase-functions";
 import admin from "firebase-admin";
-import {CloudTasksClient} from "@google-cloud/tasks";
-import { format, addDays, startOfDay } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { CloudTasksClient } from "@google-cloud/tasks";
+import { format, addDays, startOfDay, parse } from 'date-fns';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 
 admin.initializeApp();
 
@@ -40,6 +40,19 @@ export const sendScheduledNotification = functions.https.onRequest(async (req, r
         return;
     }
 
+    // 1. Save to History
+    try {
+        await db.collection('users').doc(userId).collection('notifications').add({
+            title,
+            body,
+            type: 'reminder',
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            read: false
+        });
+    } catch (e) {
+        console.error("Error saving notification history:", e);
+    }
+
     const message = {
         notification: { title, body },
         token: fcmToken,
@@ -59,6 +72,8 @@ export const sendScheduledNotification = functions.https.onRequest(async (req, r
 
 
 // --- 2. Task Notification Scheduling ---
+
+// --- 2. Task Notification Scheduling ---
 export const onTaskCreate = functions.firestore
     .document("users/{userId}/tasks/{taskId}")
     .onCreate(async (snap, context) => {
@@ -72,18 +87,42 @@ export const onTaskCreate = functions.firestore
         const fcmToken = userDoc.data()?.fcmToken;
         if (!fcmToken) return;
 
-        const dueDate = (task.dueDate as admin.firestore.Timestamp).toDate();
-        const notificationTime = new Date(dueDate.getTime() - 24 * 60 * 60 * 1000);
+        // Task Logic: 
+        // 1. Previous Night 8 PM (20:00)
+        // 2. Due Day Morning 8 AM (08:00)
+        // Timezone: Asia/Dhaka
 
-        if (notificationTime < new Date()) return;
-
+        const dueDateUTC = (task.dueDate as admin.firestore.Timestamp).toDate();
+        const timeZone = "Asia/Dhaka";
         const courseName = task.courseName || "";
         const taskType = task.type || "task";
-        const title = "Task Reminder";
-        const body = `You have an upcoming ${taskType} for ${courseName}.`;
+        const baseTitle = `Upcoming ${taskType}`;
 
-        const notificationTaskId = `task-reminder-${userId}-${taskId}`;
-        await scheduleNotificationTask(notificationTaskId, userId, fcmToken, title, body, notificationTime);
+        // Convert Due Date to Dhaka Day context
+        const zonedDueDate = utcToZonedTime(dueDateUTC, timeZone);
+
+        // Date 1: Previous Night 8:00 PM
+        const prevNight = new Date(zonedDueDate);
+        prevNight.setDate(prevNight.getDate() - 1);
+        prevNight.setHours(20, 0, 0, 0); // 8 PM
+
+        // Date 2: Due Day Morning 8:00 AM
+        const morningDue = new Date(zonedDueDate);
+        morningDue.setHours(8, 0, 0, 0); // 8 AM
+
+        const now = new Date();
+
+        // Schedule Previous Night
+        if (prevNight > now) {
+            const body = `${taskType} for ${courseName} is due tomorrow.`;
+            await scheduleNotificationTask(`task-prev-${userId}-${taskId}`, userId, fcmToken, baseTitle, body, prevNight);
+        }
+
+        // Schedule Morning
+        if (morningDue > now) {
+            const body = `${taskType} for ${courseName} is due today!`;
+            await scheduleNotificationTask(`task-morn-${userId}-${taskId}`, userId, fcmToken, baseTitle, body, morningDue);
+        }
     });
 
 
@@ -113,37 +152,72 @@ async function runSchedulerLogic(targetNextDay: boolean) {
     await Promise.all(promises);
 }
 
+// Helper to parse "09:30 AM" to minutes
+const getMinutes = (timeStr: string) => {
+    // timeStr: "09:30 AM" or "9:30 AM"
+    const [t, m] = timeStr.trim().split(' ');
+    const [hh, mm] = t.split(':').map(Number);
+    let h = hh;
+    if (m === 'PM' && h < 12) h += 12;
+    if (m === 'AM' && h === 12) h = 0;
+    return h * 60 + mm;
+};
+
 async function processUserForNotifications(userId: string, userData: any, targetDay: string, dateString: string) {
     const { fcmToken, weeklySchedule } = userData;
-    if (!fcmToken || !weeklySchedule || !weeklySchedule[targetDay]?.length) return;
+    const classes = weeklySchedule?.[targetDay];
 
-    const targetDate = startOfDay(new Date(dateString));
+    if (!fcmToken || !classes || !classes.length) return;
 
-    for (const classInfo of weeklySchedule[targetDay]) {
-        const startTimeStr = classInfo.time.split('-')[0].trim();
-        const [time, modifier] = startTimeStr.split(' ');
-        const timeParts = time.split(':').map(Number);
-        let hours = timeParts[0];
-        const minutes = timeParts[1];
+    const targetDateStart = startOfDay(new Date(dateString)); // 00:00 of target day
 
-        if (modifier === 'PM' && hours < 12) hours += 12;
-        if (modifier === 'AM' && hours === 12) hours = 0;
+    // 1. Sort Classes by Start Time
+    // Python sync sends 'time': "08:30 AM-10:00 AM"
+    const parsedClasses = classes.map((c: any) => {
+        const [startStr, endStr] = c.time.split('-');
+        return {
+            ...c,
+            startMins: getMinutes(startStr),
+            endMins: getMinutes(endStr),
+            startStr: startStr.trim()
+        };
+    }).sort((a: any, b: any) => a.startMins - b.startMins);
 
-        const classDateTime = new Date(targetDate);
-        classDateTime.setHours(hours, minutes, 0, 0);
+    let lastEndTimeMins = -999;
 
-        const notificationTime = new Date(classDateTime.getTime() - 10 * 60 * 1000);
-        if (notificationTime < new Date()) continue;
+    for (const cls of parsedClasses) {
+        // Calculate Gap
+        // If first class, gap is effectively infinite (large enough > 30)
+        let gap = cls.startMins - lastEndTimeMins;
+        if (lastEndTimeMins === -999) gap = 999;
 
-        const courseName = classInfo.title || classInfo.courseCode;
-        const classType = courseName.toLowerCase().includes("lab") ? "Lab" : "Class";
-        const room = classInfo.room || "N/A";
-        const title = "Class Reminder";
-        const body = `You have a ${courseName} ${classType} in 10 minutes at ${room}.`;
+        // Determine Offsets
+        const offsets = [];
+        if (gap > 30) {
+            offsets.push(30, 10, 5);
+        } else {
+            offsets.push(10, 5);
+        }
 
-        const safeCourseCode = classInfo.courseCode.replace(/\s+/g, '-');
-        const notificationTaskId = `class-reminder-${userId}-${safeCourseCode}-${dateString}`;
-        await scheduleNotificationTask(notificationTaskId, userId, fcmToken, title, body, notificationTime);
+        // Schedule
+        for (const offset of offsets) {
+            // Notification Time: Class Start Time minus Offset minutes
+            const notifyTime = new Date(targetDateStart.getTime() + (cls.startMins * 60 * 1000) - (offset * 60 * 1000));
+
+            if (notifyTime < new Date()) continue; // Skip past
+
+            const courseName = cls.title || cls.courseCode;
+            const room = cls.room || "Room TBA";
+            const title = "Class Reminder";
+            const body = `Your ${courseName} class starts in ${offset} minutes at ${room}.`;
+
+            const safeCode = cls.courseCode.replace(/\s+/g, '');
+            const taskId = `cls-${userId}-${safeCode}-${dateString}-${offset}m`;
+
+            await scheduleNotificationTask(taskId, userId, fcmToken, title, body, notifyTime);
+        }
+
+        lastEndTimeMins = cls.endMins;
     }
 }
 
@@ -176,55 +250,6 @@ async function scheduleNotificationTask(taskId: string, userId: string, fcmToken
     }
 }
 
-// --- 4. Weekly Schedule Generation ---
-async function generateWeeklyScheduleForUser(userId: string, enrolledSections: string[]) {
-    const appInfoDoc = await db.collection("config").doc("app_info").get();
-    const semesterId = appInfoDoc.data()?.currentSemester?.replace(/\s/g, '');
-    if (!semesterId) {
-        console.error(`Cannot generate schedule for user ${userId}: Current semester is not configured.`);
-        return;
-    }
-
-    const courseCollectionName = `courses_${semesterId}`;
-    const weeklySchedule: { [key: string]: any[] } = {
-        Saturday: [], Sunday: [], Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [],
-    };
-
-    if (!enrolledSections || enrolledSections.length === 0) {
-        await db.collection("users").doc(userId).update({ weeklySchedule });
-        return; 
-    }
-
-    const coursesQuery = await db.collection(courseCollectionName).where('id', 'in', enrolledSections).get();
-    const enrolledCourseDetails = coursesQuery.docs.map(doc => doc.data());
-
-    for (const course of enrolledCourseDetails) {
-        for (const session of course.sessions) {
-            const day = session.day;
-            if (weeklySchedule[day]) {
-                weeklySchedule[day].push({
-                    title: course.courseName,
-                    courseCode: course.code,
-                    time: `${session.startTime}-${session.endTime}`,
-                    room: session.room || "TBA",
-                });
-            }
-        }
-    }
-    
-    await db.collection("users").doc(userId).update({ weeklySchedule });
-}
-
-// --- 5. Triggers and Other Functions ---
-export const onEnrollmentChange = functions.firestore
-    .document("users/{userId}")
-    .onUpdate(async (change, context) => {
-        const beforeData = change.before.data();
-        const afterData = change.after.data();
-        if (JSON.stringify(beforeData.enrolledSections) !== JSON.stringify(afterData.enrolledSections)) {
-            await generateWeeklyScheduleForUser(context.params.userId, afterData.enrolledSections || []);
-        }
-    });
 
 // --- 6. Admin Functions ---
 
@@ -234,7 +259,7 @@ export const onEnrollmentChange = functions.firestore
 export const triggerScheduleImmediateCurrentDay = functions.https.onCall(async (data, context) => {
     const secret = data.secret;
     const expectedSecret = await _getAdminSecret();
-    
+
     if (!expectedSecret || secret !== expectedSecret) {
         throw new functions.https.HttpsError('unauthenticated', 'Invalid admin secret.');
     }
@@ -249,35 +274,119 @@ export const triggerScheduleImmediateCurrentDay = functions.https.onCall(async (
     }
 });
 
-/**
- * ADMIN-ONLY: Regenerates the 'weeklySchedule' for all users based on their 'enrolledSections'.
- */
-export const regenerateAllSchedules = functions.runWith({timeoutSeconds: 300, memory: '1GB'}).https.onCall(async (data, context) => {
-    const secret = data.secret;
-    const expectedSecret = await _getAdminSecret();
+// onEnrollmentChange is now handled by Python backend to centralize logic.
 
-    if (!expectedSecret || secret !== expectedSecret) {
-        throw new functions.https.HttpsError('unauthenticated', 'Invalid admin secret.');
-    }
+// --- 7. Advising Notifications ---
+export const onAdvisingSlotAssigned = functions.firestore
+    .document("users/{userId}")
+    .onUpdate(async (change, context) => {
+        const after = change.after.data();
+        const before = change.before.data();
+        const userId = context.params.userId;
+        const fcmToken = after.fcmToken;
 
-    console.log("ADMIN: Starting regeneration of all user schedules.");
-    const usersSnap = await db.collection("users").get();
-    if (usersSnap.empty) {
-        return { success: true, message: "No users found." };
-    }
+        if (!fcmToken) return;
 
-    const promises: Promise<void>[] = [];
-    usersSnap.forEach(doc => {
-        const userData = doc.data();
-        promises.push(generateWeeklyScheduleForUser(doc.id, userData.enrolledSections || []));
+        // Detect if any advisingSlot_* field changed
+        const afterKeys = Object.keys(after).filter(k => k.startsWith('advisingSlot_'));
+
+        for (const key of afterKeys) {
+            const slotAfter = after[key];
+            const slotBefore = before[key];
+
+            // If slot is new or changed
+            if (slotAfter && JSON.stringify(slotAfter) !== JSON.stringify(slotBefore)) {
+                const semester = key.replace('advisingSlot_', '');
+                // Format date manually or simply use the string from JSON
+                const dateStr = slotAfter.date; // "03 December 2025"
+                const timeStr = slotAfter.startTime; // "09:00 AM"
+
+                const title = "Advising Slot Assigned";
+                const body = `Your advising time for ${semester} is ${dateStr} at ${timeStr}.`;
+
+                console.log(`Sending advising notification to ${userId}`);
+
+                const message = {
+                    notification: { title, body },
+                    token: fcmToken
+                };
+
+                try {
+                    // 1. Save assignment notification to History
+                    await admin.firestore().collection('users').doc(userId).collection('notifications').add({
+                        title,
+                        body,
+                        type: 'advising',
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        read: false,
+                        semester: semester
+                    });
+
+                    // 2. Send immediate assignment notification
+                    await admin.messaging().send(message);
+
+                    // 3. Schedule Reminder 90 minutes BEFORE the slot
+                    if (dateStr && timeStr) {
+                        const timeZone = "Asia/Dhaka";
+                        // Parse "03 December 2025 09:00 AM"
+                        const parsedLocal = parse(`${dateStr} ${timeStr}`, 'dd MMMM yyyy hh:mm a', new Date());
+                        // Convert local parse (interpreted as Dhaka) to absolute UTC
+                        const slotTimeUtc = zonedTimeToUtc(parsedLocal, timeZone);
+
+                        // Subtract 90 minutes
+                        const reminderTime = new Date(slotTimeUtc.getTime() - (90 * 60 * 1000));
+
+                        if (reminderTime > new Date()) {
+                            const reminderTitle = "Advising Reminder";
+                            const reminderBody = `Your advising slot starts in 1 hour 30 minutes!`;
+                            const taskId = `adv-rem-${userId}-${semester}-${reminderTime.getTime()}`;
+
+                            await scheduleNotificationTask(taskId, userId, fcmToken, reminderTitle, reminderBody, reminderTime);
+                            console.log(`Scheduled advising reminder for ${userId} at ${reminderTime.toISOString()}`);
+                        }
+                    }
+
+                } catch (e) {
+                    console.error(`Error processing advising notification for ${userId}:`, e);
+                }
+            }
+        }
     });
 
-    try {
-        await Promise.all(promises);
-        console.log(`ADMIN: Finished regenerating schedules for ${promises.length} users.`);
-        return { success: true, processed: promises.length, message: `Processed ${promises.length} users.` };
-    } catch (error) {
-        console.error("ADMIN: Error regenerating all schedules:", error);
-        throw new functions.https.HttpsError('internal', 'An error occurred during schedule regeneration.');
-    }
-});
+
+// --- 8. Admin Broadcast Trigger ---
+export const onBroadcastCreated = functions.firestore
+    .document("admin_broadcasts/{broadcastId}")
+    .onCreate(async (snap, context) => {
+        const data = snap.data();
+        if (!data) return;
+
+        const title = data.title;
+        const body = data.body;
+        const link = data.link || "";
+
+        if (!title || !body) {
+            console.log("Broadcast missing title or body. Skipping.");
+            return;
+        }
+
+        console.log(`Sending broadcast: ${title}`);
+
+        const message = {
+            notification: { title, body },
+            data: {
+                click_action: "FLUTTER_NOTIFICATION_CLICK",
+                link: link
+            },
+            topic: 'all_users'
+        };
+
+        try {
+            await admin.messaging().send(message);
+            // Update status
+            await snap.ref.update({ status: "sent", sentAt: admin.firestore.FieldValue.serverTimestamp() });
+        } catch (e) {
+            console.error("Error sending broadcast:", e);
+            await snap.ref.update({ status: "failed", error: String(e) });
+        }
+    });

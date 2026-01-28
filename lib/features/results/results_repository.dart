@@ -943,8 +943,9 @@ class ResultsRepository {
       // Admitted from Spring 2025: 33, else 30
       return afterSpring2025 ? 33 : 30;
     }
-    if (p.contains('information studies') || p.contains('info studies'))
+    if (p.contains('information studies') || p.contains('info studies')) {
       return 30;
+    }
     if (p.contains('law') || p.contains('ll.b')) return 33;
     if (p.contains('pphs') || p.contains('population')) {
       // Admitted from Fall 2024: 33, else 30

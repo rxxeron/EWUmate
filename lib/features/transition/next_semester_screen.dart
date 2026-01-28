@@ -268,7 +268,7 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
+                      color: Colors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10)),
                   child: Text(
                     "Opens on: ${DateFormat('dd/MM/yyyy').format(_gradeSubmissionDate!)}",
@@ -510,7 +510,7 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
             hintStyle: const TextStyle(color: Colors.white38),
             prefixIcon: const Icon(Icons.search, color: Colors.white54),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none),

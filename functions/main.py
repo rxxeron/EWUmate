@@ -23,7 +23,7 @@ def _get_admin_secret():
         return doc.to_dict().get('secret_key', '')
     return ''
 
-@https_fn.on_call(memory=options.MemoryOption.MB_512, timeout_sec=120)
+@https_fn.on_call(memory=options.MemoryOption.MB_512, timeout_sec=120, cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def upload_file_via_admin(req: https_fn.CallableRequest):
     """Uploads a file (base64) to Firebase Storage via Admin panel."""
     secret = req.data.get('secret')
@@ -72,7 +72,7 @@ def upload_file_via_admin(req: https_fn.CallableRequest):
             f"Upload failed: {str(e)}"
         )
 
-@https_fn.on_call()
+@https_fn.on_call(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def verify_admin_key(req: https_fn.CallableRequest):
     """Verifies the admin secret key without sending any notifications."""
     secret = req.data.get('secret')
@@ -85,7 +85,7 @@ def verify_admin_key(req: https_fn.CallableRequest):
         )
     return {"success": True, "message": "Key verified."}
 
-@https_fn.on_call()
+@https_fn.on_call(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def send_broadcast_notification(req: https_fn.CallableRequest):
     """Sends a broadcast notification to all users."""
     from firebase_admin import messaging
@@ -131,7 +131,7 @@ def send_broadcast_notification(req: https_fn.CallableRequest):
             str(e)
         )
 
-@https_fn.on_call()
+@https_fn.on_call(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def get_app_config(req: https_fn.CallableRequest):
     """Returns general app configuration including currentSemester."""
     db = firestore.client()
@@ -140,7 +140,7 @@ def get_app_config(req: https_fn.CallableRequest):
         return doc.to_dict()
     return {"currentSemester": "Spring 2026"} # Fallback
 
-@https_fn.on_call(timeout_sec=540, memory=options.MemoryOption.MB_512)
+@https_fn.on_call(timeout_sec=540, memory=options.MemoryOption.MB_512, cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def system_master_sync(req: https_fn.CallableRequest):
     """MIGRATION: Syncs all users weekly schedules based on enrollment."""
     secret = req.data.get('secret')
@@ -171,7 +171,7 @@ def system_master_sync(req: https_fn.CallableRequest):
                 
     return {"success": True, "usersSynced": count}
 
-@https_fn.on_call()
+@https_fn.on_call(cors=options.CorsOptions(cors_origins="*", cors_methods=["post"]))
 def recalculate_all_stats(req: https_fn.CallableRequest):
     """Triggered by Admin Panel to force recalculate CGPA for all users."""
     secret = req.data.get('secret')

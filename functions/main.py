@@ -566,9 +566,30 @@ def process_uploaded_document(event: storage_fn.CloudEvent[storage_fn.StorageObj
             print(f"Type: Course Schedule for {semester_str}")
             from parser_course import parse_course_pdf
             
-            # We assume we have existing course_titles from previous semesters? Or just parse raw.
-            # Passing None for titles means we just use raw data.
-            courses = parse_course_pdf(local_path, semester_str, course_titles=None)
+            # Fetch Metadata (Course Names & Credits)
+            course_titles = {}
+            try:
+                meta_doc = db.collection('metadata').document('courses').get()
+                if meta_doc.exists:
+                    raw_data = meta_doc.to_dict()
+                    # Transform data: The user has a map like { "0": {"code": "ACT101", ...}, "1": ... }
+                    # We need { "ACT101": {"name": "...", "credits": ...} }
+                    for k, v in raw_data.items():
+                        # Case 1: Value is an object containing 'code' (e.g. numeric key map)
+                        if isinstance(v, dict) and "code" in v and v["code"]:
+                            norm_code = v["code"].replace(" ", "").upper()
+                            course_titles[norm_code] = v
+                        
+                        # Case 2: Key is the code (legacy or direct map)
+                        elif isinstance(v, dict):
+                            course_titles[k.replace(" ", "").upper()] = v
+                            
+                else:
+                    print("Warning: metadata/courses document not found.")
+            except Exception as e:
+                print(f"Error fetching metadata: {e}")
+
+            courses = parse_course_pdf(local_path, semester_str, course_titles=course_titles)
             
             if courses:
                 batch = db.batch()

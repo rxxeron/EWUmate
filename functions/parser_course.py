@@ -159,7 +159,13 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
                            if key_to_use:
                                meta_data = course_titles.get(key_to_use, {})
                                course_name = meta_data.get("name", "")
-                               credits_val = _parse_credits(meta_data.get("credits", "0"))
+                               if "creditVal" in meta_data:
+                                   try:
+                                       credits_val = float(meta_data["creditVal"])
+                                   except:
+                                       credits_val = _parse_credits(meta_data.get("credits", "0"))
+                               else:
+                                   credits_val = _parse_credits(meta_data.get("credits", "0"))
                                
                     course_map[course_key] = {
                         "docId": f"course_{code}_{section}", "code": code, "courseName": course_name,

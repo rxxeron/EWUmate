@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EWU Mate | Admin Nexus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-bg: #0a0a0c;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        .admin-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+
+        .input-group-custom {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .form-control-custom {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            padding: 14px 16px;
+            width: 100%;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-control-custom:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .btn-premium {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 24px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-premium:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-premium:active {
+            transform: translateY(0);
+        }
+
+        .btn-premium:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .nav-pills-custom {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px;
+            border-radius: 16px;
+            margin-bottom: 32px;
+        }
+
+        .nav-link-custom {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-link-custom.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content-panel {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-custom {
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            border: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-danger-custom {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .label-custom {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .section-header {
+            margin-bottom: 24px;
+        }
+
+        .section-header h4 {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        select.form-control-custom {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 20px;
+            padding-right: 44px;
+        }
+
+        .footer-text {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 24px;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Trigger Card Style */
+        .trigger-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .trigger-card:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--accent-color);
+            transform: translateY(-4px);
+        }
+
+        .trigger-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+
+        .file-drop-area:hover,
+        .file-drop-area.active {
+            border-color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOGIN SCREEN -->
+    <div id="loginSection" class="login-container">
+        <div class="glass-card p-5">
+            <div class="text-center mb-5">
+                <div class="mb-3 d-inline-block p-3 rounded-circle" style="background: rgba(99, 102, 241, 0.1);">
+                    <i class="bi bi-shield-lock-fill shadow-sm"
+                        style="font-size: 2.5rem; color: var(--accent-color);"></i>
+                </div>
+                <h3 class="fw-bold">Nexus Access</h3>
+                <p class="text-muted">Command center authentication required</p>
+            </div>
+
+            <div id="loginError" class="alert-custom alert-danger-custom hidden">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <span id="loginErrorMessage">Invalid sequence key.</span>
+            </div>
+
+            <div class="input-group-custom">
+                <label class="label-custom">ADMIN SECRET KEY</label>
+                <input type="password" id="loginKey" class="form-control-custom" placeholder="••••••••••••" autofocus autocomplete="new-password">
+            </div>
+
+            <button id="loginBtn" onclick="verifyKey()" class="btn-premium">
+                <span>Unlock Terminal</span>
+                <i class="bi bi-arrow-right"></i>
+            </button>
+
+            <div class="footer-text">
+                <i class="bi bi-database-fill-lock"></i>
+                Synced with Firestore config/admin
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="adminSection" class="admin-container hidden">
+        <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+            <div>
+                <h3 class="fw-bold mb-0">EWU Mate <span style="color: var(--accent-color);">Nexus</span></h3>
+                <span class="text-muted small">Systems Operational</span>
+            </div>
+            <button onclick="logout()" class="logout-btn">
+                <i class="bi bi-box-arrow-right me-2"></i>Terminate Session
+            </button>
+        </div>
+
+        <div class="glass-card p-4">
+            <div id="alertBox" class="alert-custom hidden">
+                <i id="alertIcon" class="bi"></i>
+                <span id="alertMessage"></span>
+            </div>
+
+            <div class="nav-pills-custom">
+                <div class="nav-link-custom active" id="tab-broadcast" onclick="switchTab('broadcast')">
+                    <i class="bi bi-broadcast me-2"></i>Broadcast
+                </div>
+                <div class="nav-link-custom" id="tab-files" onclick="switchTab('files')">
+                    <i class="bi bi-cloud-arrow-up me-2"></i>Ingestion
+                </div>
+                <div class="nav-link-custom" id="tab-migration" onclick="switchTab('migration')">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Migration
+                </div>
+            </div>
+
+            <!-- Broadcast Form -->
+                <div id="section-broadcast" class="tab-content-panel">
+                    <div class="section-header">
+                        <h4>Push Notifications</h4>
+                        <p>Transmit an urgent message to the entire user base.</p>
+                    </div>
+                    <form id="broadcastForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="label-custom">NOTIFICATION TITLE</label>
+                                <input type="text" id="title" class="form-control-custom"
+                                    placeholder="Attention: Important Update" required>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="label-custom">EXTERNAL LINK (OPTIONAL)</label>
+                                <input type="url" id="link" class="form-control-custom"
+                                    placeholder="https://ewu.edu/news">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="label-custom">MESSAGE BODY</label>
+                            <textarea id="body" class="form-control-custom" rows="4"
+                                placeholder="Craft your message details here..." required></textarea>
+                        </div>
+
+                        <div class="mb-4 p-3 rounded-4"
+                            style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Scheduled Transmission</h6>
+                                    <p class="text-muted small mb-0">Delay sending until a specific timestamp</p>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="scheduleToggle"
+                                        style="width: 48px; height: 24px;">
+                                </div>
+                            </div>
+                            <div id="scheduleInputs" class="mt-3 hidden">
+                                <input type="datetime-local" id="scheduleTime" class="form-control-custom">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="sendBtn" class="btn-premium">
+                            <i class="bi bi-send-fill"></i>
+                            Execute Broadcast
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Ingestion Form -->
+                <div id="section-files" class="tab-content-panel hidden">
+                    <div class="section-header">
+                        <h4>Resource Ingestion</h4>
+                        <p>Upload and automate parsing of critical academic PDF assets.</p>
+                    </div>
+                    <form id="uploadForm">
+                        <div class="mb-4">
+                            <label class="label-custom">TARGET SYSTEM</label>
+                            <select id="folderSelect" class="form-control-custom" required>
+                                <option value="facultylist">Faculty / Course Schedule</option>
+                                <option value="academiccalendar">University Academic Calendar</option>
+                                <option value="examschedule">Final Examination Schedule</option>
+                                <option value="advisingschedule">Student Advising Slots</option>
+                            </select>
+                        </div>
+
+                        <div class="file-drop-area" id="fileDropArea"
+                            onclick="document.getElementById('fileInput').click()">
+                            <i class="bi bi-file-earmark-pdf fs-1 mb-3" style="color: var(--accent-color);"></i>
+                            <h6 class="fw-bold">Drop PDF document here</h6>
+                            <p class="text-muted small">or click to browse local storage</p>
+                            <div id="fileNameDisplay" class="mt-2 fw-bold text-success hidden"></div>
+                            <input type="file" id="fileInput" class="hidden" accept="application/pdf" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="label-custom">SYSTEM FILENAME (AUTO-POPULATED)</label>
+                            <input type="text" id="filenameInput" class="form-control-custom"
+                                placeholder="e.g. Spring2026.pdf" required>
+                        </div>
+
+                        <button type="submit" id="uploadBtn" class="btn-premium"
+                            style="background: var(--success-color);">
+                            <i class="bi bi-cloud-plus-fill"></i>
+                            Ingest Document
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Migration Section -->
+                <div id="section-migration" class="tab-content-panel hidden">
+                    <div class="section-header">
+                        <h4>Global System Migration</h4>
+                        <p>Trigger a one-time synchronization of all user data and notification schedules.</p>
+                    </div>
+                    <div
+                        class="alert alert-warning border-warning bg-warning bg-opacity-10 text-warning p-3 rounded-4 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Caution:</strong> This will purge all existing scheduled notifications and
+                        force-reschedule everything. Run only once after deployment.
+                    </div>
+                    <button id="migrationBtn" onclick="runGlobalMigration()" class="btn-premium"
+                        style="background: var(--danger-color);">
+                        <i class="bi bi-flash-fill"></i>
+                        Trigger Global System Sync
+                    </button>
+                </div>
+
+
+
+            </div>
+        </div>
+
+        <script src="admin.js?v=2"></script>
+        <script>
+            // File selection handling enhancement
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('filenameInput').value = file.name;
+                    const display = document.getElementById('fileNameDisplay');
+                    display.innerText = "Selected: " + file.name;
+                    display.classList.remove('hidden');
+                }
+            });
+
+            // Toggle schedule inputs
+            document.getElementById('scheduleToggle').addEventListener('change', (e) => {
+                document.getElementById('scheduleInputs').classList.toggle('hidden', !e.target.checked);
+            });
+        </script>
+</body>
+
+</html>

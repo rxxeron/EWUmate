@@ -1,0 +1,107 @@
+name: mobile_app
+description: A new Flutter project.
+publish_to: 'none'
+version: 1.0.1+2
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # --- Core & Architecture ---
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  provider: ^6.1.2
+  go_router: ^14.2.0
+  flutter_dotenv: ^5.1.0
+  shared_preferences: ^2.2.3
+  intl: ^0.20.0
+  path: ^1.9.0
+  
+  # --- Firebase Ecosystem ---
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  firebase_ui_auth: ^1.10.0
+  cloud_firestore: ^4.13.3
+  firebase_ui_firestore: ^1.5.0
+  firebase_storage: ^11.5.3
+  firebase_ui_storage: ^1.4.0
+  firebase_database: ^10.3.5
+  firebase_ui_database: ^1.5.0
+  firebase_messaging: ^14.7.4
+  firebase_app_check: ^0.2.1+4
+  firebase_remote_config: ^4.3.5
+  firebase_analytics: ^10.7.0
+  firebase_crashlytics: ^3.4.7
+  firebase_performance: ^0.9.3+7
+  google_sign_in: ^6.2.1
+  cloud_functions: ^4.6.4
+
+  # --- UI & Design ---
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10
+  lottie: ^3.1.2
+  glass_kit: ^2.0.1
+  shimmer: ^3.0.0
+  animated_text_kit: ^4.2.2
+  gap: ^3.0.1
+  flutter_native_splash: ^2.4.0
+  
+  # --- Media & Files ---
+  cached_network_image: ^3.3.1
+  flutter_cache_manager: ^3.3.2
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
+  photo_view: ^0.15.0
+  
+  # --- PDF Viewer ---
+  syncfusion_flutter_pdfviewer: ^23.1.40
+  syncfusion_flutter_core: ^23.1.40
+
+  # --- Utilities ---
+  http: ^1.2.1
+  url_launcher: ^6.3.0
+  path_provider: ^2.1.3
+  package_info_plus: ^8.0.0
+  device_info_plus: ^10.1.0
+  flutter_local_notifications: ^17.2.1
+  table_calendar: ^3.1.2
+  
+  # --- Annotations ---
+  json_annotation: ^4.9.0
+  freezed_annotation: ^2.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.11
+  freezed: ^2.5.2
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.0
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.10
+  flutter_launcher_icons: ^0.13.1
+
+dependency_overrides:
+  intl: ^0.20.0
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21 
+  adaptive_icon_background: "#0F3460"
+  adaptive_icon_foreground: "assets/icon.png"
+  name: "Mobile App"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/lottie/
+    - assets/icon.png

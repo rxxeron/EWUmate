@@ -1,0 +1,40 @@
+name: Android Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # FIX: Updated to Java 17 (Required for modern Flutter/Firebase builds)
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # FIX: Restored the Google Services file creation.
+      # Without this, your Firebase dependencies in pubspec.yaml will cause the build to fail.
+      - name: Create google-services.json
+        env:
+          GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_JSON" > android/app/google-services.json
+
+      - run: flutter pub get
+
+      # FIX: Removed manual version flags.
+      # It will now use 'version: 1.0.1+2' directly from your pubspec.yaml.
+      - run: flutter build apk --release --no-tree-shake-icons
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk

@@ -1,0 +1,4 @@
+Running Gradle task 'assembleDebug'...                          
+Error: could not open `C:\Program Files\Microsoft\jdk-25.0.1.8-hotspot\lib\jvm.cfg'
+Running Gradle task 'assembleDebug'...                             112ms
+Gradle task assembleDebug failed with exit code 1

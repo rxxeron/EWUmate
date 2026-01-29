@@ -1,0 +1,2731 @@
+Delivered-To: 2025-2-50-009@std.ewubd.edu
+Received: by 2002:a05:6e04:2986:b0:3a3:d437:512b with SMTP id cd6csp4010254imd;
+        Thu, 27 Nov 2025 00:39:00 -0800 (PST)
+X-Forwarded-Encrypted: i=4; AJvYcCV9mSuq3/4GjYUagTfFIdmvfIESMZE9Q+IYWjRkltlrJmIhh98P6z+6r8O/DvLYy/yv/cHJNiuLoLGFmtPD@std.ewubd.edu
+X-Received: by 2002:a05:6214:20ab:b0:87d:cb51:4015 with SMTP id 6a1803df08f44-8847c49351bmr268078506d6.1.1764232740457;
+        Thu, 27 Nov 2025 00:39:00 -0800 (PST)
+ARC-Seal: i=3; a=rsa-sha256; t=1764232740; cv=pass;
+        d=google.com; s=arc-20240605;
+        b=TFs+4pormtfElt7TU/YVY7qaiFX6A+Q0kMiLG5A0TVosVjGb3p80hXKIqKugyH7PRo
+         JKHcExCw0IrvvNG/R+nG9wWvQO5LPDcJfUXQKMksEhnYFKf66wRGSSRHqIjKT9kznmbM
+         OxgFZWuVO4VkTyfGi8+LFcwgcHFZ93I/6JD+3F9tEp9gAngjEQRlT9OG4eGkIchuzQMI
+         SZuaUuALMvLkfk+dNWy8Owshoa+hYfE7seYtaq6vnsq1X9Ce4lZq6KJx5WpTUepEnXXY
+         EgDtWvyiP2t0GGkS3D2UjF0+2xPMhIHdOcSJ0QQtRf2PFDZXPXYIuvduuVqkM91co83D
+         D/oQ==
+ARC-Message-Signature: i=3; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=list-unsubscribe:list-archive:list-help:list-post:list-id
+         :mailing-list:precedence:to:subject:message-id:date:from
+         :mime-version:dkim-signature;
+        bh=s191YiQ7P/zYsdpQOd2W1RLi5A2tL7FUP+zbIa6s+qg=;
+        fh=tiKs0xRhd0RZn5AAnN7iu7maW1ScFAZq7zuPNTNhy58=;
+        b=IbLZNNVcOehFZ2lwEYfPb1/I/ptzGzSlXYrsEjeRERtIiPa/U7L+8dX6ottWHY49fs
+         2bvye+omA8q926LCvbnocJY3EimYH1d3qT86Sq+2uHx8xL5eyaHID5Mvh70Z29HxgtKV
+         pwnOTXRKoxh9WiAr8VhdHZ40jFhbtkh0Bk4jppFirTxoVJOC8df+6h7QWsG5bxgL7pz3
+         l6awBQ07KAE0ifvIbJfRY9HyI5ssMCgcge/uobSVh12uLh/XRiQq31HtgwofVh9Ws7P6
+         h6axMKJNo92PQrz+UnzyYCzWX49JsmSbNxnaPzr+27nOuMjwRXk97DbsPAoLbJbxvbaO
+         mRxA==;
+        dara=google.com
+ARC-Authentication-Results: i=3; mx.google.com;
+       dkim=pass header.i=@ewubd.edu header.s=google header.b=ZCEJ+BbP;
+       arc=pass (i=2 spf=pass spfdomain=ewubd.edu dkim=pass dkdomain=ewubd.edu);
+       spf=pass (google.com: domain of fall25_allothers+bncbcqnlsnry4mbbee4udeqmgqe4244ycy@ewubd.edu designates 209.85.220.69 as permitted sender) smtp.mailfrom=fall25_allothers+bncBCQNLSNRY4MBBEE4UDEQMGQE4244YCY@ewubd.edu;
+       dara=neutral header.i=@std.ewubd.edu
+Return-Path: <fall25_allothers+bncBCQNLSNRY4MBBEE4UDEQMGQE4244YCY@ewubd.edu>
+Received: from mail-sor-f69.google.com (mail-sor-f69.google.com. [209.85.220.69])
+        by mx.google.com with SMTPS id 6a1803df08f44-88652ae4359sor4777726d6.8.2025.11.27.00.39.00
+        for <2025-2-50-009@std.ewubd.edu>
+        (Google Transport Security);
+        Thu, 27 Nov 2025 00:39:00 -0800 (PST)
+Received-SPF: pass (google.com: domain of fall25_allothers+bncbcqnlsnry4mbbee4udeqmgqe4244ycy@ewubd.edu designates 209.85.220.69 as permitted sender) client-ip=209.85.220.69;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@ewubd.edu header.s=google header.b=ZCEJ+BbP;
+       arc=pass (i=2 spf=pass spfdomain=ewubd.edu dkim=pass dkdomain=ewubd.edu);
+       spf=pass (google.com: domain of fall25_allothers+bncbcqnlsnry4mbbee4udeqmgqe4244ycy@ewubd.edu designates 209.85.220.69 as permitted sender) smtp.mailfrom=fall25_allothers+bncBCQNLSNRY4MBBEE4UDEQMGQE4244YCY@ewubd.edu;
+       dara=neutral header.i=@std.ewubd.edu
+ARC-Seal: i=2; a=rsa-sha256; t=1764232740; cv=pass;
+        d=google.com; s=arc-20240605;
+        b=XtcDuR4VPeKDB0HvR5xGQRsKGqkT4ZwcOdpxuI/j4yWxeosl4LKPPm0+bcr7wevygR
+         i2nZm+NFEMkjGV6kAENEyHdu/oyy+HKgjSUC37niGXwXaoYYFHWu0aUvPLh5j+9PjXVZ
+         FslRyezLi/qSfSp2Rugc/8dY/iwnir1Htbgq7FNXYut3anmBkeqCSsh2c9bRRLUjl8QG
+         oGZulY7e16NqnLBM1A4mRNvN1TJnfc+X1uCI9hEYxRAb6moltBz0aIuYiXAv3ql+9pHv
+         kcQGQ0jPA0N7jnxI7wiEAiNEyqiFudGVFMNv/NabdSF74CN/mwJKzgEzqwTcyHvomD3A
+         Cqfg==
+ARC-Message-Signature: i=2; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=list-unsubscribe:list-archive:list-help:list-post:list-id
+         :mailing-list:precedence:to:subject:message-id:date:from
+         :mime-version:dkim-signature;
+        bh=s191YiQ7P/zYsdpQOd2W1RLi5A2tL7FUP+zbIa6s+qg=;
+        fh=tiKs0xRhd0RZn5AAnN7iu7maW1ScFAZq7zuPNTNhy58=;
+        b=S4PJHCGGNj6ZE3VoEE26731CNQlI/twircRZ80FH2++rurPEUm5mAQ5DMu5mNEaIIL
+         jrSIxculcE2HoKdIipiKW3f1GzDX9QK8+yx3mVDbUmzF95uBPQ21uBOoM0HfxrMn0kFU
+         xvSNWYWqpn+PAOFdoBtF7SbmjiNJueuV1He3vLkjYvr5TAeqD3FLTbDurY6jEjsKS7N0
+         7O8QAhXDo1jOoipDyL/480IlUvoFggitQj8OY/pJ9EWc/VRVOzzlDCBHIw5wIPQorNaW
+         BiOyJWd+dFdz1eCb7B4pOTCFwdM8fKliMtUKb4h5FTa2EFfBiDNxDGpnzlGsZp3bWZjY
+         pajw==;
+        darn=std.ewubd.edu
+ARC-Authentication-Results: i=2; mx.google.com;
+       dkim=pass header.i=@ewubd.edu header.s=google header.b=bv1G5IPW;
+       spf=pass (google.com: domain of no-reply@ewubd.edu designates 209.85.220.41 as permitted sender) smtp.mailfrom=no-reply@ewubd.edu;
+       dara=neutral header.i=@ewubd.edu
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ewubd.edu; s=google; t=1764232739; x=1764837539; darn=std.ewubd.edu;
+        h=list-unsubscribe:list-archive:list-help:list-post:list-id
+         :mailing-list:precedence:x-original-authentication-results
+         :x-original-sender:to:subject:message-id:date:from:mime-version:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=s191YiQ7P/zYsdpQOd2W1RLi5A2tL7FUP+zbIa6s+qg=;
+        b=ZCEJ+BbPyDwrZ64J7KXTqMqw191YXqfBl/UqDSphsLAqwFsmW6ARUqDdG9ehDmoiI0
+         IOCFXqyGI8vt2GSkLfTxLBvSMAYwPEOtaATO3U65FtIuNSinVH6762m2zhDxftx+rAIX
+         /H3VNovxV50aKcQkeQ8sxL+Wx0RCzFfdPx2Uv67tllPmjFGurx3EvehoWK2OYTF9ZWZA
+         9EP1zhic7UJkOXef9GXd0klwqR247xvf8IxyH9DvSXVja4KaeL8hPrAHzV4J6XwPh6ER
+         gUH/IeeM6HX5AkkgX7It/i9L8TV7IUzDghSYd/fC69TD2jC/eSURPqu0l5i0fMI39xFW
+         NsnA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1764232739; x=1764837539;
+        h=list-unsubscribe:list-archive:list-help:list-post
+         :x-spam-checked-in-group:list-id:mailing-list:precedence
+         :x-original-authentication-results:x-original-sender:to:subject
+         :message-id:date:from:mime-version:x-gm-gg:x-beenthere
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=s191YiQ7P/zYsdpQOd2W1RLi5A2tL7FUP+zbIa6s+qg=;
+        b=Ju9iOe8s8iDdlu8ncSh/gl6f9brf3aQMQAwh6v9p0gK9O11pTA6jq+3OVz6yZVr+Gn
+         mxTQTkARInW1AigNvbOcNnO9qNuU566ObunK+T2hoLar4u+GYMkumzWKXfwHsG72dWjq
+         IuSGZOxv+KFrHg3iqWHALmCy/IXrlIP0SMZ1LT8NBc6DvPu5G6h3wuOuplc00rgKj4nO
+         UQ9clczYSHLVHHt8YcWwcDAN6pNKtZ5cQ1ZNHlIySG0JtV8ijw+bMR6hwCfmz79jTJxB
+         XfQr3CYB2+Qqy//fNx0gKINDTKJNUYnYNMe896VQrjbYLR0GpAvwYECDslzKMF/vJKTa
+         OL1w==
+X-Forwarded-Encrypted: i=2; AJvYcCUM26JH5ciwIcJxeF2TXOiIQ1bEx0e2uTuBJgdf/NfXDdMCZgEZYWW4i5yP5npv/EvM8UqC93NKx2Soqsnk@std.ewubd.edu
+X-Gm-Message-State: AOJu0Yxgrlf/U9CrlYce8rnjZq03L3T2IReEcPA5nU8SB/6qIKtKLRLD
+	9JqEW39FklSNu0/eN3id4rT/T3UQ4/nONws47zqWy9wLqygFSx5pJiO29ig17eISp3WxpQ==
+X-Google-Smtp-Source: AGHT+IG9CHsBak9eZCmTRWezn1M/ggvUVg2GkBR2Sxj0msF6PbW1MEYnbWYC24Jplc7nQ09j+CaBxg==
+X-Received: by 2002:a05:6214:5c08:b0:880:448b:b893 with SMTP id 6a1803df08f44-8847c527706mr310684176d6.50.1764232739238;
+        Thu, 27 Nov 2025 00:38:59 -0800 (PST)
+X-BeenThere: fall25_allothers@ewubd.edu; h="Ae8XA+as9JTgMDfE2RgIkC4CQhHMZDGh88CbP/Qyc97QGhpQ0A=="
+Received: by 2002:a0c:ef4c:0:b0:779:d180:7e3f with SMTP id 6a1803df08f44-8864f8ca461ls8042136d6.1.-pod-prod-01-us;
+ Thu, 27 Nov 2025 00:38:40 -0800 (PST)
+X-Forwarded-Encrypted: i=2; AJvYcCX01yNrHZV1EBUJGs/7mA3w7uQSfzOyVbqdnFhTA0DhyQzuG0Z3aLirUYhOJllA8M8P/ZeJjUSeX+fd+VFSittD@ewubd.edu
+X-Received: by 2002:a05:6102:c4a:b0:5db:a481:5639 with SMTP id ada2fe7eead31-5e1de3442f1mr8030307137.20.1764232720085;
+        Thu, 27 Nov 2025 00:38:40 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1764232720; cv=none;
+        d=google.com; s=arc-20240605;
+        b=lrIN7/OlxW3E2hsCTlpiHBYqTn77Rw3jWiy5azJnL0nhd4Ufiaq1dn1ngW2PeRXAXt
+         FnpWlSUsW3WHsnHZcD1vmrc5G0gPQ22J7wofF2NVAeyI39qucwEKoAKfFSHzlvaruQCR
+         4cMyWTZJCvxwNUZXkZH+kmStUQWPaDs2avkttj5GzA0smSRbbXF7GZdt4jwJlPeP46+e
+         gOfg/8A41pL4fOno35KR2KszddynKnSDnDR/ORrA45ujAINOB2XjsifdLrABVznNkZSa
+         uCN5k4c7lOhiT9Rx6JdhlCDDrglIi3o61EilWSqUlRRzRIPOjAzJGo+EjM5zHyFf4Bt7
+         so+g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:subject:message-id:date:from:mime-version:dkim-signature;
+        bh=s191YiQ7P/zYsdpQOd2W1RLi5A2tL7FUP+zbIa6s+qg=;
+        fh=GYVl23Tyn5r4xx4KHwT304wpRJlWxknVsNoryVYLAOc=;
+        b=QeZFktvGcI+Rzr6lWGFnlo4OlWOi8edBvh18ro6eO44zdPekRyEQ7bN+siPi5syj1o
+         4v1XtXDBGuN2Ru+fgb4NNo9yuQYRawc5TK7U5w3zIZ8TaWhFYetjxUE1dfK07wvgeZbL
+         4r8Izg7VnsZzA1ImjdF2MtxRQx7nqtLOvyXvPA5AbQ5aFHxb+MOlrRt5ulMINNuu6YvR
+         YGHaBuIIxWa+V1ZIrU8VhR0uVv8oBDnBEYOJFnhIfSpsY7c/f8EmtHp2UiyBAYuQoWFv
+         MApqSJCM0OKTz861YOAN9yXZnIQcfQ0qTIE7/yk2Bu9iihwkkCH2ixb/Aixj4yN3fUk7
+         MWGw==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@ewubd.edu header.s=google header.b=bv1G5IPW;
+       spf=pass (google.com: domain of no-reply@ewubd.edu designates 209.85.220.41 as permitted sender) smtp.mailfrom=no-reply@ewubd.edu;
+       dara=neutral header.i=@ewubd.edu
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id ada2fe7eead31-5e24dceeb8dsor67495137.10.2025.11.27.00.38.40
+        for <fall25_allothers@ewubd.edu>
+        (Google Transport Security);
+        Thu, 27 Nov 2025 00:38:40 -0800 (PST)
+Received-SPF: pass (google.com: domain of no-reply@ewubd.edu designates 209.85.220.41 as permitted sender) client-ip=209.85.220.41;
+X-Forwarded-Encrypted: i=1; AJvYcCVYl4if/z0otqfGlBJBQqKHP84tYwPec0zNNnX/xTI92pBC0Uzco0tjaDeEBYLGdA9+Z5L4tPf2Vt4C5QDCkz3q@ewubd.edu
+X-Gm-Gg: ASbGnct0RccU6mJBMZXhPPmgaV02VRWvbTmTTG3/3gpaJtXXrCary0g75kMNKN0NBB+
+	SGQGGfHCi+e4KX0+Vdp2hIEwTZNvcKFGrDUEcg4uORcQhzwHaexMbde1ojvJF4SLNVXxAX340C5
+	oL8fLbvDr1GFJXiJ75dQHgjdIK6w4y8JbTHZFGZiABOOf3oUNx/p4cCFCUVCiRYZ3DsJs6T3TCD
+	usKDf6+hQB/3uL8hd0WLg0gF6TxL1/6Aiv3bBjt6q/3JDcrAbPZU8e1esAtxpvAPMBL/mZ4Ad6c
+	Hq1K0S8F9ey4
+X-Received: by 2002:a05:6102:50a2:b0:5db:2217:3b63 with SMTP id
+ ada2fe7eead31-5e1de40a193mr7666809137.39.1764232719364; Thu, 27 Nov 2025
+ 00:38:39 -0800 (PST)
+MIME-Version: 1.0
+From: EWU Admin <no-reply@ewubd.edu>
+Date: Thu, 27 Nov 2025 14:38:28 +0600
+X-Gm-Features: AWmQ_bk2-lrD8FIFxNl6fgYNIs5QIm4BF78l6r8nqfgA2pUjY5AojD3Xkn8YMJg
+Message-ID: <CA+zVu25rCdxKT6OAG2c5frUV4Me6pa6cZuE7GsgEs+82r7k2hg@mail.gmail.com>
+Subject: Online Advising of Courses for Spring Semester 2026
+To: EWU Admin <no-reply@ewubd.edu>
+Content-Type: multipart/alternative; boundary="0000000000008a065f06448f70fc"
+Bcc: fall25_allothers@ewubd.edu
+X-Original-Sender: no-reply@ewubd.edu
+X-Original-Authentication-Results: mx.google.com;       dkim=pass
+ header.i=@ewubd.edu header.s=google header.b=bv1G5IPW;       spf=pass
+ (google.com: domain of no-reply@ewubd.edu designates 209.85.220.41 as
+ permitted sender) smtp.mailfrom=no-reply@ewubd.edu;       dara=neutral header.i=@ewubd.edu
+Precedence: list
+Mailing-list: list fall25_allothers@ewubd.edu; contact fall25_allothers+owners@ewubd.edu
+List-ID: <fall25_allothers.ewubd.edu>
+X-Spam-Checked-In-Group: fall25_allothers@ewubd.edu
+X-Google-Group-Id: 1013081017411
+List-Post: <https://groups.google.com/a/ewubd.edu/group/fall25_allothers/post>,
+ <mailto:fall25_allothers@ewubd.edu>
+List-Help: <https://support.google.com/a/ewubd.edu/bin/topic.py?topic=25838>, <mailto:fall25_allothers+help@ewubd.edu>
+List-Archive: <https://groups.google.com/a/ewubd.edu/group/fall25_allothers/>
+List-Unsubscribe: <mailto:googlegroups-manage+1013081017411+unsubscribe@googlegroups.com>,
+ <https://groups.google.com/a/ewubd.edu/group/fall25_allothers/subscribe>
+
+--0000000000008a065f06448f70fc
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+23 November 2025
+
+
+
+*Notice*
+*Online Advising of Courses for Spring Semester 2026 *
+
+*for Undergraduate and Graduate Programs*
+
+*Pharmacy and Law will advise only GEN Courses*
+
+
+
+Students of the following categories must contact their respective advisor
+*personally* for advising of courses for Spring Semester 2026.
+
+*Programs*
+
+*Categories*
+
+*Advising Date*
+
+*Advising Time*
+
+Undergraduate Programs
+
+=C2=B7         CGPA 2.15 or less (students admitted up-to Summer 2023) and =
+for
+CGPA 2.40 or less (students admitted in Fall 2023 and onward) including on
+probation.
+
+01-02 December 2025
+
+09:00 am=E2=80=9304:00 pm
+
+Graduate Programs
+
+=C2=B7         CGPA 2.65 or less including on probation.
+
+01-02 December 2025
+
+05:00 pm=E2=80=9307:00 pm
+
+Online advising of courses for Spring Semester 2026 of EWU will be held
+using the Online Course Advising System. Students of both *Undergraduate
+and Graduate Programs *will take their own courses through online using the
+link: *https://portal.ewubd.edu* <https://portal.ewubd.edu> as per the
+schedule mentioned below:
+
+*Undergraduate Programs*
+
+
+
+*Date*
+
+*Credits Completed*
+
+*Time*
+
+03 December 2025
+
+120.5 Credits & above
+
+06:00 P.M.- 06:50 P.M.
+
+03 December 2025
+
+115.5-120 Credits
+
+07:00 P.M.- 07:50 P.M.
+
+03 December 2025
+
+110.5-115 Credits
+
+08:00 P.M.- 08:50 P.M.
+
+03 December 2025
+
+102.5-110 Credits
+
+09:00 P.M.- 09:50 P.M.
+
+03 December 2025
+
+97.5-102 Credits
+
+10:00 P.M.- 11:00 P.M.
+
+04 December 2025
+
+92.5-97 Credits
+
+06:00 P.M.- 06:50 P.M.
+
+04 December 2025
+
+85.5-92 Credits
+
+07:00 P.M.- 07:50 P.M.
+
+04 December 2025
+
+80.5-85 Credits
+
+08:00 P.M.- 08:50 P.M.
+
+04 December 2025
+
+75.5-80 Credits
+
+09:00 P.M.- 09:50 P.M.
+
+04 December 2025
+
+71.5-75 Credits
+
+10:00 P.M.- 11:00 P.M.
+
+05 December 2025
+
+66.5-71 Credits
+
+09:00 A.M.- 09:50 A.M.
+
+05 December 2025
+
+62.5-66 Credits
+
+10:00 A.M.- 10:50 A.M.
+
+05 December 2025
+
+58.5-62 Credits
+
+11:00 A.M.- 11:50 A.M.
+
+05 December 2025
+
+54.5-58 Credits
+
+02:30 P.M.- 03:50 P.M.
+
+05 December 2025
+
+51.5-54 Credits
+
+04:00 P.M.- 04:50 P.M.
+
+05 December 2025
+
+48.5-51 Credits
+
+05:00 P.M.- 05:50 P.M.
+
+05 December 2025
+
+45.5-48 Credits
+
+06:00 P.M.- 06:50 P.M.
+
+05 December 2025
+
+41.5-45 Credits
+
+07:00 P.M.- 07:50 P.M.
+
+05 December 2025
+
+36.5-41 Credits
+
+08:00 P.M.- 08:50 P.M.
+
+05 December 2025
+
+35.5-36 Credits
+
+09:00 P.M.- 09:50 P.M.
+
+05 December 2025
+
+33.5-35 Credits
+
+10:00 P.M.- 11:00 P.M.
+
+06 December 2025
+
+31.5-33 Credits
+
+09:00 A.M.- 09:50 A.M.
+
+06 December 2025
+
+29.5-31 Credits
+
+10:00 A.M.- 10:50 A.M.
+
+06 December 2025
+
+23.5-29 Credits
+
+11:00 A.M.- 11:50 A.M.
+
+06 December 2025
+
+19.5-23 Credits
+
+12:00 P.M.- 12:50 P.M.
+
+06 December 2025
+
+17.5-19 Credits
+
+01:00 P.M.- 01:50 P.M.
+
+06 December 2025
+
+11.5-17 Credits
+
+02:00 P.M.- 02:50 P.M.
+
+06 December 2025
+
+10.5-11 Credits
+
+03:00 P.M.- 03:50 P.M.
+
+06 December 2025
+
+0.5-10 Credits
+
+CE, DSA, Math, ICE, CSE, GEB, EEE, B.Pharm
+
+04:00 P.M.- 04:50 P.M.
+
+06 December 2025
+
+BBA
+
+05:00 P.M.- 05:50 P.M.
+
+06 December 2025
+
+ECO, PPHS, SOC, ENG, IS, LAW
+
+06:00 P.M.- 06:50 P.M.
+
+06 December 2025
+
+0 Credit
+
+BBA
+
+07:00 P.M.- 07:50 P.M.
+
+06 December 2025
+
+CSE, ICE
+
+08:00 P.M.- 08:50 P.M.
+
+06 December 2025
+
+CE, DSA, Math, GEB, EEE, B.Pharm
+
+09:00 P.M.- 09:50 P.M.
+
+06 December 2025
+
+ECO, PPHS, SOC, ENG, IS, LAW
+
+10:00 P.M.- 11:00 P.M.
+
+
+
+*Graduate Programs*
+
+
+
+*Date*
+
+*Credits Earned*
+
+*Time*
+
+07 December 2025
+
+0 credits & above
+
+09:00 A.M.-04:00 P.M
+
+Students of Undergraduate and Graduate Programs who somehow miss the above
+schedule or fail to take courses using the Online Advising System may
+contact the respective advisor personally on
+*08 December 2025* as per the convenience of the concerned advisor.
+
+For any help regarding advising and other administrative issues students
+may contact the respective Online Helpdesk (Email Account) which are
+mentioned below:
+
+*s/n*
+
+*Group name *
+
+*Email address *
+
+*Purpose*
+
+1
+
+CE Help Desk
+
+helpdesk-ce@ewubd.edu
+
+For advising/ course related issues
+
+2
+
+CSE Help Desk
+
+helpdesk-cse@ewubd.edu
+
+For advising/ course related issues
+
+3
+
+BBA Help Desk
+
+helpdesk-dba@ewubd.edu
+
+For advising/ course related issues
+
+4
+
+DSR Help Desk
+
+helpdesk-dsr@ewubd.edu
+
+For advising/ course related issues
+
+5
+
+ECO Help Desk
+
+helpdesk-eco@ewubd.edu
+
+For advising/ course related issues
+
+6
+
+EEE Help Desk
+
+helpdesk-eee@ewubd.edu
+
+For advising/ course related issues
+
+7
+
+GEB Help Desk
+
+helpdesk-geb@ewubd.edu
+
+For advising/ course related issues
+
+8
+
+ENG Help Desk
+
+helpdesk-eng@ewubd.edu
+
+For advising/ course related issues
+
+9
+
+DIS Help Desk
+
+helpdesk-dis@ewubd.edu
+
+For advising/ course related issues
+
+10
+
+Law Help Desk
+
+helpdesk-law@ewubd.edu
+
+For advising/ course related issues
+
+11
+
+MBA Help Desk
+
+helpdesk-mba@ewubd.edu
+
+For advising/ course related issues
+
+12
+
+MPS Help Desk
+
+helpdesk-mps@ewubd.edu
+
+For advising/ course related issues
+
+13
+
+PHRM Help Desk
+
+helpdesk-phrm@ewubd.edu
+
+For advising/ course related issues
+
+14
+
+SOC Help Desk
+
+helpdesk-soc@ewubd.edu
+
+For advising/ course related issues
+
+15
+
+Registrar=E2=80=99s Office Help Desk
+
+helpdesk-regoffice@ewubd.edu
+
+For registration/ other administrative issues
+
+16
+
+Accounts Help Desk
+
+helpdesk-accounts@ewubd.edu
+
+For tuition/ scholarship/ other financial issues
+
+17
+
+ICS Help Desk
+
+helpdesk-ics@ewubd.edu
+
+For relevant IT issues
+
+18
+
+COE Help Desk
+
+helpdesk-coe@ewubd.edu
+
+For Certificates/Transcripts/Grade Reports related issues
+
+While sending emails, students are advised to mention their name, ID
+number, mobile number and the problem clearly. Students are also advised to
+use their university email account to communicate the University.
+
+With the kind approval of the Vice Chancellor this is for information and
+necessary action by all concerned.
+
+
+
+
+
+Mashfiqur Rahman
+
+Registrar
+East West University
+
+--0000000000008a065f06448f70fc
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr"><p class=3D"MsoNormal" style=3D"background-image:initial;b=
+ackground-position:initial;background-size:initial;background-repeat:initia=
+l;background-origin:initial;background-clip:initial;margin:0in;font-size:11=
+pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"font-size:=
+10pt;font-family:Arial,sans-serif;color:black">23 November 2025</span><span=
+ style=3D"font-size:10pt;font-family:Arial,sans-serif"></span></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><spa=
+n style=3D"font-size:16pt;font-family:Arial,sans-serif;border:1pt none wind=
+owtext;padding:0in">=C2=A0</span></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><spa=
+n style=3D"font-size:16pt;font-family:Arial,sans-serif;color:black;border:1=
+pt none windowtext;padding:0in">Notice</span></b><span style=3D"font-size:1=
+2pt;font-family:Arial,sans-serif;color:black"><br>
+<b><span style=3D"border:1pt none windowtext;padding:0in">Online Advising o=
+f Courses for Spring Semester 2026 </span></b></span><b><span style=3D"font=
+-size:12pt;font-family:Arial,sans-serif;border:1pt none windowtext;padding:=
+0in"></span></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><spa=
+n style=3D"font-size:12pt;font-family:Arial,sans-serif;color:black;border:1=
+pt none windowtext;padding:0in">for
+Undergraduate and Graduate Programs</span></b><b><span style=3D"font-size:1=
+2pt;font-family:Arial,sans-serif;border:1pt none windowtext;padding:0in"></=
+span></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><spa=
+n style=3D"font-size:12pt;font-family:Arial,sans-serif;color:black;border:1=
+pt none windowtext;padding:0in">Pharmacy
+and Law will advise only GEN Courses</span></b><b><span style=3D"font-size:=
+12pt;font-family:Arial,sans-serif;border:1pt none windowtext;padding:0in"><=
+/span></b></p>
+
+<p class=3D"MsoNormal" style=3D"margin:6pt 0in;text-align:justify;backgroun=
+d-image:initial;background-position:initial;background-size:initial;backgro=
+und-repeat:initial;background-origin:initial;background-clip:initial;font-s=
+ize:11pt;font-family:&quot;Times New Roman&quot;,serif"><a name=3D"_Hlk1236=
+41606"></a><span style=3D"font-size:14pt;font-family:Arial,sans-serif">=C2=
+=A0</span></p>
+
+<p class=3D"MsoNormal" style=3D"margin:6pt 0in 12pt;text-align:justify;back=
+ground-image:initial;background-position:initial;background-size:initial;ba=
+ckground-repeat:initial;background-origin:initial;background-clip:initial;f=
+ont-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D=
+"font-size:14pt;font-family:Arial,sans-serif;color:black">Students
+of the following categories must contact their respective advisor <b>person=
+ally</b>
+for advising of courses for Spring Semester 2026.</span><span style=3D"font=
+-size:15pt;font-family:Arial,sans-serif"></span></p>
+
+<table class=3D"gmail-MsoTableGrid" border=3D"1" cellspacing=3D"0" cellpadd=
+ing=3D"0" width=3D"606" style=3D"width:454.25pt;border-collapse:collapse;bo=
+rder:none">
+ <tbody><tr>
+  <td width=3D"103" valign=3D"top" style=3D"width:77.55pt;border:1pt solid =
+windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in 0in 6pt;text-align:justify;fon=
+t-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span style=
+=3D"font-size:10pt;font-family:Arial,sans-serif">Programs</span></b></p>
+  </td>
+ =20
+  <td width=3D"280" valign=3D"top" style=3D"width:210.2pt;border-top:1pt so=
+lid windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid wi=
+ndowtext;border-left:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in 0in 6pt;text-align:justify;fon=
+t-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span style=
+=3D"font-size:10pt;font-family:Arial,sans-serif">Categories</span></b></p>
+  </td>
+ =20
+  <td width=3D"90" valign=3D"top" style=3D"width:67.5pt;border-top:1pt soli=
+d windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid wind=
+owtext;border-left:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:0in 0in 6pt;text-=
+align:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif">=
+<b><span style=3D"font-size:10pt;font-family:Arial,sans-serif">Advising
+  Date</span></b></p>
+  </td>
+ =20
+  <td width=3D"132" valign=3D"top" style=3D"width:99pt;border-top:1pt solid=
+ windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid windo=
+wtext;border-left:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in 0in 6pt;text-align:justify;fon=
+t-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span style=
+=3D"font-size:10pt;font-family:Arial,sans-serif">Advising
+  Time</span></b></p>
+  </td>
+ =20
+ </tr>
+ <tr style=3D"height:53.05pt">
+  <td width=3D"103" style=3D"width:77.55pt;border-right:1pt solid windowtex=
+t;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;borde=
+r-top:none;padding:0in 5.4pt;height:53.05pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:0in 0in 6pt;text-=
+align:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif">=
+<span style=3D"font-size:10pt;font-family:Arial,sans-serif">Undergraduate
+  Programs</span></p>
+  </td>
+ =20
+  <td width=3D"280" style=3D"width:210.2pt;border-top:none;border-left:none=
+;border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddi=
+ng:0in 5.4pt;height:53.05pt">
+  <p class=3D"gmail-MsoListParagraph" style=3D"margin:0in 0in 0in 16pt;text=
+-align:justify;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif=
+"><span style=3D"font-size:10pt;font-family:Symbol">=C2=B7<span style=3D"fo=
+nt-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alter=
+nates:normal;font-size-adjust:none;font-kerning:auto;font-feature-settings:=
+normal;font-stretch:normal;font-size:7pt;line-height:normal;font-family:&qu=
+ot;Times New Roman&quot;">=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0
+  </span></span><span style=3D"font-size:10pt;font-family:Arial,sans-serif"=
+>CGPA 2.15 or
+  less (students admitted up-to Summer 2023) and for CGPA 2.40 or less
+  (students admitted in Fall 2023 and onward) including on probation.</span=
+></p>
+  </td>
+ =20
+  <td width=3D"90" style=3D"width:67.5pt;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:53.05pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:0in 0in 6pt;text-=
+align:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif">=
+<span style=3D"font-size:10pt;font-family:Arial,sans-serif">01-02 December
+  2025</span></p>
+  </td>
+ =20
+  <td width=3D"132" style=3D"width:99pt;border-top:none;border-left:none;bo=
+rder-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding:=
+0in 5.4pt;height:53.05pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in 0in 6pt;text-align:justify;fon=
+t-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"f=
+ont-size:10pt;font-family:Arial,sans-serif">09:00 am=E2=80=9304:00
+  pm</span></p>
+  </td>
+ =20
+ </tr>
+ <tr style=3D"height:28.3pt">
+  <td width=3D"103" style=3D"width:77.55pt;border-right:1pt solid windowtex=
+t;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;borde=
+r-top:none;padding:0in 5.4pt;height:28.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:0in 0in 6pt;text-=
+align:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif">=
+<span style=3D"font-size:10pt;font-family:Arial,sans-serif">Graduate
+  Programs</span></p>
+  </td>
+ =20
+  <td width=3D"280" style=3D"width:210.2pt;border-top:none;border-left:none=
+;border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddi=
+ng:0in 5.4pt;height:28.3pt">
+  <p class=3D"gmail-MsoListParagraph" style=3D"margin:0in 0in 6pt 16pt;text=
+-align:justify;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif=
+"><span style=3D"font-size:10pt;font-family:Symbol">=C2=B7<span style=3D"fo=
+nt-variant-numeric:normal;font-variant-east-asian:normal;font-variant-alter=
+nates:normal;font-size-adjust:none;font-kerning:auto;font-feature-settings:=
+normal;font-stretch:normal;font-size:7pt;line-height:normal;font-family:&qu=
+ot;Times New Roman&quot;">=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0
+  </span></span><span style=3D"font-size:10pt;font-family:Arial,sans-serif"=
+>CGPA 2.65 or
+  less including on probation.</span></p>
+  </td>
+ =20
+  <td width=3D"90" style=3D"width:67.5pt;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:28.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:0in 0in 6pt;text-=
+align:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif">=
+<span style=3D"font-size:10pt;font-family:Arial,sans-serif">01-02 December
+  2025</span></p>
+  </td>
+ =20
+  <td width=3D"132" style=3D"width:99pt;border-top:none;border-left:none;bo=
+rder-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding:=
+0in 5.4pt;height:28.3pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in 0in 6pt;text-align:justify;fon=
+t-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"f=
+ont-size:10pt;font-family:Arial,sans-serif">05:00 pm=E2=80=9307:00
+  pm</span></p>
+  </td>
+ =20
+ </tr>
+</tbody></table>
+
+
+
+<p class=3D"MsoNormal" style=3D"margin:0.25in 0in 0in;text-align:justify;li=
+ne-height:150%;background-image:initial;background-position:initial;backgro=
+und-size:initial;background-repeat:initial;background-origin:initial;backgr=
+ound-clip:initial;font-size:11pt;font-family:&quot;Times New Roman&quot;,se=
+rif"><span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-=
+serif;color:black">Online advising of courses for Spring Semester 2026
+of EWU will be held using the Online Course Advising System. Students of
+both=C2=A0<b><span style=3D"border:1pt none windowtext;padding:0in">Undergr=
+aduate and Graduate Programs=C2=A0</span></b>will take
+their own courses through online using the link:=C2=A0</span><span style=3D=
+"color:black"><a href=3D"https://portal.ewubd.edu" style=3D"color:blue"><b>=
+<span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-serif=
+;color:black;border:1pt none windowtext;padding:0in">https://portal.ewubd.e=
+du</span></b></a></span><span style=3D"font-size:10pt;line-height:150%;font=
+-family:Arial,sans-serif;color:black">=C2=A0as
+per the schedule mentioned below:</span><span style=3D"font-size:10pt;line-=
+height:150%;font-family:Arial,sans-serif"></span></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><u><=
+span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;color:black;bor=
+der:1pt none windowtext;padding:0in">Undergraduate Programs</span></u></b><=
+b><u><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1p=
+t none windowtext;padding:0in"></span></u></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><u><=
+span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none=
+ windowtext;padding:0in"><span style=3D"text-decoration-line:none">=C2=A0</=
+span></span></u></b></p>
+
+<table class=3D"gmail-MsoTableGrid" border=3D"1" cellspacing=3D"0" cellpadd=
+ing=3D"0" width=3D"606" style=3D"width:454.25pt;border-collapse:collapse;bo=
+rder:none">
+ <thead>
+  <tr>
+   <td width=3D"144" style=3D"width:107.75pt;border:1pt solid windowtext;pa=
+dding:0in 5.4pt">
+   <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-=
+height:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quo=
+t;,serif"><b><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;b=
+order:1pt none windowtext;padding:0in">Date</span></b><span style=3D"font-s=
+ize:10.5pt;font-family:Arial,sans-serif"></span></p>
+   </td>
+   <td width=3D"150" style=3D"width:112.5pt;border-top:1pt solid windowtext=
+;border-right:1pt solid windowtext;border-bottom:1pt solid windowtext;borde=
+r-left:none;padding:0in 5.4pt">
+   <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-=
+height:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quo=
+t;,serif"><b><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;b=
+order:1pt none windowtext;padding:0in">Credits Completed</span></b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif"></span></p>
+   </td>
+   <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:1pt sol=
+id windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid win=
+dowtext;border-left:none;padding:0in 5.4pt">
+   <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-=
+height:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quo=
+t;,serif"><b><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;b=
+order:1pt none windowtext;padding:0in">Time</span></b></p>
+   </td>
+  </tr>
+ </thead>
+ <tbody><tr>
+  <td width=3D"144" valign=3D"top" style=3D"width:107.75pt;border-right:1pt=
+ solid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid =
+windowtext;border-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03 December 2025</span></p>
+  </td>
+  <td width=3D"150" style=3D"width:112.5pt;border-top:none;border-left:none=
+;border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddi=
+ng:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">120.5 Credits &amp;=C2=A0above</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06:00 P.M.- 06:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" valign=3D"top" style=3D"width:107.75pt;border-right:1pt=
+ solid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid =
+windowtext;border-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">115.5-120 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">07:00 P.M.- 07:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" valign=3D"top" style=3D"width:107.75pt;border-right:1pt=
+ solid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid =
+windowtext;border-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">110.5-115 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">08:00 P.M.- 08:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" valign=3D"top" style=3D"width:107.75pt;border-right:1pt=
+ solid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid =
+windowtext;border-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">102.5-110 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 P.M.- 09:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" valign=3D"top" style=3D"width:107.75pt;border-right:1pt=
+ solid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid =
+windowtext;border-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">97.5-102 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 P.M.- 11:00 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">92.5-97 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06:00 P.M.- 06:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">85.5-92 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">07:00 P.M.- 07:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">80.5-85 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">08:00 P.M.- 08:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">75.5-80 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 P.M.- 09:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">71.5-75 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 P.M.- 11:00 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">66.5-71 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 A.M.- 09:50 A.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">62.5-66 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 A.M.- 10:50 A.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">58.5-62 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">11:00 A.M.- 11:50 A.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">54.5-58 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">02:30 P.M.- 03:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">51.5-54 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04:00 P.M.- 04:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">48.5-51 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05:00 P.M.- 05:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">45.5-48 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06:00 P.M.- 06:50 P.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">41.5-45 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">07:00 P.M.- 07:50 P.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">36.5-41 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">08:00 P.M.- 08:50 P.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">35.5-36 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 P.M.- 09:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">33.5-35 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 P.M.- 11:00 P.M.</span></p>
+  </td>
+ </tr>
+ <tr>
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">31.5-33 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 A.M.- 09:50 A.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">29.5-31 Credits</span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 A.M.- 10:50 A.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-family:&quot;Aptos Narrow&quot;,sans-serif;col=
+or:black">23.5-29 Credits</span><span style=3D"font-size:10.5pt;font-family=
+:Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">11:00 A.M.- 11:50 A.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-family:&quot;Aptos Narrow&quot;,sans-serif;col=
+or:black">19.5-23 Credits</span><span style=3D"font-size:10.5pt;font-family=
+:Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">12:00 P.M.- 12:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-family:&quot;Aptos Narrow&quot;,sans-serif;col=
+or:black">17.5-19 Credits</span><span style=3D"font-size:10.5pt;font-family=
+:Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">01:00 P.M.- 01:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-family:&quot;Aptos Narrow&quot;,sans-serif;col=
+or:black">11.5-17 Credits</span><span style=3D"font-size:10.5pt;font-family=
+:Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">02:00 P.M.- 02:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:19.3pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" valign=3D"bottom" style=3D"width:112.5pt;border-top:non=
+e;border-left:none;border-bottom:1pt solid windowtext;border-right:1pt soli=
+d windowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-family:&quot;Aptos Narrow&quot;,sans-serif;col=
+or:black">10.5-11 Credits</span><span style=3D"font-size:10.5pt;font-family=
+:Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></p>
+  </td>
+  <td width=3D"312" colspan=3D"2" style=3D"width:3.25in;border-top:none;bor=
+der-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid win=
+dowtext;padding:0in 5.4pt;height:19.3pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">03:00 P.M.- 03:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:35.5pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:35.5pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" rowspan=3D"3" style=3D"width:112.5pt;border-top:none;bo=
+rder-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid wi=
+ndowtext;padding:0in 5.4pt;height:35.5pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">0.5-10 Credits</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:35.5pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">CE, </span><span style=3D"font-family:&q=
+uot;Aptos Narrow&quot;,sans-serif;color:black">DSA, </span><span style=3D"f=
+ont-size:10.5pt;font-family:Arial,sans-serif;border:1pt none windowtext;pad=
+ding:0in">Math, ICE, CSE, GEB, EEE, B.Pharm </span><b><span style=3D"font-s=
+ize:10.5pt;font-family:Arial,sans-serif;border:1pt none windowtext;padding:=
+0in"></span></b></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:35.5pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">04:00 P.M.- 04:50 P.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">BBA</span><b><span style=3D"font-size:10.5pt;font-family:=
+Arial,sans-serif;border:1pt none windowtext;padding:0in"></span></b></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">05:00 P.M.- 05:50 P.M.</span><b><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in"></span></b></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">ECO, PPHS, SOC, ENG, IS, LAW</span></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06:00 P.M.- 06:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"150" rowspan=3D"4" style=3D"width:112.5pt;border-top:none;bo=
+rder-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid wi=
+ndowtext;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">0 Credit</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">BBA</span></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">07:00 P.M.- 07:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">CSE, ICE</span></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">08:00 P.M.- 08:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">CE, </span><span style=3D"font-family:&quot;Aptos Narrow&=
+quot;,sans-serif;color:black">DSA, </span><span style=3D"font-size:10.5pt;f=
+ont-family:Arial,sans-serif;border:1pt none windowtext;padding:0in">Math, G=
+EB, EEE, B.Pharm</span></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">09:00 P.M.- 09:50 P.M.</span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:31pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">06 December 2025</span></p>
+  </td>
+  <td width=3D"144" style=3D"width:1.5in;border-top:none;border-left:none;b=
+order-bottom:1pt solid windowtext;border-right:1pt solid windowtext;padding=
+:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><span st=
+yle=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none window=
+text;padding:0in">ECO, PPHS, SOC, ENG, IS, LAW</span></p>
+  </td>
+  <td width=3D"168" style=3D"width:1.75in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:31pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;line-h=
+eight:16pt;margin:0in;font-size:11pt;font-family:&quot;Times New Roman&quot=
+;,serif"><span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;borde=
+r:1pt none windowtext;padding:0in">10:00 P.M.- 11:00 P.M.</span></p>
+  </td>
+ </tr>
+</tbody></table>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><u><=
+span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none=
+ windowtext;padding:0in"><span style=3D"text-decoration-line:none">=C2=A0</=
+span></span></u></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><u><=
+span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;color:black;bor=
+der:1pt none windowtext;padding:0in">Graduate Programs</span></u></b><b><u>=
+<span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt non=
+e windowtext;padding:0in"></span></u></b></p>
+
+<p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;backgrou=
+nd-image:initial;background-position:initial;background-size:initial;backgr=
+ound-repeat:initial;background-origin:initial;background-clip:initial;margi=
+n:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><u><=
+span style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none=
+ windowtext;padding:0in"><span style=3D"text-decoration-line:none">=C2=A0</=
+span></span></u></b></p>
+
+<table class=3D"gmail-MsoTableGrid" border=3D"1" cellspacing=3D"0" cellpadd=
+ing=3D"0" width=3D"606" style=3D"width:454.25pt;border-collapse:collapse;bo=
+rder:none">
+ <tbody><tr>
+  <td width=3D"144" style=3D"width:107.75pt;border:1pt solid windowtext;pad=
+ding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span=
+ style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none win=
+dowtext;padding:0in">Date</span></b><span style=3D"font-size:10.5pt;font-fa=
+mily:Arial,sans-serif"></span></p>
+  </td>
+  <td width=3D"150" style=3D"width:112.5pt;border-top:1pt solid windowtext;=
+border-right:1pt solid windowtext;border-bottom:1pt solid windowtext;border=
+-left:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span=
+ style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none win=
+dowtext;padding:0in">Credits Earned</span></b><span style=3D"font-size:10.5=
+pt;font-family:Arial,sans-serif"></span></p>
+  </td>
+  <td width=3D"312" style=3D"width:3.25in;border-top:1pt solid windowtext;b=
+order-right:1pt solid windowtext;border-bottom:1pt solid windowtext;border-=
+left:none;padding:0in 5.4pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"text-align:center;margin=
+:0in;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><b><span=
+ style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none win=
+dowtext;padding:0in">Time</span></b><span style=3D"font-size:10.5pt;font-fa=
+mily:Arial,sans-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:25.6pt">
+  <td width=3D"144" style=3D"width:107.75pt;border-right:1pt solid windowte=
+xt;border-bottom:1pt solid windowtext;border-left:1pt solid windowtext;bord=
+er-top:none;padding:0in 5.4pt;height:25.6pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:3pt 0in;text-alig=
+n:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><spa=
+n style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none wi=
+ndowtext;padding:0in">07 December 2025</span></p>
+  </td>
+  <td width=3D"150" style=3D"width:112.5pt;border-top:none;border-left:none=
+;border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddi=
+ng:0in 5.4pt;height:25.6pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:3pt 0in;text-alig=
+n:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><spa=
+n style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none wi=
+ndowtext;padding:0in">0 credits &amp; above</span></p>
+  </td>
+  <td width=3D"312" style=3D"width:3.25in;border-top:none;border-left:none;=
+border-bottom:1pt solid windowtext;border-right:1pt solid windowtext;paddin=
+g:0in 5.4pt;height:25.6pt">
+  <p class=3D"MsoNormal" align=3D"center" style=3D"margin:3pt 0in;text-alig=
+n:center;font-size:11pt;font-family:&quot;Times New Roman&quot;,serif"><spa=
+n style=3D"font-size:10.5pt;font-family:Arial,sans-serif;border:1pt none wi=
+ndowtext;padding:0in">09:00 A.M.-04:00 P.M</span></p>
+  </td>
+ </tr>
+</tbody></table>
+
+<p class=3D"MsoNormal" style=3D"margin:12pt 0in 6pt;text-align:justify;line=
+-height:150%;background-image:initial;background-position:initial;backgroun=
+d-size:initial;background-repeat:initial;background-origin:initial;backgrou=
+nd-clip:initial;font-size:11pt;font-family:&quot;Times New Roman&quot;,seri=
+f"><span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-se=
+rif;color:black">Students
+of Undergraduate and Graduate Programs who somehow miss the above schedule =
+or
+fail to take courses using the Online Advising System may contact the
+respective advisor personally on <br>
+<b>08 December 2025</b> as per the convenience of the concerned advisor.</s=
+pan><span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-s=
+erif"></span></p>
+
+<p class=3D"MsoNormal" style=3D"margin:0in 0in 15pt;text-align:justify;line=
+-height:150%;background-image:initial;background-position:initial;backgroun=
+d-size:initial;background-repeat:initial;background-origin:initial;backgrou=
+nd-clip:initial;font-size:11pt;font-family:&quot;Times New Roman&quot;,seri=
+f"><span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-se=
+rif;color:black">For any help regarding advising and other
+administrative issues students may contact the respective Online Helpdesk
+(Email Account) which are mentioned below:</span><span style=3D"font-size:1=
+0pt;line-height:150%;font-family:Arial,sans-serif"></span></p>
+
+<table class=3D"gmail-MsoNormalTable" border=3D"0" cellspacing=3D"0" cellpa=
+dding=3D"0" align=3D"left" width=3D"641" style=3D"width:480.8pt;background-=
+image:initial;background-position:initial;background-size:initial;backgroun=
+d-repeat:initial;background-origin:initial;background-clip:initial;border-c=
+ollapse:collapse;margin-left:6.75pt;margin-right:6.75pt">
+ <thead>
+  <tr style=3D"height:14.5pt">
+   <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+   <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&q=
+uot;Times New Roman&quot;,serif"><b><span style=3D"font-size:10pt;font-fami=
+ly:Calibri,sans-serif;color:black">s/n</span></b><span style=3D"font-size:1=
+0pt;font-family:Calibri,sans-serif"></span></p>
+   </td>
+   <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:1pt s=
+olid windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid w=
+indowtext;border-left:none;padding:0in 5.4pt;height:14.5pt">
+   <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&q=
+uot;Times New Roman&quot;,serif"><b><span style=3D"font-size:10pt;font-fami=
+ly:Calibri,sans-serif;color:black">Group name=C2=A0</span></b><span style=
+=3D"font-size:10pt;font-family:Calibri,sans-serif"></span></p>
+   </td>
+   <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:1pt s=
+olid windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid w=
+indowtext;border-left:none;padding:0in 5.4pt;height:14.5pt">
+   <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&q=
+uot;Times New Roman&quot;,serif"><b><span style=3D"font-size:10pt;font-fami=
+ly:Calibri,sans-serif;color:black">Email address=C2=A0</span></b><span styl=
+e=3D"font-size:10pt;font-family:Calibri,sans-serif"></span></p>
+   </td>
+   <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:1pt s=
+olid windowtext;border-right:1pt solid windowtext;border-bottom:1pt solid w=
+indowtext;border-left:none;padding:0in 5.4pt;height:14.5pt">
+   <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&q=
+uot;Times New Roman&quot;,serif"><b><span style=3D"font-size:10pt;font-fami=
+ly:Calibri,sans-serif;color:black">Purpose</span></b><span style=3D"font-si=
+ze:10pt;font-family:Calibri,sans-serif"></span></p>
+   </td>
+  </tr>
+ </thead>
+ <tbody><tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">1</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">CE Help Desk</span><span style=3D"font-size:=
+10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-ce@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span styl=
+e=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-ce=
+@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Calib=
+ri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">2</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">CSE Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-cse@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-c=
+se@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">3</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">BBA Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-dba@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-d=
+ba@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">4</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">DSR Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-dsr@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-d=
+sr@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">5</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">ECO Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-eco@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-e=
+co@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">6</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">EEE Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-eee@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-e=
+ee@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">7</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">GEB Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-geb@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-g=
+eb@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">8</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">ENG Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-eng@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-e=
+ng@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">9</span><span style=3D"font-size:10pt;font-f=
+amily:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">DIS Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-dis@ewubd.edu" style=3D"color:blue"><span style=3D"font-size:10=
+pt;font-family:Calibri,sans-serif">helpdesk-dis@ewubd.edu</span></a></span>=
+<span style=3D"font-size:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">10</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">Law Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-law@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-l=
+aw@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">11</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">MBA Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-mba@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-m=
+ba@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">12</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">MPS Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-mps@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-m=
+ps@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">13</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">PHRM Help Desk</span><span style=3D"font-siz=
+e:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-phrm@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span st=
+yle=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-=
+phrm@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">14</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">SOC Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-soc@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;font-family:Calibri,sans-serif;color:black">helpdesk-s=
+oc@ewubd.edu</span></a></span><span style=3D"font-size:10pt;font-family:Cal=
+ibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For advising/ course
+  related issues</span><span style=3D"font-size:10pt;font-family:Calibri,sa=
+ns-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">15</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">Registrar=E2=80=99s Office
+  Help Desk</span><span style=3D"font-size:10pt;font-family:Calibri,sans-se=
+rif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-regoffice@ewubd.edu" target=3D"_blank" style=3D"color:blue"><sp=
+an style=3D"font-size:10pt;color:black">helpdesk-regoffice@ewubd.edu</span>=
+</a></span><span style=3D"font-size:10pt;font-family:Calibri,sans-serif"></=
+span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For registration/
+  other administrative issues</span><span style=3D"font-size:10pt;font-fami=
+ly:Calibri,sans-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">16</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">Accounts Help Desk</span><span style=3D"font=
+-size:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-accounts@ewubd.edu" target=3D"_blank" style=3D"color:blue"><spa=
+n style=3D"font-size:10pt;color:black">helpdesk-accounts@ewubd.edu</span></=
+a></span><span style=3D"font-size:10pt;font-family:Calibri,sans-serif"></sp=
+an></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For tuition/
+  scholarship/ other financial issues</span><span style=3D"font-size:10pt;f=
+ont-family:Calibri,sans-serif"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">17</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">ICS Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-ics@ewubd.edu" target=3D"_blank" style=3D"color:blue"><span sty=
+le=3D"font-size:10pt;color:black">helpdesk-ics@ewubd.edu</span></a></span><=
+span style=3D"font-size:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For relevant IT
+  issues</span><span style=3D"font-size:10pt;font-family:Calibri,sans-serif=
+"></span></p>
+  </td>
+ </tr>
+ <tr style=3D"height:14.5pt">
+  <td width=3D"35" valign=3D"top" style=3D"width:25.9pt;border-right:1pt so=
+lid windowtext;border-bottom:1pt solid windowtext;border-left:1pt solid win=
+dowtext;border-top:none;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">18</span><span style=3D"font-size:10pt;font-=
+family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"158" valign=3D"top" style=3D"width:118.2pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">COE Help Desk</span><span style=3D"font-size=
+:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"217" valign=3D"top" style=3D"width:162.4pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"color:black"><a href=3D"mail=
+to:helpdesk-coe@ewubd.edu" style=3D"color:blue"><span style=3D"font-size:10=
+pt;color:black">helpdesk-coe@ewubd.edu</span></a></span><span style=3D"font=
+-size:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+  <td width=3D"232" valign=3D"top" style=3D"width:174.3pt;border-top:none;b=
+order-left:none;border-bottom:1pt solid windowtext;border-right:1pt solid w=
+indowtext;padding:0in 5.4pt;height:14.5pt">
+  <p class=3D"MsoNormal" style=3D"margin:0in;font-size:11pt;font-family:&qu=
+ot;Times New Roman&quot;,serif"><span style=3D"font-size:10pt;font-family:C=
+alibri,sans-serif;color:black">For
+  Certificates/Transcripts/Grade Reports related issues</span><span style=
+=3D"font-size:10pt;font-family:Calibri,sans-serif"></span></p>
+  </td>
+ </tr>
+</tbody></table>
+
+<p class=3D"MsoNormal" style=3D"margin:24pt 0in 15pt;text-align:justify;lin=
+e-height:150%;background-image:initial;background-position:initial;backgrou=
+nd-size:initial;background-repeat:initial;background-origin:initial;backgro=
+und-clip:initial;font-size:11pt;font-family:&quot;Times New Roman&quot;,ser=
+if"><span style=3D"font-size:10pt;line-height:150%;font-family:Arial,sans-s=
+erif;color:black">While
+sending emails, students are advised to mention their name, ID number, mobi=
+le
+number and the problem clearly. Students are also advised to use their univ=
+ersity
+email account to communicate the University.</span><span style=3D"font-size=
+:10pt;line-height:150%;font-family:Arial,sans-serif"></span></p>
+
+<p class=3D"MsoNormal" style=3D"margin:0in 0in 15pt;text-align:justify;line=
+-height:150%;background-image:initial;background-position:initial;backgroun=
+d-size:initial;background-repeat:initial;background-origin:initial;backgrou=
+nd-clip:initial;font-size:11pt;font-family:&quot;Times New Roman&quot;,seri=
+f"><span style=3D"font-size:9.5pt;line-height:150%;font-family:Arial,sans-s=
+erif;color:black">With the kind approval of the Vice
+Chancellor this is for information and necessary action by all concerned.</=
+span><span style=3D"font-size:9.5pt;line-height:150%;font-family:Arial,sans=
+-serif"></span></p>
+
+<p class=3D"MsoNormal" style=3D"text-align:justify;background-image:initial=
+;background-position:initial;background-size:initial;background-repeat:init=
+ial;background-origin:initial;background-clip:initial;margin:0in;font-size:=
+11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"font-siz=
+e:10pt;font-family:Arial,sans-serif">=C2=A0</span></p>
+
+<p class=3D"MsoNormal" style=3D"text-align:justify;background-image:initial=
+;background-position:initial;background-size:initial;background-repeat:init=
+ial;background-origin:initial;background-clip:initial;margin:0in;font-size:=
+11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"font-siz=
+e:10pt;font-family:Arial,sans-serif">=C2=A0</span></p>
+
+<p class=3D"MsoNormal" style=3D"text-align:justify;background-image:initial=
+;background-position:initial;background-size:initial;background-repeat:init=
+ial;background-origin:initial;background-clip:initial;margin:0in;font-size:=
+11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"font-siz=
+e:10pt;font-family:Arial,sans-serif;color:black">Mashfiqur Rahman</span><sp=
+an style=3D"font-size:10pt;font-family:Arial,sans-serif"></span></p>
+
+<p class=3D"MsoNormal" style=3D"text-align:justify;background-image:initial=
+;background-position:initial;background-size:initial;background-repeat:init=
+ial;background-origin:initial;background-clip:initial;margin:0in;font-size:=
+11pt;font-family:&quot;Times New Roman&quot;,serif"><span style=3D"font-siz=
+e:10pt;font-family:Arial,sans-serif;color:black">Registrar</span><span styl=
+e=3D"font-size:10pt;font-family:Arial,sans-serif"></span></p>
+
+<span style=3D"font-size:10pt;font-family:Arial,sans-serif">East West Unive=
+rsity</span></div>
+
+--0000000000008a065f06448f70fc--

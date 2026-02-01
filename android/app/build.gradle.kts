@@ -8,9 +8,7 @@ plugins {
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 29  // Android 10 - Oppo A15 compatible
-    // buildToolsVersion = "34.0.0" (Removed to allow auto-selection)
-    // ndkVersion = flutter.ndkVersion
+    compileSdk = 36  // Upgraded to build with latest plugins. Checks compatibility for minSdk (21)
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,9 +25,8 @@ android {
         applicationId = "com.rxxeron.ewumate"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Android 10 (API 29) compatible - Oppo A15 target
-        minSdk = 21
-        targetSdk = 29
+        minSdk = 21   // Keeps support for older devices (Android 5.0+)
+        targetSdk = 34 // Upgraded for Play Store compliance
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

@@ -9,9 +9,13 @@ import 'core/services/fcm_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // FIX: Removed "options: DefaultFirebaseOptions..."
-  // This allows the app to use the google-services.json file instead.
-  await Firebase.initializeApp();
+  // FIX: Make Firebase initialization non-blocking to handle devices without Google Play Services
+  // This allows the app to launch even if Firebase fails to initialize
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('[Main] Firebase init error (non-fatal): $e');
+  }
 
   // Initialize Services (non-blocking, fire-and-forget)
   FCMService().initialize().catchError((e) {

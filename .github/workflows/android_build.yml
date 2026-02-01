@@ -1,9 +1,8 @@
-name: Build Debug APK
+name: Manual Debug Build
 
-on:
-  push:
-    branches: [ "main", "master" ]
-  workflow_dispatch: # Allows you to manually click "Run workflow" from GitHub UI
+# This is the "Manual Only" trigger
+on: 
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -28,7 +27,7 @@ jobs:
           cache: true
 
       # --- 2. RESTORE FIREBASE CONFIG ---
-      # This prevents the "File google-services.json is missing" error
+      # CRITICAL: Build will fail without this secret!
       - name: Create google-services.json
         env:
           GOOGLE_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
@@ -40,12 +39,10 @@ jobs:
         run: flutter pub get
 
       # --- 4. BUILD THE DEBUG APK ---
-      # --debug: Builds a version easier to install on older phones
       - name: Build Debug APK
         run: flutter build apk --debug
 
       # --- 5. UPLOAD ARTIFACT ---
-      # This allows you to download the APK from the GitHub website
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

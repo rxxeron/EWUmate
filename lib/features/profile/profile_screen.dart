@@ -43,6 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchUserData() async {
     if (user == null) return;
+    
+    setState(() => _loading = true);
     _emailCtrl.text = user!.email ?? '';
 
     // Try cache first
@@ -74,6 +76,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       debugPrint("Error loading profile: $e");
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -275,7 +279,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(padding: const EdgeInsets.only(right: 16), child: saveButton),
         ],
       ),
-      body: SingleChildScrollView(
+      body: _loading && _nameCtrl.text.isEmpty
+          ? const Center(
+              child: CircularProgressIndicator(color: Colors.cyanAccent))
+          : SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Column(
           children: [

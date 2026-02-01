@@ -58,16 +58,37 @@ class CourseRepository {
   List<List<Course>> _parseGeneration(Map<String, dynamic>? data, String id) {
     if (data == null) return [];
 
-    final combinations = List<List<dynamic>>.from(data['combinations'] ?? []);
+    final combinations = List<dynamic>.from(data['combinations'] ?? []);
     List<List<Course>> resultSchedules = [];
 
-    for (final scheduleData in combinations) {
-      List<Course> schedule = [];
-      for (final courseData in scheduleData) {
-        schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
-      }
-      if (schedule.isNotEmpty) {
-        resultSchedules.add(schedule);
+    for (final scheduleItem in combinations) {
+      // New format: each scheduleItem is a map with 'scheduleId' and 'sections' (map of sections)
+      if (scheduleItem is Map<String, dynamic>) {
+        final sections = scheduleItem['sections'] as Map<String, dynamic>?;
+        if (sections != null) {
+          List<Course> schedule = [];
+          // Convert sections map to list
+          final sectionsList = sections.values.toList();
+          for (final courseData in sectionsList) {
+            if (courseData is Map<String, dynamic>) {
+              schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
+            }
+          }
+          if (schedule.isNotEmpty) {
+            resultSchedules.add(schedule);
+          }
+        }
+      } else if (scheduleItem is List) {
+        // Legacy format: array of sections (for backwards compatibility)
+        List<Course> schedule = [];
+        for (final courseData in scheduleItem) {
+          if (courseData is Map<String, dynamic>) {
+            schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
+          }
+        }
+        if (schedule.isNotEmpty) {
+          resultSchedules.add(schedule);
+        }
       }
     }
     return resultSchedules;

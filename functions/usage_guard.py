@@ -92,10 +92,10 @@ def check_rate_limit(user_id, action_type, limit=10, window_minutes=60):
     Note: usage of this function incurs Firestore costs (Reads/Writes).
     Use sparingly (e.g. only on heavy actions).
     """
-    # START DATE ENFORCEMENT: Only enforce after Feb 1, 2026
-    enforcement_start = datetime.datetime(2026, 2, 1)
+    # START DATE ENFORCEMENT: Only enforce after Feb 15, 2026 (grace period)
+    enforcement_start = datetime.datetime(2026, 2, 15)
     if datetime.datetime.now() < enforcement_start:
-         return True, "Enforcement starts Feb 1, 2026"
+         return True, "Rate limiting grace period active"
 
     try:
         db = get_db()

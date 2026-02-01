@@ -320,9 +320,21 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white54),
-                  onPressed: () => _deleteException(ex),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (type == 'makeup')
+                      IconButton(
+                        icon:
+                            const Icon(Icons.edit, color: Colors.cyanAccent),
+                        onPressed: () => _editMakeupFromPending(ex),
+                        tooltip: "Edit Makeup",
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.white54),
+                      onPressed: () => _deleteException(ex),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -330,6 +342,47 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         );
       },
     );
+  }
+
+  TimeOfDay? _parseTimeOfDay(String? timeStr) {
+    if (timeStr == null || timeStr.trim().isEmpty) return null;
+    try {
+      final dt = DateFormat('h:mm a').parse(timeStr.trim());
+      return TimeOfDay.fromDateTime(dt);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _editMakeupFromPending(Map<String, dynamic> ex) async {
+    final id = ex['id']?.toString() ?? '';
+    if (id.isEmpty) return;
+
+    DateTime? initialDate;
+    final dateStr = ex['date']?.toString();
+    if (dateStr != null && dateStr.isNotEmpty) {
+      try {
+        initialDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+      } catch (_) {}
+    }
+
+    final initialTime = _parseTimeOfDay(ex['startTime']?.toString());
+
+    final item = ScheduleItem(
+      id: id,
+      courseCode: ex['courseCode'] ?? 'Unknown',
+      courseName: ex['courseName'] ?? (ex['courseCode'] ?? 'Makeup Class'),
+      sessionType: 'Makeup',
+      day: '',
+      startTime: ex['startTime'] ?? '',
+      endTime: ex['endTime'] ?? '',
+      room: ex['room'] ?? 'TBA',
+      faculty: '',
+      isMakeup: true,
+    );
+
+    await _scheduleMakeup(item,
+        initialDate: initialDate, initialTime: initialTime);
   }
 
   Future<void> _cancelClass(String dateStr, ScheduleItem item) async {
@@ -391,14 +444,15 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
     }
   }
 
-  Future<void> _scheduleMakeup(ScheduleItem item) async {
+  Future<void> _scheduleMakeup(ScheduleItem item,
+      {DateTime? initialDate, TimeOfDay? initialTime}) async {
     if (!mounted) return;
 
     // 1. Pick Date
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
-      initialDate: now.add(const Duration(days: 1)),
+      initialDate: initialDate ?? now.add(const Duration(days: 1)),
       firstDate: now,
       lastDate: now.add(const Duration(days: 60)),
       builder: (ctx, child) => Theme(
@@ -418,7 +472,7 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
     if (!mounted) return;
     final time = await showTimePicker(
       context: context,
-      initialTime: const TimeOfDay(hour: 10, minute: 0),
+      initialTime: initialTime ?? const TimeOfDay(hour: 10, minute: 0),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(

@@ -223,8 +223,8 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
     
     # 2. User Rate Limit
     if user_id:
-        # Limit: 20 generations per hour per user
-        allowed, reason = check_rate_limit(user_id, "generate_schedules", limit=20)
+        # Limit: 50 generations per hour per user (increased for better UX)
+        allowed, reason = check_rate_limit(user_id, "generate_schedules", limit=50)
         if not allowed:
             raise https_fn.HttpsError(https_fn.FunctionsErrorCode.RESOURCE_EXHAUSTED, reason)
     # --------------------------------
@@ -258,10 +258,20 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
             course_sections_map[code] = sections
 
         # 2. Generate Schedules (Optimized Backtracking)
-        # Limit adjusted to 50 per user request
-        final_schedules = generate_schedules(course_sections_map, filters, limit=50)
+        # Limit adjusted to 80 per user request
+        final_schedules = generate_schedules(course_sections_map, filters, limit=80)
 
-        # 3. Store Results
+        # 3. Convert schedules to Firestore-compatible format
+        # Firestore doesn't allow nested arrays, so convert each schedule to a map
+        combinations_as_maps = []
+        for i, schedule in enumerate(final_schedules):
+            schedule_map = {
+                "scheduleId": i,
+                "sections": {str(j): section for j, section in enumerate(schedule)}
+            }
+            combinations_as_maps.append(schedule_map)
+
+        # 4. Store Results
         generation_id = db.collection("schedule_generations").document().id
         db.collection("schedule_generations").document(generation_id).set({
             "userId": user_id,
@@ -269,7 +279,7 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
             "semester": semester,
             "courses": course_codes,
             "filters": filters,
-            "combinations": final_schedules,
+            "combinations": combinations_as_maps,
             "status": "completed",
             "count": len(final_schedules)
         })

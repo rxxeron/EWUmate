@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 34  // Changed from 36 to 34 for better compatibility
+    compileSdk = 36
     // buildToolsVersion = "34.0.0" (Removed to allow auto-selection)
     // ndkVersion = flutter.ndkVersion
 

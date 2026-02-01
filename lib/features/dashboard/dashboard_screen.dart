@@ -118,6 +118,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
 
                 final data = snapshot.data;
+                debugPrint('[Dashboard] Cloud schedule keys: ${data?.keys.toList()}');
+                debugPrint('[Dashboard] Holidays count: ${(data?['holidays'] as List?)?.length ?? 0}');
                 final processed = DashboardLogic.getScheduleFromCloud(data);
 
                 return RefreshIndicator(
@@ -276,8 +278,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 15),
         if (status == 'holiday' || status == 'chill')
           _buildHeroCard(
-            status == 'holiday' ? "🎉" : "☕",
-            status == 'holiday' ? "Holiday" : "Chill Mode",
+            "☕",
+            "Chill Mode",
             reason.isNotEmpty ? reason : "No classes scheduled.",
             Colors.purpleAccent,
           )

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/course_model.dart';
 import '../../core/utils/time_utils.dart';
@@ -96,8 +97,12 @@ class DashboardLogic {
 
     // 2. Check for Holidays
     final holidays = cloudSchedule['holidays'] as List<dynamic>? ?? [];
+    debugPrint('[DashboardLogic] Checking holidays for date: $dateStr');
+    debugPrint('[DashboardLogic] Total holidays found: ${holidays.length}');
     for (var h in holidays) {
+      debugPrint('[DashboardLogic] Holiday: ${h['date']} - ${h['name']}');
       if (h['date'] == dateStr) {
+        debugPrint('[DashboardLogic] ✅ Holiday match found!');
         return {
           'status': 'holiday',
           'reason': h['name']?.toString() ?? 'Holiday',

@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 36
+    compileSdk = 34  // Changed from 36 to 34 for better compatibility
     // buildToolsVersion = "34.0.0" (Removed to allow auto-selection)
     // ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // minSdk 23 supports Android 6.0 and above (Covering Android 10/11 etc)
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34  // Changed from 36 to 34 for better compatibility
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

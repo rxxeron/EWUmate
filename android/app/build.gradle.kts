@@ -1,14 +1,13 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 36  // Upgraded to build with latest plugins. Checks compatibility for minSdk (21)
+    compileSdk = 35 // FIXED: Set to Stable Android 15 (was 36)
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -21,20 +20,21 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.rxxeron.ewumate"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21   // Keeps support for older devices (Android 5.0+)
-        targetSdk = 34 // Upgraded for Play Store compliance
+        minSdk = 21  // CRITICAL: Keeps Android 10 support active
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     buildTypes {
+        debug {
+            // Ensures the APK is signed with the default Android debug key
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = true
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // We are using debug keys here too, just in case you run release by accident
             signingConfig = signingConfigs.getByName("debug")
         }
     }

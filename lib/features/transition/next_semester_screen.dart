@@ -129,9 +129,15 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
     setState(() => _loading = true);
 
     try {
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final data = userDoc.data() ?? {};
+      // FETCH V2: Get history from academic_data/profile
+      final profileDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('academic_data')
+          .doc('profile')
+          .get();
+      
+      final data = profileDoc.data() ?? {};
 
       // Update courseHistory (Map)
       final existingHistory =
@@ -153,10 +159,21 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
 
       existingHistory[_currentSemCode] = newTermResults;
 
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      // UPDATE V2: Save to academic_data/profile subcollection
+      final profileRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('academic_data')
+          .doc('profile');
+
+      await profileRef.set({
         'courseHistory': existingHistory,
         'completedCourses': newCompleted,
-        'enrolledSections': [], // Clear finished sections
+      }, SetOptions(merge: true));
+
+      // Clear Root Enrollment (to signal semester end)
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'enrolledSections': [], 
       });
 
       _nextSemCode = _calculateNextSemester(_currentSemCode);

@@ -1,4 +1,4 @@
-# Miscellaneous
+﻿# Miscellaneous
 *.class
 *.log
 *.pyc
@@ -79,3 +79,4 @@ node_modules/
 venv/
 __pycache__/
 *.env
+config/serviceAccountKey.json

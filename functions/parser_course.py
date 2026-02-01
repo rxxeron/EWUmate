@@ -81,11 +81,18 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
 
                     # B. Extract Code and Section from the START
                     code = tokens[0].upper()
-                    if len(tokens) > 1:
-                        section = tokens[1]
+                    current_idx = 1
+                    
+                    # Fix for Split Codes (e.g., "CSE 101" -> "CSE101")
+                    if len(tokens) > 1 and code.isalpha() and tokens[1][0].isdigit():
+                         code = code + tokens[1]
+                         current_idx = 2
+
+                    if len(tokens) > current_idx:
+                        section = tokens[current_idx]
                         # Verify section is short (usually 1-2 chars) to avoid grabbing Faculty name part
                         # But sometimes section is just '1'. 
-                        middle_tokens = tokens[2:]
+                        middle_tokens = tokens[current_idx+1:]
                     else:
                         section = ""
                         middle_tokens = []
@@ -158,7 +165,8 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
                                        key_to_use = spaced_code
                            if key_to_use:
                                meta_data = course_titles.get(key_to_use, {})
-                               course_name = meta_data.get("name", "")
+                               # Robust name lookup: 'name', 'title', 'courseName', 'courseTitle'
+                               course_name = meta_data.get("name") or meta_data.get("title") or meta_data.get("courseName") or meta_data.get("courseTitle") or ""
                                if "creditVal" in meta_data:
                                    try:
                                        credits_val = float(meta_data["creditVal"])
@@ -172,6 +180,11 @@ def parse_course_pdf(pdf_path, semester_id, course_titles=None):
                         "section": section, "credits": credits_val, "capacity": capacity,
                         "semester": semester_id, "type": "COURSE", "sessions": []
                     }
+                    
+                    if not course_name:
+                        # Log failure for debugging
+                        # print(f"MISSING NAME: Code '{code}' not found in metadata.")
+                        pass
                 
                 course_map[course_key]["sessions"].append(session)
     

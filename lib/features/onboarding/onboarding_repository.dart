@@ -115,12 +115,16 @@ class OnboardingRepository {
       });
     });
 
-    // 3. Save User Doc (Clean History + Metadata)
+    // 3. Save User Doc (Enrollment Context)
     await _db.collection('users').doc(uid).set({
-      'courseHistory': pastHistory,
-      'completedCourses': completed,
       'enrolledSections': enrolledIds, // Used by Dashboard for context
       'onboardingStatus': 'onboarded',
+    }, SetOptions(merge: true));
+
+    // 4. Save Academic Data (History)
+    await _db.collection('users').doc(uid).collection('academic_data').doc('profile').set({
+      'courseHistory': pastHistory,
+      'completedCourses': completed,
     }, SetOptions(merge: true));
 
     // 4. Initialize Live Semester (Subcollections)

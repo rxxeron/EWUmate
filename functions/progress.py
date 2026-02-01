@@ -157,36 +157,118 @@ def recalculate_academic_stats(db, user_id):
     Recalculates CGPA, total credits, etc. by scanning courseHistory and enrolling sections.
     """
     user_ref = db.collection("users").document(user_id)
-    user_doc = user_ref.get()
-    if not user_doc.exists:
-        return
+    # Fetch Course History from Subcollection (V2 Structure)
+    profile_ref = user_ref.collection("academic_data").document("profile")
+    profile_doc = profile_ref.get()
     
-    data = user_doc.to_dict()
-    course_history = data.get('courseHistory', {})
-    
+    course_history = {}
+    if profile_doc.exists:
+        profile_data = profile_doc.to_dict()
+        course_history = profile_data.get('courseHistory', {})
+    else:
+        # Fallback to Root if still migrating (Optional, or fail safe)
+        user_doc = user_ref.get()
+        if user_doc.exists:
+            course_history = user_doc.to_dict().get('courseHistory', {})
+
     total_points = 0.0
     total_credits = 0.0
     courses_completed = 0
     remained_credits = 140.0 # Default fallback
     
-    # 1. Process History
+    # 1. Process History and Rebuild "semesters" List
+    semesters_list = []
+    
     if course_history and isinstance(course_history, dict):
-        for semester in course_history:
-            courses = course_history[semester]
-            if not isinstance(courses, dict): continue
+        # Sort semesters chronologically if possible.
+        # Fallback: Alphabetical might not be perfect (Fall2024 comes before Spring2025? No.)
+        # Ideal: Parse year/semester. "Spring2025" -> (2025, 0), "Summer2025" -> (2025, 1), "Fall2025" -> (2025, 2)
+        
+        def sem_sorter(sem_str):
+            match = re.search(r"(\D+)(\d{4})", sem_str)
+            if not match: return (0, 0)
+            ss, yy = match.group(1).lower(), int(match.group(2))
+            order = 0
+            if "spring" in ss: order = 1
+            elif "summer" in ss: order = 2
+            elif "fall" in ss: order = 3
+            return (yy, order)
+
+        sorted_keys = sorted(course_history.keys(), key=sem_sorter)
+        
+        cumulative_points_so_far = 0.0
+        cumulative_credits_so_far = 0.0
+
+        for semester in sorted_keys:
+            courses_map = course_history[semester]
+            if not isinstance(courses_map, dict): continue
             
-            for code, grade in courses.items():
-                if grade in ["Ongoing", "W", "I", ""]: continue
+            term_points = 0.0
+            term_credits = 0.0
+            term_courses_list = []
+            
+            for code, grade in courses_map.items():
+                if grade is None: continue
                 
-                # Assume 3.0 credits for now, or fetch from metadata if needed. 
-                # Keeping it simple as per legacy logic
+                # Metadata credits lookup could go here if we had access to the master map
+                # For now simplify to 3.0 or try to infer?
+                # Using 3.0 as default, same as stats logic below
                 credits = 3.0
-                gp = GRADE_POINTS.get(grade, 0.0)
                 
-                total_points += (gp * credits)
-                total_credits += credits
-                if gp > 0:
-                    courses_completed += 1
+                gp = 0.0
+                status = "Ongoing"
+                
+                if grade in ["W", "I", ""]:
+                    status = "Retake/Incomplete" if grade == "I" else "Withdrawn"
+                elif grade == "Ongoing":
+                    status = "Ongoing" 
+                else:
+                    status = "Completed"
+                    gp = GRADE_POINTS.get(grade, 0.0)
+                    if gp == 0.0 and grade != "F":
+                        # Unknown grade logic?
+                        pass
+                    
+                    term_points += (gp * credits)
+                    term_credits += credits
+
+                # Add to Global Stats (Only for completed)
+                if status == "Completed" or grade == "F":
+                     # Yes, F counts towards GPA usually but 0 points
+                     total_points += (gp * credits)
+                     total_credits += credits
+                     if gp > 0:
+                         courses_completed += 1
+
+                term_courses_list.append({
+                    "code": code,
+                    "credits": credits,
+                    "grade": grade,
+                    "point": gp,
+                    "status": status
+                })
+            
+            # Term Stats
+            term_gpa = (term_points / term_credits) if term_credits > 0 else 0.0
+            
+            # Cumulative Snapshot
+            # Note: total_points tracks global, but for the "history list" 
+            # we want the snapshot *at that time*.
+            cumulative_points_so_far += term_points
+            cumulative_credits_so_far += term_credits
+            cum_gpa = (cumulative_points_so_far / cumulative_credits_so_far) if cumulative_credits_so_far > 0 else 0.0
+
+            semesters_list.append({
+                 "semesterName": semester,
+                 "semesterId": semester.replace(" ", ""),
+                 "termGPA": round(term_gpa, 2),
+                 "cumulativeGPA": round(cum_gpa, 2),
+                 "courses": term_courses_list
+            })
+    
+    # Reverse list (Newest first) for UI? Or keep Oldest first?
+    # Profile UI usually likes Newest first.
+    semesters_list.sort(key=lambda x: sem_sorter(x["semesterName"]), reverse=True)
 
     # 2. Final Results
     cgpa = (total_points / total_credits) if total_credits > 0 else 0.0
@@ -197,8 +279,15 @@ def recalculate_academic_stats(db, user_id):
         "totalCredits": round(total_credits, 1),
         "coursesCompleted": courses_completed,
         "remainedCredits": round(remained, 1),
-        "lastUpdated": firestore.SERVER_TIMESTAMP
+        "lastUpdated": firestore.SERVER_TIMESTAMP,
+        "semesters": semesters_list # <--- The crucial addition
     }
     
-    user_ref.update({"statistics": stats})
+    # Update academic_data/profile subcollection
+    user_ref.collection('academic_data').document('profile').set(stats, merge=True)
+    
+    # Also update root statistics for now (Dual Write) until frontend is fully verified?
+    # No, user asked to clean root. But for safety, we removed 'statistics' field in migration.
+    # So we should NOT write it back to root.
+    
     return stats

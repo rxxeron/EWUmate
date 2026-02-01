@@ -52,14 +52,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final doc = await FirebaseFirestore.instance
+      // Remove subcollection fetch since data is directly in 'users/uid'
+      final userDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
           .get();
-      if (doc.exists) {
-        final data = doc.data()!;
+
+      if (userDoc.exists) {
+        // Correctly read nested fields based on user provided structure
+        // No 'academic_data' subcollection lookup needed if data is flat or in 'statistics' field of parent
+        final data = userDoc.data()!;
+        
         await _cacheService.cacheStats(data);
         _populateFields(data);
+      } else {
+        // Fallback to Auth data if Firestore doc missing
+        setState(() {
+          _nameCtrl.text = user!.displayName ?? '';
+          _photoUrl = user!.photoURL;
+        });
       }
     } catch (e) {
       debugPrint("Error loading profile: $e");
@@ -104,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
-          .update({'profilePicture': url});
+          .set({'profilePicture': url}, SetOptions(merge: true));
 
       await user!.updatePhotoURL(url);
 
@@ -124,12 +135,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
-          .update({
+          .set({
         'fullName': _nameCtrl.text.trim(),
         'nickname': _nicknameCtrl.text.trim(),
         'studentId': _idCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
-      });
+      }, SetOptions(merge: true));
       if (mounted) _showSnack("Profile saved!");
     } catch (e) {
       if (mounted) _showSnack("Save failed: $e", isError: true);

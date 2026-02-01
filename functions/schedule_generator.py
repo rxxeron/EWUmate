@@ -57,7 +57,9 @@ def generate_schedules(course_sections_map, filters=None, limit=100):
 
 def is_section_valid(section, filters):
     # Mandatory Capacity Check: Ignore Full or 0/0 sections
-    # This happens BEFORE any optional filters.
+    # Request: "overlook means exclude the 0/0 or full sections"
+    # So we MUST KEEP THIS CHECK. 
+    # Logic: if tot <= 0 (it is 0/0) OR enr >= tot (it is full) -> Return False (Exclude)
     cap_str = section.get('capacity', '0/0')
     try:
         # Format "Enrolled/Total" (e.g. "35/35" or "0/0")

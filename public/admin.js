@@ -46,7 +46,7 @@ async function verifyKey() {
         // However, we should be strict.
         showLoginError("System Connection Error: " + err.message);
     } finally {
-        setBtnLoading(btn, false, "Unlock Terminal");
+        setBtnLoading(btn, false, `<span class="btn-text">Authenticate</span> <i class="bi bi-arrow-right"></i>`);
     }
 }
 
@@ -125,7 +125,7 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
     } catch (err) {
         handleAuthError(err);
     } finally {
-        setBtnLoading(btn, false, "Execute Broadcast");
+        setBtnLoading(btn, false, `<i class="bi bi-send-fill"></i> <span class="btn-text">Execute Broadcast</span>`);
     }
 });
 
@@ -154,11 +154,18 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             showAlert("success", `Asset ingested successfully. Processing initiated.`, "bi-cloud-check-fill");
             document.getElementById('uploadForm').reset();
             document.getElementById('fileNameDisplay').classList.add('hidden');
+             // Reset UI
+             document.getElementById('dropZoneContent').classList.remove('hidden');
+             const submitBtn = document.getElementById('uploadBtn');
+             submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+             submitBtn.classList.remove('bg-primary-600', 'text-white');
+             submitBtn.disabled = true;
+
             suggestFilename(); // Reset to default suggestions
         } catch (err) {
             handleAuthError(err);
         } finally {
-            setBtnLoading(btn, false, "Ingest Document");
+            setBtnLoading(btn, false, `<i class="bi bi-upload"></i> <span class="btn-text">Ingest Document</span>`);
         }
     };
 });
@@ -182,7 +189,11 @@ async function fetchCurrentSemester() {
     }
 }
 
+let manualFilename = false;
+
 function suggestFilename() {
+    if (manualFilename) return; // Don't override if user typed something
+
     const folder = document.getElementById('folderSelect').value;
     const semester = currentSemester || "Spring 2026"; // Fallback if fetch fails
     let filename = "";
@@ -207,7 +218,14 @@ function suggestFilename() {
     }
 }
 
-document.getElementById('folderSelect').addEventListener('change', suggestFilename);
+document.getElementById('filenameInput').addEventListener('input', () => {
+    manualFilename = !!document.getElementById('filenameInput').value;
+});
+
+document.getElementById('folderSelect').addEventListener('change', () => {
+    manualFilename = false; // Reset manual override on type change
+    suggestFilename();
+});
 
 // Initial suggestion (will be updated after login)
 suggestFilename();
@@ -231,23 +249,43 @@ async function postData(url, data) {
     return json.result || json;
 }
 
-function setBtnLoading(btn, isLoading, text) {
+function setBtnLoading(btn, isLoading, originalHtml) {
     if (!btn) return;
     btn.disabled = isLoading;
     if (isLoading) {
-        btn.innerHTML = `<div class="loading-spinner"></div> <span>${text}</span>`;
+        // Use Tailwind loader
+        btn.innerHTML = `<div class="loader mr-2 border-t-white border-2 w-4 h-4"></div> <span>Processing...</span>`;
     } else {
-        btn.innerHTML = text.includes('<i') ? text : `<span>${text}</span>`;
+        btn.innerHTML = originalHtml;
     }
 }
 
 function showAlert(type, msg, icon) {
+    const alertBox = document.getElementById('alertBox');
     const alertIcon = document.getElementById('alertIcon');
-    const alertMessage = document.getElementById('alertMessage');
+    const alertTitle = document.getElementById('alertTitle');
+    const alertBody = document.getElementById('alertBody');
 
-    alertBox.className = `alert-custom alert-${type}-custom`;
-    alertIcon.className = `bi ${icon}`;
-    alertMessage.innerText = msg;
+    // Reset classes
+    alertBox.className = 'fade-in mb-6 p-4 rounded-xl border flex items-center gap-3 shadow-sm';
+    
+    // Tailwind Colors based on Type
+    if (type === 'success') {
+        alertBox.classList.add('bg-green-50', 'border-green-100', 'text-green-800');
+        alertIcon.classList.add('text-green-600');
+        alertTitle.innerText = "Success";
+    } else if (type === 'danger') {
+         alertBox.classList.add('bg-red-50', 'border-red-100', 'text-red-800');
+         alertIcon.classList.add('text-red-600');
+         alertTitle.innerText = "Error";
+    } else {
+        alertBox.classList.add('bg-blue-50', 'border-blue-100', 'text-blue-800');
+         alertIcon.classList.add('text-blue-600');
+         alertTitle.innerText = "Info";
+    }
+
+    alertIcon.className = `bi ${icon} text-xl`;
+    alertBody.innerText = msg;
 
     alertBox.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -267,24 +305,65 @@ function handleAuthError(err) {
     }
 }
 async function runGlobalMigration() {
-    if (!confirm("CRITICAL ACTION: This will sync all user data and reset all notifications. Proceed?")) return;
+    // SECURITY DOUBLE CHECK
+    const confirm1 = confirm("⚠️ DANGER: EXECUTE FULL SYSTEM RESET?\n\nThis will:\n1. Re-sync EVERY user's schedule from scratch.\n2. Recalculate CGPA/Credits for ALL users.\n3. PURGE and RESCHEDULE all notifications.\n\nThis is a heavy operation. Are you sure?");
+    if (!confirm1) return;
+    
+    // Second Confirmation just in case
+    if (!confirm("Confirm Execution: Type 'YES' in your mind. This cannot be undone.")) return;
 
-    const btn = document.getElementById('migrationBtn');
-    setBtnLoading(btn, true, "Migrating Systems...");
+    const btn = document.getElementById('resetBtn');
+    setBtnLoading(btn, true, "Executing Master Reset Protocol...");
 
     try {
         // 1. Python: Sync all user schedules
-        showAlert("info", "Phase 1/2: Syncing User Weekly Schedules...", "bi-gear-fill");
+        showAlert("info", "Phase 1/3: Syncing User Weekly Schedules...", "bi-gear-fill");
         const pyRes = await postData(`${BASE_URL}/system_master_sync`, { secret: currentKey });
+        
+        // 2. Python: Recalculate Stats
+        showAlert("info", `Phase 2/3: Recalculating Statistics (${pyRes.usersSynced} schedules synced)...`, "bi-calculator-fill");
+        await postData(`${BASE_URL}/recalculate_all_stats`, { secret: currentKey });
 
-        // 2. Node: Reset and Reschedule Notifications
-        showAlert("info", `Phase 2/2: Rescheduling Notifications (Users Synced: ${pyRes.usersSynced})...`, "bi-bell-fill");
-        const nodeRes = await postData(`${BASE_URL}/systemNotificationReset`, { secret: currentKey });
+        // 3. Node: Reset and Reschedule Notifications
+        showAlert("info", "Phase 3/3: Purging & Rescheduling Notifications...", "bi-bell-fill");
+        const nodeRes = await postData(`${BASE_URL}/systemNotificationReset`, { secret: currentKey }); 
 
-        showAlert("success", `Migration Complete! ${pyRes.usersSynced} schedules and ${nodeRes.message} tasks updated.`, "bi-rocket-takeoff-fill");
+        showAlert("success", `System Reset Complete! Notifications purged/rescheduled.`, "bi-check-circle-fill");
     } catch (err) {
         handleAuthError(err);
     } finally {
-        setBtnLoading(btn, false, "Trigger Global System Sync");
+        setBtnLoading(btn, false, `<i class="bi bi-radioactive"></i> EXECUTE FULL SYSTEM RESET`);
+    }
+}
+
+async function runMasterSync() {
+    if (!confirm("This will overwrite weekly schedules for all users based on their enrolled sections. Continue?")) return;
+
+    const btn = document.getElementById('syncBtn');
+    setBtnLoading(btn, true, "Syncing...");
+
+    try {
+        const pyRes = await postData(`${BASE_URL}/system_master_sync`, { secret: currentKey });
+        showAlert("success", `Sync Complete. ${pyRes.usersSynced} users processed.`, "bi-check-circle-fill");
+    } catch (err) {
+        handleAuthError(err);
+    } finally {
+        setBtnLoading(btn, false, `<span class="btn-text">Start Sync</span>`);
+    }
+}
+
+async function runStatsCalc() {
+    if (!confirm("Recalculate CGPA and Credits completed for everyone? This is intensive.")) return;
+
+    const btn = document.getElementById('statsBtn');
+    setBtnLoading(btn, true, "Calculating...");
+
+    try {
+        const res = await postData(`${BASE_URL}/recalculate_all_stats`, { secret: currentKey });
+        showAlert("success", `Stats Updated. Processed ${res.processed} users.`, "bi-calculator-fill");
+    } catch (err) {
+        handleAuthError(err);
+    } finally {
+        setBtnLoading(btn, false, `<span class="btn-text">Recalculate Stats</span>`);
     }
 }

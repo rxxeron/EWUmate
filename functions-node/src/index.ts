@@ -127,6 +127,10 @@ export const generateDailySchedule = functions.pubsub
     .onRun(() => runSchedulerLogic(true));
 
 async function runSchedulerLogic(targetNextDay: boolean) {
+    // 1. Get Current Semester
+    const configDoc = await db.collection("config").doc("app_info").get();
+    const currentSemester = configDoc.data()?.currentSemester?.replace(/\s+/g, '') || "Spring2026";
+
     const usersSnap = await db.collection("users").get();
     if (usersSnap.empty) return;
 
@@ -139,9 +143,9 @@ async function runSchedulerLogic(targetNextDay: boolean) {
     const targetDay = format(targetDate, 'EEEE');
     const dateString = format(targetDate, 'yyyy-MM-dd');
 
-    console.log(`Scheduling class notifications for: ${targetDay}`);
+    console.log(`Scheduling class notifications for: ${targetDay} (${dateString}) [${currentSemester}]`);
     const promises = usersSnap.docs.map((doc: admin.firestore.QueryDocumentSnapshot) =>
-        processUserForNotifications(doc.id, doc.data(), targetDay, dateString)
+        processUserForNotifications(doc.id, doc.data(), targetDay, dateString, currentSemester)
     );
     await Promise.all(promises);
 }
@@ -157,11 +161,41 @@ const getMinutes = (timeStr: string) => {
     return h * 60 + mm;
 };
 
-async function processUserForNotifications(userId: string, userData: any, targetDay: string, dateString: string) {
-    const { fcmToken, weeklySchedule } = userData;
-    const baseClasses = weeklySchedule?.[targetDay] || [];
-
+async function processUserForNotifications(userId: string, userData: any, targetDay: string, dateString: string, semesterId: string) {
+    const { fcmToken } = userData;
     if (!fcmToken) return;
+
+    // --- Fetch Schedule from Subcollection ---
+    // Moved from root 'weeklySchedule' to 'schedule/{semesterId}'
+    const scheduleDoc = await db.collection("users").doc(userId).collection("schedule").doc(semesterId).get();
+    if (!scheduleDoc.exists) return;
+    
+    const scheduleData = scheduleDoc.data();
+    const weeklyTemplate = scheduleData?.weeklyTemplate || {};
+    
+    // --- Day Swaps Handling ---
+    // Use the stored daySwaps in the schedule doc if available, or fetch config if global?
+    // The python parser puts daySwaps directly into this doc!
+    const daySwaps = scheduleData?.daySwaps || [];
+    const holidays = scheduleData?.holidays || [];
+
+    // 1. Check for Holiday
+    const isHoliday = holidays.some((h: any) => h.date === dateString);
+    if (isHoliday) {
+        console.log(`Skipping notification for ${userId} on ${dateString} (Holiday)`);
+        return;
+    }
+
+    // 2. Check for Day Swap (e.g. "Tuesday classes held on Sunday date")
+    // If today is Sunday(dateString), but swap says "Tuesday classes", then effDay = Tuesday
+    let effectiveDay = targetDay;
+    const activeSwap = daySwaps.find((s: any) => s.date === dateString);
+    if (activeSwap) {
+        effectiveDay = activeSwap.dayOfWeek; // e.g. "Tuesday"
+        console.log(`Day Swap Active: ${dateString} acts as ${effectiveDay}`);
+    }
+
+    const baseClasses = weeklyTemplate[effectiveDay] || [];
 
     // --- Fetch User Exceptions for this date ---
     const exceptionsSnap = await db.collection("users").doc(userId).collection("schedule_exceptions")
@@ -169,12 +203,12 @@ async function processUserForNotifications(userId: string, userData: any, target
         .get();
     const exceptions = exceptionsSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => d.data());
 
-    // 1. Identify cancelled course codes
+    // 3. Identify cancelled course codes
     const cancelledCodes = exceptions
         .filter((ex: any) => ex.type === 'cancel' || ex.type === 'cancellation')
         .map((ex: any) => (ex.courseCode as string).replace(/\s+/g, '').toUpperCase());
 
-    // 2. Filter base classes and add makeups
+    // 4. Filter base classes and add makeups
     const finalClasses = baseClasses.filter((c: any) => {
         const code = (c.courseCode as string).replace(/\s+/g, '').toUpperCase();
         return !cancelledCodes.includes(code);
@@ -191,8 +225,6 @@ async function processUserForNotifications(userId: string, userData: any, target
     }
 
     if (!finalClasses.length) return;
-
-    const targetDateStart = startOfDay(new Date(dateString));
 
     // 3. Sort Classes by Start Time
     const parsedClasses = finalClasses.map((c: any) => {
@@ -214,7 +246,15 @@ async function processUserForNotifications(userId: string, userData: any, target
         const offsets = gap > 30 ? [30, 10, 5] : [10, 5];
 
         for (const offset of offsets) {
-            const notifyTime = new Date(targetDateStart.getTime() + (cls.startMins * 60 * 1000) - (offset * 60 * 1000));
+            // Fix: Correctly calculate time in Asia/Dhaka timezone
+            const hours = Math.floor(cls.startMins / 60);
+            const mins = cls.startMins % 60;
+            const hh = hours.toString().padStart(2, '0');
+            const mm = mins.toString().padStart(2, '0');
+            const isoString = `${dateString}T${hh}:${mm}:00`;
+            const classTime = zonedTimeToUtc(isoString, "Asia/Dhaka");
+
+            const notifyTime = new Date(classTime.getTime() - (offset * 60 * 1000));
             if (notifyTime < new Date()) continue;
 
             const courseName = cls.title || cls.courseCode;

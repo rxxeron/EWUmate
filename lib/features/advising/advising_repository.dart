@@ -92,6 +92,57 @@ class AdvisingRepository {
     }
   }
 
+  // Save a specific favorite schedule
+  Future<void> saveFavoriteSchedule(String semester, List<String> sectionIds,
+      {String? note}) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorite_schedules')
+        .add({
+      'semester': semester,
+      'sectionIds': sectionIds,
+      'note': note ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Fetch favorite schedules
+  Stream<List<Map<String, dynamic>>> getFavoriteSchedulesStream(
+      String semester) {
+    final user = _auth.currentUser;
+    if (user == null) return const Stream.empty();
+
+    return _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorite_schedules')
+        .where('semester', isEqualTo: semester)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList());
+  }
+
+  // Delete a favorite schedule
+  Future<void> deleteFavoriteSchedule(String docId) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorite_schedules')
+        .doc(docId)
+        .delete();
+  }
+
   // Save a specific manual plan or a selected option from generator
   Future<void> saveManualPlan(String semester, List<String> sectionIds) async {
     final user = _auth.currentUser;

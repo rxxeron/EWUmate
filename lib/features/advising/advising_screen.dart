@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/widgets/glass_kit.dart';
@@ -24,6 +25,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   late TabController _tabController;
   StreamSubscription? _scheduleSubscription;
+  StreamSubscription? _savedSchedulesSubscription;
 
   bool _loading = true;
   bool _isLocked = true;
@@ -41,10 +43,13 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
   // Generator State
   final Set<String> _selectedCodes = {};
-  final List<List<Course>> _generatedHistory = [];
+  List<List<Course>> _generatedHistory = [];
   List<List<Course>> _filteredHistory = [];
   bool _isGenerating = false;
   String _generationStatus = '';
+
+  // Saved Schedules State
+  List<Map<String, dynamic>> _savedSchedules = [];
 
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _manualSearchController = TextEditingController();
@@ -55,7 +60,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _searchController
         .addListener(() => _filterSchedules(_searchController.text));
     _manualSearchController.addListener(() {
@@ -71,6 +76,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     _manualSearchController.dispose();
     _facultyFilterController.dispose();
     _scheduleSubscription?.cancel();
+    _savedSchedulesSubscription?.cancel();
     super.dispose();
   }
 
@@ -153,14 +159,28 @@ class _AdvisingScreenState extends State<AdvisingScreen>
 
     _filteredCourseCodes = _groupedCourses.keys.toList()..sort();
 
+    // Listen to Saved Schedules
+    _savedSchedulesSubscription?.cancel();
+    _savedSchedulesSubscription = _advisingRepo
+        .getFavoriteSchedulesStream(_nextSemesterCode)
+        .listen((data) {
+      if (mounted) {
+        setState(() {
+          _savedSchedules = data;
+        });
+      }
+    });
+
     // Persistent Generated History
     _scheduleSubscription?.cancel();
     _scheduleSubscription =
         _courseRepo.streamLatestGeneratedSchedules().listen((schedules) {
       if (mounted) {
         setState(() {
-          _generatedHistory.clear();
-          _generatedHistory.addAll(schedules);
+          // Keep existing unless new data is empty or different?
+          // streamLatestGeneratedSchedules returns the latest doc.
+          // We overwrite local state with what's in cloud.
+          _generatedHistory = schedules;
           if (_searchController.text.isEmpty) {
             _filteredHistory = List.from(schedules);
           } else {
@@ -434,9 +454,12 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           indicatorColor: Colors.cyanAccent,
           labelColor: Colors.cyanAccent,
           unselectedLabelColor: Colors.white54,
+          labelStyle:
+              const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
           tabs: const [
-            Tab(text: "Manual Plan"),
-            Tab(text: "Smart Generator"),
+            Tab(text: "Manual"),
+            Tab(text: "Generator"),
+            Tab(text: "Saved"),
           ],
         ),
         Expanded(
@@ -445,10 +468,134 @@ class _AdvisingScreenState extends State<AdvisingScreen>
             children: [
               _buildManualTab(),
               _buildGeneratorTab(),
+              _buildSavedTab(),
             ],
           ),
         )
       ],
+    );
+  }
+
+  Widget _buildSavedTab() {
+    if (_savedSchedules.isEmpty) {
+      return const Center(
+        child: Text(
+          "No saved schedules yet.\nBookmark options from the Generator tab.",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white38),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _savedSchedules.length,
+      itemBuilder: (context, index) {
+        final data = _savedSchedules[index];
+        final sectionIds = List<String>.from(data['sectionIds'] ?? []);
+        final id = data['id'];
+        final date = (data['createdAt'] as Timestamp?)?.toDate();
+        final dateStr =
+            date != null ? DateFormat('MMM d, h:mm a').format(date) : '';
+
+        // We need to fetch/resolve the Course objects for display
+        // Since we don't have them in the 'data' map immediately, we can use a FutureBuilder
+        // calling repository validateSchedule.
+
+        return FutureBuilder<List<Course>>(
+          future: _advisingRepo.validateSchedule(_nextSemesterCode, sectionIds),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return GlassContainer(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2)));
+            }
+
+            final courses = snapshot.data!;
+            if (courses.isEmpty) {
+              return const SizedBox.shrink(); // Invalid saved item
+            }
+
+            return _buildSavedScheduleCard(id, dateStr, courses);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSavedScheduleCard(
+      String docId, String dateStr, List<Course> schedule) {
+    return GlassContainer(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Saved Plan • $dateStr",
+                  style: const TextStyle(
+                      color: Colors.cyanAccent, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.white38),
+                onPressed: () => _advisingRepo.deleteFavoriteSchedule(docId),
+              )
+            ],
+          ),
+          const Divider(color: Colors.white12, height: 16),
+          ...schedule.map((course) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                        width: 70,
+                        child: Text(course.code,
+                            style: const TextStyle(
+                                color: Colors.cyanAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sec ${course.section} • ${course.faculty}',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 2),
+                          ...course.sessions.map((s) => Text(
+                                "${s.type}: ${s.day} ${s.startTime} - ${s.endTime}",
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 11),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: ElevatedButton(
+              onPressed: () => _savePlanOption(schedule),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.greenAccent,
+                  foregroundColor: Colors.black),
+              child: const Text("Enroll in this Saved Plan",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          )
+        ],
+      ),
     );
   }
 
@@ -640,14 +787,64 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     }
   }
 
+  String _generatorSearchQuery = '';
+
   Widget _buildGeneratorTab() {
-    _allCourseCodes.sort();
+    // Filter logic for the list
+    var displayList = _filteredCourseCodes;
+    if (_generatorSearchQuery.isNotEmpty) {
+      displayList = _filteredCourseCodes
+          .where((c) =>
+              c.toLowerCase().contains(_generatorSearchQuery.toLowerCase()))
+          .toList();
+    }
+    displayList.sort(); // Keep sorted
 
     return Column(
       children: [
+        // Search Bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: TextField(
+            onChanged: (val) {
+              setState(() => _generatorSearchQuery = val);
+            },
+            decoration: InputDecoration(
+              hintText: 'Search Course (e.g. CSE101)',
+              hintStyle: const TextStyle(color: Colors.white54),
+              prefixIcon: const Icon(Icons.search, color: Colors.white54),
+              filled: true,
+              fillColor: Colors.white.withAlpha(20),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+
+        // Selection List
         Expanded(
           flex: 2,
-          child: _buildCourseSelectionList(),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: displayList.length,
+            itemBuilder: (context, index) {
+              final code = displayList[index];
+              final isSelected = _selectedCodes.contains(code);
+              return CheckboxListTile(
+                title: Text(code, style: const TextStyle(color: Colors.white)),
+                value: isSelected,
+                onChanged: (val) => _toggleGeneratorCode(code),
+                activeColor: Colors.cyanAccent,
+                checkColor: Colors.black,
+                side: const BorderSide(color: Colors.white38),
+                controlAffinity: ListTileControlAffinity.leading,
+              );
+            },
+          ),
         ),
         _buildFilterControls(),
         Padding(
@@ -668,25 +865,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     );
   }
 
-  Widget _buildCourseSelectionList() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _filteredCourseCodes.length,
-      itemBuilder: (context, index) {
-        final code = _filteredCourseCodes[index];
-        final isSelected = _selectedCodes.contains(code);
-        return CheckboxListTile(
-          title: Text(code, style: const TextStyle(color: Colors.white)),
-          value: isSelected,
-          onChanged: (val) => _toggleGeneratorCode(code),
-          activeColor: Colors.cyanAccent,
-          checkColor: Colors.black,
-          side: const BorderSide(color: Colors.white38),
-          controlAffinity: ListTileControlAffinity.leading,
-        );
-      },
-    );
-  }
 
   void _toggleGeneratorCode(String code) {
     setState(() {
@@ -703,6 +881,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       }
     });
   }
+
 
   Widget _buildFilterControls() {
     return ExpansionTile(
@@ -880,15 +1059,44 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   }
 
   Widget _buildScheduleCard(int index, List<Course> schedule) {
+    // Check if this option is already saved (by comparing section IDs)
+    // Naive check: if any saved schedule has same set of IDs
+    final currentIds = schedule.map((e) => e.id).toSet();
+    final isSaved = _savedSchedules.any((saved) {
+      final savedIds = List<String>.from(saved['sectionIds'] ?? []).toSet();
+      return savedIds.length == currentIds.length &&
+          savedIds.containsAll(currentIds);
+    });
+
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Option ${index + 1} (${schedule.length} Courses)",
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text("Option ${index + 1} (${schedule.length} Courses)",
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+              IconButton(
+                icon: Icon(isSaved ? Icons.bookmark : Icons.bookmark_border,
+                    color: isSaved ? Colors.cyanAccent : Colors.white54),
+                onPressed: () {
+                  if (isSaved) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Already saved in Saved tab!")));
+                  } else {
+                    _advisingRepo.saveFavoriteSchedule(
+                        _nextSemesterCode, schedule.map((e) => e.id).toList());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Saved to favorites!")));
+                  }
+                },
+              )
+            ],
+          ),
           const Divider(color: Colors.white12, height: 16),
           ...schedule.map((course) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),

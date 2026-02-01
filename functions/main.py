@@ -110,15 +110,18 @@ def send_broadcast_notification(req: https_fn.CallableRequest):
         )
 
     try:
+        data_payload = {
+            "click_action": "FLUTTER_NOTIFICATION_CLICK"
+        }
+        if link:
+            data_payload["link"] = link
+
         message = messaging.Message(
             notification=messaging.Notification(
                 title=title,
                 body=body,
             ),
-            data={
-                "click_action": "FLUTTER_NOTIFICATION_CLICK",
-                "link": link if link else ""
-            },
+            data=data_payload,
             topic='all_users'
         )
         
@@ -155,7 +158,8 @@ def system_master_sync(req: https_fn.CallableRequest):
     if not current_semester:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.FAILED_PRECONDITION, "Current semester not set in config.")
 
-    users = db.collection('users').get()
+    # Use stream() instead of get() to handle large collections
+    users = db.collection('users').stream()
     count = 0
     for user_doc in users:
         data = user_doc.to_dict()
@@ -254,8 +258,8 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
             course_sections_map[code] = sections
 
         # 2. Generate Schedules (Optimized Backtracking)
-        # 100 limit to prevent timeout/high memory
-        final_schedules = generate_schedules(course_sections_map, filters, limit=100)
+        # Limit adjusted to 50 per user request
+        final_schedules = generate_schedules(course_sections_map, filters, limit=50)
 
         # 3. Store Results
         generation_id = db.collection("schedule_generations").document().id
@@ -572,17 +576,36 @@ def process_uploaded_document(event: storage_fn.CloudEvent[storage_fn.StorageObj
                 meta_doc = db.collection('metadata').document('courses').get()
                 if meta_doc.exists:
                     raw_data = meta_doc.to_dict()
-                    # Transform data: The user has a map like { "0": {"code": "ACT101", ...}, "1": ... }
-                    # We need { "ACT101": {"name": "...", "credits": ...} }
+                    print(f"Metadata loaded. Keys: {list(raw_data.keys())}")
+                    
+                    # 1. Handle "list" array if present (User confirms this structure)
+                    if "list" in raw_data and isinstance(raw_data["list"], list):
+                         print(f"Found 'list' array with {len(raw_data['list'])} items.")
+                         for item in raw_data["list"]:
+                             if isinstance(item, dict) and "code" in item:
+                                  norm_code = str(item["code"]).replace(" ", "").upper()
+                                  course_titles[norm_code] = item
+                    
+                    # 2. Handle Map Format (Fallback)
                     for k, v in raw_data.items():
-                        # Case 1: Value is an object containing 'code' (e.g. numeric key map)
-                        if isinstance(v, dict) and "code" in v and v["code"]:
-                            norm_code = v["code"].replace(" ", "").upper()
-                            course_titles[norm_code] = v
+                        if k == "list": continue 
                         
-                        # Case 2: Key is the code (legacy or direct map)
+                        clean_key = k.replace(" ", "").upper()
+
+                        if isinstance(v, dict) and "code" in v:
+                             # Trust the code inside the object more than the key
+                             c_code = str(v["code"]).replace(" ", "").upper()
+                             course_titles[c_code] = v
+                             # Also map the key just in case
+                             course_titles[clean_key] = v
                         elif isinstance(v, dict):
-                            course_titles[k.replace(" ", "").upper()] = v
+                            course_titles[clean_key] = v
+                        elif isinstance(v, str):
+                            course_titles[clean_key] = {"name": v}
+
+                    print(f"Loaded {len(course_titles)} course titles into memory.")
+                    if len(course_titles) > 0:
+                        print(f"Sample: {list(course_titles.items())[:3]}")
                             
                 else:
                     print("Warning: metadata/courses document not found.")

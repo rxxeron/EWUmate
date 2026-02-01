@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 36
+    compileSdk = 34  // Changed from 36 to 34 for better compatibility
     // buildToolsVersion = "34.0.0" (Removed to allow auto-selection)
     // ndkVersion = flutter.ndkVersion
 
@@ -48,8 +48,8 @@ android {
         applicationId = "com.rxxeron.ewumate"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // minSdk 23 supports Android 6.0 and above (Covering Android 10/11 etc)
-        minSdk = 24
+        // minSdk 23 supports Android 6.0 and above, minSdk 28 = Android 9+
+        minSdk = 23  // Lowered to 23 to support Android 9 (API 28) and 10 (API 29)
         targetSdk = 34  // Changed from 36 to 34 for better compatibility
         versionCode = flutter.versionCode
         versionName = flutter.versionName

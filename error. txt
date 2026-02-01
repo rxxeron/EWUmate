@@ -1,4 +1,4 @@
-﻿2026-02-01T16:38:23.0547606Z ##[group]Run flutter build apk --release --no-tree-shake-icons
+﻿2026-02-01T19:20:11.7496272Z ##[group]Run flutter build apk --release --no-tree-shake-icons
 flutter build apk --release --no-tree-shake-icons
 shell: /usr/bin/bash -e ***0***
 env:
@@ -6,41 +6,6 @@ env:
   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Zulu_jdk/17.0.18-8/x64
   FLUTTER_ROOT: /opt/hostedtoolcache/flutter/stable-3.38.9-x64
   PUB_CACHE: /home/runner/.pub-cache
-Resolving dependencies...
-Downloading packages...
-  _fe_analyzer_shared 91.0.0 (94.0.0 available)
-  analysis_server_plugin 0.3.3 (0.3.8 available)
-  analyzer 8.4.0 (10.0.2 available)
-  analyzer_buffer 0.1.11 (0.3.0 available)
-  analyzer_plugin 0.13.10 (0.14.2 available)
-  app_links 6.4.1 (7.0.0 available)
-  characters 1.4.0 (1.4.1 available)
-  custom_lint_core 0.8.1 (0.8.2 available)
-  custom_lint_visitor 1.0.0+8.4.0 (1.0.0+9.0.0 available)
-  dart_style 3.1.3 (3.1.5 available)
-  email_validator 2.1.17 (3.0.0 available)
-  flutter_blurhash 0.8.2 (0.9.1 available)
-  flutter_riverpod 3.1.0 (3.2.0 available)
-  freezed 3.2.3 (3.2.4 available)
-! intl 0.20.2 (overridden)
-  json_annotation 4.9.0 (4.10.0 available)
-  json_serializable 6.11.2 (6.12.0 available)
-  matcher 0.12.17 (0.12.18 available)
-  material_color_utilities 0.11.1 (0.13.0 available)
-  meta 1.17.0 (1.18.1 available)
-  riverpod 3.1.0 (3.2.0 available)
-  riverpod_analyzer_utils 1.0.0-dev.8 (1.0.0-dev.9 available)
-  riverpod_annotation 4.0.0 (4.0.1 available)
-  riverpod_generator 4.0.0+1 (4.0.2 available)
-  riverpod_lint 3.1.0 (3.1.2 available)
-  source_helper 1.3.8 (1.3.10 available)
-  test 1.26.3 (1.29.0 available)
-  test_api 0.7.7 (0.7.9 available)
-  test_core 0.6.12 (0.6.15 available)
-  timezone 0.10.1 (0.11.0 available)
-Got dependencies!
-29 packages have newer versions incompatible with dependency constraints.
-Try `flutter pub outdated` for more information.
 Upgrading build.gradle.kts
 Running Gradle task 'assembleRelease'...                        
 Checking the license for package NDK (Side by side) 27.0.12077973 in /usr/local/lib/android/sdk/licenses
@@ -52,11 +17,37 @@ Installing NDK (Side by side) 27.0.12077973 in /usr/local/lib/android/sdk/ndk/27
 "Install NDK (Side by side) 27.0.12077973 v.27.0.12077973" finished.
 Warning: The plugin app_links requires Android SDK version 36 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin cloud_firestore requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin cloud_functions requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin desktop_webview_auth requires Android SDK version 36 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin device_info_plus requires Android SDK version 36 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin file_selector_android requires Android SDK version 36 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_analytics requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_app_check requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_auth requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_core requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_crashlytics requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_database requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_messaging requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_performance requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_remote_config requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin firebase_storage requires Android SDK version 34 or higher.
+For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
+Warning: The plugin flutter_image_compress_common requires Android SDK version 34 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin flutter_local_notifications requires Android SDK version 35 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
@@ -76,15 +67,26 @@ Warning: The plugin shared_preferences_android requires Android SDK version 36 o
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin sqflite_android requires Android SDK version 36 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Warning: The plugin syncfusion_flutter_pdfviewer requires Android SDK version 36 or higher.
-For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
 Warning: The plugin url_launcher_android requires Android SDK version 36 or higher.
 For more information about build configuration, see https://flutter.dev/to/review-gradle-config.
-Your project is configured to compile against Android SDK 34, but the following plugin(s) require to be compiled against a higher Android SDK version:
+Your project is configured to compile against Android SDK 29, but the following plugin(s) require to be compiled against a higher Android SDK version:
 - app_links compiles against Android SDK 36
+- cloud_firestore compiles against Android SDK 34
+- cloud_functions compiles against Android SDK 34
 - desktop_webview_auth compiles against Android SDK 36
 - device_info_plus compiles against Android SDK 36
 - file_selector_android compiles against Android SDK 36
+- firebase_analytics compiles against Android SDK 34
+- firebase_app_check compiles against Android SDK 34
+- firebase_auth compiles against Android SDK 34
+- firebase_core compiles against Android SDK 34
+- firebase_crashlytics compiles against Android SDK 34
+- firebase_database compiles against Android SDK 34
+- firebase_messaging compiles against Android SDK 34
+- firebase_performance compiles against Android SDK 34
+- firebase_remote_config compiles against Android SDK 34
+- firebase_storage compiles against Android SDK 34
+- flutter_image_compress_common compiles against Android SDK 34
 - flutter_local_notifications compiles against Android SDK 35
 - flutter_native_splash compiles against Android SDK 35
 - flutter_plugin_android_lifecycle compiles against Android SDK 36
@@ -94,7 +96,6 @@ Your project is configured to compile against Android SDK 34, but the following 
 - path_provider_android compiles against Android SDK 36
 - shared_preferences_android compiles against Android SDK 36
 - sqflite_android compiles against Android SDK 36
-- syncfusion_flutter_pdfviewer compiles against Android SDK 36
 - url_launcher_android compiles against Android SDK 36
 Fix this issue by compiling against the highest Android SDK version (they are backward compatible).
 Add the following to /home/runner/work/EWUmate/EWUmate/android/app/build.gradle.kts:
@@ -103,97 +104,13 @@ Add the following to /home/runner/work/EWUmate/EWUmate/android/app/build.gradle.
         compileSdk = 36
         ...
     ***
-Checking the license for package CMake 3.22.1 in /usr/local/lib/android/sdk/licenses
-License for package CMake 3.22.1 accepted.
-Preparing "Install CMake 3.22.1 v.3.22.1".
-"Install CMake 3.22.1 v.3.22.1" ready.
-Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
-"Install CMake 3.22.1 v.3.22.1" complete.
-"Install CMake 3.22.1 v.3.22.1" finished.
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
 
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':app:checkReleaseAarMetadata'.
-> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckAarMetadataWorkAction
-   > 5 issues were found when checking AAR metadata:
-
-       1.  Dependency 'androidx.credentials:credentials-play-services-auth:1.5.0' requires libraries and applications that
-           depend on it to compile against version 35 or later of the
-           Android APIs.
-
-           :app is currently compiled against android-34.
-
-           Recommended action: Update this project to use a newer compileSdk
-           of at least 35, for example 36.
-
-           Note that updating a library or application's compileSdk (which
-           allows newer APIs to be used) can be done separately from updating
-           targetSdk (which opts the app in to new runtime behavior) and
-           minSdk (which determines which devices the app can be installed
-           on).
-
-       2.  Dependency 'androidx.credentials:credentials:1.5.0' requires libraries and applications that
-           depend on it to compile against version 35 or later of the
-           Android APIs.
-
-           :app is currently compiled against android-34.
-
-           Recommended action: Update this project to use a newer compileSdk
-           of at least 35, for example 36.
-
-           Note that updating a library or application's compileSdk (which
-           allows newer APIs to be used) can be done separately from updating
-           targetSdk (which opts the app in to new runtime behavior) and
-           minSdk (which determines which devices the app can be installed
-           on).
-
-       3.  Dependency 'androidx.browser:browser:1.9.0' requires libraries and applications that
-           depend on it to compile against version 36 or later of the
-           Android APIs.
-
-           :app is currently compiled against android-34.
-
-           Recommended action: Update this project to use a newer compileSdk
-           of at least 36, for example 36.
-
-           Note that updating a library or application's compileSdk (which
-           allows newer APIs to be used) can be done separately from updating
-           targetSdk (which opts the app in to new runtime behavior) and
-           minSdk (which determines which devices the app can be installed
-           on).
-
-       4.  Dependency 'androidx.core:core-ktx:1.17.0' requires libraries and applications that
-           depend on it to compile against version 36 or later of the
-           Android APIs.
-
-           :app is currently compiled against android-34.
-
-           Recommended action: Update this project to use a newer compileSdk
-           of at least 36, for example 36.
-
-           Note that updating a library or application's compileSdk (which
-           allows newer APIs to be used) can be done separately from updating
-           targetSdk (which opts the app in to new runtime behavior) and
-           minSdk (which determines which devices the app can be installed
-           on).
-
-       5.  Dependency 'androidx.core:core:1.17.0' requires libraries and applications that
-           depend on it to compile against version 36 or later of the
-           Android APIs.
-
-           :app is currently compiled against android-34.
-
-           Recommended action: Update this project to use a newer compileSdk
-           of at least 36, for example 36.
-
-           Note that updating a library or application's compileSdk (which
-           allows newer APIs to be used) can be done separately from updating
-           targetSdk (which opts the app in to new runtime behavior) and
-           minSdk (which determines which devices the app can be installed
-           on).
+Could not determine the dependencies of task ':app:packageRelease'.
+> Could not create task ':app:compileReleaseJavaWithJavac'.
+   > In order to compile Java 9+ source, please set compileSdkVersion to 30 or above
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -201,7 +118,7 @@ Execution failed for task ':app:checkReleaseAarMetadata'.
 > Run with --scan to get full insights.
 > Get more help at https://help.gradle.org.
 
-BUILD FAILED in 10m 54s
-Running Gradle task 'assembleRelease'...                          654.6s
+BUILD FAILED in 5m 24s
+Running Gradle task 'assembleRelease'...                          324.6s
 Gradle task assembleRelease failed with exit code 1
 Process completed with exit code 1.

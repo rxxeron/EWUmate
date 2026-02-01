@@ -30,11 +30,11 @@ jobs:
 
       - run: flutter pub get
 
-      # FIX: Build split APKs for ARM64 and ARMv7 (better device compatibility).
+      # FIX: Build universal APK (includes all ABIs) for broader compatibility.
       # It will now use 'version: 1.0.1+2' directly from your pubspec.yaml.
-      - run: flutter build apk --release --no-tree-shake-icons --split-per-abi
+      - run: flutter build apk --release --no-tree-shake-icons
 
       - uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-*-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk

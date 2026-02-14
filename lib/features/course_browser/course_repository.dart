@@ -45,14 +45,34 @@ class CourseRepository {
     return _firestore
         .collection('schedule_generations')
         .where('userId', isEqualTo: user.uid)
-        .orderBy('createdAt', descending: true)
-        .limit(1)
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) return [];
-      return _parseGeneration(
-          snapshot.docs.first.data(), snapshot.docs.first.id);
+      final docs = snapshot.docs.toList();
+      docs.sort((a, b) {
+        final aTime = a.data()['createdAt'];
+        final bTime = b.data()['createdAt'];
+        return _compareFirestoreTimes(bTime, aTime);
+      });
+      final latest = docs.first;
+      return _parseGeneration(latest.data(), latest.id);
     });
+  }
+
+  int _compareFirestoreTimes(dynamic aTime, dynamic bTime) {
+    final aValue = _toMillis(aTime);
+    final bValue = _toMillis(bTime);
+    return aValue.compareTo(bValue);
+  }
+
+  int _toMillis(dynamic value) {
+    if (value is Timestamp) {
+      return value.millisecondsSinceEpoch;
+    }
+    if (value is DateTime) {
+      return value.millisecondsSinceEpoch;
+    }
+    return 0;
   }
 
   List<List<Course>> _parseGeneration(Map<String, dynamic>? data, String id) {

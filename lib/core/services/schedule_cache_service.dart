@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ScheduleCacheService {
@@ -6,7 +7,7 @@ class ScheduleCacheService {
 
   Future<void> cacheStats(Map<String, dynamic> stats) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_statsKey, jsonEncode(stats));
+    await prefs.setString(_statsKey, _encodeJson(stats));
   }
 
   Future<Map<String, dynamic>?> getCachedStats() async {
@@ -32,7 +33,7 @@ class ScheduleCacheService {
   Future<void> cacheSchedule(Map<String, dynamic> schedule,
       [String? semester]) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_getScheduleKey(semester), jsonEncode(schedule));
+    await prefs.setString(_getScheduleKey(semester), _encodeJson(schedule));
   }
 
   Future<Map<String, dynamic>?> getCachedSchedule([String? semester]) async {
@@ -65,7 +66,7 @@ class ScheduleCacheService {
   Future<void> cacheProgress(Map<String, dynamic> data,
       [String? semester]) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_getProgressKey(semester), jsonEncode(data));
+    await prefs.setString(_getProgressKey(semester), _encodeJson(data));
   }
 
   Future<Map<String, dynamic>?> getCachedProgress([String? semester]) async {
@@ -97,7 +98,7 @@ class ScheduleCacheService {
 
   Future<void> cacheMarks(Map<String, String> marks, [String? semester]) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_getMarksKey(semester), jsonEncode(marks));
+    await prefs.setString(_getMarksKey(semester), _encodeJson(marks));
   }
 
   Future<Map<String, String>?> getCachedMarks([String? semester]) async {
@@ -117,7 +118,27 @@ class ScheduleCacheService {
 
   Future<void> cacheTasks(List<Map<String, dynamic>> tasks) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tasksKey, jsonEncode(tasks));
+    await prefs.setString(_tasksKey, _encodeJson(tasks));
+  }
+
+  String _encodeJson(dynamic value) {
+    return jsonEncode(_sanitizeValue(value));
+  }
+
+  dynamic _sanitizeValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate().toIso8601String();
+    }
+    if (value is DateTime) {
+      return value.toIso8601String();
+    }
+    if (value is Map) {
+      return value.map((key, val) => MapEntry(key.toString(), _sanitizeValue(val)));
+    }
+    if (value is List) {
+      return value.map(_sanitizeValue).toList();
+    }
+    return value;
   }
 
   Future<List<Map<String, dynamic>>?> getCachedTasks() async {

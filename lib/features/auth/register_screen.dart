@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
+import 'dart:typed_data';
 
 import '../../core/services/storage_service.dart';
 import '../../core/widgets/glass_kit.dart';
@@ -29,7 +29,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _loading = false;
   bool _passwordVisible = false;
-  XFile? _imageFile; // Changed to XFile
+  XFile? _imageFile; // Used for upload
+  Uint8List? _imageBytes; // Used for preview (web-safe)
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -37,7 +38,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final picked =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
     if (picked != null) {
-      setState(() => _imageFile = picked);
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
     }
   }
 
@@ -126,9 +131,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       CircleAvatar(
                         radius: 45,
                         backgroundColor: Colors.white10,
-                        backgroundImage: _imageFile != null
-                            ? FileImage(File(_imageFile!.path))
-                            : null,
+                        backgroundImage: _imageBytes != null
+                          ? MemoryImage(_imageBytes!)
+                          : null,
                         child: _imageFile == null
                             ? const Icon(Icons.person,
                                 size: 45, color: Colors.white70)

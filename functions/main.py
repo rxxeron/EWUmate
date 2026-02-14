@@ -195,7 +195,10 @@ def recalculate_all_stats(req: https_fn.CallableRequest):
     
     return {"success": True, "processed": count}
 
-@https_fn.on_call(memory=options.MemoryOption.MB_512, timeout_sec=60)
+@https_fn.on_call(
+    memory=options.MemoryOption.MB_512,
+    timeout_sec=60
+)
 def generate_schedules_kickoff(req: https_fn.CallableRequest):
     """
     HTTP Callable: Generate valid schedules for a given set of courses.
@@ -240,26 +243,67 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
     try:
         # 1. Fetch Sections for all courses
         course_sections_map = {}
+        coll_name = f"courses_{semester.replace(' ', '')}"
+        
+        print(f"Fetching courses from collection: {coll_name}")
+        
         for code in course_codes:
-            # Assuming collection name format 'courses_Spring2026' etc.
-            # Ideally sanitized.
-            coll_name = f"courses_{semester.replace(' ', '')}" 
-            
-            # Query for exact code match
-            query = db.collection(coll_name).where("code", "==", code)
-            docs = query.stream()
-            
-            sections = [doc.to_dict() for doc in docs]
-            if not sections:
-                # If no sections found for a course, we can't generate a schedule including it
-                # We could return error or just empty list
-                return {"generationId": None, "error": f"No sections found for {code}"}
-            
-            course_sections_map[code] = sections
+            try:
+                # Query for exact code match
+                query = db.collection(coll_name).where("code", "==", code)
+                docs = list(query.stream())
+                
+                if not docs:
+                    raise https_fn.HttpsError(
+                        https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                        f"No sections found for course {code} in {semester}. Please verify the course code is offered this semester."
+                    )
+                
+                sections = []
+                for doc in docs:
+                    section_data = doc.to_dict()
+                    # Add document ID as 'id' field for later reference
+                    section_data['id'] = doc.id
+                    # Validate required fields
+                    if not section_data.get('capacity'):
+                        print(f"Warning: Section for {code} missing capacity field. Skipping.")
+                        continue
+                    sections.append(section_data)
+                
+                if not sections:
+                    raise https_fn.HttpsError(
+                        https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                        f"No valid sections found for course {code} (all sections missing required fields)"
+                    )
+                
+                course_sections_map[code] = sections
+                
+            except https_fn.HttpsError:
+                raise
+            except Exception as e:
+                print(f"Error fetching sections for {code}: {e}")
+                raise https_fn.HttpsError(
+                    https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                    f"Error processing course {code}: {str(e)}"
+                )
 
         # 2. Generate Schedules (Optimized Backtracking)
         # Limit adjusted to 80 per user request
-        final_schedules = generate_schedules(course_sections_map, filters, limit=80)
+        try:
+            final_schedules = generate_schedules(course_sections_map, filters, limit=80)
+        except Exception as e:
+            print(f"Error in schedule generation algorithm: {e}")
+            raise https_fn.HttpsError(
+                https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                f"Schedule generation failed: {str(e)}"
+            )
+
+        if not final_schedules:
+            print(f"No valid schedules found for the given courses and filters")
+            raise https_fn.HttpsError(
+                https_fn.FunctionsErrorCode.INVALID_ARGUMENT,
+                "No valid schedule combinations found. Try removing filters or selecting different courses."
+            )
 
         # 3. Convert schedules to Firestore-compatible format
         # Firestore doesn't allow nested arrays, so convert each schedule to a map
@@ -272,23 +316,35 @@ def generate_schedules_kickoff(req: https_fn.CallableRequest):
             combinations_as_maps.append(schedule_map)
 
         # 4. Store Results
-        generation_id = db.collection("schedule_generations").document().id
-        db.collection("schedule_generations").document(generation_id).set({
-            "userId": user_id,
-            "createdAt": firestore.SERVER_TIMESTAMP,
-            "semester": semester,
-            "courses": course_codes,
-            "filters": filters,
-            "combinations": combinations_as_maps,
-            "status": "completed",
-            "count": len(final_schedules)
-        })
+        try:
+            generation_id = db.collection("schedule_generations").document().id
+            db.collection("schedule_generations").document(generation_id).set({
+                "userId": user_id,
+                "createdAt": firestore.SERVER_TIMESTAMP,
+                "semester": semester,
+                "courses": course_codes,
+                "filters": filters,
+                "combinations": combinations_as_maps,
+                "status": "completed",
+                "count": len(final_schedules)
+            })
+        except Exception as e:
+            print(f"Error writing schedule results to Firestore: {e}")
+            raise https_fn.HttpsError(
+                https_fn.FunctionsErrorCode.INTERNAL,
+                f"Failed to save schedule results: {str(e)}"
+            )
 
+        print(f"Successfully generated {len(final_schedules)} schedules for generation {generation_id}")
         return {"generationId": generation_id, "count": len(final_schedules)}
 
+    except https_fn.HttpsError:
+        raise
     except Exception as e:
-        print(f"Error generating schedules: {e}")
-        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INTERNAL, str(e))
+        print(f"Unexpected error in generate_schedules_kickoff: {e}")
+        import traceback
+        traceback.print_exc()
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INTERNAL, f"Internal error: {str(e)}")
 
 
 @firestore_fn.on_document_updated(

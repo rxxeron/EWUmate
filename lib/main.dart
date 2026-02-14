@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'core/router/app_router.dart';
+import 'firebase_options.dart';
 
 import 'core/providers/theme_provider.dart';
 import 'core/services/fcm_service.dart';
@@ -12,15 +14,19 @@ void main() async {
   // FIX: Make Firebase initialization non-blocking to handle devices without Google Play Services
   // This allows the app to launch even if Firebase fails to initialize
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
     debugPrint('[Main] Firebase init error (non-fatal): $e');
   }
 
   // Initialize Services (non-blocking, fire-and-forget)
-  FCMService().initialize().catchError((e) {
-    debugPrint('[Main] FCMService init error: $e');
-  });
+  if (!kIsWeb) {
+    FCMService().initialize().catchError((e) {
+      debugPrint('[Main] FCMService init error: $e');
+    });
+  }
 
   runApp(
     ChangeNotifierProvider(

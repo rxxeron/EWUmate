@@ -63,11 +63,14 @@ def is_section_valid(section, filters):
     cap_str = section.get('capacity', '0/0')
     try:
         # Format "Enrolled/Total" (e.g. "35/35" or "0/0")
-        enr, tot = map(int, cap_str.split('/'))
+        if not cap_str or '/' not in str(cap_str):
+            return False
+        enr, tot = map(int, str(cap_str).split('/'))
         if tot <= 0 or enr >= tot:
             return False
-    except: 
+    except Exception as e:
         # If capacity string is malformed or missing, we skip for safety
+        print(f"Warning: Invalid capacity format '{cap_str}': {e}")
         return False
 
     if not filters:
@@ -98,10 +101,20 @@ def has_conflict(new_section, current_schedule):
 
 def sections_conflict(sec1, sec2):
     # Iterate through all sessions (classes/labs) of both sections
-    for sess1 in sec1.get('sessions', []):
-        for sess2 in sec2.get('sessions', []):
+    sections1_sessions = sec1.get('sessions', [])
+    sections2_sessions = sec2.get('sessions', [])
+    
+    if not sections1_sessions or not sections2_sessions:
+        # If either section has no sessions, no conflict
+        return False
+    
+    for sess1 in sections1_sessions:
+        for sess2 in sections2_sessions:
             # 1. Check Day overlap
-            if not is_day_conflict(sess1.get('day', ''), sess2.get('day', '')):
+            day1 = sess1.get('day', '')
+            day2 = sess2.get('day', '')
+            
+            if not is_day_conflict(day1, day2):
                 continue
             
             # 2. Check Time overlap

@@ -53,13 +53,20 @@ class AdvisingRepository {
         .doc(user.uid)
         .collection('advising_plans')
         .where('semester', isEqualTo: semester)
-        .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map((snapshot) {
+      final docs = snapshot.docs.toList();
+      docs.sort((a, b) {
+        final aTime = a.data()['timestamp'];
+        final bTime = b.data()['timestamp'];
+        return _compareFirestoreTimes(bTime, aTime);
+      });
+      return docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
   }
 
   // Validate a saved schedule by fetching fresh data
@@ -121,13 +128,36 @@ class AdvisingRepository {
         .doc(user.uid)
         .collection('favorite_schedules')
         .where('semester', isEqualTo: semester)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map((snapshot) {
+      final docs = snapshot.docs.toList();
+      docs.sort((a, b) {
+        final aTime = a.data()['createdAt'];
+        final bTime = b.data()['createdAt'];
+        return _compareFirestoreTimes(bTime, aTime);
+      });
+      return docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
+    });
+  }
+
+  int _compareFirestoreTimes(dynamic aTime, dynamic bTime) {
+    final aValue = _toMillis(aTime);
+    final bValue = _toMillis(bTime);
+    return aValue.compareTo(bValue);
+  }
+
+  int _toMillis(dynamic value) {
+    if (value is Timestamp) {
+      return value.millisecondsSinceEpoch;
+    }
+    if (value is DateTime) {
+      return value.millisecondsSinceEpoch;
+    }
+    return 0;
   }
 
   // Delete a favorite schedule

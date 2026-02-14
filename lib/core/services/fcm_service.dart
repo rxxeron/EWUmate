@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,6 +15,10 @@ class FCMService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
   Future<void> initialize() async {
+    if (kIsWeb) {
+      debugPrint('[FCM] Skipping FCM init on web.');
+      return;
+    }
     // 1. Request Permission
     await _firebaseMessaging.requestPermission(
       alert: true,

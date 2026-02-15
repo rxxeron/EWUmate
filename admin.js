@@ -1,8 +1,6 @@
 
-const BASE_URL = window.SUPABASE_FUNCTION_URL || "";
-// Supabase configuration
-const SUPABASE_URL = "https://jwygjihrbwxhehijldiz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDQxNzQsImV4cCI6MjA4NjY4MDE3NH0.zQc3dq53HBpMeN0rbJA9soF0oYhl7de1_sNnB_9JPoM"; // Get from Supabase dashboard
+const SUPABASE_URL = "https://vcfijikafkofgakxnbib.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZmlqaWthZmtvZmdha3huYmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1NzY2NjQsImV4cCI6MjA1MzE1MjY2NH0.XcPMCZ69YpXojrfN2M0V0K9w4L5HYdJMpLHU6A3QX0k";
 
 let currentKey = "";
 const alertBox = document.getElementById('alertBox');
@@ -14,7 +12,7 @@ async function verifyKey() {
     const loginErrorMessage = document.getElementById('loginErrorMessage');
 
     if (!inputKey) {
-        showLoginError("Please enter a sequence key.");
+        showLoginError("Please enter admin password.");
         return;
     }
 
@@ -23,18 +21,17 @@ async function verifyKey() {
     try {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
             method: 'POST',
-            headers: {
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Content-Type': 'application/json'
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             },
-            body: JSON.stringify({ secret: inputKey })
+            body: JSON.stringify({ password: inputKey })
         });
 
         const json = await res.json();
 
-        if (json.error || !json.success) {
-            showLoginError(json.error?.message || "Invalid Admin Key");
+        if (!res.ok || json.error || !json.success) {
+            showLoginError(json.error || "Invalid Admin Password");
             document.getElementById('loginKey').value = '';
         } else {
             currentKey = inputKey;
@@ -43,7 +40,7 @@ async function verifyKey() {
             loginError.classList.add('hidden');
         }
     } catch (err) {
-        showLoginError("System Connection Error: " + err.message);
+        showLoginError("Connection Error: " + err.message);
     } finally {
         setBtnLoading(btn, false, `<span class="btn-text">Authenticate</span> <i class="bi bi-arrow-right"></i>`);
     }
@@ -131,7 +128,7 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('uploadBtn');
-    setBtnLoading(btn, true, "Parsing and Ingesting...");
+    setBtnLoading(btn, true, "Parsing Document...");
 
     const file = document.getElementById('fileInput').files[0];
     if (!file) return;
@@ -140,93 +137,80 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     reader.readAsDataURL(file);
     reader.onload = async () => {
         const base64Content = reader.result.split(',')[1];
-        const folderType = document.getElementById('folderSelect').value;
-        
-        // Map folder types to parser types
-        const parserTypeMap = {
+        const folder = document.getElementById('folderSelect').value;
+        const filename = document.getElementById('filenameInput').value || file.name;
+
+        // Map folder to parser type
+        const typeMap = {
             'facultylist': 'course',
-            'examschedule': 'exam',
             'academiccalendar': 'calendar',
+            'examschedule': 'exam',
             'advisingschedule': 'advising'
         };
-        
-        const parserType = parserTypeMap[folderType] || 'course';
-        const semesterId = currentSemester.replace(/\s+/g, '') || 'Spring2026'; // e.g., "Spring2026"
 
         const data = {
-            type: parserType,
+            type: typeMap[folder] || 'course',
             base64Data: base64Content,
-            semesterId: semesterId,
+            filename: filename,  // Send filename for semester extraction
             saveToDatabase: true,
             debug: false
         };
 
         try {
-            showAlert("info", `Parsing ${file.name}... This may take 30-60 seconds for large files.`, "bi-hourglass-split");
-
-            // Call Supabase PDF parser function
             const res = await fetch(`${SUPABASE_URL}/functions/v1/pdf-parser`, {
                 method: 'POST',
-                headers: {
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                 },
                 body: JSON.stringify(data)
             });
 
             const result = await res.json();
 
-            if (!res.ok || !result.success) {
-                throw new Error(result.error || "Parsing failed");
+            if (result.success) {
+                showAlert("success", `Successfully parsed ${result.count} items and saved ${result.saved} to database in ${(result.totalTime/1000).toFixed(1)}s!`, "bi-cloud-check-fill");
+            } else {
+                showAlert("danger", `Parsing failed: ${result.error}`, "bi-exclamation-triangle-fill");
             }
-
-            showAlert("success", 
-                `✅ Successfully parsed ${result.count} items and saved ${result.saved} to database in ${(result.totalTime / 1000).toFixed(1)}s!`, 
-                "bi-cloud-check-fill"
-            );
             
             document.getElementById('uploadForm').reset();
             document.getElementById('fileNameDisplay').classList.add('hidden');
             document.getElementById('dropZoneContent').classList.remove('hidden');
-            
             const submitBtn = document.getElementById('uploadBtn');
             submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
             submitBtn.classList.remove('bg-primary-600', 'text-white');
             submitBtn.disabled = true;
 
-            suggestFilename();
+            suggestFilename(); // Reset to default suggestions
         } catch (err) {
-            showAlert("danger", `Failed to parse: ${err.message}`, "bi-bug-fill");
-            handleAuthError(err);
+            showAlert("danger", "Upload failed: " + err.message, "bi-bug-fill");
         } finally {
             setBtnLoading(btn, false, `<i class="bi bi-upload"></i> <span class="btn-text">Ingest Document</span>`);
         }
     };
 });
 
-let currentSemester = "Spring 2026"; // Default value
+let currentSemester = "";
 
 async function fetchCurrentSemester() {
     try {
-        // Try to fetch from Supabase config table
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?select=value&key=eq.currentSemester`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.currentSemester&select=value`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        
-        if (res.ok) {
-            const data = await res.json();
-            if (data && data.length > 0) {
-                currentSemester = data[0].value;
-            }
+        const json = await res.json();
+        if (json && json.length > 0 && json[0].value) {
+            currentSemester = json[0].value;
+            suggestFilename();
         }
     } catch (err) {
-        console.log("Using default semester:", currentSemester);
+        console.error("Failed to fetch current semester:", err);
+        currentSemester = "Spring 2026"; // Fallback
+        suggestFilename();
     }
-    suggestFilename();
 }
 
 let manualFilename = false;

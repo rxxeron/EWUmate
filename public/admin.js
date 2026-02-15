@@ -1,7 +1,6 @@
 
-const PROJECT_ID = "ewu-stu-togo";
-const REGION = "us-central1";
-const BASE_URL = `https://${REGION}-${PROJECT_ID}.cloudfunctions.net`;
+const SUPABASE_URL = "https://vcfijikafkofgakxnbib.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjZmlqaWthZmtvZmdha3huYmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzc1NzY2NjQsImV4cCI6MjA1MzE1MjY2NH0.XcPMCZ69YpXojrfN2M0V0K9w4L5HYdJMpLHU6A3QX0k";
 
 let currentKey = "";
 const alertBox = document.getElementById('alertBox');
@@ -13,27 +12,26 @@ async function verifyKey() {
     const loginErrorMessage = document.getElementById('loginErrorMessage');
 
     if (!inputKey) {
-        showLoginError("Please enter a sequence key.");
+        showLoginError("Please enter admin password.");
         return;
     }
 
     setBtnLoading(btn, true, "Verifying...");
 
     try {
-        const res = await fetch(`${BASE_URL}/verify_admin_key`, {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: {
-                    secret: inputKey
-                }
-            })
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ password: inputKey })
         });
 
         const json = await res.json();
 
-        if (json.error) {
-            showLoginError(json.error.message || "Invalid Admin Key");
+        if (!res.ok || json.error || !json.success) {
+            showLoginError(json.error || "Invalid Admin Password");
             document.getElementById('loginKey').value = '';
         } else {
             currentKey = inputKey;
@@ -42,9 +40,7 @@ async function verifyKey() {
             loginError.classList.add('hidden');
         }
     } catch (err) {
-        // If the function doesn't exist yet but returns something (mocking successful bypass for testing if user wants)
-        // However, we should be strict.
-        showLoginError("System Connection Error: " + err.message);
+        showLoginError("Connection Error: " + err.message);
     } finally {
         setBtnLoading(btn, false, `<span class="btn-text">Authenticate</span> <i class="bi bi-arrow-right"></i>`);
     }
@@ -132,7 +128,7 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('uploadBtn');
-    setBtnLoading(btn, true, "Ingesting Document...");
+    setBtnLoading(btn, true, "Parsing Document...");
 
     const file = document.getElementById('fileInput').files[0];
     if (!file) return;
@@ -141,29 +137,54 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     reader.readAsDataURL(file);
     reader.onload = async () => {
         const base64Content = reader.result.split(',')[1];
+        const folder = document.getElementById('folderSelect').value;
+        const filename = document.getElementById('filenameInput').value || file.name;
+
+        // Map folder to parser type
+        const typeMap = {
+            'facultylist': 'course',
+            'academiccalendar': 'calendar',
+            'examschedule': 'exam',
+            'advisingschedule': 'advising'
+        };
 
         const data = {
-            secret: currentKey,
-            folder: document.getElementById('folderSelect').value,
-            filename: document.getElementById('filenameInput').value,
-            file_base64: base64Content
+            type: typeMap[folder] || 'course',
+            base64Data: base64Content,
+            filename: filename,  // Send filename for semester extraction
+            saveToDatabase: true,
+            debug: false
         };
 
         try {
-            const res = await postData(`${BASE_URL}/upload_file_via_admin`, data);
-            showAlert("success", `Asset ingested successfully. Processing initiated.`, "bi-cloud-check-fill");
+            const res = await fetch(`${SUPABASE_URL}/functions/v1/pdf-parser`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if (result.success) {
+                showAlert("success", `Successfully parsed ${result.count} items and saved ${result.saved} to database in ${(result.totalTime/1000).toFixed(1)}s!`, "bi-cloud-check-fill");
+            } else {
+                showAlert("danger", `Parsing failed: ${result.error}`, "bi-exclamation-triangle-fill");
+            }
+            
             document.getElementById('uploadForm').reset();
             document.getElementById('fileNameDisplay').classList.add('hidden');
-             // Reset UI
-             document.getElementById('dropZoneContent').classList.remove('hidden');
-             const submitBtn = document.getElementById('uploadBtn');
-             submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-             submitBtn.classList.remove('bg-primary-600', 'text-white');
-             submitBtn.disabled = true;
+            document.getElementById('dropZoneContent').classList.remove('hidden');
+            const submitBtn = document.getElementById('uploadBtn');
+            submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
+            submitBtn.classList.remove('bg-primary-600', 'text-white');
+            submitBtn.disabled = true;
 
             suggestFilename(); // Reset to default suggestions
         } catch (err) {
-            handleAuthError(err);
+            showAlert("danger", "Upload failed: " + err.message, "bi-bug-fill");
         } finally {
             setBtnLoading(btn, false, `<i class="bi bi-upload"></i> <span class="btn-text">Ingest Document</span>`);
         }
@@ -174,18 +195,21 @@ let currentSemester = "";
 
 async function fetchCurrentSemester() {
     try {
-        const res = await fetch(`${BASE_URL}/get_app_config`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: {} })
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/config?key=eq.currentSemester&select=value`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
         });
         const json = await res.json();
-        if (json.result && json.result.currentSemester) {
-            currentSemester = json.result.currentSemester;
+        if (json && json.length > 0 && json[0].value) {
+            currentSemester = json[0].value;
             suggestFilename();
         }
     } catch (err) {
         console.error("Failed to fetch current semester:", err);
+        currentSemester = "Spring 2026"; // Fallback
+        suggestFilename();
     }
 }
 

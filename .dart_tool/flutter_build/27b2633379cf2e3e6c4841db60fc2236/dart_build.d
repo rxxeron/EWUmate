@@ -1,0 +1,1 @@
+ /workspaces/EWUmate/.dart_tool/flutter_build/27b2633379cf2e3e6c4841db60fc2236/dart_build_result.json:  /opt/flutter/bin/cache/dart-sdk/version /workspaces/EWUmate/.dart_tool/package_config.json /workspaces/EWUmate/pubspec.yaml

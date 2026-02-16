@@ -1,40 +1,33 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../../core/models/semester_progress_models.dart';
 
 class SemesterProgressRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
 
-  String? get _uid => _auth.currentUser?.uid;
-
-  DocumentReference _getCourseDoc(String semesterCode, String courseCode) {
-    return _firestore
-        .collection('users')
-        .doc(_uid)
-        .collection('semesterProgress')
-        .doc(semesterCode)
-        .collection('courses')
-        .doc(courseCode);
-  }
+  String? get _uid => _supabase.auth.currentUser?.id;
 
   /// Streams all courses with marks for a given semester
   Stream<List<CourseMarks>> getSemesterProgressStream(String semesterCode) {
     if (_uid == null) return Stream.value([]);
 
-    return _firestore
-        .collection('users')
-        .doc(_uid)
-        .collection('semesterProgress')
-        .doc(semesterCode)
-        .collection('courses')
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data();
-            data['courseCode'] = doc.id;
-            return CourseMarks.fromMap(data);
+    return _supabase
+        .from('semester_progress')
+        .stream(primaryKey: ['id']) // Using 'id' which is UUID PK
+        .eq('user_id', _uid!)
+        .map((data) {
+          // Filter by semester_code locally if multiple eq is not supported in stream
+          final semesterData =
+              data.where((d) => d['semester_code'] == semesterCode);
+          if (semesterData.isEmpty) return [];
+
+          final summary =
+              semesterData.first['summary'] as Map<String, dynamic>? ?? {};
+          final courses = summary['courses'] as Map<String, dynamic>? ?? {};
+          return courses.entries.map((e) {
+            final val = Map<String, dynamic>.from(e.value);
+            val['courseCode'] = e.key;
+            return CourseMarks.fromMap(val);
           }).toList();
         });
   }
@@ -44,22 +37,22 @@ class SemesterProgressRepository {
     if (_uid == null) return [];
 
     try {
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('semesterProgress')
-          .doc(semesterCode)
-          .collection('courses')
-          .get();
+      final data = await _supabase
+          .from('semester_progress')
+          .select('summary')
+          .eq('user_id', _uid!)
+          .eq('semester_code', semesterCode)
+          .maybeSingle();
 
-      debugPrint(
-        '[SemesterProgressRepo] Fetched ${snapshot.docs.length} courses for $semesterCode',
-      );
+      if (data == null) return [];
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['courseCode'] = doc.id;
-        return CourseMarks.fromMap(data);
+      final summary = data['summary'] as Map<String, dynamic>? ?? {};
+      final courses = summary['courses'] as Map<String, dynamic>? ?? {};
+
+      return courses.entries.map((e) {
+        final val = Map<String, dynamic>.from(e.value);
+        val['courseCode'] = e.key;
+        return CourseMarks.fromMap(val);
       }).toList();
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error fetching semester progress: $e');
@@ -74,16 +67,13 @@ class SemesterProgressRepository {
     if (_uid == null) return null;
 
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(_uid)
-          .collection('semesterProgress')
-          .doc(semesterCode)
-          .get();
+      final data = await _supabase
+          .from('semester_progress')
+          .select('summary')
+          .eq('user_id', _uid!)
+          .eq('semester_code', semesterCode)
+          .maybeSingle();
 
-      if (!doc.exists) return null;
-
-      final data = doc.data();
       return data?['summary'] as Map<String, dynamic>?;
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error fetching summary: $e');
@@ -92,6 +82,17 @@ class SemesterProgressRepository {
   }
 
   /// Fetches marks for a single course
+  Future<void> _updateSummary(
+      String semesterCode, Map<String, dynamic> summary) async {
+    if (_uid == null) return;
+    await _supabase.from('semester_progress').upsert({
+      'user_id': _uid!,
+      'semester_code': semesterCode,
+      'summary': summary,
+      'last_updated': DateTime.now().toIso8601String(),
+    });
+  }
+
   Future<CourseMarks?> fetchCourseMarks(
     String semesterCode,
     String courseCode,
@@ -99,19 +100,13 @@ class SemesterProgressRepository {
     if (_uid == null) return null;
 
     try {
-      final doc = await _getCourseDoc(semesterCode, courseCode).get();
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = summary['courses'] as Map<String, dynamic>? ?? {};
 
-      if (!doc.exists) {
-        debugPrint(
-          '[SemesterProgressRepo] Course $courseCode does not exist, returning null',
-        );
-        return null;
-      }
+      if (!courses.containsKey(courseCode)) return null;
 
-      final data = doc.data() as Map<String, dynamic>?;
-      if (data == null) return null;
-      data['courseCode'] = doc.id;
-      debugPrint('[SemesterProgressRepo] Fetched course marks for $courseCode');
+      final data = Map<String, dynamic>.from(courses[courseCode]);
+      data['courseCode'] = courseCode;
       return CourseMarks.fromMap(data);
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error fetching course marks: $e');
@@ -119,7 +114,6 @@ class SemesterProgressRepository {
     }
   }
 
-  /// Initializes a course with empty data if it doesn't exist
   Future<void> initializeCourse(
     String semesterCode,
     String courseCode, {
@@ -128,21 +122,19 @@ class SemesterProgressRepository {
     if (_uid == null) return;
 
     try {
-      final docRef = _getCourseDoc(semesterCode, courseCode);
-      final doc = await docRef.get();
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
 
-      if (!doc.exists) {
-        debugPrint('[SemesterProgressRepo] Initializing course $courseCode');
-        await docRef.set({
+      if (!courses.containsKey(courseCode)) {
+        courses[courseCode] = {
           'courseCode': courseCode,
           'courseName': courseName ?? courseCode,
           'distribution': {},
           'obtained': {'quizzes': [], 'shortQuizzes': []},
           'quizStrategy': 'bestN',
-        });
-        debugPrint('[SemesterProgressRepo] Course $courseCode initialized');
-      } else {
-        debugPrint('[SemesterProgressRepo] Course $courseCode already exists');
+        };
+        summary['courses'] = courses;
+        await _updateSummary(semesterCode, summary);
       }
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error initializing course: $e');
@@ -159,12 +151,16 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      debugPrint('[SemesterProgressRepo] Saving distribution for $courseCode');
-      await _getCourseDoc(semesterCode, courseCode).set({
-        'distribution': distribution.toMap(),
-        'courseName': courseName ?? courseCode,
-      }, SetOptions(merge: true));
-      debugPrint('[SemesterProgressRepo] Distribution saved for $courseCode');
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+
+      courseData['distribution'] = distribution.toMap();
+      if (courseName != null) courseData['courseName'] = courseName;
+
+      courses[courseCode] = courseData;
+      summary['courses'] = courses;
+      await _updateSummary(semesterCode, summary);
       return true;
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error saving distribution: $e');
@@ -172,7 +168,6 @@ class SemesterProgressRepository {
     }
   }
 
-  /// Saves obtained marks for a category (excluding quizzes)
   Future<bool> saveObtainedMark(
     String semesterCode,
     String courseCode,
@@ -182,13 +177,16 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      debugPrint(
-        '[SemesterProgressRepo] Saving $category=$value for $courseCode',
-      );
-      await _getCourseDoc(semesterCode, courseCode).set({
-        'obtained': {category: value},
-      }, SetOptions(merge: true));
-      debugPrint('[SemesterProgressRepo] Saved $category for $courseCode');
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+      final obtained = Map<String, dynamic>.from(courseData['obtained'] ?? {});
+
+      obtained[category] = value;
+      courseData['obtained'] = obtained;
+      courses[courseCode] = courseData;
+      summary['courses'] = courses;
+      await _updateSummary(semesterCode, summary);
       return true;
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error saving obtained mark: $e');
@@ -205,20 +203,18 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      final docRef = _getCourseDoc(semesterCode, courseCode);
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+      final obtained = Map<String, dynamic>.from(courseData['obtained'] ?? {});
+      final quizzes = List<double>.from(obtained['quizzes'] ?? []);
 
-      debugPrint(
-        '[SemesterProgressRepo] Adding quiz mark $mark to $courseCode',
-      );
-
-      // Use arrayUnion for atomic append
-      await docRef.set({
-        'obtained': {
-          'quizzes': FieldValue.arrayUnion([mark]),
-        },
-      }, SetOptions(merge: true));
-
-      debugPrint('[SemesterProgressRepo] Quiz mark added to $courseCode');
+      quizzes.add(mark);
+      obtained['quizzes'] = quizzes;
+      courseData['obtained'] = obtained;
+      courses[courseCode] = courseData;
+      summary['courses'] = courses;
+      await _updateSummary(semesterCode, summary);
       return true;
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error adding quiz mark: $e');
@@ -226,7 +222,6 @@ class SemesterProgressRepository {
     }
   }
 
-  /// Adds a new short quiz mark to the list
   Future<bool> addShortQuizMark(
     String semesterCode,
     String courseCode,
@@ -235,20 +230,18 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      final docRef = _getCourseDoc(semesterCode, courseCode);
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+      final obtained = Map<String, dynamic>.from(courseData['obtained'] ?? {});
+      final shortQuizzes = List<double>.from(obtained['shortQuizzes'] ?? []);
 
-      debugPrint(
-        '[SemesterProgressRepo] Adding short quiz mark $mark to $courseCode',
-      );
-
-      // Use arrayUnion for atomic append
-      await docRef.set({
-        'obtained': {
-          'shortQuizzes': FieldValue.arrayUnion([mark]),
-        },
-      }, SetOptions(merge: true));
-
-      debugPrint('[SemesterProgressRepo] Short quiz mark added to $courseCode');
+      shortQuizzes.add(mark);
+      obtained['shortQuizzes'] = shortQuizzes;
+      courseData['obtained'] = obtained;
+      courses[courseCode] = courseData;
+      summary['courses'] = courses;
+      await _updateSummary(semesterCode, summary);
       return true;
     } catch (e) {
       debugPrint('[SemesterProgressRepo] Error adding short quiz mark: $e');
@@ -256,22 +249,30 @@ class SemesterProgressRepository {
     }
   }
 
-  /// Updates quiz strategy for a course
-  Future<bool> saveQuizStrategy(
+  Future<bool> saveStrategies(
     String semesterCode,
-    String courseCode,
-    String strategy,
-  ) async {
+    String courseCode, {
+    required String strategy,
+    required int quizN,
+    required int shortQuizN,
+  }) async {
     if (_uid == null) return false;
 
     try {
-      await _getCourseDoc(
-        semesterCode,
-        courseCode,
-      ).set({'quizStrategy': strategy}, SetOptions(merge: true));
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+
+      courseData['quizStrategy'] = strategy;
+      courseData['quizN'] = quizN;
+      courseData['shortQuizN'] = shortQuizN;
+
+      courses[courseCode] = courseData;
+      summary['courses'] = courses;
+      await _updateSummary(semesterCode, summary);
       return true;
     } catch (e) {
-      debugPrint('[SemesterProgressRepo] Error saving quiz strategy: $e');
+      debugPrint('[SemesterProgressRepo] Error saving strategies: $e');
       return false;
     }
   }
@@ -285,20 +286,19 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      final docRef = _getCourseDoc(semesterCode, courseCode);
-      final doc = await docRef.get();
-
-      if (!doc.exists) return false;
-
-      final data = doc.data() as Map<String, dynamic>?;
-      if (data == null) return false;
-
-      final obtained = data['obtained'] as Map<String, dynamic>? ?? {};
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+      final obtained = Map<String, dynamic>.from(courseData['obtained'] ?? {});
       final quizzes = List<dynamic>.from(obtained['quizzes'] ?? []);
 
       if (index >= 0 && index < quizzes.length) {
         quizzes.removeAt(index);
-        await docRef.update({'obtained.quizzes': quizzes});
+        obtained['quizzes'] = quizzes;
+        courseData['obtained'] = obtained;
+        courses[courseCode] = courseData;
+        summary['courses'] = courses;
+        await _updateSummary(semesterCode, summary);
         return true;
       }
       return false;
@@ -308,7 +308,6 @@ class SemesterProgressRepository {
     }
   }
 
-  /// Deletes a short quiz mark by index
   Future<bool> deleteShortQuizMark(
     String semesterCode,
     String courseCode,
@@ -317,20 +316,19 @@ class SemesterProgressRepository {
     if (_uid == null) return false;
 
     try {
-      final docRef = _getCourseDoc(semesterCode, courseCode);
-      final doc = await docRef.get();
-
-      if (!doc.exists) return false;
-
-      final data = doc.data() as Map<String, dynamic>?;
-      if (data == null) return false;
-
-      final obtained = data['obtained'] as Map<String, dynamic>? ?? {};
+      final summary = await fetchSemesterSummary(semesterCode) ?? {};
+      final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
+      final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
+      final obtained = Map<String, dynamic>.from(courseData['obtained'] ?? {});
       final shortQuizzes = List<dynamic>.from(obtained['shortQuizzes'] ?? []);
 
       if (index >= 0 && index < shortQuizzes.length) {
         shortQuizzes.removeAt(index);
-        await docRef.update({'obtained.shortQuizzes': shortQuizzes});
+        obtained['shortQuizzes'] = shortQuizzes;
+        courseData['obtained'] = obtained;
+        courses[courseCode] = courseData;
+        summary['courses'] = courses;
+        await _updateSummary(semesterCode, summary);
         return true;
       }
       return false;

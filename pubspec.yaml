@@ -73,6 +73,7 @@ dependencies:
   # --- Annotations ---
   json_annotation: ^4.9.0
   freezed_annotation: ^3.1.0
+  supabase_flutter: ^2.12.0
 
 dev_dependencies:
   flutter_test:

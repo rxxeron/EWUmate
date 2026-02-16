@@ -1,22 +1,26 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 
 class OnboardingRepository {
-  final _db = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
 
   Future<List<Map<String, dynamic>>> fetchDepartments() async {
     try {
-      final doc = await _db.collection('metadata').doc('departments').get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        if (data['list'] is List) {
-          return List<Map<String, dynamic>>.from(data['list']);
-        }
+      debugPrint('[Onboarding] Fetching departments from metadata...');
+      final data = await _supabase
+          .from('metadata')
+          .select('data')
+          .eq('id', 'departments')
+          .single()
+          .timeout(const Duration(seconds: 5));
+
+      final departmentsData = data['data'];
+      if (departmentsData != null && departmentsData['list'] is List) {
+        debugPrint('[Onboarding] Departments loaded from DB');
+        return List<Map<String, dynamic>>.from(departmentsData['list']);
       }
     } catch (e) {
-      // ignore
+      debugPrint("Error fetching departments (using fallback): $e");
     }
 
     return [
@@ -83,242 +87,184 @@ class OnboardingRepository {
 
   Future<void> saveProgram(
       String programId, String deptName, String admittedSemester) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) throw Exception("User not logged in");
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception("User not logged in");
 
-    await _db.collection('users').doc(uid).set({
-      'programId': programId,
+    await _supabase.from('profiles').upsert({
+      'id': user.id,
+      'program_id': programId,
       'department': deptName,
-      'admittedSemester': admittedSemester, // New field for context awareness
-      'onboardingStatus': 'program_selected',
-    }, SetOptions(merge: true));
+      'admitted_semester': admittedSemester,
+      'onboarding_status': 'program_selected',
+    });
   }
 
   /// Saves course history, separating Live (Current) vs Archived (Past) semesters
   Future<void> saveCourseHistory(Map<String, Map<String, String>> history,
-      List<String> enrolledIds, String currentSemester) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) throw Exception("User not logged in");
+      List<String> enrolledIds, String currentSemester,
+      {List<Map<String, dynamic>>? enrolledCourseDetails}) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception("User not logged in");
 
-    // 1. Separate Current vs Past
     final pastHistory = Map<String, Map<String, String>>.from(history);
     final Map<String, String> currentCourses =
         pastHistory.remove(currentSemester) ?? {};
 
-    // 2. Flatten Past for "completedCourses"
-    final completed = <String>[];
-    pastHistory.forEach((sem, courses) {
-      courses.forEach((code, grade) {
-        if (grade != "Ongoing") {
-          completed.add(code);
-        }
-      });
+    // 3. Save Profile with enrollment details
+    await _supabase.from('profiles').upsert({
+      'id': user.id,
+      'enrolled_sections': enrolledIds,
+      'onboarding_status': 'onboarded',
     });
 
-    // 3. Save User Doc (Enrollment Context)
-    await _db.collection('users').doc(uid).set({
-      'enrolledSections': enrolledIds, // Used by Dashboard for context
-      'onboardingStatus': 'onboarded',
-    }, SetOptions(merge: true));
+    // 4. Save Academic Data (raw map → Azure Function will enrich with credits + names)
+    await _supabase.from('academic_data').upsert({
+      'user_id': user.id,
+      'semesters': pastHistory,
+    });
 
-    // 4. Save Academic Data (History)
-    await _db.collection('users').doc(uid).collection('academic_data').doc('profile').set({
-      'courseHistory': pastHistory,
-      'completedCourses': completed,
-    }, SetOptions(merge: true));
-
-    // 4. Initialize Live Semester (Subcollections)
+    // 5. Initialize Live Semester with course details
     if (currentCourses.isNotEmpty) {
-      final safeSem =
-          currentSemester.replaceAll(" ", ""); // "Spring 2026" -> "Spring2026"
-      final batch = _db.batch();
+      final safeSem = currentSemester.replaceAll(" ", "");
 
-      for (var code in currentCourses.keys) {
-        final docRef = _db
-            .collection('users')
-            .doc(uid)
-            .collection('semesterProgress')
-            .doc(safeSem)
-            .collection('courses')
-            .doc(code);
+      final results = await _supabase
+          .from('semester_progress')
+          .select()
+          .eq('user_id', user.id)
+          .eq('semester_code', safeSem)
+          .maybeSingle();
 
-        batch.set(
-            docRef,
-            {
-              'courseCode': code,
-              'courseName': code, // We might lack name here, fallback to code.
-              'distribution': {},
-              'obtained': {'quizzes': [], 'shortQuizzes': []},
-              'quizStrategy': 'bestN',
-            },
-            SetOptions(merge: true));
+      Map<String, dynamic> summary = results?['summary'] ?? {};
+      Map<String, dynamic> coursesMap = summary['courses'] ?? {};
+
+      // Build a lookup from enrolledCourseDetails if provided
+      final detailsMap = <String, Map<String, dynamic>>{};
+      if (enrolledCourseDetails != null) {
+        for (var detail in enrolledCourseDetails) {
+          final code = (detail['code'] ?? '').toString();
+          if (code.isNotEmpty) detailsMap[code] = detail;
+        }
       }
 
-      await batch.commit();
-      debugPrint("Onboarding: Live courses initialized for $safeSem");
+      for (var code in currentCourses.keys) {
+        if (!coursesMap.containsKey(code)) {
+          final detail = detailsMap[code];
+          coursesMap[code] = {
+            'courseCode': code,
+            'courseName': detail?['name'] ?? code,
+            'section': detail?['section'] ?? '',
+            'schedule': detail?['time'] ?? '',
+            'distribution': {},
+            'obtained': {'quizzes': [], 'shortQuizzes': []},
+            'quizStrategy': 'bestN',
+          };
+        }
+      }
 
-      // 5. Touch parent document to trigger Cloud schedule generation
-      await _db
-          .collection('users')
-          .doc(uid)
-          .collection('semesterProgress')
-          .doc(safeSem)
-          .set({
-        'semesterCode': safeSem,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      debugPrint("Onboarding: Triggered schedule generation for $safeSem");
+      summary['courses'] = coursesMap;
+
+      await _supabase.from('semester_progress').upsert({
+        'user_id': user.id,
+        'semester_code': safeSem,
+        'summary': summary,
+        'last_updated': DateTime.now().toIso8601String(),
+      });
+      debugPrint("Onboarding: Live courses initialized for $safeSem");
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchCourseCatalog(
       {String? semester, bool isCurrent = false, String? searchQuery}) async {
-    // 1. Try Specific Semester (Priority)
-    if (semester != null) {
-      final safeSem = semester.replaceAll(" ", "");
-      final collection = "courses_$safeSem";
+    final queryStr = searchQuery?.toUpperCase().replaceAll(' ', '').trim();
 
+    // CURRENT semester → query 'courses' table for sections with schedules
+    if (isCurrent && semester != null) {
       try {
-        final queryStr = searchQuery?.toUpperCase().replaceAll(' ', '').trim();
-        List<QueryDocumentSnapshot> docs = [];
-
+        var queryBuilder = _supabase.from('courses').select();
         if (queryStr != null && queryStr.isNotEmpty) {
-          // Try 'courseCode' field first (Preferred format)
-          var snapshot = await _db
-              .collection(collection)
-              .where('courseCode', isGreaterThanOrEqualTo: queryStr)
-              .where('courseCode', isLessThanOrEqualTo: '$queryStr\uf8ff')
-              .limit(100)
-              .get();
-
-          if (snapshot.docs.isEmpty) {
-            // Try 'code' field (Legacy/Alternative format)
-            snapshot = await _db
-                .collection(collection)
-                .where('code', isGreaterThanOrEqualTo: queryStr)
-                .where('code', isLessThanOrEqualTo: '$queryStr\uf8ff')
-                .limit(100)
-                .get();
-          }
-          docs = snapshot.docs;
-        } else {
-          // Default initial load: Just 100 items to keep it snappy
-          final snapshot = await _db.collection(collection).limit(100).get();
-          docs = snapshot.docs;
+          queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
         }
 
-        if (docs.isNotEmpty) {
-          if (isCurrent) {
-            final groups = <String, Map<String, dynamic>>{};
+        final List<dynamic> data = await queryBuilder
+            .eq('semester', semester)
+            .limit(100)
+            .timeout(const Duration(seconds: 8));
 
-            for (var d in docs) {
-              final data = d.data() as Map<String, dynamic>;
-              final rawCode = data['courseCode'] ?? data['code'] ?? "???";
-              final code = rawCode.toString().replaceAll(' ', '');
-              final section = (data['section'] ?? 'N/A').toString();
-              final key = "${code}_Sec$section";
+        if (data.isNotEmpty) {
+          final groups = <String, Map<String, dynamic>>{};
 
-              // Build schedule from sessions array
-              String schedule = "TBA";
-              if (data['sessions'] is List &&
-                  (data['sessions'] as List).isNotEmpty) {
-                final sessions = data['sessions'] as List;
-                final scheduleList = sessions.map((s) {
-                  final day = s['day'] ?? 'TBA';
-                  final start = s['startTime'] ?? '??';
-                  final end = s['endTime'] ?? '??';
-                  return "$day $start-$end";
-                }).toList();
-                schedule = scheduleList.join(", ");
-              } else {
-                // Fallback to legacy format
-                schedule =
-                    "${data['day'] ?? 'TBA'} ${data['startTime'] ?? '??'}-${data['endTime'] ?? '??'}";
-              }
+          for (var d in data) {
+            final rawCode = d['code'] ?? "???";
+            final code = rawCode.toString().replaceAll(' ', '');
+            final section = (d['section'] ?? 'N/A').toString();
+            final key = "${code}_Sec$section";
 
-              if (!groups.containsKey(key)) {
-                groups[key] = {
-                  'id': d.id, // Primary ID
-                  'allIds': [d.id],
-                  'code': code,
-                  'name': (data['courseName'] ?? rawCode).toString(),
-                  'section': section,
-                  'schedules': [schedule],
-                };
-              } else {
-                groups[key]!['allIds'].add(d.id);
-                groups[key]!['schedules'].add(schedule);
-              }
+            String schedule = "TBA";
+            if (d['sessions'] is List && (d['sessions'] as List).isNotEmpty) {
+              final sessions = d['sessions'] as List;
+              final scheduleList = sessions.map((s) {
+                final day = s['day'] ?? 'TBA';
+                final start = s['start_time'] ?? s['startTime'] ?? '??';
+                final end = s['end_time'] ?? s['endTime'] ?? '??';
+                return "$day $start-$end";
+              }).toList();
+              schedule = scheduleList.join(", ");
             }
 
-            return groups.values.map((g) {
-              return {
-                ...g,
-                'time': (g['schedules'] as List).join(", "),
-                'day': "", // Combined into time
+            if (!groups.containsKey(key)) {
+              groups[key] = {
+                'id': d['doc_id'] ?? d['id'].toString(),
+                'allIds': [d['doc_id'] ?? d['id'].toString()],
+                'code': code,
+                'name':
+                    (d['course_name'] ?? d['courseName'] ?? rawCode).toString(),
+                'section': section,
+                'schedules': [schedule],
               };
-            }).toList();
-          } else {
-            final unique = <String, Map<String, dynamic>>{};
-            for (var d in docs) {
-              final data = d.data() as Map<String, dynamic>;
-              final rawCode = data['courseCode'] ?? data['code'];
-              if (rawCode != null) {
-                final code = rawCode.toString().replaceAll(' ', '');
-                if (!unique.containsKey(code)) {
-                  unique[code] = {
-                    'code': code,
-                    'name': (data['courseName'] ?? rawCode).toString(),
-                  };
-                }
-              }
+            } else {
+              groups[key]!['allIds'].add(d['doc_id'] ?? d['id'].toString());
+              groups[key]!['schedules'].add(schedule);
             }
-            if (unique.isNotEmpty) return unique.values.toList();
           }
+
+          return groups.values.map((g) {
+            return {
+              ...g,
+              'time': (g['schedules'] as List).join(", "),
+              'day': "",
+            };
+          }).toList();
         }
       } catch (e) {
-        // // print("Catalog Search Error ($collection): $e");
+        debugPrint("Courses table error: $e");
       }
     }
 
-    // 2. Try Global Metadata (Master Catalog)
+    // PAST semesters (or fallback) → query 'course_metadata' directly
     try {
-      final doc = await _db.collection('metadata').doc('courses').get();
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        if (data['list'] is List) {
-          final list = List<dynamic>.from(data['list']);
-          final queryStr =
-              searchQuery?.toUpperCase().replaceAll(' ', '').trim();
+      debugPrint('[Onboarding] Loading courses from course_metadata...');
+      var queryBuilder = _supabase.from('course_metadata').select();
 
-          return list
-              .where((item) {
-                if (queryStr == null || queryStr.isEmpty) return true;
-                final m = item as Map;
-                final code = (m['code'] ?? "")
-                    .toString()
-                    .toUpperCase()
-                    .replaceAll(' ', '');
-                return code.contains(queryStr);
-              })
-              .map((item) {
-                final m = Map<String, dynamic>.from(item as Map);
-                final rawCode = (m['code'] ?? '???').toString();
-                final code = rawCode.replaceAll(' ', '');
-                return {
-                  'code': code,
-                  'name': (m['name'] ?? rawCode).toString(),
-                };
-              })
-              .take(100)
-              .toList();
-        }
+      if (queryStr != null && queryStr.isNotEmpty) {
+        queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
       }
+
+      final List<dynamic> list =
+          await queryBuilder.limit(200).timeout(const Duration(seconds: 8));
+      debugPrint(
+          '[Onboarding] Found ${list.length} courses in course_metadata');
+      return list.map((m) {
+        final rawCode = (m['code'] ?? '???').toString();
+        final code = rawCode.replaceAll(' ', '');
+        return {
+          'code': code,
+          'name': (m['name'] ?? rawCode).toString(),
+        };
+      }).toList();
     } catch (e) {
-      // // print("Master Catalog Error: $e");
+      debugPrint("course_metadata error: $e");
     }
 
-    // 3. Hard Fallback
     return [];
   }
 }

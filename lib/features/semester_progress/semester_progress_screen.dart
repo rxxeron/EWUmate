@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/semester_progress_models.dart';
 import '../calendar/academic_repository.dart';
 import 'semester_progress_repository.dart';
@@ -17,7 +16,7 @@ class SemesterProgressScreen extends StatefulWidget {
 class _SemesterProgressScreenState extends State<SemesterProgressScreen> {
   final SemesterProgressRepository _progressRepo = SemesterProgressRepository();
   final AcademicRepository _academicRepo = AcademicRepository();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _supabase = Supabase.instance.client;
 
   bool _loading = true;
   String _semesterCode = '';
@@ -31,44 +30,43 @@ class _SemesterProgressScreenState extends State<SemesterProgressScreen> {
   }
 
   Future<void> _initData() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
     try {
       // 1. Get Semester
       _semesterCode = await _academicRepo.getCurrentSemesterCode();
-      final safeSem = _semesterCode.replaceAll(' ', '');
 
-      // 2. Get User Enrolled
-      final userDoc =
-          await _firestore.collection('users').doc(currentUser.uid).get();
-      if (!userDoc.exists) {
+      // 2. Get User Enrolled from Profile
+      final profileData = await _supabase
+          .from('profiles')
+          .select('enrolled_sections')
+          .eq('id', user.id)
+          .single();
+
+      final enrolledIds =
+          List<String>.from(profileData['enrolled_sections'] ?? []);
+
+      if (enrolledIds.isEmpty) {
         if (mounted) setState(() => _loading = false);
         return;
       }
-      final enrolledIds = List<String>.from(
-        userDoc.data()?['enrolledSections'] ?? [],
-      );
 
-      // 3. Fetch Course Info
+      // 3. Fetch Course Info from 'courses' table
+      final data = await _supabase
+          .from('courses')
+          .select()
+          .eq('semester', _semesterCode)
+          .inFilter('doc_id', enrolledIds);
+
       final Map<String, CourseProgressData> courses = {};
-      final coursesCollection = _firestore.collection('courses_$safeSem');
-
-      for (final sectionId in enrolledIds) {
-        try {
-          final doc = await coursesCollection.doc(sectionId).get();
-          if (doc.exists) {
-            final data = doc.data()!;
-            final code = data['code']?.toString() ?? sectionId;
-            courses[code] = CourseProgressData(
-              code: code,
-              name: data['courseName']?.toString() ?? '',
-              section: data['section']?.toString() ?? '',
-            );
-          }
-        } catch (e) {
-          debugPrint("Error loading course info $sectionId: $e");
-        }
+      for (var item in data) {
+        final code = item['code']?.toString() ?? '';
+        courses[code] = CourseProgressData(
+          code: code,
+          name: item['course_name']?.toString() ?? '',
+          section: item['section']?.toString() ?? '',
+        );
       }
 
       if (mounted) {

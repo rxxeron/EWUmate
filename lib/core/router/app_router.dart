@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/auth/register_screen.dart';
 import '../widgets/main_shell.dart';
@@ -88,7 +88,8 @@ class AppRouter {
       ),
     ],
     redirect: (context, state) {
-      final user = FirebaseAuth.instance.currentUser;
+      final session = Supabase.instance.client.auth.currentSession;
+      final user = session?.user;
       final path = state.uri.toString();
 
       // Define public routes

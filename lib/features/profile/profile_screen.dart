@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +16,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final User? user = FirebaseAuth.instance.currentUser;
+  final _supabase = Supabase.instance.client;
+  User? get user => _supabase.auth.currentUser;
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _nicknameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
@@ -43,7 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _fetchUserData() async {
     if (user == null) return;
-    
+
     setState(() => _loading = true);
     _emailCtrl.text = user!.email ?? '';
 
@@ -54,24 +53,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      // Remove subcollection fetch since data is directly in 'users/uid'
-      final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
+      final data =
+          await _supabase.from('profiles').select().eq('id', user!.id).single();
 
-      if (userDoc.exists) {
-        // Correctly read nested fields based on user provided structure
-        // No 'academic_data' subcollection lookup needed if data is flat or in 'statistics' field of parent
-        final data = userDoc.data()!;
-        
-        await _cacheService.cacheStats(data);
-        _populateFields(data);
+      final academicData = await _supabase
+          .from('academic_data')
+          .select()
+          .eq('user_id', user!.id)
+          .maybeSingle();
+
+      if (data.isNotEmpty) {
+        final merged = {...data, if (academicData != null) ...academicData};
+        await _cacheService.cacheStats(merged);
+        _populateFields(merged);
       } else {
-        // Fallback to Auth data if Firestore doc missing
         setState(() {
-          _nameCtrl.text = user!.displayName ?? '';
-          _photoUrl = user!.photoURL;
+          _nameCtrl.text = user!.userMetadata?['fullName'] ?? '';
+          _photoUrl = user!.userMetadata?['photoURL'];
         });
       }
     } catch (e) {
@@ -84,15 +82,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _populateFields(Map<String, dynamic> data) {
     if (!mounted) return;
     setState(() {
-      _nameCtrl.text = data['fullName'] ?? '';
+      _nameCtrl.text = data['full_name'] ?? data['fullName'] ?? '';
       _nicknameCtrl.text = data['nickname'] ?? '';
-      _idCtrl.text = data['studentId'] ?? '';
+      _idCtrl.text = data['student_id'] ?? data['studentId'] ?? '';
       _phoneCtrl.text = data['phone'] ?? '';
-      _photoUrl = data['profilePicture'] ?? data['photoURL'];
-      _stats = data['statistics'] ?? {};
-      _advisingSlot = data['advisingSlot']?['displayTime'];
+      _photoUrl = data['photo_url'] ??
+          data['photoURL'] ??
+          data['profilePicture'] ??
+          data['profile_picture'];
+      _stats = {
+        'cgpa': data['cgpa'],
+        'totalCredits': data['total_credits'] ?? data['total_credits_earned'],
+        'coursesCompleted':
+            data['courses_completed'] ?? data['total_courses_completed'],
+        'remainedCredits': data['remained_credits'],
+      };
+      _advisingSlot =
+          data['advising_slot'] ?? data['advisingSlot']?['displayTime'];
       _department = data['department'];
-      _admittedSemester = data['admittedSemester'];
+      _admittedSemester = data['admitted_semester'] ?? data['admittedSemester'];
     });
   }
 
@@ -105,23 +113,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _loading = true);
 
     try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profile_pictures')
-          .child('${user!.uid}.jpg');
-
-      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      final String fileName = 'profile_${user!.id}.jpg';
       final bytes = await image.readAsBytes();
 
-      await ref.putData(bytes, metadata);
-      final url = await ref.getDownloadURL();
+      await _supabase.storage.from('profile_images').uploadBinary(
+            fileName,
+            bytes,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .set({'profilePicture': url}, SetOptions(merge: true));
+      final url =
+          _supabase.storage.from('profile_images').getPublicUrl(fileName);
 
-      await user!.updatePhotoURL(url);
+      await _supabase
+          .from('profiles')
+          .update({'photo_url': url}).eq('id', user!.id);
+
+      await _supabase.auth.updateUser(
+        UserAttributes(data: {'photoURL': url}),
+      );
 
       setState(() => _photoUrl = url);
       if (mounted) _showSnack("Photo updated!");
@@ -136,15 +146,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user == null) return;
     setState(() => _loading = true);
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .set({
-        'fullName': _nameCtrl.text.trim(),
+      await _supabase.from('profiles').update({
+        'full_name': _nameCtrl.text.trim(),
         'nickname': _nicknameCtrl.text.trim(),
-        'studentId': _idCtrl.text.trim(),
+        'student_id': _idCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
-      }, SetOptions(merge: true));
+      }).eq('id', user!.id);
       if (mounted) _showSnack("Profile saved!");
     } catch (e) {
       if (mounted) _showSnack("Save failed: $e", isError: true);
@@ -200,17 +207,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               }
 
               try {
-                final credential = EmailAuthProvider.credential(
-                  email: user!.email!,
-                  password: currentPassCtrl.text,
+                await _supabase.auth.updateUser(
+                  UserAttributes(password: newPassCtrl.text),
                 );
-                await user!.reauthenticateWithCredential(credential);
-                await user!.updatePassword(newPassCtrl.text);
 
                 if (!mounted) return;
                 Navigator.of(context).pop();
                 _showSnack("Password changed successfully!");
-              } on FirebaseAuthException catch (e) {
+              } on AuthException catch (e) {
                 _showSnack("Error: ${e.message}", isError: true);
               }
             },
@@ -283,188 +287,198 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: Colors.cyanAccent))
           : SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        child: Column(
-          children: [
-            // Profile Header
-            Center(
-              child: Stack(
-                alignment: Alignment.bottomRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Column(
                 children: [
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.cyanAccent.withValues(alpha: 0.5),
-                        width: 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.cyanAccent.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          spreadRadius: 5,
+                  // Profile Header
+                  Center(
+                    child: Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.cyanAccent.withValues(alpha: 0.5),
+                              width: 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.cyanAccent.withValues(alpha: 0.2),
+                                blurRadius: 20,
+                                spreadRadius: 5,
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.white10,
+                            backgroundImage: _photoUrl != null
+                                ? NetworkImage(_photoUrl!)
+                                : null,
+                            child: _photoUrl == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 60,
+                                    color: Colors.white30,
+                                  )
+                                : null,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _loading ? null : _pickAndUploadImage,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Colors.cyanAccent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.white10,
-                      backgroundImage:
-                          _photoUrl != null ? NetworkImage(_photoUrl!) : null,
-                      child: _photoUrl == null
-                          ? const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.white30,
-                            )
-                          : null,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    _nameCtrl.text.isNotEmpty ? _nameCtrl.text : "Student",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _loading ? null : _pickAndUploadImage,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.cyanAccent,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: Colors.black,
-                        size: 20,
+                  Text(
+                    _emailCtrl.text,
+                    style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  ),
+                  if (_department != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _department!,
+                        style: const TextStyle(
+                            color: Colors.cyanAccent, fontSize: 12),
+                        textAlign: TextAlign.center,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              _nameCtrl.text.isNotEmpty ? _nameCtrl.text : "Student",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              _emailCtrl.text,
-              style: const TextStyle(color: Colors.white54, fontSize: 14),
-            ),
-            if (_department != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  _department!,
-                  style:
-                      const TextStyle(color: Colors.cyanAccent, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            if (_admittedSemester != null)
-              Text(
-                "Started: $_admittedSemester",
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
-                textAlign: TextAlign.center,
-              ),
-            const SizedBox(height: 30),
+                  if (_admittedSemester != null)
+                    Text(
+                      "Started: $_admittedSemester",
+                      style:
+                          const TextStyle(color: Colors.white38, fontSize: 11),
+                      textAlign: TextAlign.center,
+                    ),
+                  const SizedBox(height: 30),
 
-            // Academic Snapshot
-            _buildAcademicSnapshot(),
-            const SizedBox(height: 20),
+                  // Academic Snapshot
+                  _buildAcademicSnapshot(),
+                  const SizedBox(height: 20),
 
-            // Advising Slot
-            if (_advisingSlot != null) _buildAdvisingCard(),
+                  // Advising Slot
+                  if (_advisingSlot != null) _buildAdvisingCard(),
 
-            const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-            // Form Fields
-            _buildSectionHeader("Personal Info"),
-            const SizedBox(height: 15),
-            _buildGlassField("Full Name", _nameCtrl, Icons.person_outline),
-            const SizedBox(height: 15),
-            _buildGlassField("Nickname", _nicknameCtrl, Icons.badge_outlined),
-            const SizedBox(height: 15),
-            _buildGlassField("Student ID", _idCtrl, Icons.card_membership),
-            const SizedBox(height: 15),
-            _buildGlassField("Mobile Number", _phoneCtrl, Icons.phone_outlined),
+                  // Form Fields
+                  _buildSectionHeader("Personal Info"),
+                  const SizedBox(height: 15),
+                  _buildGlassField(
+                      "Full Name", _nameCtrl, Icons.person_outline),
+                  const SizedBox(height: 15),
+                  _buildGlassField(
+                      "Nickname", _nicknameCtrl, Icons.badge_outlined),
+                  const SizedBox(height: 15),
+                  _buildGlassField(
+                      "Student ID", _idCtrl, Icons.card_membership),
+                  const SizedBox(height: 15),
+                  _buildGlassField(
+                      "Mobile Number", _phoneCtrl, Icons.phone_outlined),
 
-            const SizedBox(height: 40),
-            _buildSectionHeader("App Settings"),
-            const SizedBox(height: 15),
+                  const SizedBox(height: 40),
+                  _buildSectionHeader("App Settings"),
+                  const SizedBox(height: 15),
 
-            GlassContainer(
-              padding: EdgeInsets.zero,
-              borderRadius: 16,
-              color: Colors.white.withValues(alpha: 0.05),
-              child: Column(
-                children: [
-                  Consumer<ThemeProvider>(
-                    builder: (context, theme, _) {
-                      return SwitchListTile(
-                        title: const Text(
-                          "Dark Mode",
-                          style: TextStyle(color: Colors.white),
+                  GlassContainer(
+                    padding: EdgeInsets.zero,
+                    borderRadius: 16,
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: Column(
+                      children: [
+                        Consumer<ThemeProvider>(
+                          builder: (context, theme, _) {
+                            return SwitchListTile(
+                              title: const Text(
+                                "Dark Mode",
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              secondary: Icon(
+                                theme.isDarkMode
+                                    ? Icons.dark_mode
+                                    : Icons.light_mode,
+                                color: Colors.cyanAccent,
+                              ),
+                              activeThumbColor: Colors.cyanAccent,
+                              value: theme.isDarkMode,
+                              onChanged: (val) => theme.toggleTheme(val),
+                            );
+                          },
                         ),
-                        secondary: Icon(
-                          theme.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                          color: Colors.cyanAccent,
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+                  GlassContainer(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    borderRadius: 16,
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const Icon(
+                            Icons.lock_reset,
+                            color: Colors.orangeAccent,
+                          ),
+                          title: const Text(
+                            "Change Password",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white54,
+                          ),
+                          onTap: _showChangePasswordDialog,
                         ),
-                        activeThumbColor: Colors.cyanAccent,
-                        value: theme.isDarkMode,
-                        onChanged: (val) => theme.toggleTheme(val),
-                      );
-                    },
+                        Divider(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            height: 1),
+                        ListTile(
+                          leading:
+                              const Icon(Icons.logout, color: Colors.redAccent),
+                          title: const Text(
+                            "Log Out",
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
+                          onTap: () {
+                            _supabase.auth.signOut();
+                            context.go('/login');
+                          },
+                        ),
+                      ],
+                    ),
                   ),
+
+                  const SizedBox(height: 50),
                 ],
               ),
             ),
-
-            const SizedBox(height: 30),
-            GlassContainer(
-              padding: const EdgeInsets.symmetric(vertical: 5),
-              borderRadius: 16,
-              color: Colors.white.withValues(alpha: 0.05),
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(
-                      Icons.lock_reset,
-                      color: Colors.orangeAccent,
-                    ),
-                    title: const Text(
-                      "Change Password",
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    trailing: const Icon(
-                      Icons.chevron_right,
-                      color: Colors.white54,
-                    ),
-                    onTap: _showChangePasswordDialog,
-                  ),
-                  Divider(
-                      color: Colors.white.withValues(alpha: 0.1), height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.logout, color: Colors.redAccent),
-                    title: const Text(
-                      "Log Out",
-                      style: TextStyle(color: Colors.redAccent),
-                    ),
-                    onTap: () {
-                      FirebaseAuth.instance.signOut();
-                      context.go('/login');
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
     );
   }
 

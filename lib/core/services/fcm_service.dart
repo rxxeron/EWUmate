@@ -1,8 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../router/app_router.dart';
 
@@ -13,6 +12,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class FCMService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final _supabase = Supabase.instance.client;
 
   Future<void> initialize() async {
     if (kIsWeb) {
@@ -32,10 +32,10 @@ class FCMService {
     // 3. Token Management
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
-      await _saveTokenToFirestore(token);
+      await _saveTokenToSupabase(token);
     }
 
-    _firebaseMessaging.onTokenRefresh.listen(_saveTokenToFirestore);
+    _firebaseMessaging.onTokenRefresh.listen(_saveTokenToSupabase);
 
     // 4. Foreground Message
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -149,12 +149,6 @@ class FCMService {
                   textAlign: TextAlign.left,
                 ),
               ),
-
-              // Actions (Optional)
-              // Padding(
-              //   padding: const EdgeInsets.only(bottom: 10, right: 10),
-              //   child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [ TextButton(child: Text("OK"), onPressed: ()=>Navigator.pop(ctx))]),
-              // )
             ],
           ),
         ),
@@ -162,24 +156,19 @@ class FCMService {
     );
   }
 
-  Future<void> _saveTokenToFirestore(String token) async {
-    final user = FirebaseAuth.instance.currentUser;
+  Future<void> _saveTokenToSupabase(String token) async {
+    final user = _supabase.auth.currentUser;
     if (user == null) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('fcm_tokens')
-          .doc(token)
-          .set({
+      await _supabase.from('fcm_tokens').upsert({
+        'user_id': user.id,
         'token': token,
-        'createdAt': FieldValue.serverTimestamp(),
-        'platform': 'android',
-        'lastUpdated': FieldValue.serverTimestamp(),
+        'platform': kIsWeb ? 'web' : 'android', // Simple detection
+        'last_updated': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      // Ignore
+      debugPrint('[FCM] Error saving token to Supabase: $e');
     }
   }
 }

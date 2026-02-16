@@ -1,7 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/widgets/glass_kit.dart';
@@ -216,30 +214,21 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           _nextSemesterCode, _selectedCodes.toList(), filters);
 
       if (generationId == null) {
-        throw Exception('Failed to start generation process.');
+        // For testing/mocking when backend is missing
+        setState(() {
+          _isGenerating = false;
+          _generationStatus = 'Generation pending backend implementation.';
+        });
+        return;
       }
 
       setState(() {
-        _generationStatus = 'Processing... Waiting for cloud results.';
+        _generationStatus = 'Processing... Waiting for results.';
       });
-      // The _scheduleSubscription from _loadInitialData will pick up the results
-      // when the cloud function finishes and writes the document.
-    } on FirebaseFunctionsException catch (e) {
-      setState(() {
-        _isGenerating = false;
-        _generationStatus = 'Error: ${e.message}';
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Generation failed: ${e.message}'),
-              backgroundColor: Colors.redAccent),
-        );
-      }
     } catch (e) {
       setState(() {
         _isGenerating = false;
-        _generationStatus = 'An unexpected error occurred.';
+        _generationStatus = 'Error occurred: $e';
       });
     }
   }
@@ -423,9 +412,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
         final data = _savedSchedules[index];
         final sectionIds = List<String>.from(data['sectionIds'] ?? []);
         final id = data['id'];
-        final date = (data['createdAt'] as Timestamp?)?.toDate();
-        final dateStr =
-            date != null ? DateFormat('MMM d, h:mm a').format(date) : '';
+        final dateStr = data['createdAt'] ?? '';
 
         // We need to fetch/resolve the Course objects for display
         // Since we don't have them in the 'data' map immediately, we can use a FutureBuilder
@@ -606,7 +593,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     );
   }
 
-
   void _toggleGeneratorCode(String code) {
     setState(() {
       if (_selectedCodes.contains(code)) {
@@ -622,7 +608,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       }
     });
   }
-
 
   Widget _buildFilterControls() {
     return ExpansionTile(

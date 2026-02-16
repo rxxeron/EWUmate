@@ -1,24 +1,23 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/course_model.dart';
 import '../course_browser/course_repository.dart';
 import '../calendar/academic_repository.dart';
 
 class ScheduleManagerRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
   final CourseRepository _courseRepo = CourseRepository();
   final AcademicRepository _academicRepo = AcademicRepository();
 
-  String get _userId => _auth.currentUser?.uid ?? '';
+  String? get _userId => _supabase.auth.currentUser?.id;
 
   Future<List<Course>> fetchEnrolledCourses(String semesterCode) async {
-    if (_userId.isEmpty) return [];
+    if (_userId == null) return [];
 
     try {
       // 1. Get enrolled IDs
       final userData = await _courseRepo.fetchUserData();
-      final enrolledIds = List<String>.from(userData['enrolledSections'] ?? []);
+      final enrolledIds =
+          List<String>.from(userData['enrolled_sections'] ?? []);
 
       if (enrolledIds.isEmpty) return [];
 
@@ -64,22 +63,18 @@ class ScheduleManagerRepository {
 
   Future<List<Map<String, dynamic>>> fetchExceptions(
       String semesterCode) async {
-    if (_userId.isEmpty) return [];
+    if (_userId == null) return [];
 
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(_userId)
-          .collection('schedule')
-          .doc(semesterCode)
-          .get();
-
-      if (!doc.exists) return [];
-
-      final data = doc.data() ?? {};
-      return List<Map<String, dynamic>>.from(data['exceptions'] ?? []);
+      final res = await _supabase
+          .from('profiles')
+          .select('schedule_exceptions')
+          .eq('id', _userId!)
+          .single();
+      final allExceptions =
+          res['schedule_exceptions'] as Map<String, dynamic>? ?? {};
+      return List<Map<String, dynamic>>.from(allExceptions[semesterCode] ?? []);
     } catch (e) {
-      // debugPrint("Error fetching exceptions: $e");
       return [];
     }
   }
@@ -95,85 +90,61 @@ class ScheduleManagerRepository {
     DateTime? makeupDate,
     String? room, // Added room support
   }) async {
-    if (_userId.isEmpty) return;
-
-    final docRef = _firestore
-        .collection('users')
-        .doc(_userId)
-        .collection('schedule')
-        .doc(semesterCode);
+    if (_userId == null) return;
 
     final dateStr = date.toIso8601String().split('T')[0];
 
     try {
-      await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
+      final res = await _supabase
+          .from('profiles')
+          .select('schedule_exceptions')
+          .eq('id', _userId!)
+          .single();
+      final Map<String, dynamic> allExceptions =
+          Map<String, dynamic>.from(res['schedule_exceptions'] ?? {});
+      List<Map<String, dynamic>> exceptions =
+          List<Map<String, dynamic>>.from(allExceptions[semesterCode] ?? []);
 
-        List<Map<String, dynamic>> exceptions = [];
-        if (snapshot.exists) {
-          final data = snapshot.data();
-          if (data != null && data.containsKey('exceptions')) {
-            exceptions = List<Map<String, dynamic>>.from(data['exceptions']);
-          }
-        }
+      // Remove existing exception for this date/course if any
+      exceptions.removeWhere(
+          (e) => e['courseCode'] == courseCode && e['date'] == dateStr);
 
-        // Remove existing exception for this date/course if any
-        exceptions.removeWhere(
-            (e) => e['courseCode'] == courseCode && e['date'] == dateStr);
+      if (type != 'active') {
+        // Add new exception
+        final Map<String, dynamic> newException = {
+          'courseCode': courseCode,
+          'courseName': courseName, // Snapshot for dashboard
+          'date': dateStr,
+          'type': type,
+        };
 
-        if (type != 'active') {
-          // Add new exception
-          final Map<String, dynamic> newException = {
-            'courseCode': courseCode,
-            'courseName': courseName, // Snapshot for dashboard
-            'date': dateStr,
-            'type': type,
-          };
+        if (type == 'makeup' && makeupDate != null) {
+          newException['makeupDate'] = makeupDate.toIso8601String();
 
-          if (type == 'makeup' && makeupDate != null) {
-            newException['makeupDate'] = makeupDate.toIso8601String();
-            // Start/End time logic from makeupDate
-            // Assuming 1 hour or default duration?
-            // Better to calculate from original or passed in?
-            // For now, let's just use formatted string or store just date.
-            // DashboardLogic expects: startTime, endTime.
-            // Let's assume default 1.5h or reuse original session length?
-            // For simplicity, we'll store specific times if passed, or derive.
-            // Let's store makeupDate as full ISO.
-            // DashboardLogic reads: 'startTime', 'endTime'.
-
-            // Generate formatted time strings "HH:mm AM/PM"
-            // Borrowing rough formatter or using DateFormat in screen?
-            // Repository shouldn't do formatting ideally.
-            // Let's ask caller to pass times or Format here.
-
-            // Minimal simple formatting here:
-            // "hh:mm a"
-            String fmt(int h, int m) {
-              final suffix = h >= 12 ? "PM" : "AM";
-              int oh = h > 12 ? h - 12 : (h == 0 ? 12 : h);
-              final mStr = m.toString().padLeft(2, '0');
-              return "$oh:$mStr $suffix";
-            }
-
-            newException['startTime'] = fmt(makeupDate.hour, makeupDate.minute);
-            final end =
-                makeupDate.add(const Duration(minutes: 90)); // Default 1.5h
-            newException['endTime'] = fmt(end.hour, end.minute);
-            newException['room'] = room ?? 'TBA';
-
-            // Dashboard logic expects 'faculty'.
-            newException['faculty'] = 'Makeup';
+          String fmt(int h, int m) {
+            final suffix = h >= 12 ? "PM" : "AM";
+            int oh = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+            final mStr = m.toString().padLeft(2, '0');
+            return "$oh:$mStr $suffix";
           }
 
-          exceptions.add(newException);
+          newException['startTime'] = fmt(makeupDate.hour, makeupDate.minute);
+          final end =
+              makeupDate.add(const Duration(minutes: 90)); // Default 1.5h
+          newException['endTime'] = fmt(end.hour, end.minute);
+          newException['room'] = room ?? 'TBA';
+          newException['faculty'] = 'Makeup';
         }
 
-        transaction.set(
-            docRef, {'exceptions': exceptions}, SetOptions(merge: true));
-      });
+        exceptions.add(newException);
+      }
+
+      allExceptions[semesterCode] = exceptions;
+      await _supabase
+          .from('profiles')
+          .update({'schedule_exceptions': allExceptions}).eq('id', _userId!);
     } catch (e) {
-      // debugPrint("Error updating exception: $e");
+      // debugPrint("Error updating exception: $e"); // Re-add if debugPrint is available
       rethrow;
     }
   }

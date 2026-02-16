@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/models/semester_progress_models.dart';
 import '../../core/widgets/glass_kit.dart';
 import 'semester_progress_repository.dart';
@@ -160,67 +158,17 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
       courseName: widget.courseName,
     );
 
-    // Save Strategies
-    // The repo doesn't have a specific method for strategies + N,
-    // but we can just update the doc directly or add a method.
-    // For now, I'll update the 'quizStrategy' and new fields by writing to the doc directly via repo logic
-    // actually repo method saveQuizStrategy only takes string.
-    // I should probably manually update the doc here or expand repo.
-    // simpler: expand repo? No, I can't edit repo in this tool call easily without context switch.
-    // I will use a simple workaround: initializeCourse actually sets defaults, I can use a generic update.
-    // Or I'll assume I can just update the strategy field, but what about N?
-    // Wait, I updated the model, but did I update the repo's save methods?
-    // I checked repo, it has `saveQuizStrategy` but not `saveQuizN`.
-    // I should have updated repo. I will do a quick direct firestore write here or add a method if I could.
-    // Better: I'll use the generic Firestore instance here since I have it in _repo (private) ... no I don't.
-    // I'll add a helper method updates to the repo first?
-    // Actually, I can just use `_repo.saveMarkDistribution` which merges.
-    // I will update the repo to accept the extra fields or just do a manual write if I had access.
-    // Since I can't change repo in this call, I'll assume I can update the strategy string.
-    // BUT the N values needs saving.
-    // I will update the Repo in the NEXT step or include it in this file if I could.
-    // Actually, `initializeCourse` sets defaults.
-    // I will implement a local `_saveStrategies` that uses `FirebaseFirestore.instance` strictly speaking?
-    // No, I should stick to repo pattern.
-    // I will use `_repo` to save strategy, but I need to save N too.
-    // I'll add a temporary direct write here to avoid blocking, reusing the `_repo`'s internal refs would be ideal but they are private.
-    // I'll just use a fresh Firestore instance here for the strategy/N update.
-
-    // ... Direct Firestore Write for Strategy details ...
-    // Note: This matches the path in repository
-    /*
-        .collection('users').doc(uid)
-        .collection('semesterProgress').doc(sem)
-        .collection('courses').doc(code)
-    */
-    // I need currentUser.
-    // I'll implement a safe update.
-
-    await _saveStrategies(); // Defined below
+    // Save Strategies via Repo
+    await _repo.saveStrategies(
+      widget.semesterCode,
+      widget.courseCode,
+      strategy: _quizStrategy,
+      quizN: int.tryParse(_quizNCtrl.text) ?? 2,
+      shortQuizN: int.tryParse(_shortQuizNCtrl.text) ?? 2,
+    );
 
     _showSnack("Settings saved!", isError: false);
     _loadData();
-  }
-
-  Future<void> _saveStrategies() async {
-    // Logic to save strategy and N
-    // Using direct firestore since repo update is pending/cumbersome in one go
-
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('semesterProgress')
-        .doc(widget.semesterCode)
-        .collection('courses')
-        .doc(widget.courseCode)
-        .set({
-      'quizStrategy': _quizStrategy,
-      'quizN': int.tryParse(_quizNCtrl.text) ?? 2,
-      'shortQuizN': int.tryParse(_shortQuizNCtrl.text) ?? 2,
-    }, SetOptions(merge: true));
   }
 
   Future<void> _saveObtainedMark(

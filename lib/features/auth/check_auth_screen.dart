@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class CheckAuthScreen extends StatefulWidget {
@@ -19,8 +18,9 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
 
   Future<void> _checkStatus() async {
     await Future.delayed(const Duration(milliseconds: 500)); // Smooth UX
-    final user = FirebaseAuth.instance.currentUser;
-    debugPrint("CheckAuth: User is ${user?.uid}");
+    final session = Supabase.instance.client.auth.currentSession;
+    final user = session?.user;
+    debugPrint("CheckAuth: User is ${user?.id}");
 
     if (user == null) {
       if (mounted) context.go('/login');
@@ -28,20 +28,16 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
     }
 
     try {
-      debugPrint("CheckAuth: Fetching user doc...");
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get()
+      debugPrint("CheckAuth: Fetching user profile...");
+      final data = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .single()
           .timeout(const Duration(seconds: 5));
 
-      debugPrint("CheckAuth: Doc exists? ${doc.exists}");
-      if (!doc.exists) {
-        if (mounted) context.go('/login');
-        return;
-      }
-
-      final status = doc.data()?['onboardingStatus'] ?? '';
+      final status =
+          data['onboarding_status'] ?? data['onboardingStatus'] ?? '';
       debugPrint("CheckAuth: Status is $status");
 
       if (mounted) {

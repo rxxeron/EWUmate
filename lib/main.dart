@@ -1,25 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'core/router/app_router.dart';
-import 'firebase_options.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/router/app_router.dart';
 import 'core/providers/theme_provider.dart';
 import 'core/services/fcm_service.dart';
+import 'core/config/supabase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // FIX: Make Firebase initialization non-blocking to handle devices without Google Play Services
-  // This allows the app to launch even if Firebase fails to initialize
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('[Main] Firebase init error (non-fatal): $e');
-  }
+
+  // 1. Initialize Supabase (Primary Backend)
+  await Supabase.initialize(
+    url: SupabaseConfig.url,
+    anonKey: SupabaseConfig.anonKey,
+  );
 
   // Initialize Services (non-blocking, fire-and-forget)
   if (!kIsWeb) {
@@ -44,7 +40,7 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return MaterialApp.router(
-      title: 'Mobile App',
+      title: 'EWUmate',
       themeMode: themeProvider.themeMode,
       theme: ThemeData(
         brightness: Brightness.light,

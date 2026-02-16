@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
@@ -51,37 +50,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _loading = true);
     try {
-      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final res = await Supabase.instance.client.auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        data: {
+          'displayName': _nicknameController.text.trim(),
+          'fullName': _fullNameController.text.trim(),
+        },
       );
 
-      final String uid = cred.user!.uid;
+      if (res.user == null) throw const AuthException("Registration failed");
+
+      final String uid = res.user!.id;
       String? photoURL;
 
       if (_imageFile != null) {
         photoURL = await _storageService.uploadProfileImage(_imageFile!, uid);
       }
 
-      await cred.user?.updateDisplayName(_nicknameController.text.trim());
-      if (photoURL != null) {
-        await cred.user?.updatePhotoURL(photoURL);
-      }
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).set({
-        'uid': uid,
+      await Supabase.instance.client.from('profiles').upsert({
+        'id': uid,
         'email': _emailController.text.trim(),
-        'fullName': _fullNameController.text.trim(),
+        'full_name': _fullNameController.text.trim(),
         'nickname': _nicknameController.text.trim(),
-        'studentId': _studentIdController.text.trim(),
+        'student_id': _studentIdController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'photoURL': photoURL,
-        'createdAt': FieldValue.serverTimestamp(),
-        'onboardingStatus': 'registered',
-      }, SetOptions(merge: true));
+        'photo_url': photoURL,
+        'onboarding_status': 'registered',
+      });
 
       if (mounted) context.go('/onboarding/program'); // Direct to flow
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text("Registration Failed: ${e.message}"),
@@ -132,8 +131,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         radius: 45,
                         backgroundColor: Colors.white10,
                         backgroundImage: _imageBytes != null
-                          ? MemoryImage(_imageBytes!)
-                          : null,
+                            ? MemoryImage(_imageBytes!)
+                            : null,
                         child: _imageFile == null
                             ? const Icon(Icons.person,
                                 size: 45, color: Colors.white70)

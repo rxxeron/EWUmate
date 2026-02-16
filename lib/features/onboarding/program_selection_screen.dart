@@ -122,7 +122,7 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         ),
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
-                        initialValue: _selectedDeptName,
+                        value: _selectedDeptName,
                         items: _departments.map((dept) {
                           final name = dept['name'] as String;
                           return DropdownMenuItem(
@@ -157,7 +157,7 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         ),
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
-                        initialValue: _selectedProgramId,
+                        value: _selectedProgramId,
                         disabledHint: const Text("Select Department First",
                             style: TextStyle(color: Colors.white38)),
                         items: _selectedDeptName == null
@@ -199,7 +199,7 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         ),
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
-                        initialValue: _selectedAdmittedSemester,
+                        value: _selectedAdmittedSemester,
                         items: _semesters.map((sem) {
                           return DropdownMenuItem(value: sem, child: Text(sem));
                         }).toList(),

@@ -19,8 +19,19 @@ class CourseSession {
     return CourseSession(
       type: data['type'] ?? 'Theory',
       day: data['day'] ?? '',
-      startTime: data['startTime'] ?? '',
-      endTime: data['endTime'] ?? '',
+      startTime: data['startTime'] ?? data['start_time'] ?? '',
+      endTime: data['endTime'] ?? data['end_time'] ?? '',
+      room: data['room'] ?? '',
+      faculty: data['faculty'] ?? '',
+    );
+  }
+
+  factory CourseSession.fromSupabase(Map<String, dynamic> data) {
+    return CourseSession(
+      type: data['type'] ?? 'Theory',
+      day: data['day'] ?? '',
+      startTime: data['start_time'] ?? data['startTime'] ?? '',
+      endTime: data['end_time'] ?? data['endTime'] ?? '',
       room: data['room'] ?? '',
       faculty: data['faculty'] ?? '',
     );
@@ -98,6 +109,36 @@ class Course {
       faculty: theorySession?.faculty ?? data['faculty'],
       room: theorySession?.room ?? data['room'],
       docId: data['docId'],
+    );
+  }
+
+  factory Course.fromSupabase(Map<String, dynamic> data, String id) {
+    List<CourseSession> sessionList = [];
+
+    if (data['sessions'] != null && data['sessions'] is List) {
+      sessionList = (data['sessions'] as List)
+          .map((s) => CourseSession.fromSupabase(s as Map<String, dynamic>))
+          .toList();
+    }
+
+    final theorySession = sessionList.isNotEmpty ? sessionList.first : null;
+
+    return Course(
+      id: id,
+      code: data['code'] ?? '',
+      courseName: data['course_name'] ?? data['courseName'] ?? '',
+      section: data['section']?.toString(),
+      capacity: data['capacity']?.toString(),
+      credits: data['credits']?.toString(),
+      semester: data['semester'],
+      sessions: sessionList,
+      day: theorySession?.day ?? data['day'],
+      startTime:
+          theorySession?.startTime ?? data['start_time'] ?? data['startTime'],
+      endTime: theorySession?.endTime ?? data['end_time'] ?? data['endTime'],
+      faculty: theorySession?.faculty ?? data['faculty'],
+      room: theorySession?.room ?? data['room'],
+      docId: data['doc_id'] ?? data['docId'],
     );
   }
 

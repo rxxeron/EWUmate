@@ -1,95 +1,65 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/task_model.dart';
-// Removed ScheduleCacheService per user request
 
 class TaskRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
 
   // Stream of tasks for real-time updates
   Stream<List<Task>> getTasksStream() {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return Stream.value([]);
 
-    return _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        // .where('isCompleted', isEqualTo: false) // Optional: filter at source
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => Task.fromMap(doc.data(), doc.id))
-              .toList();
-        });
+    return _supabase
+        .from('tasks')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', user.id)
+        .map((data) => data.map((d) => Task.fromSupabase(d)).toList());
   }
 
   Future<void> addTask(Task task) async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
-    await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        .doc(task.id)
-        .set(task.toMap());
+    await _supabase.from('tasks').insert(task.toSupabase(user.id));
   }
 
   Future<void> updateTask(Task task) async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
-    await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        .doc(task.id)
-        .update(task.toMap());
+    await _supabase
+        .from('tasks')
+        .update(task.toSupabase(user.id))
+        .eq('id', task.id);
   }
 
   Future<List<Task>> fetchTasks() async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return [];
 
     try {
-      final snapshot = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('tasks')
-          .get();
+      final data =
+          await _supabase.from('tasks').select().eq('user_id', user.id);
 
-      return snapshot.docs
-          .map((doc) => Task.fromMap(doc.data(), doc.id))
-          .toList();
+      return (data as List).map((d) => Task.fromSupabase(d)).toList();
     } catch (e) {
-      // Return empty on error instead of cache
       return [];
     }
   }
 
   Future<void> toggleTaskCompletion(String taskId, bool isCompleted) async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        .doc(taskId)
-        .update({'isCompleted': isCompleted});
+    await _supabase
+        .from('tasks')
+        .update({'is_completed': isCompleted}).eq('id', taskId);
   }
 
   Future<void> deleteTask(String taskId) async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    await _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('tasks')
-        .doc(taskId)
-        .delete();
+    await _supabase.from('tasks').delete().eq('id', taskId);
   }
 }

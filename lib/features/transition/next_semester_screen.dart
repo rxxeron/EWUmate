@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/widgets/glass_kit.dart';
@@ -18,7 +17,7 @@ class NextSemesterScreen extends StatefulWidget {
 }
 
 class _NextSemesterScreenState extends State<NextSemesterScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
   final AcademicRepository _academicRepo = AcademicRepository();
   final CourseRepository _courseRepo = CourseRepository();
   final AdvisingRepository _advisingRepo = AdvisingRepository();
@@ -62,12 +61,12 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
   }
 
   Future<void> _initData() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
     try {
       _currentSemCode = await _academicRepo.getCurrentSemesterCode();
-      if (_currentSemCode.isEmpty) _currentSemCode = "Spring2026";
+      if (_currentSemCode.isEmpty) _currentSemCode = "Spring 2026";
 
       _gradeSubmissionDate =
           await _academicRepo.getFinalGradeSubmissionDate(_currentSemCode);
@@ -77,28 +76,27 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
         }
       }
 
-      final scheduleDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('schedule')
-          .doc(_currentSemCode.replaceAll(' ', ''))
-          .get();
+      // Fetch enrolled sections from profile
+      final profileData = await _supabase
+          .from('profiles')
+          .select('enrolled_sections')
+          .eq('id', user.id)
+          .single();
 
-      if (scheduleDoc.exists) {
-        final data = scheduleDoc.data()!;
-        final enrolled = List<String>.from(data['enrolledSections'] ?? []);
-        if (enrolled.isNotEmpty) {
-          final courses =
-              await _courseRepo.fetchCoursesByIds(_currentSemCode, enrolled);
-          _currentCourses = courses
-              .map((c) => {
-                    'code': c.code,
-                    'name': c.courseName,
-                    'credits': c.credits,
-                    'grade': 'A', // Default
-                  })
-              .toList();
-        }
+      final enrolled =
+          List<String>.from(profileData['enrolled_sections'] ?? []);
+
+      if (enrolled.isNotEmpty) {
+        final courses =
+            await _courseRepo.fetchCoursesByIds(_currentSemCode, enrolled);
+        _currentCourses = courses
+            .map((c) => {
+                  'code': c.code,
+                  'name': c.courseName,
+                  'credits': c.credits,
+                  'grade': 'A', // Default
+                })
+            .toList();
       }
 
       setState(() {
@@ -123,27 +121,24 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
   }
 
   Future<void> _submitGrades() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
     setState(() => _loading = true);
 
     try {
-      // FETCH V2: Get history from academic_data/profile
-      final profileDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('academic_data')
-          .doc('profile')
-          .get();
-      
-      final data = profileDoc.data() ?? {};
+      final profileData = await _supabase
+          .from('profiles')
+          .select('academic_history, completed_courses')
+          .eq('id', user.id)
+          .single();
 
-      // Update courseHistory (Map)
+      // Update academic_history (Map)
       final existingHistory =
-          Map<String, dynamic>.from(data['courseHistory'] ?? {});
+          Map<String, dynamic>.from(profileData['academic_history'] ?? {});
       final newTermResults = <String, String>{};
-      final newCompleted = List<String>.from(data['completedCourses'] ?? []);
+      final newCompleted =
+          List<String>.from(profileData['completed_courses'] ?? []);
 
       for (var c in _currentCourses) {
         final code = c['code'].toString();
@@ -159,22 +154,12 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
 
       existingHistory[_currentSemCode] = newTermResults;
 
-      // UPDATE V2: Save to academic_data/profile subcollection
-      final profileRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('academic_data')
-          .doc('profile');
-
-      await profileRef.set({
-        'courseHistory': existingHistory,
-        'completedCourses': newCompleted,
-      }, SetOptions(merge: true));
-
-      // Clear Root Enrollment (to signal semester end)
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'enrolledSections': [], 
-      });
+      // Update Profile
+      await _supabase.from('profiles').update({
+        'academic_history': existingHistory,
+        'completed_courses': newCompleted,
+        'enrolled_sections': [], // Clear current enrollment
+      }).eq('id', user.id);
 
       _nextSemCode = _calculateNextSemester(_currentSemCode);
       final planIds = await _advisingRepo.getManualPlanIds(_nextSemCode);

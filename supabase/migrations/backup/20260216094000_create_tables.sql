@@ -44,6 +44,10 @@ CREATE TABLE IF NOT EXISTS config (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure columns exist (in case table was created with different schema)
+ALTER TABLE config ADD COLUMN IF NOT EXISTS value JSONB;
+ALTER TABLE config ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
 -- Advising schedules
 CREATE TABLE IF NOT EXISTS advising_schedules (
   semester_id TEXT PRIMARY KEY,

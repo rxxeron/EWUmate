@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:go_router/go_router.dart';
 
@@ -26,13 +26,13 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _supabase = Supabase.instance.client;
   final AcademicRepository _academicRepo = AcademicRepository();
   final TaskRepository _taskRepo = TaskRepository();
   final DashboardRepository _dashboardRepo = DashboardRepository();
   final CourseRepository _courseRepo = CourseRepository();
 
-  User? get user => _auth.currentUser;
+  User? get user => _supabase.auth.currentUser;
   String _semesterCode = "";
   bool _loadingInit = true;
   List<Task> _tasks = [];
@@ -50,7 +50,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final code = await _academicRepo.getCurrentSemesterCode();
       final tasks = await _taskRepo.fetchTasks();
       final userData = await _courseRepo.fetchUserData();
-      final enrolledIds = List<String>.from(userData['enrolledSections'] ?? []);
+      final enrolledIds =
+          List<String>.from(userData['enrolled_sections'] ?? []);
       List<Course> enrolled = [];
       if (enrolledIds.isNotEmpty) {
         enrolled = await _courseRepo.fetchCoursesByIds(
@@ -118,8 +119,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
 
                 final data = snapshot.data;
-                debugPrint('[Dashboard] Cloud schedule keys: ${data?.keys.toList()}');
-                debugPrint('[Dashboard] Holidays count: ${(data?['holidays'] as List?)?.length ?? 0}');
+                debugPrint(
+                    '[Dashboard] Cloud schedule keys: ${data?.keys.toList()}');
+                debugPrint(
+                    '[Dashboard] Holidays count: ${(data?['holidays'] as List?)?.length ?? 0}');
                 final processed = DashboardLogic.getScheduleFromCloud(data);
 
                 return RefreshIndicator(
@@ -167,7 +170,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHeader() {
     String greeting = _getGreeting();
-    String nickname = user?.displayName ?? "Student";
+    String nickname =
+        user?.userMetadata?['full_name']?.toString().split(' ').first ??
+            "Student";
 
     return GlassContainer(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -195,10 +200,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: CircleAvatar(
                       radius: 26,
                       backgroundColor: const Color(0xFF1A1A2E),
-                      backgroundImage: user?.photoURL != null
-                          ? NetworkImage(user!.photoURL!)
+                      backgroundImage: user?.userMetadata?['avatar_url'] != null
+                          ? NetworkImage(user!.userMetadata!['avatar_url']!)
                           : null,
-                      child: user?.photoURL == null
+                      child: user?.userMetadata?['avatar_url'] == null
                           ? const Icon(
                               Icons.person,
                               color: Colors.cyanAccent,

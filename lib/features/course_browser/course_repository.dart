@@ -1,78 +1,52 @@
-import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/course_model.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/services/azure_functions_service.dart';
 
 class CourseRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final _supabase = Supabase.instance.client;
 
-  // --- NEW: Backend Schedule Generation ---
+  // --- Schedule Generation via Azure Function ---
 
   Future<String?> triggerScheduleGeneration(String semester,
       List<String> courseCodes, Map<String, dynamic> filters) async {
     try {
-      final callable = _functions.httpsCallable('generate_schedules_kickoff');
-      final result = await callable.call({
-        'semester': semester,
-        'courses': courseCodes,
-        'filters': filters,
-      });
-      return result.data['generationId'];
-    } on FirebaseFunctionsException catch (e) {
-      debugPrint('Cloud function failed: ${e.code} ${e.message}');
-      rethrow;
+      final result = await AzureFunctionsService().generateSchedules(
+        semester: semester,
+        courses: courseCodes,
+        filters: filters,
+      );
+      return result['generationId'] as String?;
+    } catch (e) {
+      debugPrint('[CourseRepo] Schedule generation error: $e');
+      return null;
     }
   }
 
   Stream<List<List<Course>>> streamGeneratedSchedules(String generationId) {
-    return _firestore
-        .collection('schedule_generations')
-        .doc(generationId)
-        .snapshots()
-        .map((doc) => _parseGeneration(doc.data(), doc.id));
+    // Realtime stream for schedule_generations
+    return _supabase
+        .from('schedule_generations')
+        .stream(primaryKey: ['id'])
+        .eq('id', generationId)
+        .map((data) => data.isNotEmpty
+            ? _parseGeneration(data.first, data.first['id'])
+            : []);
   }
 
   Stream<List<List<Course>>> streamLatestGeneratedSchedules() {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return Stream.value([]);
 
-    return _firestore
-        .collection('schedule_generations')
-        .where('userId', isEqualTo: user.uid)
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) return [];
-      final docs = snapshot.docs.toList();
-      docs.sort((a, b) {
-        final aTime = a.data()['createdAt'];
-        final bTime = b.data()['createdAt'];
-        return _compareFirestoreTimes(bTime, aTime);
-      });
-      final latest = docs.first;
-      return _parseGeneration(latest.data(), latest.id);
-    });
-  }
-
-  int _compareFirestoreTimes(dynamic aTime, dynamic bTime) {
-    final aValue = _toMillis(aTime);
-    final bValue = _toMillis(bTime);
-    return aValue.compareTo(bValue);
-  }
-
-  int _toMillis(dynamic value) {
-    if (value is Timestamp) {
-      return value.millisecondsSinceEpoch;
-    }
-    if (value is DateTime) {
-      return value.millisecondsSinceEpoch;
-    }
-    return 0;
+    return _supabase
+        .from('schedule_generations')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(1)
+        .map((data) => data.isNotEmpty
+            ? _parseGeneration(data.first, data.first['id'])
+            : []);
   }
 
   List<List<Course>> _parseGeneration(Map<String, dynamic>? data, String id) {
@@ -82,32 +56,20 @@ class CourseRepository {
     List<List<Course>> resultSchedules = [];
 
     for (final scheduleItem in combinations) {
-      // New format: each scheduleItem is a map with 'scheduleId' and 'sections' (map of sections)
       if (scheduleItem is Map<String, dynamic>) {
         final sections = scheduleItem['sections'] as Map<String, dynamic>?;
         if (sections != null) {
           List<Course> schedule = [];
-          // Convert sections map to list
           final sectionsList = sections.values.toList();
           for (final courseData in sectionsList) {
             if (courseData is Map<String, dynamic>) {
-              schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
+              schedule
+                  .add(Course.fromSupabase(courseData, courseData['id'] ?? ''));
             }
           }
           if (schedule.isNotEmpty) {
             resultSchedules.add(schedule);
           }
-        }
-      } else if (scheduleItem is List) {
-        // Legacy format: array of sections (for backwards compatibility)
-        List<Course> schedule = [];
-        for (final courseData in scheduleItem) {
-          if (courseData is Map<String, dynamic>) {
-            schedule.add(Course.fromFirestore(courseData, courseData['id'] ?? ''));
-          }
-        }
-        if (schedule.isNotEmpty) {
-          resultSchedules.add(schedule);
         }
       }
     }
@@ -115,47 +77,45 @@ class CourseRepository {
   }
 
   Future<void> clearAllGeneratedSchedules() async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    final query = _firestore
-        .collection('schedule_generations')
-        .where('userId', isEqualTo: user.uid);
-
-    final batch = _firestore.batch();
-    final snapshot = await query.get();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
+    await _supabase
+        .from('schedule_generations')
+        .delete()
+        .eq('user_id', user.id);
   }
 
   // --- RESTORED METHODS ---
 
   Future<Map<String, dynamic>> fetchUserData() async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return {};
 
-    final docSnap = await _firestore.collection('users').doc(user.uid).get();
-    return docSnap.data() ?? {};
+    final data =
+        await _supabase.from('profiles').select().eq('id', user.id).single();
+    return data;
   }
 
   Future<void> toggleEnrolled(String courseId, bool shouldEnroll,
       {String? semesterCode, String? courseName}) async {
-    final user = _auth.currentUser;
+    final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    final userRef = _firestore.collection('users').doc(user.uid);
+    // Fetch current enrolled list
+    final profile = await fetchUserData();
+    List<String> enrolled =
+        List<String>.from(profile['enrolled_sections'] ?? []);
 
     if (shouldEnroll) {
-      await userRef.update({
-        'enrolledSections': FieldValue.arrayUnion([courseId]),
-      });
+      if (!enrolled.contains(courseId)) enrolled.add(courseId);
     } else {
-      await userRef.update({
-        'enrolledSections': FieldValue.arrayRemove([courseId]),
-      });
+      enrolled.remove(courseId);
     }
+
+    await _supabase
+        .from('profiles')
+        .update({'enrolled_sections': enrolled}).eq('id', user.id);
   }
 
   Future<List<Course>> fetchCoursesByIds(
@@ -163,38 +123,29 @@ class CourseRepository {
     if (docIds.isEmpty) return [];
 
     try {
-      final List<Course> courses = [];
+      final data = await _supabase
+          .from('courses')
+          .select()
+          .eq('semester', semester)
+          .inFilter('doc_id', docIds);
 
-      for (var i = 0;
-          i < docIds.length;
-          i += AppConstants.firestoreWhereInLimit) {
-        final batch =
-            docIds.skip(i).take(AppConstants.firestoreWhereInLimit).toList();
-        final snapshot = await _firestore
-            .collection('courses_$semester')
-            .where(FieldPath.documentId, whereIn: batch)
-            .get();
-
-        for (final doc in snapshot.docs) {
-          courses.add(Course.fromFirestore(doc.data(), doc.id));
-        }
-      }
-      return courses;
+      return (data as List)
+          .map((d) => Course.fromSupabase(d, d['id']))
+          .toList();
     } catch (e) {
       debugPrint('[CourseRepo] Error fetching courses by IDs: $e');
       return [];
     }
   }
 
-  // --- Existing Methods ---
-
   Future<Map<String, List<Course>>> fetchCourses(String semester) async {
     try {
-      final snapshot = await _firestore.collection('courses_$semester').get();
+      final data =
+          await _supabase.from('courses').select().eq('semester', semester);
 
       final Map<String, List<Course>> groupedCourses = {};
-      for (var doc in snapshot.docs) {
-        final course = Course.fromFirestore(doc.data(), doc.id);
+      for (var d in (data as List)) {
+        final course = Course.fromSupabase(d, d['id']);
         if (groupedCourses.containsKey(course.code)) {
           groupedCourses[course.code]!.add(course);
         } else {
@@ -210,15 +161,9 @@ class CourseRepository {
 
   Future<List<String>> fetchAllCourseCodes() async {
     try {
-      final snapshot =
-          await _firestore.collection('metadata').doc('courses').get();
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        if (data != null && data.containsKey('list')) {
-          return List<String>.from(data['list'].map((item) => item['code']));
-        }
-      }
-      return [];
+      final data = await _supabase.from('course_metadata').select('code');
+
+      return (data as List).map((item) => item['code'].toString()).toList();
     } catch (e) {
       debugPrint('[CourseRepo] Error fetching all course codes: $e');
       rethrow;

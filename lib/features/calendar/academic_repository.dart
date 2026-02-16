@@ -1,150 +1,68 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import '../../core/models/academic_event_model.dart';
 
 class AcademicRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final _supabase = Supabase.instance.client;
 
-  // Determines current semester code from academic calendar collections
+  // Determines current semester code from config table
   Future<String> getCurrentSemesterCode() async {
-    final now = DateTime.now();
-    final year = now.year;
+    try {
+      final res = await _supabase
+          .from('config')
+          .select('value')
+          .eq('key', 'currentSemester')
+          .single();
 
-    // Ordered list of semesters to check
-    final semestersToCheck = [
-      'Fall${year - 1}', // Previous fall (in case we're in early Jan)
-      'Spring$year',
-      'Summer$year',
-      'Fall$year',
-    ];
-
-    String? currentSemester;
-
-    // Find the most recent semester whose "University Reopens" date has passed
-    for (final code in semestersToCheck) {
-      try {
-        final events = await fetchHolidays(code);
-
-        // Look for "University Reopens for X" event in this semester
-        final reopenEvent = events.firstWhere(
-          (e) =>
-              e.title.contains("University Reopens for") ||
-              e.title.contains("University Opens for"),
-          orElse: () => AcademicEvent(date: '', title: ''),
-        );
-
-        if (reopenEvent.title.isNotEmpty) {
-          final reopenDate = _parseDate(reopenEvent.date, reopenEvent.title);
-          if (reopenDate != null && now.isAfter(reopenDate)) {
-            // We've passed this reopening - extract the next semester
-            final match = RegExp(r'(Spring|Summer|Fall)\s*(\d{4})')
-                .firstMatch(reopenEvent.title);
-            if (match != null) {
-              currentSemester = '${match.group(1)}${match.group(2)}';
-            }
-          }
-        }
-
-        // Check "First Day of Classes" to confirm we're in this semester
-        final firstDay = await getFirstDayOfClasses(code);
-        if (firstDay != null && now.isAfter(firstDay)) {
-          currentSemester = code;
-        }
-      } catch (e) {
-        // Calendar doesn't exist for this semester, skip
-      }
+      return res['value'] as String;
+    } catch (e) {
+      debugPrint("Error fetching current semester: $e");
+      return 'Spring2026'; // Fallback
     }
-
-    // Return detected semester or a default based on year
-    return currentSemester ?? 'Spring2026';
   }
 
   Future<List<AcademicEvent>> fetchHolidays(String semesterCode) async {
-    // Corrected to use exact casing (e.g. 'Spring2026') based on user screenshot
-    // Collection name: `calendar_Spring2026`
-    final collectionRef = _firestore.collection('calendar_$semesterCode');
-    List<AcademicEvent> events = [];
-
-    // Extract year from semesterCode for parsing dates (e.g. Spring2026 -> 2026)
-    // int year = DateTime.now().year; -- logic moved to _parseDate fallback or explicit context
-
     try {
-      // 1. Try Meta Doc
-      final metaDoc = await collectionRef.doc('CALENDAR_META').get();
-      if (metaDoc.exists) {
-        final data = metaDoc.data();
-        if (data != null &&
-            data['allEvents'] != null &&
-            data['allDates'] != null) {
-          final List<dynamic> titles = data['allEvents'];
-          final List<dynamic> dates = data['allDates'];
+      final data = await _supabase
+          .from('calendar')
+          .select()
+          .eq('semester', semesterCode);
 
-          for (int i = 0; i < titles.length; i++) {
-            if (i < dates.length) {
-              events.add(AcademicEvent(
-                  date: dates[i].toString(), title: titles[i].toString()));
-            }
-          }
-          return events;
-        }
-      }
-
-      // 2. Fallback: Query individual docs
-      final querySnapshot = await collectionRef.get();
-      for (var doc in querySnapshot.docs) {
-        if (doc.data()['type'] == 'CALENDAR_EVENT' ||
-            doc.data().containsKey('event')) {
-          // Provide year context to parsing if needed, but for now we rely on the event string
-          // We might need to handle the date parsing smarter here or in _parseDate
-          // The screenshot shows "date": "March 15".
-          var eventData = doc.data();
-          // map legacy fields if needed
-          if (eventData['event'] != null && eventData['title'] == null) {
-            eventData['title'] = eventData['event'];
-          }
-          // parse date with context
-          AcademicEvent event = AcademicEvent.fromMap(eventData);
-          // If parsing fails later, we fix _parseDate
-          events.add(event);
-        }
-      }
+      return (data as List)
+          .map((d) => AcademicEvent(
+              date: d['date_string'] ?? d['date'],
+              title: d['event'] ?? d['title']))
+          .toList();
     } catch (e) {
       debugPrint("Error fetching holidays for $semesterCode: $e");
     }
 
-    return events;
+    return [];
   }
 
   Future<List<Map<String, dynamic>>> fetchExamSchedule(
       String semesterCode) async {
-    // Corrected: `exams_Spring2026` (plural 'exams', CamelCase semester)
-    final collectionName = 'exams_$semesterCode';
-    final List<Map<String, dynamic>> exams = [];
-
     try {
-      final snapshot = await _firestore.collection(collectionName).get();
-      for (var doc in snapshot.docs) {
-        exams.add(doc.data());
-      }
+      final data =
+          await _supabase.from('exams').select().eq('semester', semesterCode);
+      return List<Map<String, dynamic>>.from(data as List);
     } catch (e) {
       debugPrint("Error fetching exams: $e");
     }
-    return exams;
+    return [];
   }
 
   /// Fetches pre-generated personalized schedule from Cloud
   Future<Map<String, dynamic>?> fetchPersonalizedSchedule(
       String userId, String semesterCode) async {
     try {
-      final doc = await _firestore
-          .collection('users')
-          .doc(userId)
-          .collection('schedule')
-          .doc(semesterCode)
-          .get();
+      final data = await _supabase
+          .from('user_schedules')
+          .select()
+          .eq('user_id', userId)
+          .single();
 
-      if (!doc.exists) return null;
-      return doc.data();
+      return data;
     } catch (e) {
       debugPrint("Error fetching personalized schedule: $e");
       return null;

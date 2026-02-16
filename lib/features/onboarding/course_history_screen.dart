@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'onboarding_repository.dart';
 import '../calendar/academic_repository.dart';
 import '../../core/widgets/glass_kit.dart';
+import '../../core/services/azure_functions_service.dart';
 
 class CourseHistoryScreen extends StatefulWidget {
   final bool isEditMode;
@@ -17,7 +17,7 @@ class CourseHistoryScreen extends StatefulWidget {
 
 class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
   final OnboardingRepository _repo = OnboardingRepository();
-  final User? user = FirebaseAuth.instance.currentUser;
+  final _supabase = Supabase.instance.client;
 
   // State
   bool _initializing = false; // Changed from true to avoid flash
@@ -84,16 +84,16 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
     // 3. Fetch User Profile for Admitted Semester & History
     String? savedSemester;
     Map<String, dynamic>? savedHistory;
+    final user = _supabase.auth.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
-      if (doc.exists) {
-        final data = doc.data();
-        savedSemester = data?['admittedSemester'];
-        savedHistory = data?['courseHistory'] as Map<String, dynamic>?;
-      }
+      final profileData = await _supabase
+          .from('profiles')
+          .select('admitted_semester, academic_history')
+          .eq('id', user.id)
+          .single();
+
+      savedSemester = profileData['admitted_semester']?.toString();
+      savedHistory = profileData['academic_history'] as Map<String, dynamic>?;
     }
 
     if (mounted) {
@@ -192,6 +192,41 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
     }
   }
 
+  /// Collects course details (name, section, schedule) for current semester enrollments
+  List<Map<String, dynamic>> _collectEnrolledDetails() {
+    final currentSemMap = _history[_runningSemester] ?? {};
+    final details = <Map<String, dynamic>>[];
+
+    for (final selection in currentSemMap.keys) {
+      // Try to find matching catalog entry
+      final match = _catalog.firstWhere(
+        (c) {
+          final key = _isCurrentSemester
+              ? "${c['code']}_Sec${c['section']}"
+              : c['code'].toString();
+          return key == selection;
+        },
+        orElse: () => {},
+      );
+
+      if (match.isNotEmpty) {
+        details.add({
+          'code': (match['code'] ?? selection).toString(),
+          'name': (match['name'] ?? match['code'] ?? selection).toString(),
+          'section': (match['section'] ?? '').toString(),
+          'time': (match['time'] ?? '').toString(),
+        });
+      } else {
+        // Extract code from selection key (e.g. "CSE101_Sec1" → "CSE101")
+        final code = selection.contains('_Sec')
+            ? selection.split('_Sec').first
+            : selection;
+        details.add({'code': code, 'name': code, 'section': '', 'time': ''});
+      }
+    }
+    return details;
+  }
+
   Future<void> _finishOnboarding() async {
     try {
       // Collect enrolled section IDs for the dashboard
@@ -206,7 +241,6 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
         }
 
         // Priority 2: Fallback to Catalog Lookup (e.g. restored data)
-        // We need to find the unique Firestore 'id' for these selections
         final match = _catalog.firstWhere(
           (c) {
             final key = _isCurrentSemester
@@ -224,7 +258,22 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
         }
       }
 
-      await _repo.saveCourseHistory(_history, enrolledIds, _runningSemester);
+      await _repo.saveCourseHistory(
+        _history,
+        enrolledIds,
+        _runningSemester,
+        enrolledCourseDetails: _collectEnrolledDetails(),
+      );
+
+      // Trigger server-side CGPA recalculation (Azure Function)
+      try {
+        await AzureFunctionsService().recalculateStats();
+        debugPrint('[Onboarding] CGPA recalculation triggered successfully');
+      } catch (e) {
+        debugPrint('[Onboarding] CGPA recalc failed (non-blocking): $e');
+        // Non-blocking: onboarding continues even if Azure is not yet deployed
+      }
+
       if (mounted) {
         if (widget.isEditMode) {
           Navigator.pop(context); // Return to Degree Progress
@@ -306,7 +355,8 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String nickname = user?.displayName ?? "Student";
+    final user = _supabase.auth.currentUser;
+    final String nickname = user?.email?.split('@').first ?? "Student";
 
     // 1. Initial Prompt with Personalization & Gradient
     if (_profileLoading) {

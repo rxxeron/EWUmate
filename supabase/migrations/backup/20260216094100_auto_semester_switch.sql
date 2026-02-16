@@ -80,7 +80,7 @@ BEGIN
   PERFORM cron.schedule(
     job_name,
     cron_schedule,
-    $$SELECT switch_to_next_semester();$$
+    $cmd$SELECT switch_to_next_semester();$cmd$
   );
   
   RETURN 'Scheduled semester switch to ' || next_sem || ' at ' || switch_date::TEXT;

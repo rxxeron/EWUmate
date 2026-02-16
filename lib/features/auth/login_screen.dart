@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/widgets/glass_kit.dart';
 
@@ -19,13 +19,13 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() => _loading = true);
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
       // Navigate to CheckAuthScreen which will redirect based on onboarding status
       if (mounted) context.go('/');
-    } on FirebaseAuthException catch (e) {
+    } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text("Login Failed: ${e.message}"),
@@ -85,11 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: Colors.cyanAccent),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                          borderSide: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.1))),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.cyanAccent)),
+                          borderSide:
+                              const BorderSide(color: Colors.cyanAccent)),
                       filled: true,
                       fillColor: Colors.white.withValues(alpha: 0.05)),
                 ),
@@ -105,8 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.cyanAccent),
                     enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                        borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.1))),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Colors.cyanAccent)),

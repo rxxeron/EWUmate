@@ -49,18 +49,41 @@ class Task {
     };
   }
 
+  Map<String, dynamic> toSupabase(String userId) {
+    return {
+      'id': id,
+      'user_id': userId,
+      'title': title,
+      'course_code': courseCode,
+      'course_name': courseName,
+      'assign_date': assignDate.toIso8601String(),
+      'due_date': dueDate.toIso8601String(),
+      'submission_type': submissionType.name,
+      'type': type.name,
+      'is_completed': isCompleted,
+    };
+  }
+
   factory Task.fromMap(Map<String, dynamic> map, String id) {
     return Task(
       id: id,
       title: map['title'] ?? '',
-      courseCode: map['courseCode'] ?? '',
-      courseName: map['courseName'] ?? '',
-      assignDate: DateTime.tryParse(map['assignDate'] ?? '') ?? DateTime.now(),
-      dueDate: DateTime.tryParse(map['dueDate'] ?? '') ?? DateTime.now(),
-      submissionType: _parseSubmission(map['submissionType']),
+      courseCode: map['courseCode'] ?? map['course_code'] ?? '',
+      courseName: map['courseName'] ?? map['course_name'] ?? '',
+      assignDate:
+          DateTime.tryParse(map['assignDate'] ?? map['assign_date'] ?? '') ??
+              DateTime.now(),
+      dueDate: DateTime.tryParse(map['dueDate'] ?? map['due_date'] ?? '') ??
+          DateTime.now(),
+      submissionType:
+          _parseSubmission(map['submissionType'] ?? map['submission_type']),
       type: _parseType(map['type']),
-      isCompleted: map['isCompleted'] ?? false,
+      isCompleted: map['isCompleted'] ?? map['is_completed'] ?? false,
     );
+  }
+
+  factory Task.fromSupabase(Map<String, dynamic> data) {
+    return Task.fromMap(data, data['id'] ?? '');
   }
 
   static SubmissionType _parseSubmission(String? val) {

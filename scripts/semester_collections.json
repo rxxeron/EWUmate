@@ -1,0 +1,12 @@
+[
+  {
+    "type": "calendar",
+    "semester": "Spring2026",
+    "collection": "calendar_Spring2026"
+  },
+  {
+    "type": "courses",
+    "semester": "Spring2026",
+    "collection": "courses_Spring2026"
+  }
+]

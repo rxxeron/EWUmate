@@ -1,6 +1,7 @@
 
 const SUPABASE_URL = "https://jwygjihrbwxhehijldiz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDQxNzQsImV4cCI6MjA4NjY4MDE3NH0.zQc3dq53HBpMeN0rbJA9soF0oYhl7de1_sNnB_9JPoM";
+const BASE_URL = `${SUPABASE_URL}/functions/v1`;
 
 let currentKey = "";
 const alertBox = document.getElementById('alertBox');
@@ -18,7 +19,7 @@ async function verifyKey() {
     setBtnLoading(btn, true, "Verifying...");
 
     try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-auth`, {
+        const res = await fetch(`${BASE_URL}/admin-auth`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -76,7 +77,39 @@ function switchTab(tab) {
     alertBox.classList.add('hidden');
 }
 
-// UPLOAD LOGIC (Optimized for Storage Webhooks)
+// BROADCAST LOGIC
+document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('sendBtn');
+    setBtnLoading(btn, true, "Transmitting...");
+
+    const data = {
+        title: document.getElementById('title').value,
+        body: document.getElementById('body').value,
+        link: document.getElementById('link').value,
+        secret: currentKey
+    };
+
+    try {
+        await fetch(`${BASE_URL}/force-dispatch`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify(data)
+        });
+        showAlert("success", "Broadcast Sequence Executed Successfully!", "bi-check-circle-fill");
+        document.getElementById('broadcastForm').reset();
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-send-fill"></i> <span class="btn-text">Execute Broadcast</span>`);
+    }
+});
+
+// UPLOAD LOGIC
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('uploadBtn');
@@ -90,8 +123,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     const filePath = `${folder}/${filename}`;
 
     try {
-        // 1. Upload to Supabase Storage
-        // Using direct fetch to Storage API for simplicity (no large SDK needed)
         const uploadUrl = `${SUPABASE_URL}/storage/v1/object/academic_documents/${filePath}`;
         const res = await fetch(uploadUrl, {
             method: 'POST',
@@ -109,15 +140,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         }
 
         showAlert("success", `File uploaded to '${filePath}'. The system will now process it automatically via webhooks.`, "bi-cloud-check-fill");
-
         document.getElementById('uploadForm').reset();
-        document.getElementById('fileNameDisplay').classList.add('hidden');
-        document.getElementById('dropZoneContent').classList.remove('hidden');
-        const submitBtn = document.getElementById('uploadBtn');
-        submitBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-        submitBtn.classList.remove('bg-primary-600', 'text-white');
-        submitBtn.disabled = true;
-
         suggestFilename();
     } catch (err) {
         showAlert("danger", "Upload failed: " + err.message, "bi-bug-fill");
@@ -125,6 +148,29 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         setBtnLoading(btn, false, `<i class="bi bi-upload"></i> <span class="btn-text">Ingest Document</span>`);
     }
 });
+
+async function runGlobalMigration() {
+    if (!confirm("⚠️ DANGER: EXECUTE FULL SYSTEM RESET?\n\nThis will purge and reschedule ALL notifications. Are you sure?")) return;
+    const btn = document.getElementById('resetBtn');
+    setBtnLoading(btn, true, "Executing Master Reset...");
+
+    try {
+        await fetch(`${BASE_URL}/alert-scheduler`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({ secret: currentKey, forceReset: true })
+        });
+        showAlert("success", "System Reset Complete!", "bi-check-circle-fill");
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-radioactive"></i> EXECUTE FULL SYSTEM RESET`);
+    }
+}
 
 let currentSemester = "";
 async function fetchCurrentSemester() {
@@ -150,7 +196,6 @@ function suggestFilename() {
     const folder = document.getElementById('folderSelect').value;
     const semester = currentSemester || "Spring 2026";
     let filename = "";
-
     switch (folder) {
         case 'facultylist': filename = `Faculty List ${semester}.pdf`; break;
         case 'academiccalendar': filename = `Academic Calender ${semester}.pdf`; break;
@@ -170,7 +215,6 @@ function showAlert(type, msg, icon) {
     const alertIcon = document.getElementById('alertIcon');
     const alertTitle = document.getElementById('alertTitle');
     const alertBody = document.getElementById('alertBody');
-
     alertBox.className = `fade-in mb-6 p-4 rounded-xl border flex items-center gap-3 shadow-sm ${type === 'success' ? 'bg-green-50 border-green-100 text-green-800' : 'bg-red-50 border-red-100 text-red-800'}`;
     alertIcon.className = `bi ${icon} text-xl ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
     alertTitle.innerText = type === 'success' ? "Success" : "Error";

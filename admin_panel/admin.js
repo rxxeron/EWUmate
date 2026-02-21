@@ -83,15 +83,17 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
     const btn = document.getElementById('sendBtn');
     setBtnLoading(btn, true, "Transmitting...");
 
+    const isScheduled = document.getElementById('scheduleToggle').checked;
     const data = {
         title: document.getElementById('title').value,
         body: document.getElementById('body').value,
         link: document.getElementById('link').value,
+        scheduledAt: isScheduled ? document.getElementById('scheduleTime').value : null,
         secret: currentKey
     };
 
     try {
-        await fetch(`${BASE_URL}/force-dispatch`, {
+        const res = await fetch(`${BASE_URL}/broadcast`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,8 +102,13 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
             },
             body: JSON.stringify(data)
         });
-        showAlert("success", "Broadcast Sequence Executed Successfully!", "bi-check-circle-fill");
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Broadcast failed");
+
+        showAlert("success", json.message || "Broadcast Sequence Executed Successfully!", "bi-check-circle-fill");
         document.getElementById('broadcastForm').reset();
+        document.getElementById('scheduleInputs').classList.add('hidden');
     } catch (err) {
         showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
     } finally {

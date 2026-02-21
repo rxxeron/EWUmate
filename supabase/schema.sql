@@ -42,7 +42,7 @@ CREATE TABLE calendar (
 
 -- 4. COURSES (Offered Sections)
 CREATE TABLE courses (
-    -- We use the Firebase Doc ID as PK to maintain compatibility/easy import
+    -- We use a persistent Doc ID as PK to maintain compatibility and easy ingestion
     doc_id TEXT PRIMARY KEY, 
     semester TEXT NOT NULL,
     code TEXT NOT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE user_schedules (
 
 -- 7.5 SCHEDULE EXCEPTIONS (Cancellations / Makeups)
 CREATE TABLE schedule_exceptions (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY, -- or use Firestore ID
+    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
     
     date TEXT, -- "January 25, 2026"

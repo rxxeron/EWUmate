@@ -13,6 +13,7 @@ import '../../core/utils/course_utils.dart';
 import 'advising_repository.dart';
 import '../../core/widgets/animations/loading_shimmer.dart';
 import '../../core/widgets/animations/fade_in_slide.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 
 class AdvisingScreen extends StatefulWidget {
   const AdvisingScreen({super.key});
@@ -69,6 +70,38 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     _searchController
         .addListener(() => _filterSchedules(_searchController.text));
     _initData();
+    _showTutorial();
+  }
+
+  void _showTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingOverlay.show(
+        context: context,
+        featureKey: 'advising_planner_main',
+        steps: [
+          const OnboardingStep(
+            title: "Plan Your Semester",
+            description: "Advising can be stressful. Use this tool to plan your next semester's courses without the headache of manual time matching.",
+            icon: Icons.auto_awesome_motion_rounded,
+          ),
+          const OnboardingStep(
+            title: "Automated Generator",
+            description: "Select the courses you want to take, and our engine will find every possible conflict-free combination for you.",
+            icon: Icons.bolt_rounded,
+          ),
+          const OnboardingStep(
+            title: "Manual Mode",
+            description: "Prefer hand-picking? Use Manual Mode to select specific sections and build your perfect schedule yourself.",
+            icon: Icons.touch_app_rounded,
+          ),
+          const OnboardingStep(
+            title: "7-Day Governance",
+            description: "To ensure accuracy, the planner opens 7 days before the official advising session starts. Stay ahead of the curve!",
+            icon: Icons.timer_rounded,
+          ),
+        ],
+      );
+    });
   }
 
   @override
@@ -94,8 +127,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
         final now = DateTime.now();
 
         if (now.isBefore(plannerOpenDate)) {
-          // Locked by date policy - Bypassing for now as per user request
-          _isLocked = false; 
+          _isLocked = true;
           _lockMessage =
               "Planner opens on ${DateFormat('MMM d').format(plannerOpenDate)}.\nAdvising starts on ${DateFormat('MMM d').format(advisingDate)}.";
         } else {

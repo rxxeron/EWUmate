@@ -17,39 +17,81 @@ import 'core/services/offline_cache_service.dart';
 import 'core/services/connectivity_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-  tz.initializeTimeZones();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    // Attempt to load .env, but don't crash if it fails (using hardcoded fallback in SupabaseConfig)
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      debugPrint('[Main] Environment load failed (Non-critical): $e');
+    }
 
-  // 1. Initialize Supabase (Primary Backend)
-  await Supabase.initialize(
-    url: SupabaseConfig.url,
-    anonKey: SupabaseConfig.anonKey,
-  );
+    tz.initializeTimeZones();
 
-  // 1.5. Initialize Offline Storage & Connectivity
-  await OfflineCacheService().init();
-  await OfflineCacheService().clearRamadanCache(); // One-time clear as requested
-  await ConnectivityService().init();
+    // 1. Initialize Supabase (Primary Backend)
+    await Supabase.initialize(
+      url: SupabaseConfig.url,
+      anonKey: SupabaseConfig.anonKey,
+    );
 
-  // 2. Request Permissions
-  await Permission.notification.request();
+    // 1.5. Initialize Offline Storage & Connectivity
+    await OfflineCacheService().init();
+    await OfflineCacheService().clearRamadanCache(); 
+    await ConnectivityService().init();
 
-  // 3. Initialize In-App Services (non-blocking)
-  RealtimeNotificationService().initialize().catchError((e) {
-    debugPrint('[Main] RealtimeNotificationService Error: $e');
-  });
+    // 2. Request Permissions
+    await Permission.notification.request();
 
-  LifecycleNotificationService().initialize().catchError((e) {
-    debugPrint('[Main] LifecycleNotificationService Error: $e');
-  });
+    // 3. Initialize In-App Services (non-blocking)
+    RealtimeNotificationService().initialize().catchError((e) {
+      debugPrint('[Main] RealtimeNotificationService Error: $e');
+    });
 
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
+    LifecycleNotificationService().initialize().catchError((e) {
+      debugPrint('[Main] LifecycleNotificationService Error: $e');
+    });
+
+    runApp(
+      ChangeNotifierProvider(
+        create: (_) => ThemeProvider(),
+        child: const MyApp(),
+      ),
+    );
+  } catch (e, stack) {
+    debugPrint('[Main] CRITICAL STARTUP ERROR: $e');
+    debugPrint('[Main] Stacktrace: $stack');
+    
+    // Show a fallback UI if initialization fails completely
+    runApp(MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.redAccent, size: 64),
+                const SizedBox(height: 16),
+                const Text("Startup Error", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(e.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    // Try to restart or at least show login
+                    runApp(const MaterialApp(home: Scaffold(body: Center(child: Text("Restart the app please.")))));
+                  }, 
+                  child: const Text("Retry")
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    ));
+  }
 }
 
 class MyApp extends StatelessWidget {

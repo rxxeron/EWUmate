@@ -11,6 +11,7 @@ import 'course_marks_screen.dart';
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/animations/loading_shimmer.dart';
 import '../../core/widgets/animations/fade_in_slide.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 
 class SemesterProgressScreen extends StatefulWidget {
   const SemesterProgressScreen({super.key});
@@ -33,6 +34,33 @@ class _SemesterProgressScreenState extends State<SemesterProgressScreen> {
   void initState() {
     super.initState();
     _initData();
+    _showTutorial();
+  }
+
+  void _showTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingOverlay.show(
+        context: context,
+        featureKey: 'semester_progress_main',
+        steps: [
+          const OnboardingStep(
+            title: "Track Your Marks",
+            description: "Log your quizzes, midterms, and assignments for each course. We'll help you see where you stand.",
+            icon: Icons.trending_up_rounded,
+          ),
+          const OnboardingStep(
+            title: "Grade Prediction",
+            description: "Enter your target grade, and we'll calculate exactly how many marks you need in the final exam to achieve it.",
+            icon: Icons.psychology_rounded,
+          ),
+          const OnboardingStep(
+            title: "Auto-Synchronization",
+            description: "Any marks you enter here will automatically update your overall CGPA projections in the Semester Summary.",
+            icon: Icons.sync_rounded,
+          ),
+        ],
+      );
+    });
   }
 
   Future<void> _initData() async {

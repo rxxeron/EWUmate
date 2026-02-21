@@ -30,6 +30,7 @@ import '../../core/models/result_models.dart';
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/animations/loading_shimmer.dart';
 import '../../core/widgets/animations/fade_in_slide.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 
 class DashboardScreen extends StatefulWidget {
   final VoidCallback? onSeeAllTasks;
@@ -66,6 +67,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadCachedData(); // Fast initial load
     _initDashboard(); // Background refresh
     SyncService().performFullSync(); // Proactive Sync
+    _showDashboardTutorial();
+  }
+
+  void _showDashboardTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingOverlay.show(
+        context: context,
+        featureKey: 'dashboard_main',
+        steps: [
+          const OnboardingStep(
+            title: "Your Academic Hub",
+            description: "Welcome to your new dashboard! Here you'll find your classes, deadlines, and important university updates.",
+            icon: Icons.dashboard_rounded,
+          ),
+          const OnboardingStep(
+            title: "Live Schedule",
+            description: "Your daily classes appear here automatically. We'll even remind you 15 minutes before they start!",
+            icon: Icons.calendar_today_rounded,
+          ),
+          const OnboardingStep(
+            title: "The Floating Pulse",
+            description: "Check the sidebar for quick access to your tasks, CGPA projections, and the Advising Planner.",
+            icon: Icons.bubble_chart_rounded,
+          ),
+        ],
+      );
+    });
   }
 
   Future<void> _loadCachedData() async {

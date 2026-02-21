@@ -230,14 +230,9 @@ class AcademicRepository {
   Future<DateTime?> getOnlineAdvisingDate(String currentSemesterCode) async {
     try {
       // 1. Try to fetch from consolidated active_semester table first
-      final res = await _supabase
-          .from('active_semester')
-          .select('advising_start_date')
-          .eq('is_active', true)
-          .maybeSingle();
-
-      if (res != null && res['advising_start_date'] != null) {
-        return DateTime.parse(res['advising_start_date'] as String);
+      final config = await getActiveSemesterConfig();
+      if (config['advising_start_date'] != null) {
+        return DateTime.parse(config['advising_start_date'] as String);
       }
 
       // 2. Fallback to keyword search in calendar
@@ -251,6 +246,24 @@ class AcademicRepository {
     } catch (e) {
       debugPrint("Error fetching advising date: $e");
       return null;
+    }
+  }
+
+  /// Gets the grade submission window from active_semester table
+  Future<Map<String, DateTime?>> getGradeSubmissionWindow() async {
+    try {
+      final config = await getActiveSemesterConfig();
+      return {
+        'start': config['grade_submission_start'] != null 
+            ? DateTime.parse(config['grade_submission_start'] as String) 
+            : null,
+        'deadline': config['grade_submission_deadline'] != null 
+            ? DateTime.parse(config['grade_submission_deadline'] as String) 
+            : null,
+      };
+    } catch (e) {
+      debugPrint("Error fetching grade submission window: $e");
+      return {'start': null, 'deadline': null};
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'onboarding_repository.dart';
 import '../../core/widgets/glass_kit.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 
 class ProgramSelectionScreen extends StatefulWidget {
   const ProgramSelectionScreen({super.key});
@@ -38,6 +39,33 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
   void initState() {
     super.initState();
     _loadDepartments();
+    _showWelcomeOnboarding();
+  }
+
+  void _showWelcomeOnboarding() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingOverlay.show(
+        context: context,
+        featureKey: 'welcome_flow',
+        steps: [
+          const OnboardingStep(
+            title: "Welcome to EWUmate!",
+            description: "Your all-in-one assistant for academic success at East West University. Let's get you set up!",
+            icon: Icons.auto_awesome,
+          ),
+          const OnboardingStep(
+            title: "Personalized Profile",
+            description: "First, we need to know your program and batch to provide you with the correct course catalogs and schedules.",
+            icon: Icons.school,
+          ),
+          const OnboardingStep(
+            title: "Course History",
+            description: "Next, you can import your completed courses to get better advising suggestions and CGPA projections.",
+            icon: Icons.history_edu,
+          ),
+        ],
+      );
+    });
   }
 
   Future<void> _loadDepartments() async {

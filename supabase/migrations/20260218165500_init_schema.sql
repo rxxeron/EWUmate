@@ -42,7 +42,7 @@ CREATE TABLE calendar (
 
 -- 4. COURSES (Offered Sections)
 CREATE TABLE courses (
-    -- We use the Firebase Doc ID as PK to maintain compatibility/easy import
+    -- We use a persistent Doc ID as PK to maintain compatibility and easy ingestion
     doc_id TEXT PRIMARY KEY, 
     semester TEXT NOT NULL,
     code TEXT NOT NULL,

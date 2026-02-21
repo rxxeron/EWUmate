@@ -15,6 +15,7 @@ import 'task_editor_modal.dart';
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/animations/loading_shimmer.dart';
 import '../../core/widgets/animations/fade_in_slide.dart';
+import '../../core/widgets/onboarding_overlay.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -40,6 +41,33 @@ class TasksScreenState extends State<TasksScreen> {
     _initData(); // Full refresh
     // Proactive sync
     SyncService().performFullSync();
+    _showTutorial();
+  }
+
+  void _showTutorial() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      OnboardingOverlay.show(
+        context: context,
+        featureKey: 'tasks_main',
+        steps: [
+          const OnboardingStep(
+            title: "Never Miss a Deadline",
+            description: "Keep track of your assignments, quizzes, and project deadlines. We'll categorize them for you automatically.",
+            icon: Icons.notifications_active_rounded,
+          ),
+          const OnboardingStep(
+            title: "Proximity Alerts",
+            description: "Get notified 1-3 days before a task is due. We'll pulse the dashboard to keep you on your toes!",
+            icon: Icons.timer_rounded,
+          ),
+          const OnboardingStep(
+            title: "Auto-Exam Sync",
+            description: "When the university releases exam dates, we'll automatically add them to your task list so you can study in advance.",
+            icon: Icons.calendar_month_rounded,
+          ),
+        ],
+      );
+    });
   }
 
   Future<void> _loadCachedData() async {

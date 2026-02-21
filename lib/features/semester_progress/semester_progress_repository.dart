@@ -147,8 +147,8 @@ class SemesterProgressRepository {
 
     // Local update
     final coursesRaw = summary['courses'] as Map?;
-    final Map<String, dynamic> courses = coursesRaw != null ? Map<String, dynamic>.from(coursesRaw) : {};
-    final marksList = courses.entries.map((e) {
+    final Map<String, dynamic> coursesMap = coursesRaw != null ? Map<String, dynamic>.from(coursesRaw) : {};
+    final marksList = coursesMap.entries.map((e) {
       final val = Map<String, dynamic>.from(e.value);
       val['courseCode'] = e.key;
       return CourseMarks.fromMap(val);
@@ -161,6 +161,9 @@ class SemesterProgressRepository {
     // Also cache the full summary map
     await OfflineCacheService().cacheSemesterSummaryMap(semesterCode, summary);
     _emitCachedProgress(semesterCode); // Notify UI immediately
+
+    // Sync to Summary Stats (The high-level table used by Semester Summary screen)
+    unawaited(_syncToSummaryStats(semesterCode, marksList));
 
     // Sync if online
     if (await ConnectivityService().isOnline()) {
@@ -176,6 +179,42 @@ class SemesterProgressRepository {
       }
     } else {
       debugPrint("Offline: Progress saved locally, will sync when online.");
+    }
+  }
+
+  /// Synchronizes detailed marks to the flat semester_course_stats table
+  Future<void> _syncToSummaryStats(String semester, List<CourseMarks> marksList) async {
+    if (_uid == null) return;
+    
+    try {
+      for (var marks in marksList) {
+        final totalObtained = marks.totalObtained;
+        
+        // Use the existing logic from SemesterRepository to upsert
+        // We'll do it directly here to avoid circular dependencies
+        final existing = await _supabase.from('semester_course_stats')
+          .select()
+          .eq('user_id', _uid!)
+          .eq('semester', semester)
+          .eq('course_code', marks.courseCode)
+          .maybeSingle();
+
+        final data = {
+          'user_id': _uid!,
+          'semester': semester,
+          'course_code': marks.courseCode,
+          'marks_obtained': totalObtained,
+          'last_updated': DateTime.now().toIso8601String(),
+        };
+
+        if (existing != null) {
+          await _supabase.from('semester_course_stats').update(data).eq('id', existing['id']);
+        } else {
+          await _supabase.from('semester_course_stats').insert(data);
+        }
+      }
+    } catch (e) {
+      debugPrint("Error syncing to summary stats: $e");
     }
   }
 

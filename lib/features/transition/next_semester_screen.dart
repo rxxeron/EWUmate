@@ -32,7 +32,7 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
   String _currentSemCode = '';
   DateTime? _gradeSubmissionDate;
   bool _isLockedByDate = false;
-  bool _debugBypass = true;
+  bool _debugBypass = false;
   String _nextSemCode = '';
 
   // Step 1 Data (Grades)
@@ -81,10 +81,17 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
       // Load universal grade scale and metadata
       await _resultsRepo.fetchAcademicProfile(); // Trigger metadata load
   
-      _gradeSubmissionDate =
-          await _academicRepo.getFinalGradeSubmissionDate(_currentSemCode);
+      final window = await _academicRepo.getGradeSubmissionWindow();
+      _gradeSubmissionDate = window['start'];
+      
       if (_gradeSubmissionDate != null) {
         if (DateTime.now().isBefore(_gradeSubmissionDate!)) {
+          _isLockedByDate = true;
+        }
+      } else {
+        // Fallback to calendar parsing if active_semester has no start date
+        _gradeSubmissionDate = await _academicRepo.getFinalGradeSubmissionDate(_currentSemCode);
+        if (_gradeSubmissionDate != null && DateTime.now().isBefore(_gradeSubmissionDate!)) {
           _isLockedByDate = true;
         }
       }

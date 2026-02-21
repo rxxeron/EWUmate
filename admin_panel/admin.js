@@ -22,7 +22,8 @@ async function verifyKey() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
             },
             body: JSON.stringify({ password: inputKey })
         });
@@ -96,6 +97,7 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY,
                 'x-upsert': 'true'
             },
             body: file

@@ -1,0 +1,171 @@
+class CourseSession {
+  final String type;
+  final String day;
+  final String startTime;
+  final String endTime;
+  final String room;
+  final String faculty;
+
+  CourseSession({
+    required this.type,
+    required this.day,
+    required this.startTime,
+    required this.endTime,
+    required this.room,
+    required this.faculty,
+  });
+
+  factory CourseSession.fromMap(Map<String, dynamic> data) {
+    return CourseSession(
+      type: data['type'] ?? 'Theory',
+      day: data['day'] ?? '',
+      startTime: data['startTime'] ?? data['start_time'] ?? '',
+      endTime: data['endTime'] ?? data['end_time'] ?? '',
+      room: data['room'] ?? '',
+      faculty: data['faculty'] ?? '',
+    );
+  }
+
+  factory CourseSession.fromSupabase(Map<String, dynamic> data) {
+    return CourseSession(
+      type: data['type'] ?? 'Theory',
+      day: data['day'] ?? '',
+      startTime: data['start_time'] ?? data['startTime'] ?? '',
+      endTime: data['end_time'] ?? data['endTime'] ?? '',
+      room: data['room'] ?? '',
+      faculty: data['faculty'] ?? '',
+    );
+  }
+}
+
+class Course {
+  final String id;
+  final String code;
+  final String courseName;
+  final String section;
+  final String capacity;
+  final String credits;
+  final String semester;
+  final List<CourseSession> sessions;
+
+  final String day;
+  final String startTime;
+  final String endTime;
+  final String faculty;
+  final String room;
+  final String docId;
+
+  Course({
+    required this.id,
+    required this.code,
+    required this.courseName,
+    this.section = '',
+    this.capacity = '',
+    this.credits = '3.0',
+    this.semester = '',
+    this.sessions = const [],
+    this.day = '',
+    this.startTime = '',
+    this.endTime = '',
+    this.room = '',
+    this.faculty = '',
+    this.docId = '',
+  });
+
+  factory Course.fromFirestore(Map<String, dynamic> data, String id) {
+    List<CourseSession> sessionList = [];
+
+    if (data['sessions'] != null && data['sessions'] is List) {
+      sessionList = (data['sessions'] as List)
+          .map((s) => CourseSession.fromMap(Map<String, dynamic>.from(s as Map)))
+          .toList();
+    } else if (data['day'] != null) {
+      sessionList = [
+        CourseSession(
+          type: 'Theory',
+          day: data['day'] ?? '',
+          startTime: data['startTime'] ?? '',
+          endTime: data['endTime'] ?? '',
+          room: data['room'] ?? '',
+          faculty: data['faculty'] ?? '',
+        )
+      ];
+    }
+
+    final theorySession = sessionList.isNotEmpty ? sessionList.first : null;
+
+    return Course(
+      id: id,
+      code: data['code']?.toString() ?? data['courseCode']?.toString() ?? '',
+      courseName: data['courseName']?.toString() ?? '',
+      section: data['section']?.toString() ?? '',
+      capacity: data['capacity']?.toString() ?? '',
+      credits: data['credits']?.toString() ?? '3.0',
+      semester: data['semester']?.toString() ?? '',
+      sessions: sessionList,
+      day: theorySession?.day ?? data['day']?.toString() ?? '',
+      startTime: theorySession?.startTime ?? data['startTime']?.toString() ?? '',
+      endTime: theorySession?.endTime ?? data['endTime']?.toString() ?? '',
+      faculty: theorySession?.faculty ?? data['faculty']?.toString() ?? '',
+      room: theorySession?.room ?? data['room']?.toString() ?? '',
+      docId: data['docId']?.toString() ?? '',
+    );
+  }
+
+  factory Course.fromSupabase(Map<String, dynamic> data, String id) {
+    List<CourseSession> sessionList = [];
+
+    if (data['sessions'] != null && data['sessions'] is List) {
+      sessionList = (data['sessions'] as List)
+          .map((s) => CourseSession.fromSupabase(Map<String, dynamic>.from(s as Map)))
+          .toList();
+    }
+
+    final theorySession = sessionList.isNotEmpty ? sessionList.first : null;
+
+    return Course(
+      id: id,
+      code: data['code']?.toString() ?? '',
+      courseName: data['course_name']?.toString() ?? data['courseName']?.toString() ?? '',
+      section: data['section']?.toString() ?? '',
+      capacity: data['capacity']?.toString() ?? '',
+      credits: data['credits']?.toString() ?? '3.0',
+      semester: data['semester']?.toString() ?? '',
+      sessions: sessionList,
+      day: theorySession?.day ?? data['day']?.toString() ?? '',
+      startTime:
+          theorySession?.startTime ?? data['start_time']?.toString() ?? data['startTime']?.toString() ?? '',
+      endTime: theorySession?.endTime ?? data['end_time']?.toString() ?? data['endTime']?.toString() ?? '',
+      faculty: theorySession?.faculty ?? data['faculty']?.toString() ?? '',
+      room: theorySession?.room ?? data['room']?.toString() ?? '',
+      docId: data['doc_id']?.toString() ?? data['docId']?.toString() ?? '',
+    );
+  }
+
+  CourseSession? getFirstSession(String type) {
+    return sessions.where((s) => s.type == type).firstOrNull;
+  }
+}
+
+class ScheduleGenerationResult {
+  final String id;
+  final String status;
+  final List<List<Course>> combinations;
+  final DateTime createdAt;
+
+  ScheduleGenerationResult({
+    required this.id,
+    required this.status,
+    required this.combinations,
+    required this.createdAt,
+  });
+
+  factory ScheduleGenerationResult.empty() {
+    return ScheduleGenerationResult(
+      id: '',
+      status: 'none',
+      combinations: [],
+      createdAt: DateTime.now(),
+    );
+  }
+}

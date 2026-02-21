@@ -1,0 +1,6 @@
+azure-functions
+supabase
+httpx
+pypdf
+pdfplumber
+pytz

@@ -17,17 +17,21 @@ class OfflineCacheService {
   Future<void> init() async {
     await Hive.initFlutter();
     
-    // Open all necessary boxes
-    await Future.wait([
-      Hive.openBox(_tasksBoxName),
-      Hive.openBox(_semesterBoxName),
-      Hive.openBox(_ramadanBoxName),
-      Hive.openBox(_profileBoxName),
-      Hive.openBox(_settingsBoxName),
-      Hive.openBox(_metadataBoxName),
-    ]);
-    
-    debugPrint('OfflineCacheService: Hive initialized and boxes opened.');
+    // Open all necessary boxes with a timeout
+    try {
+      await Future.wait([
+        Hive.openBox(_tasksBoxName),
+        Hive.openBox(_semesterBoxName),
+        Hive.openBox(_ramadanBoxName),
+        Hive.openBox(_profileBoxName),
+        Hive.openBox(_settingsBoxName),
+        Hive.openBox(_metadataBoxName),
+      ]).timeout(const Duration(seconds: 4));
+      debugPrint('OfflineCacheService: Hive initialized and boxes opened.');
+    } catch (e) {
+      debugPrint('OfflineCacheService: Hive initialization error or timeout $e');
+      // If Hive fails, the app might crash later, but at least we tried to move on
+    }
   }
 
   // --- Task Methods ---
@@ -198,6 +202,18 @@ class OfflineCacheService {
     final data = box.get('last_full_sync');
     if (data == null) return null;
     return DateTime.tryParse(data.toString());
+  }
+  
+  // --- User Metadata Methods ---
+  Future<void> cacheUserMetadata(Map<String, dynamic> metadata) async {
+    final box = Hive.box(_profileBoxName);
+    await box.put('user_metadata', metadata);
+  }
+
+  Map<String, dynamic>? getCachedUserMetadata() {
+    final box = Hive.box(_profileBoxName);
+    final data = box.get('user_metadata');
+    return data != null ? Map<String, dynamic>.from(data as Map) : null;
   }
 
   // --- Generic Methods ---

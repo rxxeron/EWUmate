@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as t_z;
@@ -14,13 +15,44 @@ import 'core/services/notification_service.dart';
 import 'core/services/lifecycle_notification_service.dart';
 import 'core/config/supabase_config.dart';
 import 'core/services/offline_cache_service.dart';
+import 'core/services/sync_service.dart';
 import 'core/services/connectivity_service.dart';
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('[FCM] Handling a background message: ${message.messageId}');
+}
+
+
+
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Create a future for the initialization logic
+  final initFuture = _initializeServices();
+
+  // Wait for init with a hard timeout of 7 seconds
+  await initFuture.timeout(
+    const Duration(seconds: 7),
+    onTimeout: () {
+      debugPrint('[Main] STARTUP TIMEOUT: Initialization took too long, proceeding to runApp.');
+    },
+  ).catchError((e) {
+    debugPrint('[Main] STARTUP ERROR: $e');
+  });
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+Future<void> _initializeServices() async {
   try {
-    WidgetsFlutterBinding.ensureInitialized();
-    
-    // Attempt to load .env, but don't crash if it fails (using hardcoded fallback in SupabaseConfig)
+    // Attempt to load .env, but don't crash if it fails
     try {
       await dotenv.load(fileName: ".env");
     } catch (e) {
@@ -29,19 +61,30 @@ void main() async {
 
     tz.initializeTimeZones();
 
-    // 1. Initialize Supabase (Primary Backend)
+    // 0. Initialize Firebase
+    await Firebase.initializeApp().timeout(const Duration(seconds: 5)).catchError((e) {
+      debugPrint('[Main] Firebase Init Timeout/Error: $e');
+    });
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // 1. Initialize Supabase
     await Supabase.initialize(
       url: SupabaseConfig.url,
       anonKey: SupabaseConfig.anonKey,
-    );
+    ).timeout(const Duration(seconds: 5)).catchError((e) {
+      debugPrint('[Main] Supabase Init Timeout/Error: $e');
+    });
 
     // 1.5. Initialize Offline Storage & Connectivity
     await OfflineCacheService().init();
     await OfflineCacheService().clearRamadanCache(); 
     await ConnectivityService().init();
 
-    // 2. Request Permissions
-    await Permission.notification.request();
+    // 2. Request Permissions with Timeout
+    await Permission.notification.request().timeout(
+      const Duration(seconds: 2),
+      onTimeout: () => PermissionStatus.denied,
+    ).catchError((_) => PermissionStatus.denied);
 
     // 3. Initialize In-App Services (non-blocking)
     RealtimeNotificationService().initialize().catchError((e) {
@@ -52,12 +95,7 @@ void main() async {
       debugPrint('[Main] LifecycleNotificationService Error: $e');
     });
 
-    runApp(
-      ChangeNotifierProvider(
-        create: (_) => ThemeProvider(),
-        child: const MyApp(),
-      ),
-    );
+    SyncService().init();
   } catch (e, stack) {
     debugPrint('[Main] CRITICAL STARTUP ERROR: $e');
     debugPrint('[Main] Stacktrace: $stack');

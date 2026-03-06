@@ -13,7 +13,9 @@ class ExceptionRepository {
     // 1. Get cached data
     final cached = OfflineCacheService().getCachedExceptions();
 
-    if (_uid == null) return cached;
+    if (_uid == null) {
+      return cached;
+    }
 
     // 2. If online, refresh
     if (await ConnectivityService().isOnline()) {
@@ -38,7 +40,9 @@ class ExceptionRepository {
   /// Add a cancellation exception
   Future<void> addCancellation(String date, String courseCode,
       {bool pendingMakeup = false}) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     final newException = {
       'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
@@ -81,7 +85,9 @@ class ExceptionRepository {
     required String endTime,
     required String room,
   }) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     final newException = {
       'id': 'temp_${DateTime.now().millisecondsSinceEpoch}',
@@ -129,7 +135,9 @@ class ExceptionRepository {
     required String endTime,
     required String room,
   }) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     // 1. Local Update
     final current = OfflineCacheService().getCachedExceptions();
@@ -145,7 +153,9 @@ class ExceptionRepository {
     }
 
     // 2. Sync if online (skip if temp ID)
-    if (id.startsWith('temp_')) return;
+    if (id.startsWith('temp_')) {
+      return;
+    }
 
     if (await ConnectivityService().isOnline()) {
       try {
@@ -164,7 +174,9 @@ class ExceptionRepository {
 
   /// Remove an exception (e.g. undo cancel)
   Future<void> removeException(String id) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     // 1. Local Update
     final current = OfflineCacheService().getCachedExceptions();
@@ -172,7 +184,9 @@ class ExceptionRepository {
     await OfflineCacheService().cacheExceptions(current);
 
     // 2. Sync if online (skip if temp ID)
-    if (id.startsWith('temp_')) return;
+    if (id.startsWith('temp_')) {
+      return;
+    }
 
     if (await ConnectivityService().isOnline()) {
       try {
@@ -195,7 +209,9 @@ class ExceptionRepository {
       return match['id']?.toString();
     } catch (_) {}
 
-    if (_uid == null) return null;
+    if (_uid == null) {
+      return null;
+    }
     try {
       final data = await _supabase
           .from('schedule_exceptions')

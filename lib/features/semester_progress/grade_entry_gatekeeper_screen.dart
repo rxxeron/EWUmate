@@ -32,7 +32,7 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
   bool _isForced = true;
   final _repo = SemesterRepository();
   final _courseRepo = CourseRepository();
-  final _academicRepo = AcademicRepository();
+  // final _academicRepo = AcademicRepository(); // Removed unused
   final _advisingRepo = AdvisingRepository();
 
   // Step 0: Enrollment for next semester
@@ -69,10 +69,15 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
       if (match != null) {
         final season = match.group(1)!;
         final year = int.parse(match.group(2)!);
-        if (season.contains('Spring')) _nextSemCode = 'Summer$year';
-        else if (season.contains('Summer')) _nextSemCode = 'Fall$year';
-        else if (season.contains('Fall')) _nextSemCode = 'Spring${year + 1}';
-        else _nextSemCode = _semesterCode;
+        if (season.contains('Spring')) {
+          _nextSemCode = 'Summer$year';
+        } else if (season.contains('Summer')) {
+          _nextSemCode = 'Fall$year';
+        } else if (season.contains('Fall')) {
+          _nextSemCode = 'Spring${year + 1}';
+        } else {
+          _nextSemCode = _semesterCode;
+        }
       }
 
       _courses = await _repo.fetchSemesterSummary(_semesterCode);
@@ -99,7 +104,9 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
           _availableCourses = {};
           raw.forEach((code, sections) {
             final available = sections.where((s) => CourseUtils.isAvailable(s.capacity)).toList();
-            if (available.isNotEmpty) _availableCourses[code] = available;
+            if (available.isNotEmpty) {
+              _availableCourses[code] = available;
+            }
           });
           _filteredCodes = _availableCourses.keys.toList()..sort();
         } catch (e) {

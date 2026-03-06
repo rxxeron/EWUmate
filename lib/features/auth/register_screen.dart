@@ -46,7 +46,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     setState(() => _loading = true);
     try {
@@ -59,7 +61,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         },
       );
 
-      if (res.user == null) throw const AuthException("Registration failed");
+      if (res.user == null) {
+        throw const AuthException("Registration failed");
+      }
 
       final String uid = res.user!.id;
       String? photoURL;
@@ -79,7 +83,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'onboarding_status': 'registered',
       });
 
-      if (mounted) context.go('/onboarding/program'); // Direct to flow
+      if (mounted) {
+        context.go('/onboarding/program'); // Direct to flow
+      }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -92,7 +98,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 

@@ -117,7 +117,9 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
       );
     }
 
-    if (mounted) setState(() => _loading = false);
+    if (mounted) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _saveDistribution() async {
@@ -211,7 +213,9 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
     // Max for individual quiz? Typically not strictly enforcing against distribution-total here,
     // but maybe against a theoretical max like 20? I won't enforce strict single-quiz max
     // as it varies, but definitely non-negative.
-    if (val < 0) return;
+    if (val < 0) {
+      return;
+    }
 
     if (isShort) {
       await _repo.addShortQuizMark(widget.semesterCode, widget.courseCode, val);
@@ -272,7 +276,9 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
   }
 
   void _showSnack(String msg, {bool isError = false}) {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
@@ -494,13 +500,27 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
     final distTotal = isShort
         ? _courseMarks?.distribution.shortQuiz
         : _courseMarks?.distribution.quiz;
-    if (distTotal == null || distTotal <= 0) return const SizedBox.shrink();
+    if (distTotal == null || distTotal <= 0) {
+      return const SizedBox.shrink();
+    }
 
     // Calculate effective
     final calc = isShort
         ? _courseMarks?.calculatedShortQuizMark
         : _courseMarks?.calculatedQuizMark;
-    final strategy = _quizStrategy;
+    String strategy = _quizStrategy;
+    if (strategy == 'bestN') {
+      strategy = "Best N (Avg)";
+    }
+    if (strategy == 'sumBestN') {
+      strategy = "Best N (Sum)";
+    }
+    if (strategy == 'average') {
+      strategy = "Avg All";
+    }
+    if (strategy == 'sum') {
+      strategy = "Sum All";
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,7 +654,11 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
                 items: const [
                   DropdownMenuItem(
                     value: 'bestN',
-                    child: Text("Best N (Average of Top N)"),
+                    child: Text("Best N (Average)"),
+                  ),
+                  DropdownMenuItem(
+                    value: 'sumBestN',
+                    child: Text("Best N (Sum)"),
                   ),
                   DropdownMenuItem(
                     value: 'average',
@@ -643,12 +667,14 @@ class _CourseMarksScreenState extends State<CourseMarksScreen>
                   DropdownMenuItem(value: 'sum', child: Text("Sum of All")),
                 ],
                 onChanged: (val) {
-                  if (val != null) setState(() => _quizStrategy = val);
+                  if (val != null) {
+                    setState(() => _quizStrategy = val);
+                  }
                 },
               ),
             ),
           ),
-          if (_quizStrategy == 'bestN') ...[
+          if (_quizStrategy == 'bestN' || _quizStrategy == 'sumBestN') ...[
             const SizedBox(height: 10),
             Row(
               children: [

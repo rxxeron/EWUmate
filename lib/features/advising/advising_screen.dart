@@ -134,7 +134,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           _isLocked = false;
         }
       } else {
-        _isLocked = false;
+        // Strict locking: if we don't know the date, it's locked until we fetch it online
+        _isLocked = true;
+        _lockMessage = "Advising details are pending. Please check back later.";
       }
 
       if (!_isLocked) {
@@ -142,13 +144,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       }
     } catch (e) {
       debugPrint("Advising Init Error: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content:
-              Text("Error initializing advising data. Please try again later."),
-          backgroundColor: Colors.redAccent,
-        ));
-      }
+      _isLocked = true;
+      _lockMessage = "Unable to load advising status. Check your connection.";
+      if (mounted) setState(() => _loading = false);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -526,7 +524,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
                       }
 
                       final courses = snapshot.data!;
-                      if (courses.isEmpty) return const SizedBox.shrink();
+                      if (courses.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
 
                       final hasFull = courses.any((c) => !CourseUtils.isAvailable(c.capacity));
                       return _buildSavedScheduleCard(id, dateStr, courses, hasFull: hasFull);
@@ -1161,10 +1161,18 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       itemBuilder: (context, index) {
         final combo = allCombos[index];
         final isManual = combo == _manualDraft;
+        String cardLabel;
+        if (isManual) {
+          cardLabel = "My Manual Draft";
+        } else {
+          final offset = allCombos.contains(_manualDraft) ? 0 : 1;
+          cardLabel = "Option ${index + offset}";
+        }
+
         return _buildScheduleCard(
           index, 
           combo, 
-          label: isManual ? "My Manual Draft" : "Option ${index + (allCombos.contains(_manualDraft) ? 0 : 1)}"
+          label: cardLabel,
         );
       },
     );

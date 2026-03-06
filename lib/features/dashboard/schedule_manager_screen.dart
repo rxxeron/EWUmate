@@ -31,6 +31,8 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
   List<Map<String, dynamic>> _userExceptions = [];
   String _semesterCode = "";
 
+  static const String _dateIdFormat = 'yyyy-MM-dd';
+
   @override
   void initState() {
     super.initState();
@@ -39,14 +41,20 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
 
   /// Load data using Repositories
   Future<void> _loadData({bool silent = false}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      if (mounted) context.pop(); // Exit if not logged in
+      if (mounted) {
+        context.pop(); // Exit if not logged in
+      }
       return;
     }
 
-    if (!silent) setState(() => _loading = true);
+    if (!silent) {
+      setState(() => _loading = true);
+    }
     try {
       // 1. Get Semester
       _semesterCode = await _academicRepo.getCurrentSemesterCode();
@@ -63,7 +71,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
             final List<String> enrolledIds = List<String>.from(profileData['enrolled_sections'] ?? []);
             await ScheduleService().syncUserSchedule(_semesterCode, enrolledIds);
             // Gently refresh UI if we got fresh data
-            if (mounted) _loadData(silent: true);
+            if (mounted) {
+              _loadData(silent: true);
+            }
           } catch (e) {
             debugPrint("Auto-sync background error: $e");
           }
@@ -82,7 +92,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
       }
     } catch (e) {
       debugPrint("Error loading manager: $e");
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -211,7 +223,7 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         final type = entry['type'] as String;
  
         // Date formatting for Firestore ID (yyyy-MM-dd)
-        final dateId = DateFormat('yyyy-MM-dd').format(date);
+        final dateId = DateFormat(_dateIdFormat).format(date);
  
         if (type == 'holiday' || type == 'chill') {
           return Padding(
@@ -418,7 +430,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
   }
 
   TimeOfDay? _parseTimeOfDay(String? timeStr) {
-    if (timeStr == null || timeStr.trim().isEmpty) return null;
+    if (timeStr == null || timeStr.trim().isEmpty) {
+      return null;
+    }
     try {
       final dt = DateFormat('h:mm a').parse(timeStr.trim());
       return TimeOfDay.fromDateTime(dt);
@@ -429,13 +443,15 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
 
   Future<void> _editMakeupFromPending(Map<String, dynamic> ex) async {
     final id = ex['id']?.toString() ?? '';
-    if (id.isEmpty) return;
+    if (id.isEmpty) {
+      return;
+    }
 
     DateTime? initialDate;
     final dateStr = ex['date']?.toString();
     if (dateStr != null && dateStr.isNotEmpty) {
       try {
-        initialDate = DateFormat('yyyy-MM-dd').parse(dateStr);
+        initialDate = DateFormat(_dateIdFormat).parse(dateStr);
       } catch (_) {}
     }
 
@@ -460,7 +476,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
 
   Future<void> _cancelClass(String dateStr, ScheduleItem item) async {
     try {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       // Confirm dialog
       final confirm = await showDialog<bool>(
@@ -508,7 +526,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
 
   Future<void> _deleteExceptionById(String id) async {
     try {
-      if (id.isEmpty) return;
+      if (id.isEmpty) {
+        return;
+      }
       await _exceptionRepo.removeException(id);
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -522,7 +542,9 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
 
   Future<void> _scheduleMakeup(ScheduleItem item,
       {DateTime? initialDate, TimeOfDay? initialTime}) async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     // 1. Pick Date
     final now = DateTime.now();
@@ -544,10 +566,14 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         child: child!,
       ),
     );
-    if (date == null) return;
+    if (date == null) {
+      return;
+    }
 
     // 2. Pick Time
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     final time = await showTimePicker(
       context: context,
       initialTime: initialTime ?? const TimeOfDay(hour: 10, minute: 0),
@@ -562,10 +588,14 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         child: child!,
       ),
     );
-    if (time == null) return;
+    if (time == null) {
+      return;
+    }
 
     // 3. Enter Room & Confirm
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     final roomController = TextEditingController(text: item.room);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -624,7 +654,7 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
         // Update existing
         await _exceptionRepo.updateMakeupClass(
           id: item.id,
-          date: DateFormat('yyyy-MM-dd').format(date),
+          date: DateFormat(_dateIdFormat).format(date),
           startTime: fmt(startDt),
           endTime: fmt(endDt),
           room: roomController.text,
@@ -632,7 +662,7 @@ class _ScheduleManagerScreenState extends State<ScheduleManagerScreen> {
       } else {
         // Add new
         await _exceptionRepo.addMakeupClass(
-          date: DateFormat('yyyy-MM-dd').format(date),
+          date: DateFormat(_dateIdFormat).format(date),
           courseCode: item.courseCode,
           courseName: item.courseName,
           startTime: fmt(startDt),

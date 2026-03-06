@@ -15,9 +15,15 @@ class ConnectivityService {
   Stream<ConnectivityStatus> get statusStream => _statusController.stream;
 
   Future<void> init() async {
-    final results = await _connectivity.checkConnectivity();
-    if (results.isNotEmpty) {
-      _updateStatus(results.first);
+    try {
+      final results = await _connectivity.checkConnectivity().timeout(
+        const Duration(seconds: 2),
+      );
+      if (results.isNotEmpty) {
+        _updateStatus(results.first);
+      }
+    } catch (e) {
+      debugPrint("ConnectivityService: Init timeout or error $e");
     }
 
     _connectivity.onConnectivityChanged.listen((results) {
@@ -36,8 +42,14 @@ class ConnectivityService {
   }
 
   Future<bool> isOnline() async {
-    final result = await _connectivity.checkConnectivity();
-    return result.any((r) => r != ConnectivityResult.none);
+    try {
+      final result = await _connectivity.checkConnectivity().timeout(
+        const Duration(seconds: 2),
+      );
+      return result.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      return false;
+    }
   }
 
   void dispose() {

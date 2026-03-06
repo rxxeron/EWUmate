@@ -26,6 +26,7 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
   final TaskRepository _taskRepo = TaskRepository();
   bool _saving = false;
   bool _isCompleted = false;
+  bool _isMissed = false;
 
   Course? _selectedCourse;
   DateTime _assignDate = DateTime.now();
@@ -43,7 +44,6 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
     if (widget.taskToEdit != null) {
       _loadExistingTask(widget.taskToEdit!);
     } else {
-      // Default course selection if available
       if (widget.availableCourses.isNotEmpty) {
         _selectedCourse = widget.availableCourses.first;
       }
@@ -58,15 +58,14 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
     _submissionType = task.submissionType;
     _taskType = task.type;
     _isCompleted = task.isCompleted;
+    _isMissed = task.isMissed;
 
-    // Find course object that matches courseCode
     try {
       _selectedCourse = widget.availableCourses.firstWhere(
         (c) => c.code == task.courseCode,
       );
     } catch (e) {
-      // Course might not be in the list anymore, try to handle gracefully
-      // For now, we leave it null or keep the old code/name if we had a text input
+      // Course mismatch or archived
     }
   }
 
@@ -89,32 +88,24 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
   }
 
   Future<void> _pickTime() async {
-    final picked =
-        await showTimePicker(context: context, initialTime: _dueTime);
+    final picked = await showTimePicker(context: context, initialTime: _dueTime);
     if (picked != null) setState(() => _dueTime = picked);
   }
 
   void _submit() async {
     if (_selectedCourse == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Select a course")));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Select a course")));
       return;
     }
 
     setState(() => _saving = true);
+    final finalDue = DateTime(_dueDate.year, _dueDate.month, _dueDate.day, _dueTime.hour, _dueTime.minute);
 
-    // Construct final due date
-    final finalDue = DateTime(_dueDate.year, _dueDate.month, _dueDate.day,
-        _dueTime.hour, _dueTime.minute);
-
-    // Auto-generate title if empty based on type
     String title = _titleController.text.trim();
     if (title.isEmpty) {
-      title =
-          "${_taskType.name[0].toUpperCase()}${_taskType.name.substring(1)}";
+      title = "${_taskType.name[0].toUpperCase()}${_taskType.name.substring(1)}";
     }
 
-    // Create Updated/New Task
     final task = Task(
       id: widget.taskToEdit?.id ?? const Uuid().v4(),
       title: title,
@@ -125,6 +116,7 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
       submissionType: _submissionType,
       type: _taskType,
       isCompleted: _isCompleted,
+      isMissed: _isMissed,
     );
 
     try {
@@ -133,16 +125,11 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
       } else {
         await _taskRepo.addTask(task);
       }
-
       widget.onTaskSaved(task);
-
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text("Error saving task: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
         setState(() => _saving = false);
       }
     }
@@ -150,186 +137,125 @@ class _TaskEditorModalState extends State<TaskEditorModal> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.taskToEdit != null;
     final inputDecoration = InputDecoration(
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.05),
-      border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.cyanAccent)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Colors.cyanAccent)),
       labelStyle: const TextStyle(color: Colors.white70),
-      prefixIconColor: Colors.cyanAccent,
     );
 
     return GlassContainer(
       margin: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       borderRadius: 20,
       opacity: 0.1,
-      blur: 20,
       borderColor: Colors.white.withValues(alpha: 0.2),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(isEditing ? "Edit Task" : "Add New Task",
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textAlign: TextAlign.center),
-            const SizedBox(height: 20),
+            Text(widget.taskToEdit != null ? "Edit Task" : "New Task",
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.center),
+            const SizedBox(height: 24),
             DropdownButtonFormField<Course>(
-              decoration: inputDecoration.copyWith(
-                  labelText: "Select Course",
-                  prefixIcon: const Icon(Icons.book)),
-              dropdownColor: const Color(0xFF1e1e1e),
+              decoration: inputDecoration.copyWith(labelText: "Course", prefixIcon: const Icon(Icons.book, color: Colors.cyanAccent)),
+              dropdownColor: const Color(0xFF1E1E2E),
               style: const TextStyle(color: Colors.white),
               initialValue: _selectedCourse,
-              items: widget.availableCourses
-                  .map((c) => DropdownMenuItem(
-                        value: c,
-                        child: Text(c.code, overflow: TextOverflow.ellipsis),
-                      ))
-                  .toList(),
+              items: widget.availableCourses.map((c) => DropdownMenuItem(value: c, child: Text(c.code))).toList(),
               onChanged: (val) => setState(() => _selectedCourse = val),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: InkWell(
                     onTap: () => _pickDate(true),
                     child: InputDecorator(
-                      decoration: inputDecoration.copyWith(
-                          labelText: "Assigned Date",
-                          prefixIcon: const Icon(Icons.calendar_today)),
-                      child: Text(DateFormat('MMM d, y').format(_assignDate),
-                          style: const TextStyle(color: Colors.white)),
+                      decoration: inputDecoration.copyWith(labelText: "Assigned", prefixIcon: const Icon(Icons.calendar_today, size: 18, color: Colors.cyanAccent)),
+                      child: Text(DateFormat('MMM d').format(_assignDate), style: const TextStyle(color: Colors.white)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: InkWell(
                     onTap: () => _pickDate(false),
                     child: InputDecorator(
-                      decoration: inputDecoration.copyWith(
-                          labelText: "Due Date",
-                          prefixIcon: const Icon(Icons.event_busy)),
-                      child: Text(DateFormat('MMM d, y').format(_dueDate),
-                          style: const TextStyle(color: Colors.white)),
+                      decoration: inputDecoration.copyWith(labelText: "Due Date", prefixIcon: const Icon(Icons.event_busy, size: 18, color: Colors.cyanAccent)),
+                      child: Text(DateFormat('MMM d').format(_dueDate), style: const TextStyle(color: Colors.white)),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
             InkWell(
               onTap: _pickTime,
               child: InputDecorator(
-                decoration: inputDecoration.copyWith(
-                    labelText: "Due Time",
-                    prefixIcon: const Icon(Icons.access_time)),
-                child: Text(_dueTime.format(context),
-                    style: const TextStyle(color: Colors.white)),
+                decoration: inputDecoration.copyWith(labelText: "Due Time", prefixIcon: const Icon(Icons.access_time, color: Colors.cyanAccent)),
+                child: Text(_dueTime.format(context), style: const TextStyle(color: Colors.white)),
               ),
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _titleController,
+              style: const TextStyle(color: Colors.white),
+              decoration: inputDecoration.copyWith(labelText: "Description (e.g. Quiz 1)", prefixIcon: const Icon(Icons.edit, color: Colors.cyanAccent)),
+            ),
+            const SizedBox(height: 24),
             Row(
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<SubmissionType>(
-                    decoration:
-                        inputDecoration.copyWith(labelText: "Submission"),
-                    dropdownColor: const Color(0xFF1e1e1e),
+                  child: DropdownButtonFormField<TaskType>(
+                    decoration: inputDecoration.copyWith(labelText: "Type"),
+                    dropdownColor: const Color(0xFF1E1E2E),
                     style: const TextStyle(color: Colors.white),
-                    initialValue: _submissionType,
-                    items: SubmissionType.values
-                        .map((s) => DropdownMenuItem(
-                              value: s,
-                              child: Text(s.name.toUpperCase()),
-                            ))
-                        .toList(),
+                    initialValue: _taskType,
+                    items: TaskType.values.map((t) => DropdownMenuItem(value: t, child: Text(t.name.toUpperCase()))).toList(),
                     onChanged: (v) {
-                      if (v != null) setState(() => _submissionType = v);
+                      if (v != null) {
+                        setState(() => _taskType = v);
+                      }
                     },
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: DropdownButtonFormField<TaskType>(
-                    decoration: inputDecoration.copyWith(labelText: "Type"),
-                    dropdownColor: const Color(0xFF1e1e1e),
+                  child: DropdownButtonFormField<SubmissionType>(
+                    decoration: inputDecoration.copyWith(labelText: "Sub."),
+                    dropdownColor: const Color(0xFF1E1E2E),
                     style: const TextStyle(color: Colors.white),
-                    initialValue: _taskType,
-                    items: TaskType.values
-                        .map((t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(t.name.toUpperCase()),
-                            ))
-                        .toList(),
+                    initialValue: _submissionType,
+                    items: SubmissionType.values.map((s) => DropdownMenuItem(value: s, child: Text(s.name.toUpperCase()))).toList(),
                     onChanged: (v) {
-                      if (v != null) setState(() => _taskType = v);
+                      if (v != null) {
+                        setState(() => _submissionType = v);
+                      }
                     },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 15),
-            TextField(
-              controller: _titleController,
-              style: const TextStyle(color: Colors.white),
-              decoration: inputDecoration.copyWith(
-                labelText: "Title (Optional)",
-                hintText: "e.g. Chapter 1 Quiz",
-                hintStyle: const TextStyle(color: Colors.white38),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _saving ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.cyanAccent.withValues(alpha: 0.2),
+                foregroundColor: Colors.cyanAccent,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: const BorderSide(color: Colors.cyanAccent)),
+                elevation: 0,
               ),
-            ),
-            if (isEditing) ...[
-              SwitchListTile(
-                title: const Text("Mark as Completed",
-                    style: TextStyle(color: Colors.white)),
-                value: _isCompleted,
-                activeTrackColor: Colors.cyanAccent,
-                activeThumbColor: Colors.white, // Thumb color when active
-                onChanged: (val) {
-                  setState(() => _isCompleted = val);
-                },
-              ),
-              const SizedBox(height: 15),
-            ],
-            GlassContainer(
-              borderRadius: 12,
-              color: Colors.cyanAccent.withValues(alpha: 0.2),
-              borderColor: Colors.cyanAccent,
-              child: InkWell(
-                onTap: _saving ? null : _submit,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  alignment: Alignment.center,
-                  child: _saving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2))
-                      : Text(isEditing ? "Save Changes" : "Create Task",
-                          style: const TextStyle(
-                              color: Colors.cyanAccent,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16)),
-                ),
-              ),
+              child: _saving 
+                ? const CircularProgressIndicator() 
+                : Text(
+                    widget.taskToEdit != null ? "Save Changes" : "Create Task", 
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                  ),
             ),
             const SizedBox(height: 40),
           ],

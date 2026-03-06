@@ -36,7 +36,9 @@ class SemesterProgressRepository {
         final semesterData =
             data.where((d) => d['semester_code'] == semesterCode);
         if (semesterData.isEmpty) {
-          if (!_controller.isClosed) _controller.add([]);
+          if (!_controller.isClosed) {
+            _controller.add([]);
+          }
           return;
         }
 
@@ -54,7 +56,9 @@ class SemesterProgressRepository {
         OfflineCacheService().cacheSemesterProgress(
             semesterCode, remoteMarks.map((m) => m.toMap()).toList());
 
-        if (!_controller.isClosed) _controller.add(remoteMarks);
+        if (!_controller.isClosed) {
+          _controller.add(remoteMarks);
+        }
       }, onError: (e) {
         debugPrint("SemesterProgressStream Error: $e");
         _subscription?.cancel();
@@ -79,7 +83,9 @@ class SemesterProgressRepository {
 
   /// Fetches all courses with marks for a given semester
   Future<List<CourseMarks>> fetchSemesterProgress(String semesterCode) async {
-    if (_uid == null) return [];
+    if (_uid == null) {
+      return [];
+    }
 
     try {
       final data = await _supabase
@@ -89,7 +95,9 @@ class SemesterProgressRepository {
           .eq('semester_code', semesterCode)
           .maybeSingle();
 
-      if (data == null) return [];
+      if (data == null) {
+        return [];
+      }
 
       final summaryRaw = data['summary'] as Map?;
       final Map<String, dynamic> summary = summaryRaw != null ? Map<String, dynamic>.from(summaryRaw) : {};
@@ -114,9 +122,13 @@ class SemesterProgressRepository {
     // 1. Try cache first
     final cachedSummary =
         OfflineCacheService().getCachedSemesterSummaryMap(semesterCode);
-    if (cachedSummary != null) return cachedSummary;
+    if (cachedSummary != null) {
+      return cachedSummary;
+    }
 
-    if (_uid == null) return null;
+    if (_uid == null) {
+      return null;
+    }
 
     try {
       final data = await _supabase
@@ -143,7 +155,9 @@ class SemesterProgressRepository {
   /// Fetches marks for a single course
   Future<void> _updateSummary(
       String semesterCode, Map<String, dynamic> summary) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     // Local update
     final coursesRaw = summary['courses'] as Map?;
@@ -184,37 +198,64 @@ class SemesterProgressRepository {
 
   /// Synchronizes detailed marks to the flat semester_course_stats table
   Future<void> _syncToSummaryStats(String semester, List<CourseMarks> marksList) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
     
     try {
+      final List<Map<String, dynamic>> upsertData = [];
+      
       for (var marks in marksList) {
         final totalObtained = marks.totalObtained;
+        // removed unused totalPossible
         
-        // Use the existing logic from SemesterRepository to upsert
-        // We'll do it directly here to avoid circular dependencies
-        final existing = await _supabase.from('semester_course_stats')
-          .select()
-          .eq('user_id', _uid!)
-          .eq('semester', semester)
-          .eq('course_code', marks.courseCode)
-          .maybeSingle();
-
-        final data = {
+        upsertData.add({
           'user_id': _uid!,
           'semester': semester,
           'course_code': marks.courseCode,
           'marks_obtained': totalObtained,
           'last_updated': DateTime.now().toIso8601String(),
-        };
+        });
+      }
 
-        if (existing != null) {
-          await _supabase.from('semester_course_stats').update(data).eq('id', existing['id']);
-        } else {
-          await _supabase.from('semester_course_stats').insert(data);
-        }
+      if (upsertData.isNotEmpty) {
+        // Use upsert with onConflict for all fields. 
+        // This relies on (user_id, semester, course_code) being unique or having a constraint.
+        await _supabase.from('semester_course_stats').upsert(
+          upsertData,
+          onConflict: 'user_id, semester, course_code',
+        );
+        debugPrint("[Sync] Successfully synced ${upsertData.length} courses to stats table.");
       }
     } catch (e) {
       debugPrint("Error syncing to summary stats: $e");
+      // Fallback: If upsert fails (e.g. no constraint), try one-by-one with update/insert
+      for (var marks in marksList) {
+        try {
+          final existing = await _supabase.from('semester_course_stats')
+            .select()
+            .eq('user_id', _uid!)
+            .eq('semester', semester)
+            .eq('course_code', marks.courseCode)
+            .maybeSingle();
+
+          final data = {
+            'user_id': _uid!,
+            'semester': semester,
+            'course_code': marks.courseCode,
+            'marks_obtained': marks.totalObtained,
+            'last_updated': DateTime.now().toIso8601String(),
+          };
+
+          if (existing != null) {
+            await _supabase.from('semester_course_stats').update(data).eq('id', existing['id']);
+          } else {
+            await _supabase.from('semester_course_stats').insert(data);
+          }
+        } catch (innerE) {
+          debugPrint("Failed fallback sync for ${marks.courseCode}: $innerE");
+        }
+      }
     }
   }
 
@@ -233,14 +274,18 @@ class SemesterProgressRepository {
       return CourseMarks.fromMap(cachedCourse);
     }
 
-    if (_uid == null) return null;
+    if (_uid == null) {
+      return null;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
       final coursesRaw = summary['courses'] as Map?;
       final Map<String, dynamic> courses = coursesRaw != null ? Map<String, dynamic>.from(coursesRaw) : {};
 
-      if (!courses.containsKey(courseCode)) return null;
+      if (!courses.containsKey(courseCode)) {
+        return null;
+      }
 
       final data = Map<String, dynamic>.from(courses[courseCode]);
       data['courseCode'] = courseCode;
@@ -256,7 +301,9 @@ class SemesterProgressRepository {
     String courseCode, {
     String? courseName,
   }) async {
-    if (_uid == null) return;
+    if (_uid == null) {
+      return;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -285,7 +332,9 @@ class SemesterProgressRepository {
     MarkDistribution distribution, {
     String? courseName,
   }) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -293,7 +342,9 @@ class SemesterProgressRepository {
       final courseData = Map<String, dynamic>.from(courses[courseCode] ?? {});
 
       courseData['distribution'] = distribution.toMap();
-      if (courseName != null) courseData['courseName'] = courseName;
+      if (courseName != null) {
+        courseData['courseName'] = courseName;
+      }
 
       courses[courseCode] = courseData;
       summary['courses'] = courses;
@@ -311,7 +362,9 @@ class SemesterProgressRepository {
     String category,
     double value,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -337,7 +390,9 @@ class SemesterProgressRepository {
     String courseCode,
     double mark,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -364,7 +419,9 @@ class SemesterProgressRepository {
     String courseCode,
     double mark,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -393,7 +450,9 @@ class SemesterProgressRepository {
     required int quizN,
     required int shortQuizN,
   }) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -420,7 +479,9 @@ class SemesterProgressRepository {
     int index,
     double mark,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
       final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
@@ -450,7 +511,9 @@ class SemesterProgressRepository {
     int index,
     double mark,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
       final courses = Map<String, dynamic>.from(summary['courses'] ?? {});
@@ -480,7 +543,9 @@ class SemesterProgressRepository {
     String courseCode,
     int index,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};
@@ -510,7 +575,9 @@ class SemesterProgressRepository {
     String courseCode,
     int index,
   ) async {
-    if (_uid == null) return false;
+    if (_uid == null) {
+      return false;
+    }
 
     try {
       final summary = await fetchSemesterSummary(semesterCode) ?? {};

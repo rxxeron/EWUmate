@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,8 +20,10 @@ import 'dashboard_repository.dart';
 import 'dashboard_logic.dart';
 import '../../core/utils/date_utils.dart' as date_util;
 import '../../core/services/ramadan_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/services/schedule_service.dart';
 import '../../core/services/offline_cache_service.dart';
+import '../../core/services/connectivity_service.dart';
 import '../../core/services/sync_service.dart';
 import '../../core/utils/time_utils.dart';
 import 'hero_card.dart';
@@ -47,6 +50,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final TaskRepository _taskRepo = TaskRepository();
   final DashboardRepository _dashboardRepo = DashboardRepository();
   final CourseRepository _courseRepo = CourseRepository();
+  final ResultsRepository _resultsRepo = ResultsRepository();
+
+  static const String _timeTba = "Time TBA";
+  static const String _venueTba = "Venue TBA";
 
   User? get user => _supabase.auth.currentUser;
   String _semesterCode = "";
@@ -60,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _showAdvisingBanner = false;
   Map<String, dynamic>? _lastValidScheduleData;
   Object? _lastStreamError;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -68,6 +76,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _initDashboard(); // Background refresh
     SyncService().performFullSync(); // Proactive Sync
     _showDashboardTutorial();
+
+    // FAIL-SAFE: Ensure we stop loading after 5 seconds no matter what
+    Future.delayed(const Duration(seconds: 5), () {
+      if (mounted && _loadingInit) {
+        debugPrint("Dashboard: Fail-safe loader timeout triggered.");
+        setState(() => _loadingInit = false);
+      }
+    });
+
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   void _showDashboardTutorial() {
@@ -108,13 +136,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _initDashboard() async {
-    if (user == null) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      return;
+    }
     try {
       // Parallelize independent data fetching
       final results = await Future.wait<dynamic>([
-        _academicRepo.getActiveSemesterConfig(),
-        _taskRepo.fetchTasks(),
-        _courseRepo.fetchUserData(),
+        _academicRepo.getActiveSemesterConfig().timeout(const Duration(seconds: 4)),
+        _taskRepo.fetchTasks().timeout(const Duration(seconds: 4)),
+        _courseRepo.fetchUserData().timeout(const Duration(seconds: 4)),
       ]);
 
       final config = results[0] as Map<String, dynamic>;
@@ -128,7 +159,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       List<Course> enrolled = [];
       if (enrolledIds.isNotEmpty) {
         enrolled = await _courseRepo.fetchCoursesByIds(
-            code, enrolledIds);
+            code, enrolledIds).timeout(const Duration(seconds: 4));
       }
 
       final startDateStr = config['current_semester_start_date'];
@@ -147,10 +178,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           
           String classTime = (course.startTime != null && course.endTime != null && course.startTime!.isNotEmpty) 
               ? "${course.startTime} - ${course.endTime}" 
-              : "Time TBA";
+              : _timeTba;
           String classVenue = (course.room != null && course.room!.isNotEmpty) 
               ? course.room! 
-              : "Venue TBA";
+              : _venueTba;
 
           examSchedules.add({
             'course_code': course.code,
@@ -188,16 +219,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // (Other summary info could go here)
       });
 
-      // Background: Re-sync schedule (including holidays) so fresh calendar data is always current
-      if (enrolledIds.isNotEmpty) {
+      // Background: Re-sync schedule (including holidays) 
+      if (enrolledIds.isNotEmpty && await ConnectivityService().isOnline()) {
         ScheduleService().syncUserSchedule(code, enrolledIds);
       }
 
       // Check if advising banner should be shown (one-time per semester)
-      _checkAdvisingBanner(code, userData);
+      await _checkAdvisingBanner(_semesterCode, _semConfig ?? {});
     } catch (e) {
       debugPrint("Error initializing dashboard: $e");
-      if (mounted) setState(() => _loadingInit = false);
+      try {
+        if (mounted) {
+          setState(() => _loadingInit = false);
+        }
+      } catch (_) {}
     }
   }
 
@@ -257,23 +292,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
 
                 if (_lastValidScheduleData == null) {
+                  // If we don't have data yet, we wait up to 10 seconds (handled by initState timer)
+                  // If SNAPSHOT has error, show it
                   if (snapshot.hasError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.cloud_off, color: Colors.white24, size: 48),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Connection issue: ${snapshot.error}",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.redAccent, fontSize: 13),
-                          ),
-                          TextButton(onPressed: _initDashboard, child: const Text("Retry")),
-                        ],
-                      ),
-                    );
+                    return _buildErrorState("Sync Error: ${snapshot.error}");
                   }
+                  
                   return SingleChildScrollView(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -281,6 +305,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const LoadingShimmer(width: double.infinity, height: 180, margin: EdgeInsets.only(bottom: 16)),
                         const LoadingShimmer(width: double.infinity, height: 180, margin: EdgeInsets.only(bottom: 16)),
                         const LoadingShimmer(width: double.infinity, height: 120),
+                        const SizedBox(height: 20),
+                        const Text("Syncing your schedule...", style: TextStyle(color: Colors.white54, fontSize: 12)),
                       ],
                     ),
                   );
@@ -363,7 +389,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // 1. Gather all incomplete midTerm tasks
     final midExams = _tasks.where((t) => t.type == TaskType.midTerm && !t.isCompleted).toList();
     
-    if (midExams.isEmpty) return const SizedBox.shrink();
+    if (midExams.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     // 2. Sort by due date
     midExams.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -376,7 +404,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final windowStart = firstExamDate.subtract(const Duration(days: 3));
     
     // Condition: Now must be AFTER the window start, AND we still have incomplete exams in the list
-    if (now.isBefore(windowStart) || midExams.isEmpty) return const SizedBox.shrink();
+    if (now.isBefore(windowStart) || midExams.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -398,8 +428,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final inPast = now.isAfter(exam.dueDate) && !isToday;
           
           // --- EXTRACT VENUE AND TIME FROM SESSIONS ---
-          String classTime = "Time TBA";
-          String classVenue = "Venue TBA";
+          String classTime = _timeTba;
+          String classVenue = _venueTba;
           
           final courseNameMatch = exam.courseName.isNotEmpty ? exam.courseName : exam.courseCode;
           
@@ -410,13 +440,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
              // 1. Get the Day Character (S, M, T, W, R, F, A) for the exam date
              final dayName = DateFormat('EEEE').format(exam.dueDate).toLowerCase();
              String dayChar = '';
-             if (dayName == 'sunday') dayChar = 'S';
-             else if (dayName == 'monday') dayChar = 'M';
-             else if (dayName == 'tuesday') dayChar = 'T';
-             else if (dayName == 'wednesday') dayChar = 'W';
-             else if (dayName == 'thursday') dayChar = 'R';
-             else if (dayName == 'friday') dayChar = 'F';
-             else if (dayName == 'saturday') dayChar = 'A';
+             switch (dayName) {
+               case 'sunday':    dayChar = 'S'; break;
+               case 'monday':    dayChar = 'M'; break;
+               case 'tuesday':   dayChar = 'T'; break;
+               case 'wednesday': dayChar = 'W'; break;
+               case 'thursday':  dayChar = 'R'; break;
+               case 'friday':    dayChar = 'F'; break;
+               case 'saturday':  dayChar = 'A'; break;
+             }
              
              // 2. Find matching session for that day
              if (dayChar.isNotEmpty) {
@@ -437,18 +469,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
              }
              
              // 3. Fallback: if specific day not found, use any available lecture session info
-             if (classVenue == "Venue TBA") {
+             if (classVenue == _venueTba) {
                  for (var sess in course.sessions) {
                    final sessionType = (sess.type ?? '').toLowerCase();
                    if (sessionType.contains('lab') || sessionType.contains('tutorial')) continue;
                    
-                   if (sess.startTime != null && sess.endTime != null && classTime == "Time TBA") {
+                   if (sess.startTime != null && sess.endTime != null && classTime == _timeTba) {
                        classTime = "${sess.startTime} - ${sess.endTime}";
                    }
-                   if (sess.room != null && classVenue == "Venue TBA") {
+                   if (sess.room != null && classVenue == _venueTba) {
                        classVenue = sess.room!;
                    }
-                   if (classVenue != "Venue TBA" && classTime != "Time TBA") break;
+                   if (classVenue != _venueTba && classTime != _timeTba) break;
                  }
              }
           }
@@ -521,14 +553,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 25),
       ],
     );
   }
 
   Widget _buildExamTimelineSection() {
-    if (!_isFinalExamSeason() || _userExamSchedules.isEmpty) return const SizedBox.shrink();
+    if (!_isFinalExamSeason() || _userExamSchedules.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,7 +624,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                    exam['class_venue'] ?? "Venue TBA",
+                    exam['class_venue'] ?? _venueTba,
                     style: const TextStyle(
                       color: Colors.cyanAccent,
                       fontSize: 12,
@@ -598,7 +632,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   Text(
-                    exam['class_time'] ?? "Time TBA",
+                    exam['class_time'] ?? _timeTba,
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 11,
@@ -609,7 +643,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 25),
       ],
     );
@@ -618,11 +652,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Removed manual _buildAppBar as it's replaced by EWUmateAppBar
 
   Widget _buildTransitionBanner() {
-    if (_semConfig == null) return const SizedBox.shrink();
+    if (_semConfig == null) {
+      return const SizedBox.shrink();
+    }
 
     final startStr = _semConfig!['grade_submission_start'];
     final endStr = _semConfig!['grade_submission_deadline'];
-    if (startStr == null || endStr == null) return const SizedBox.shrink();
+    if (startStr == null || endStr == null) {
+      return const SizedBox.shrink();
+    }
 
     final now = DateTime.now();
     final start = DateTime.parse(startStr);
@@ -681,10 +719,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final dismissKey = 'advising_banner_dismissed_$semCode';
-      if (prefs.getBool(dismissKey) == true) return;
+      if (prefs.getBool(dismissKey) == true) {
+        return;
+      }
 
       final advisingDate = await _academicRepo.getOnlineAdvisingDate(semCode);
-      if (advisingDate == null) return;
+      if (advisingDate == null) {
+        return;
+      }
 
       final now = DateTime.now();
       if (now.isAfter(advisingDate)) {
@@ -705,7 +747,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildAdvisingBanner() {
-    if (!_showAdvisingBanner) return const SizedBox.shrink();
+    if (!_showAdvisingBanner) {
+      return const SizedBox.shrink();
+    }
 
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: 25),
@@ -754,7 +798,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _isMidExamSeason() {
     final midExams = _tasks.where((t) => t.type == TaskType.midTerm && !t.isCompleted).toList();
-    if (midExams.isEmpty) return false;
+    if (midExams.isEmpty) {
+      return false;
+    }
     
     midExams.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     final windowStart = midExams.first.dueDate.subtract(const Duration(days: 3));
@@ -762,7 +808,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   bool _isFinalExamSeason() {
-    if (_userExamSchedules.isEmpty || _lastClassDates.isEmpty) return false;
+    if (_userExamSchedules.isEmpty || _lastClassDates.isEmpty) {
+      return false;
+    }
     final earliestLastClass = _lastClassDates.values.reduce((a, b) => a.isBefore(b) ? a : b);
     return DateTime.now().isAfter(earliestLastClass);
   }
@@ -1005,57 +1053,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
 
   Widget _buildTasksSection() {
-    final upcomingTasks = _tasks.where((task) {
-      if (task.isCompleted) return false;
-      return date_util.DateUtils.isToday(task.dueDate) ||
-          date_util.DateUtils.isTomorrow(task.dueDate);
-    }).toList();
+    return StreamBuilder<List<Task>>(
+      stream: _taskRepo.getTasksStream(),
+      builder: (context, snapshot) {
+        final tasks = snapshot.data ?? _tasks;
+        
+        // Refactored logic to reduce cognitive complexity of this section
+        final allPending = tasks.where((task) => !task.isCompleted && !task.isMissed).toList();
+        final now = DateTime.now();
+        final overdue = allPending.where((t) => t.dueDate.isBefore(now)).toList();
+        final upcoming = allPending.where((t) => !t.dueDate.isBefore(now)).toList();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              "Upcoming Tasks",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            TextButton(
-              onPressed: widget.onSeeAllTasks ?? () => context.push('/tasks'),
-              child: const Text(
-                "See All",
-                style: TextStyle(color: Colors.cyanAccent),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        if (upcomingTasks.isEmpty)
-          const HeroCard(
-            iconInfo: Icons.task_alt,
-            title: "All Done!",
-            subtitle: "No pending tasks.",
-            color: Colors.blueAccent,
-            iconMode: true,
-          )
-        else
-          ...upcomingTasks.take(3).map(
-                (t) => TaskCard(
-                  task: t,
-                  onTap: () => _showTaskEditor(t),
-                  onStatusChange: (v) async {
-                    await _taskRepo.toggleTaskCompletion(t.id, v);
-                    _refreshTasks();
-                  },
-                  onDelete: () {}, // Optional
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Active Tasks",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-      ],
+                TextButton(
+                  onPressed: widget.onSeeAllTasks ?? () => context.push('/tasks'),
+                  child: const Text(
+                    "See All",
+                    style: TextStyle(color: Colors.cyanAccent),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (allPending.isEmpty)
+              const HeroCard(
+                iconInfo: Icons.task_alt,
+                title: "All Done!",
+                subtitle: "No pending tasks.",
+                color: Colors.blueAccent,
+                iconMode: true,
+              )
+            else ...[
+              if (overdue.isNotEmpty) ...[
+                 const Padding(
+                   padding: EdgeInsets.only(left: 4, bottom: 8),
+                   child: Text("Overdue", style: TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                 ),
+                 ...overdue.take(3).map((t) => _buildTaskCard(t)),
+                 const SizedBox(height: 10),
+              ],
+              if (upcoming.isNotEmpty) ...[
+                 if (overdue.isNotEmpty) const Padding(
+                   padding: EdgeInsets.only(left: 4, bottom: 8, top: 4),
+                   child: Text("Upcoming", style: TextStyle(color: Colors.cyanAccent, fontSize: 13, fontWeight: FontWeight.bold)),
+                 ),
+                 ...upcoming.take(overdue.isNotEmpty ? 2 : 3).map((t) => _buildTaskCard(t)),
+              ],
+            ],
+          ],
+        );
+      }
+    );
+  }
+
+  Widget _buildTaskCard(Task t) {
+    return TaskCard(
+      task: t,
+      onTap: () => _showTaskEditor(t),
+      onStatusChange: (comp, miss) async {
+        await _taskRepo.updateTaskStatus(t.id, isCompleted: comp, isMissed: miss);
+        _refreshTasks();
+      },
     );
   }
 
@@ -1074,5 +1145,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.sync_problem, color: Colors.amberAccent, size: 48),
+            const SizedBox(height: 16),
+            const Text(
+              "Sync Issue",
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white60, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _initDashboard,
+              icon: const Icon(Icons.refresh),
+              label: const Text("Retry Sync"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.cyanAccent.withValues(alpha: 0.2),
+                foregroundColor: Colors.cyanAccent,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

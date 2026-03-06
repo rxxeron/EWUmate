@@ -42,10 +42,16 @@ class CourseMarks {
     final sorted = List<double>.from(obtained.shortQuizzes)
       ..sort((a, b) => b.compareTo(a)); // Descending
 
+    double val = 0;
     if (quizStrategy == 'sum') {
-      return sorted.reduce((a, b) => a + b);
+      val = sorted.reduce((a, b) => a + b);
     } else if (quizStrategy == 'average') {
-      return sorted.reduce((a, b) => a + b) / sorted.length;
+      val = sorted.reduce((a, b) => a + b) / sorted.length;
+    } else if (quizStrategy == 'sumBestN') {
+      int n = shortQuizN;
+      if (n <= 0) n = 1;
+      if (n > sorted.length) n = sorted.length;
+      val = sorted.take(n).reduce((a, b) => a + b);
     } else {
       // 'bestN' strategy: Average of the best N
       int n = shortQuizN;
@@ -53,8 +59,12 @@ class CourseMarks {
       if (n > sorted.length) n = sorted.length;
 
       final bestN = sorted.take(n).toList();
-      return bestN.reduce((a, b) => a + b) / n; // Divide by N (averaged)
+      val = bestN.reduce((a, b) => a + b) / n; // Divide by n for average
     }
+
+    // Clamp to distribution if set
+    final maxDist = distribution.shortQuiz ?? 100.0;
+    return val > maxDist ? maxDist : val;
   }
 
   /// Calculates quiz mark based on strategy
@@ -64,10 +74,16 @@ class CourseMarks {
     final sorted = List<double>.from(obtained.quizzes)
       ..sort((a, b) => b.compareTo(a)); // Descending
 
+    double val = 0;
     if (quizStrategy == 'sum') {
-      return sorted.reduce((a, b) => a + b);
+      val = sorted.reduce((a, b) => a + b);
     } else if (quizStrategy == 'average') {
-      return sorted.reduce((a, b) => a + b) / sorted.length;
+      val = sorted.reduce((a, b) => a + b) / sorted.length;
+    } else if (quizStrategy == 'sumBestN') {
+      int n = quizN;
+      if (n <= 0) n = 1;
+      if (n > sorted.length) n = sorted.length;
+      val = sorted.take(n).reduce((a, b) => a + b);
     } else {
       // 'bestN' strategy: Average of the best N
       int n = quizN;
@@ -75,8 +91,12 @@ class CourseMarks {
       if (n > sorted.length) n = sorted.length;
 
       final bestN = sorted.take(n).toList();
-      return bestN.reduce((a, b) => a + b) / n; // Divide by N (averaged)
+      val = bestN.reduce((a, b) => a + b) / n; // Divide by n for average
     }
+
+    // Clamp to distribution if set
+    final maxDist = distribution.quiz ?? 100.0;
+    return val > maxDist ? maxDist : val;
   }
 
   /// Total possible marks (sum of distribution)
@@ -90,6 +110,25 @@ class CourseMarks {
         (distribution.viva ?? 0) +
         (distribution.lab ?? 0) +
         (distribution.attendance ?? 0);
+  }
+
+  /// Calculates the total possible marks for components that have been attempted/graded
+  double get totalPossibleSoFar {
+    double total = 0;
+    if (obtained.mid != null) total += distribution.mid ?? 0;
+    if (obtained.assignment != null) total += distribution.assignment ?? 0;
+    if (obtained.presentation != null) total += distribution.presentation ?? 0;
+    if (obtained.viva != null) total += distribution.viva ?? 0;
+    if (obtained.finalExam != null) total += distribution.finalExam ?? 0;
+    if (obtained.attendance != null) total += distribution.attendance ?? 0;
+    if (obtained.lab != null) total += distribution.lab ?? 0;
+    
+    // Quizzes are a bit different since they are lists. 
+    // We assume if the list is not empty, the component is "active"
+    if (obtained.quizzes.isNotEmpty) total += distribution.quiz ?? 0;
+    if (obtained.shortQuizzes.isNotEmpty) total += distribution.shortQuiz ?? 0;
+    
+    return total;
   }
 
   /// Calculates marks needed in Final to reach each grade (A+ to F)

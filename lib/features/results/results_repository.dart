@@ -34,7 +34,6 @@ class ResultsRepository {
   };
 
   Future<AcademicProfile> fetchAcademicProfile() async {
-    // 1. Return cached profile immediately
     final cachedData = OfflineCacheService().getCachedAcademicProfile();
     AcademicProfile? cachedProfile;
     if (cachedData != null) {
@@ -49,77 +48,16 @@ class ResultsRepository {
     await ensureMetadataLoaded();
 
     try {
-      final profileData =
-          await _supabase.from('profiles').select().eq('id', user.id).single();
-
-      final academicData = await _supabase
-          .from('academic_data')
-          .select()
-          .eq('user_id', user.id)
-          .maybeSingle();
+      final profileData = await _supabase.from('profiles').select().eq('id', user.id).single();
+      final academicData = await _supabase.from('academic_data').select().eq('user_id', user.id).maybeSingle();
 
       if (academicData != null) {
         final semesters = await _injectOngoingSemester(
           _parseCloudSemesters(academicData['semesters']),
           user.id,
         );
-
-        // Calculate counts from the fully merged list
-        int ongoing = 0;
-        int completed = 0;
-        for (var s in semesters) {
-          for (var c in s.courses) {
-            if (c.grade == 'Ongoing' || c.grade.isEmpty) {
-              ongoing++;
-            } else if (!['W', 'I', 'F', 'F*', 'S', 'U', 'R-'].contains(c.grade)) {
-              completed++;
-            }
-          }
-        }
         
-        final cgpa = _readDouble(academicData['cgpa']);
-        double totalCreditsEarned = _readDouble(academicData['total_credits_earned']);
-        double remainedCredits = _readDouble(academicData['remained_credits']);
-
-        // If Azure Function hasn't enriched data yet, calculate credits locally
-        if (totalCreditsEarned == 0 && semesters.isNotEmpty) {
-          for (var sem in semesters) {
-            for (var c in sem.courses) {
-              if (c.grade != 'Ongoing' && c.grade.isNotEmpty && 
-                  !['W', 'I', 'F', 'F*'].contains(c.grade)) {
-                totalCreditsEarned += c.credits;
-              }
-            }
-          }
-          // Auto-trigger Azure Function enrichment in background
-          try {
-            AzureFunctionsService().recalculateStats().ignore();
-          } catch (_) {}
-        }
-
-        final cloudOngoing = academicData['ongoing_courses'] as int? ?? 0;
-        final enrolledCount = (profileData['enrolled_sections'] as List?)?.length ?? 0;
-        
-        final profile = AcademicProfile(
-          semesters: semesters,
-          cgpa: cgpa,
-          ongoingCourses: enrolledCount > 0 ? enrolledCount : (ongoing > 0 ? ongoing : cloudOngoing),
-          totalCoursesCompleted: completed,
-          totalCreditsEarned: totalCreditsEarned,
-          studentName: (profileData['full_name'] ?? 'Student').toString(),
-          studentId: (profileData['student_id'] ?? 'N/A').toString(),
-          program: _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
-          department: (profileData['department'] ?? 'N/A').toString(),
-          nickname: (profileData['nickname'] ?? '').toString(),
-          photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '').toString(),
-          remainedCredits: remainedCredits,
-          scholarshipStatus: _calculateScholarship(
-            (profileData['student_id'] ?? 'N/A').toString(),
-            (profileData['program_id'] ?? 'N/A').toString(),
-            cgpa,
-            semesters,
-          ),
-        );
+        final profile = _mapToAcademicProfile(profileData, academicData, semesters);
 
         // 2. Cache the fresh profile
         final profileMap = profile.toMap();
@@ -133,6 +71,79 @@ class ResultsRepository {
     }
 
     return cachedProfile ?? AcademicProfile(semesters: [], cgpa: 0.0, totalCreditsEarned: 0.0);
+  }
+
+  AcademicProfile _mapToAcademicProfile(
+    Map<String, dynamic> profileData,
+    Map<String, dynamic> academicData,
+    List<SemesterResult> semesters,
+  ) {
+    int ongoing = 0;
+    int completed = 0;
+    for (var s in semesters) {
+      for (var c in s.courses) {
+        if (c.grade == 'Ongoing' || c.grade.isEmpty) {
+          ongoing++;
+        } else if (!['W', 'I', 'F', 'F*', 'S', 'U', 'R-'].contains(c.grade)) {
+          completed++;
+        }
+      }
+    }
+
+    final cgpa = _readDouble(academicData['cgpa']);
+    double totalCreditsEarned = _readDouble(academicData['total_credits_earned']);
+    final remainedCredits = _readDouble(academicData['remained_credits']);
+
+    if (totalCreditsEarned == 0 && semesters.isNotEmpty) {
+      totalCreditsEarned = _calculateTotalCreditsEarned(semesters);
+      try {
+        AzureFunctionsService().recalculateStats().ignore();
+      } catch (_) {}
+    }
+
+    final enrolledCount = (profileData['enrolled_sections'] as List?)?.length ?? 0;
+    final cloudOngoing = (academicData['ongoing_courses'] as num?)?.toInt() ?? 0;
+    int resolvedOngoing = cloudOngoing;
+    if (enrolledCount > 0) {
+      resolvedOngoing = enrolledCount;
+    } else if (ongoing > 0) {
+      resolvedOngoing = ongoing;
+    }
+
+    return AcademicProfile(
+      semesters: semesters,
+      cgpa: cgpa,
+      ongoingCourses: resolvedOngoing,
+      totalCoursesCompleted: completed,
+      totalCreditsEarned: totalCreditsEarned,
+      studentName: (profileData['full_name'] ?? 'Student').toString(),
+      studentId: (profileData['student_id'] ?? 'N/A').toString(),
+      programId: (profileData['program_id'] ?? '').toString().toLowerCase(),
+      program: _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
+      department: (profileData['department'] ?? 'N/A').toString(),
+      nickname: (profileData['nickname'] ?? '').toString(),
+      photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '').toString(),
+      remainedCredits: remainedCredits,
+      scholarshipStatus: _calculateScholarship(
+        (profileData['student_id'] ?? 'N/A').toString(),
+        (profileData['program_id'] ?? 'N/A').toString(),
+        cgpa,
+        semesters,
+      ),
+    );
+  }
+
+  double _calculateTotalCreditsEarned(List<SemesterResult> semesters) {
+    double total = 0;
+    for (var sem in semesters) {
+      for (var c in sem.courses) {
+        if (c.grade != 'Ongoing' && c.grade.isNotEmpty && 
+            !['W', 'I', 'F', 'F*'].contains(c.grade)) {
+          total += c.credits;
+        }
+      }
+    }
+    return total;
   }
 
   String _getProgramName(String id) {
@@ -347,17 +358,21 @@ class ResultsRepository {
       }
     }
 
+    final enrolledCount = (profileData['enrolled_sections'] as List?)?.length ?? 0;
+    final cloudOngoing = (academicData['ongoing_courses'] as num?)?.toInt() ?? 0;
+
     final cgpa = _readDouble(academicData['cgpa']);
-    final cloudOngoing = academicData['ongoing_courses'] as int? ?? 0;
-    final enrolledCount =
-        (profileData['enrolled_sections'] as List?)?.length ?? 0;
+    int resolvedOngoing = cloudOngoing;
+    if (enrolledCount > 0) {
+      resolvedOngoing = enrolledCount;
+    } else if (ongoing > 0) {
+      resolvedOngoing = ongoing;
+    }
 
     return AcademicProfile(
       semesters: semesters,
       cgpa: cgpa,
-      ongoingCourses: enrolledCount > 0
-          ? enrolledCount
-          : (ongoing > 0 ? ongoing : cloudOngoing),
+      ongoingCourses: resolvedOngoing,
       totalCoursesCompleted: completed,
       totalCreditsEarned: _readDouble(academicData['total_credits_earned']),
       studentName: (profileData['full_name'] ?? 'Student').toString(),
@@ -607,47 +622,86 @@ class ResultsRepository {
     return (term, year);
   }
 
-  String _calculateScholarship(String studentId, String programName,
-      double cgpa, List<SemesterResult> semesters) {
-    if (cgpa < 3.50) return "";
-    final (term, year) = _parseAdmissionFromId(studentId);
-    if (year == 0) return "";
-
-    // 1. Determine Threshold Era (New vs Old)
-    // The PDF explicitly states "Admitted in Spring 2026 and onward" for the new highest thresholds.
-    bool isNewCGPARules = year > 2026 || (year == 2026 && term >= 1);
+  String _calculateScholarship(String studentId, String programId, double cgpa, List<SemesterResult> semesters) {
+    if (cgpa < 3.50) {
+      return "";
+    }
     
-    // 2. Identify Potential Tier based on CGPA
-    String potential = "";
-    if (isNewCGPARules) {
-      if (cgpa >= 3.95) potential = "100% Merit Scholarship";
-      else if (cgpa >= 3.85) potential = "Dean’s List Scholarship";
-      else if (cgpa >= 3.75) potential = "Medha Lalon Scholarship";
-    } else {
-      if (cgpa >= 3.90) potential = "100% Merit Scholarship";
-      else if (cgpa >= 3.75) potential = "Dean’s List Scholarship";
-      else if (cgpa >= 3.50) potential = "Medha Lalon Scholarship";
+    final (term, year) = _parseAdmissionFromId(studentId);
+    if (year == 0) {
+      return "";
     }
 
-    if (potential.isEmpty) return "";
+    final potential = _getPotentialTier(cgpa, year, term);
+    if (potential.isEmpty) {
+      return "";
+    }
 
-    // 3. Calculate Completed Credits in Last One Year (Last 3 Semesters)
+    final double lastYearCredits = _calculateLastYearCredits(semesters);
+    final double requiredCredits = _getRequiredCredits(programId, year, term);
+    
+    return lastYearCredits >= requiredCredits ? potential : "";
+  }
+
+  String _getPotentialTier(double cgpa, int admitYear, int admitTerm) {
+    // PDF states "Admitted in Spring 2026 and onward" for new thresholds.
+    final bool isNewRules = admitYear > 2026 || (admitYear == 2026 && admitTerm >= 1);
+    
+    if (isNewRules) {
+      if (cgpa >= 3.95) return "100% Merit Scholarship";
+      if (cgpa >= 3.85) return "Dean’s List Scholarship";
+      if (cgpa >= 3.75) return "Medha Lalon Scholarship";
+    } else {
+      if (cgpa >= 3.90) return "100% Merit Scholarship";
+      if (cgpa >= 3.75) return "Dean’s List Scholarship";
+      if (cgpa >= 3.50) return "Medha Lalon Scholarship";
+    }
+    return "";
+  }
+
+  double _calculateLastYearCredits(List<SemesterResult> semesters) {
+    // "Last one year" means the last 3 consecutive completed semesters
     final completed = semesters
-        .where((s) => s.courses.any(
-            (c) => c.grade != 'Ongoing' && c.grade != 'I' && c.grade != 'W'))
+        .where((s) => s.courses.any((c) => c.grade != 'Ongoing' && c.grade != 'I' && c.grade != 'W'))
         .toList();
     completed.sort((a, b) => _compareSemesterName(b.semesterName, a.semesterName));
 
-    double lastYearCredits = 0;
-    // According to East West University, "last one year" means the last 3 consecutive completed semesters
+    double credits = 0;
     for (var i = 0; i < completed.length && i < 3; i++) {
-      lastYearCredits += completed[i].totalCredits;
+      credits += completed[i].totalCredits;
+    }
+    return credits;
+  }
+
+  double _getRequiredCredits(String program, int year, int term) {
+    final p = program.toUpperCase();
+    
+    bool isUpto(int targetYear, int targetTerm) {
+      if (year < targetYear) return true;
+      if (year == targetYear && term <= targetTerm) return true;
+      return false;
     }
 
-    // 4. Validate against Required Credits based on Department & Admission Year
-    final requiredCredits = _getRequiredCredits(programName, year, term);
+    if (p.contains('CSE') || p.contains('ICE') || p.contains('EEE')) return 35.0;
+    if (p.contains('PHARM')) return 39.0;
+    if (p.contains('MATHEMATICS') || p.contains('DSA')) return 33.0;
+    if (p.contains('INFORMATION STUDIES') || p.contains('ISLM')) return 30.0;
     
-    return lastYearCredits >= requiredCredits ? potential : "";
+    if (p.contains('ECONOMICS') || p.contains('ENGLISH') || p.contains('PPHS')) {
+      return isUpto(2024, 1) ? 30.0 : 33.0;
+    }
+    if (p.contains('LL.B') || p.contains('LAW')) return 33.0;
+    if (p.contains('CE') || p.contains('CIVIL')) {
+      return isUpto(2024, 1) ? 37.0 : 35.0;
+    }
+    if (p.contains('BBA') || p.contains('BUSINESS') || p.contains('SOC')) {
+      return isUpto(2024, 3) ? 30.0 : 33.0;
+    }
+    if (p.contains('GEB') || p.contains('GENETIC')) {
+      return isUpto(2025, 3) ? 33.0 : 35.0;
+    }
+
+    return 30.0;
   }
 
   (int, int) _parseAdmissionFromId(String id) {
@@ -656,48 +710,5 @@ class ResultsRepository {
       return (int.tryParse(parts[1]) ?? 0, int.tryParse(parts[0]) ?? 0);
     }
     return (0, 0);
-  }
-
-  double _getRequiredCredits(String program, int year, int term) {
-    final p = program.toUpperCase();
-    
-    // Helper to evaluate "upto [Semester] [Year]"
-    bool isUpto(int targetYear, int targetTerm) {
-      if (year < targetYear) return true;
-      if (year == targetYear && term <= targetTerm) return true;
-      return false;
-    }
-    // Terms: 1 = Spring, 2 = Summer, 3 = Fall
-
-    if (p.contains('CSE') || p.contains('ICE') || p.contains('EEE')) {
-      return isUpto(2025, 3) ? 35.0 : 35.0; // Both eras require 35
-    }
-    if (p.contains('PHARM')) {
-      return 39.0;
-    }
-    if (p.contains('MATHEMATICS') || p.contains('DSA')) {
-      return 33.0;
-    }
-    if (p.contains('INFORMATION STUDIES') || p.contains('ISLM')) {
-      return 30.0;
-    }
-    if (p.contains('ECONOMICS') || p.contains('ENGLISH') || p.contains('PPHS')) {
-      return isUpto(2024, 1) ? 30.0 : 33.0; // Admitted from Fall 2024 (term 3), required: 33
-    }
-    if (p.contains('LL.B') || p.contains('LAW')) {
-      return 33.0;
-    }
-    if (p.contains('CE') || p.contains('CIVIL')) {
-      return isUpto(2024, 1) ? 37.0 : 35.0;
-    }
-    if (p.contains('BBA') || p.contains('BUSINESS') || p.contains('SOC')) {
-      return isUpto(2024, 3) ? 30.0 : 33.0;
-    }
-    if (p.contains('GEB') || p.contains('GENETIC')) {
-      return isUpto(2025, 3) ? 33.0 : 35.0; // Admitted from Spring 2026 (term 1)
-    }
-
-    // Fallback based on historical defaults
-    return 30.0;
   }
 }

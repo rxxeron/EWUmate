@@ -1,0 +1,60 @@
+name: Security Scanning
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.0'
+
+      - name: Build APK (obfuscated)
+        run: |
+          flutter build apk --obfuscate --split-debug-info=./debug-info
+
+      - name: Run MobSF Scan
+        uses: opszero/mobsf-action@v1
+        with:
+          apk_path: build/app/outputs/flutter-apk/app-release.apk
+          output_dir: mobsf-report
+
+      - name: Upload MobSF Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobsf-report
+          path: mobsf-report
+
+      - name: AppSweep Upload
+        env:
+          APPSWEEP_API_TOKEN: ${{ secrets.APPSWEEP_API_TOKEN }}
+        run: |
+          curl -X POST -F "file=@build/app/outputs/flutter-apk/app-release.apk" -H "Authorization: Bearer $APPSWEEP_API_TOKEN" https://api.app-sweep.com/upload
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=EWUmate
+            -Dsonar.sources=lib
+            -Dsonar.language=dart
+            -Dsonar.exclusions=**/generated/**
+
+      - name: testRigor Security Tests
+        env:
+          TESTRIGOR_API_KEY: ${{ secrets.TESTRIGOR_API_KEY }}
+        run: |
+          curl -X POST -H "Authorization: Bearer $TESTRIGOR_API_KEY" https://api.testrigor.com/v1/run-tests -d '{"project":"EWUmate","suite":"security"}'

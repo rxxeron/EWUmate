@@ -103,6 +103,7 @@ class AcademicProfile {
   // Metadata
   final String studentName;
   final String studentId;
+  final String programId; // short code: 'cse', 'bba', etc.
   final String program;
   final String department;
   final String nickname;
@@ -114,6 +115,7 @@ class AcademicProfile {
     required this.totalCreditsEarned,
     this.studentName = "",
     this.studentId = "",
+    this.programId = "",
     this.program = "",
     this.department = "",
     this.nickname = "",

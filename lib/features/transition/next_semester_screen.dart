@@ -13,6 +13,7 @@ import '../calendar/academic_repository.dart';
 import '../advising/advising_repository.dart';
 import '../results/results_repository.dart';
 import '../../core/models/course_model.dart';
+import '../../core/router/app_router.dart';
 
 class NextSemesterScreen extends StatefulWidget {
   const NextSemesterScreen({super.key});
@@ -34,6 +35,8 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
   bool _isLockedByDate = false;
   bool _debugBypass = false;
   String _nextSemCode = '';
+  DateTime? _advisingDate;
+  bool _isAdvisingLockedByDate = false;
 
   // Step 1 Data (Grades)
   List<Map<String, dynamic>> _currentCourses = []; // {code, name, grade}
@@ -71,7 +74,9 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
 
   Future<void> _initData() async {
     final user = _supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      return;
+    }
 
     try {
       final config = await _academicRepo.getActiveSemesterConfig();
@@ -81,6 +86,13 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
       // Load universal grade scale and metadata
       await _resultsRepo.fetchAcademicProfile(); // Trigger metadata load
   
+      _advisingDate = await _academicRepo.getOnlineAdvisingDate(_currentSemCode);
+      if (_advisingDate != null) {
+        if (DateTime.now().isBefore(_advisingDate!)) {
+          _isAdvisingLockedByDate = true;
+        }
+      }
+
       final window = await _academicRepo.getGradeSubmissionWindow();
       _gradeSubmissionDate = window['start'];
       
@@ -169,7 +181,9 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
           } catch (_) {}
           return false;
         }).toList();
-        if (available.isNotEmpty) _availableCourses[code] = available;
+        if (available.isNotEmpty) {
+          _availableCourses[code] = available;
+        }
       });
       _filteredAvailableCodes = _availableCourses.keys.toList()..sort();
       debugPrint("[NextSemester] Loaded ${_availableCourses.length} available courses");
@@ -181,7 +195,9 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
 
   Future<void> _submitGrades() async {
     final user = _supabase.auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      return;
+    }
 
     setState(() => _loading = true);
 
@@ -268,7 +284,7 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
       }
 
       if (mounted) {
-        context.go('/dashboard');
+        context.go(AppRouter.dashboardPath);
       }
     } catch (e) {
       debugPrint("Error saving grades: $e");
@@ -324,7 +340,9 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
                       child: FadeInSlide(
                         key: ValueKey(_currentStep),
                         child: _currentStep == 1
-                            ? _buildStep2Enrollment()
+                            ? (_isAdvisingLockedByDate && !_debugBypass
+                                ? _buildAdvisingLockedScreen()
+                                : _buildStep2Enrollment())
                             : (_isLockedByDate && !_debugBypass
                                 ? _buildLockedByDate()
                                 : _buildStep1FinalizeGrades()),
@@ -419,7 +437,68 @@ class _NextSemesterScreenState extends State<NextSemesterScreen> {
               ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () => context.go('/dashboard'),
+              onPressed: () => context.go(AppRouter.dashboardPath),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.white10),
+              child: const Text("Return to Dashboard",
+                  style: TextStyle(color: Colors.white)),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdvisingLockedScreen() {
+    return Center(
+      child: GlassContainer(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onLongPress: () {
+                setState(() => _debugBypass = true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Developer Bypass Activated")),
+                );
+              },
+              child: const Icon(Icons.school_outlined,
+                  size: 64, color: Colors.orangeAccent),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Advising Locked",
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "The Next Semester planner will unlock when the advising period officially begins.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 20),
+            if (_advisingDate != null)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text(
+                  "Opens on: ${DateFormat('dd MMMM yyyy').format(_advisingDate!)}",
+                  style: const TextStyle(
+                      color: Colors.orangeAccent,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () => context.go(AppRouter.dashboardPath),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.white10),
               child: const Text("Return to Dashboard",

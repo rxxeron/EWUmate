@@ -20,6 +20,7 @@ class AzureFunctionsService {
   factory AzureFunctionsService() => _instance;
 
   String? get _currentUserId => Supabase.instance.client.auth.currentUser?.id;
+  static const String _notLoggedIn = 'Not logged in';
 
   Future<Map<String, dynamic>> _post(
       String action, Map<String, dynamic> body) async {
@@ -64,7 +65,9 @@ class AzureFunctionsService {
   /// Call this after onboarding or whenever course history is updated.
   Future<Map<String, dynamic>> recalculateStats() async {
     final uid = _currentUserId;
-    if (uid == null) throw Exception('Not logged in');
+    if (uid == null) {
+      throw Exception(_notLoggedIn);
+    }
 
     return _post('recalculate_stats', {'user_id': uid});
   }
@@ -73,7 +76,9 @@ class AzureFunctionsService {
   /// Call this when a student updates their quiz/exam marks.
   Future<Map<String, dynamic>> updateProgress(String semesterCode) async {
     final uid = _currentUserId;
-    if (uid == null) throw Exception('Not logged in');
+    if (uid == null) {
+      throw Exception(_notLoggedIn);
+    }
 
     return _post('update_progress', {
       'user_id': uid,
@@ -89,7 +94,9 @@ class AzureFunctionsService {
     Map<String, dynamic>? filters,
   }) async {
     final uid = _currentUserId;
-    if (uid == null) throw Exception('Not logged in');
+    if (uid == null) {
+      throw Exception(_notLoggedIn);
+    }
 
     return _post('generate_schedules', {
       'user_id': uid,

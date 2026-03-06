@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
 import '../../features/semester_progress/semester_progress_screen.dart';
+import '../router/app_router.dart';
 // import 'dart:ui';
 import 'glass_kit.dart';
 import 'app_drawer.dart';
@@ -61,29 +62,29 @@ class MainShell extends StatelessWidget {
   }
 
   int _getSelectedIndex(String location) {
-    if (location == '/dashboard') return 0;
-    if (location == '/tasks') return 1;
-    if (location == '/semester-progress') return 2;
+    if (location == AppRouter.dashboardPath) return 0;
+    if (location == AppRouter.tasksPath) return 1;
+    if (location == AppRouter.semesterProgressPath) return 2;
     return 0; // Default or fallback
   }
 
   bool _shouldShowBottomNav(String location) {
     // Only show bottom nav on main tabs
-    return location == '/dashboard' ||
-        location == '/tasks' ||
-        location == '/semester-progress';
+    return location == AppRouter.dashboardPath ||
+        location == AppRouter.tasksPath ||
+        location == AppRouter.semesterProgressPath;
   }
 
   void _onItemTapped(BuildContext context, int index) {
     switch (index) {
       case 0:
-        context.go('/dashboard');
+        context.go(AppRouter.dashboardPath);
         break;
       case 1:
-        context.go('/tasks');
+        context.go(AppRouter.tasksPath);
         break;
       case 2:
-        context.go('/semester-progress');
+        context.go(AppRouter.semesterProgressPath);
         break;
     }
   }

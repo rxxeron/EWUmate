@@ -5,6 +5,8 @@ import '../../core/models/task_model.dart';
 import '../../features/results/results_repository.dart';
 import '../../core/models/result_models.dart';
 import '../../core/models/course_model.dart';
+import '../../core/models/scholarship_rule_model.dart';
+import '../../core/models/semester_progress_models.dart';
 import '../../core/utils/course_utils.dart';
 
 
@@ -13,7 +15,9 @@ class CourseSummary {
   final String title;
   final String section;
   final double credits;
-  final double marksObtained;
+  final double marksObtained;     // Raw marks earned so far
+  final double totalPossible;     // Graded weight so far (e.g. 30.0 out of 100)
+  final double projectedMarks;    // (marksObtained / totalPossibleSoFar) × 100 — best estimate of final %
   final String? gradeGoal;
   final List<Task> upcomingTasks;
   final Map<String, dynamic>? midExam;
@@ -26,11 +30,32 @@ class CourseSummary {
     required this.section,
     this.credits = 3.0,
     this.marksObtained = 0.0,
+    this.totalPossible = 100.0,
+    double? projectedMarks,  // If null, computed from marksObtained/totalPossible
     this.gradeGoal,
     this.upcomingTasks = const [],
     this.midExam,
     this.finalExam,
     this.targetFinalScore = 0.0,
+  }) : projectedMarks = projectedMarks ??
+         (totalPossible > 0 && totalPossible < 100
+             ? (marksObtained / totalPossible) * 100
+             : marksObtained);
+}
+
+class TierRequirement {
+  final String name;
+  final double threshold;
+  final double? requiredSGPA;
+  final bool isAchieved;
+  final bool isImpossible;
+
+  TierRequirement({
+    required this.name,
+    required this.threshold,
+    this.requiredSGPA,
+    this.isAchieved = false,
+    this.isImpossible = false,
   });
 }
 
@@ -42,21 +67,109 @@ class ScholarshipProjection {
   final String nextTier;
   final double distanceToNext;
   final double? requiredSGPA;
+  
+  // New Fields for Annual Strategy
+  final double projectedYearlyGPA;
+  final double liveYearlyGPA;  // Based on actual marks so far
+  final double liveCGPA;       // Cumulative: past + live this sem
+  final double goalCGPA;       // Cumulative: past + goal this sem (if all goals hit)
+  final int cycleSemestersCount; // 1, 2, or 3
+  final String cycleName; // e.g. "Year 1" or "Summer 25 - Spring 26"
+  final List<TierRequirement> tierRequirements;
+
+  // Credit Tracking for Scholarship
+  final double cycleCreditsGoal; // Usually 30-35
+  final double cycleCreditsCompleted; // Past completed semesters only
+  final double cycleCreditsThisSemester; // Credits enrolled this semester (in progress)
+  final double cycleCreditsRemaining; // Still left after this semester
 
   ScholarshipProjection({
     required this.currentCGPA,
     required this.projectedCGPA,
     required this.projectedSGPA,
+    this.projectedYearlyGPA = 0.0,
+    this.liveYearlyGPA = 0.0,
+    this.liveCGPA = 0.0,
+    this.goalCGPA = 0.0,
     this.currentTier = "",
     this.nextTier = "",
     this.distanceToNext = 0.0,
     this.requiredSGPA,
+    this.cycleSemestersCount = 1,
+    this.cycleName = "",
+    this.tierRequirements = const [],
+    this.cycleCreditsGoal = 30.0,
+    this.cycleCreditsCompleted = 0.0,
+    this.cycleCreditsThisSemester = 0.0,
+    this.cycleCreditsRemaining = 30.0,
   });
 }
 
 class SemesterRepository {
   final _supabase = Supabase.instance.client;
   final _resultsRepo = ResultsRepository();
+
+  // In-memory cache: program -> rule (avoids re-fetching every build)
+  static final Map<String, ScholarshipRule> _ruleCache = {};
+
+  /// Fetch the scholarship rule for a given [program] and [admitSemester].
+  /// Returns a matching rule from Supabase, or a fallback default.
+  Future<ScholarshipRule> fetchScholarshipRule(String programId, String admitSemester) async {
+    final cacheKey = '$programId|$admitSemester';
+    if (_ruleCache.containsKey(cacheKey)) return _ruleCache[cacheKey]!;
+
+    try {
+      final rows = await _supabase
+          .from('scholarship_rules')
+          .select()
+          .eq('program_id', programId.toLowerCase())
+          .eq('level', 'undergraduate');
+
+      if (rows.isEmpty) return _defaultRule(programId);
+
+      final (admitTerm, admitYear) = _parseSemesterName(admitSemester);
+      final admitKeyVal = _semesterSortKey(admitTerm, admitYear);
+
+      // Find the best matching row for the student's admit semester
+      ScholarshipRule? best;
+      for (final row in rows) {
+        final rule = ScholarshipRule.fromMap(row);
+
+        if (rule.admittedFrom != null) {
+          final (ft, fy) = _parseSemesterName(rule.admittedFrom!);
+          if (admitKeyVal < _semesterSortKey(ft, fy)) continue;
+        }
+
+        if (rule.admittedUpto != null) {
+          final (tt, ty) = _parseSemesterName(rule.admittedUpto!);
+          if (admitKeyVal > _semesterSortKey(tt, ty)) continue;
+        }
+
+        best = rule;
+      }
+
+      final result = best ?? _defaultRule(programId);
+      _ruleCache[cacheKey] = result;
+      debugPrint('[ScholarshipRule] $programId / $admitSemester -> annualCredits: ${result.annualCreditsRequired}');
+      return result;
+    } catch (e) {
+      debugPrint('[ScholarshipRule] Error fetching rule: $e');
+      return _defaultRule(programId);
+    }
+  }
+
+  ScholarshipRule _defaultRule(String program) {
+    // Fallback: engineering programs need 35, everyone else 30
+    final isEng = program.contains('CSE') || program.contains('ICE') ||
+        program.contains('EEE') || program.contains('GEB') ||
+        program.contains('Civil') || program.contains('Pharmacy');
+    return ScholarshipRule(
+      id: 0,
+      program: program,
+      annualCreditsRequired: isEng ? 35 : 30,
+      degreeCreditsRequired: isEng ? 140 : 130,
+    );
+  }
 
   Future<AcademicProfile> fetchAcademicProfile() => _resultsRepo.fetchAcademicProfile();
 
@@ -164,6 +277,35 @@ class SemesterRepository {
         s['course_code'] as String: s
     };
 
+    // 5a. Fetch CourseMarks (mark distribution) from semester_progress
+    //     Used for accurate live mark projection: totalObtained / totalPossibleSoFar × 100
+    Map<String, CourseMarks> courseMarksMap = {};
+    try {
+      final progressData = await _supabase
+          .from('semester_progress')
+          .select('summary')
+          .eq('user_id', user.id)
+          .eq('semester_code', semesterCode)
+          .maybeSingle();
+
+      if (progressData != null) {
+        final summaryRaw = progressData['summary'] as Map?;
+        final summary = summaryRaw != null ? Map<String, dynamic>.from(summaryRaw) : {};
+        final coursesRaw = summary['courses'] as Map?;
+        if (coursesRaw != null) {
+          final courses = Map<String, dynamic>.from(coursesRaw);
+          for (var entry in courses.entries) {
+            final val = Map<String, dynamic>.from(entry.value);
+            val['courseCode'] = entry.key;
+            final cm = CourseMarks.fromMap(val);
+            courseMarksMap[cm.courseCode] = cm;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[SemesterRepo] Could not fetch mark distribution: $e');
+    }
+
     // 5. Fetch Final Exams (Check cache first)
     final profileData = await _supabase.from('profiles').select('exam_dates_cache').eq('id', user.id).single();
     final examCache = Map<String, dynamic>.from(profileData['exam_dates_cache'] ?? {});
@@ -219,7 +361,20 @@ class SemesterRepository {
 
       final stat = statsMap[code];
       final marks = (stat?['marks_obtained'] ?? 0.0).toDouble();
+      final totalPoss = (stat?['total_possible'] ?? 0.0).toDouble();
       final goal = stat?['grade_goal'] as String?;
+
+      // Projected marks using mark distribution (if available in courseMarksMap)
+      // courseMarksMap is fetched below — totalObtained / totalPossibleSoFar × 100
+      double? projectedMarksValue;
+      final courseMarksEntry = courseMarksMap[code];
+      if (courseMarksEntry != null) {
+        final possibleSoFar = courseMarksEntry.totalPossibleSoFar;
+        final obtained = courseMarksEntry.totalObtained;
+        if (possibleSoFar > 0) {
+          projectedMarksValue = (obtained / possibleSoFar) * 100.0;
+        }
+      }
 
       summaries.add(CourseSummary(
         code: code,
@@ -227,6 +382,8 @@ class SemesterRepository {
         section: section,
         credits: credits,
         marksObtained: marks,
+        totalPossible: totalPoss > 0 ? totalPoss : 100.0,
+        projectedMarks: projectedMarksValue, // null = auto-computed from marks/totalPossible
         gradeGoal: goal,
         upcomingTasks: courseTasks,
         midExam: midTask != null ? {'title': midTask.title, 'date': midTask.dueDate.toIso8601String()} : null,
@@ -244,109 +401,285 @@ class SemesterRepository {
     final codes = <String>[];
     for (var day in days) {
       final d = day.toLowerCase().trim();
-      if (d == 'sunday' || d == 's') codes.add('S');
-      else if (d == 'monday' || d == 'm') codes.add('M');
-      else if (d == 'tuesday' || d == 't') codes.add('T');
-      else if (d == 'wednesday' || d == 'w') codes.add('W');
-      else if (d == 'thursday' || d == 'r') codes.add('R');
-      else if (d == 'friday' || d == 'f') codes.add('F');
-      else if (d == 'saturday' || d == 'a') codes.add('A');
+      if (d == 'sunday' || d == 's') {
+        codes.add('S');
+      } else if (d == 'monday' || d == 'm') {
+        codes.add('M');
+      } else if (d == 'tuesday' || d == 't') {
+        codes.add('T');
+      } else if (d == 'wednesday' || d == 'w') {
+        codes.add('W');
+      } else if (d == 'thursday' || d == 'r') {
+        codes.add('R');
+      } else if (d == 'friday' || d == 'f') {
+        codes.add('F');
+      } else if (d == 'saturday' || d == 'a') {
+        codes.add('A');
+      }
     }
     final order = {'S': 0, 'M': 1, 'T': 2, 'W': 3, 'R': 4, 'F': 5, 'A': 6};
     codes.sort((a, b) => (order[a] ?? 99).compareTo(order[b] ?? 99));
     return codes.join('');
   }
 
-  ScholarshipProjection getScholarshipProjection(AcademicProfile profile, List<CourseSummary> summaries) {
-    if (summaries.isEmpty) return ScholarshipProjection(currentCGPA: profile.cgpa, projectedCGPA: profile.cgpa, projectedSGPA: 0.0);
+  // --- Helpers for semester ordering ---
 
-    double currentTotalPoints = profile.cgpa * profile.totalCreditsEarned;
-    double projectedSemPoints = 0.0;
-    double projectedSemCredits = 0.0;
+  /// EWU term order in an academic year: Summer (2) → Fall (3) → Spring (1)
+  static const List<int> _termOrder = [2, 3, 1]; // Summer, Fall, Spring
 
+  /// Converts a term integer (1/2/3) to its position in EWU annual cycle
+  static int _termPosition(int term) => _termOrder.indexOf(term);
+
+  /// Parse semester name like "Summer 2025" or "Fall 2025" → (term, year)
+  /// Term: 1=Spring, 2=Summer, 3=Fall
+  static (int term, int year) _parseSemesterName(String name) {
+    final lower = name.toLowerCase();
+    int term = 2; // default summer
+    if (lower.contains('spring')) {
+      term = 1;
+    } else if (lower.contains('fall')) {
+      term = 3;
+    }
+    final yearMatch = RegExp(r'\d{4}').firstMatch(name);
+    final year = yearMatch != null ? int.parse(yearMatch.group(0)!) : 2024;
+    return (term, year);
+  }
+
+  /// Returns a comparable integer for sorting semesters chronologically.
+  /// Higher = later semester.
+  static int _semesterSortKey(int term, int year) {
+    // Summer=0, Fall=1, Spring=2 within the same academic year (Summer-Fall-Spring)
+    // But Spring belongs to next calendar year from Summer/Fall perspective
+    // So: Sum 2025=0, Fall 2025=1, Spring 2026=2, Sum 2026=3, Fall 2026=4, Spring 2027=5 ...
+    final pos = _termPosition(term);
+    // Spring (term=1) is in "cycle year" of previous Summer's year
+    final adjustedYear = term == 1 ? year - 1 : year;
+    return adjustedYear * 3 + pos;
+  }
+
+  ScholarshipProjection getScholarshipProjection(
+    AcademicProfile profile, 
+    List<CourseSummary> summaries, {
+    ScholarshipRule? rule,
+  }) {
+    if (profile.semesters.isEmpty && summaries.isEmpty) {
+      return ScholarshipProjection(currentCGPA: profile.cgpa, projectedCGPA: profile.cgpa, projectedSGPA: 0.0);
+    }
+
+    // 1. Parse admitted semester from studentId (format: YYYY-T-XX-XXX)
+    final idParts = profile.studentId.split('-');
+    int admitYear = idParts.length >= 1 ? (int.tryParse(idParts[0]) ?? 2024) : 2024;
+    int admitTerm = idParts.length >= 2 ? (int.tryParse(idParts[1]) ?? 2) : 2; // 1=Spring, 2=Summer, 3=Fall
+    final admitKey = _semesterSortKey(admitTerm, admitYear);
+
+    // 2. Filter completed semesters (no "Ongoing" semesters)
+    final pastCompleted = profile.semesters
+        .where((s) => !s.semesterName.toLowerCase().contains('ongoing') && s.totalCredits > 0)
+        .toList();
+
+    // 3. Sort completed semesters chronologically
+    pastCompleted.sort((a, b) {
+      final (aTerm, aYear) = _parseSemesterName(a.semesterName);
+      final (bTerm, bYear) = _parseSemesterName(b.semesterName);
+      return _semesterSortKey(aTerm, aYear).compareTo(_semesterSortKey(bTerm, bYear));
+    });
+
+    // 4. Determine how many semesters have passed since ADMISSION (not since app start)
+    //    Count only semesters >= admitKey
+    final semsSinceAdmit = pastCompleted
+        .where((s) {
+          final (t, y) = _parseSemesterName(s.semesterName);
+          return _semesterSortKey(t, y) >= admitKey;
+        })
+        .toList();
+
+    final int pastSemsCount = semsSinceAdmit.length;
+    final int currentCycleIndex = pastSemsCount ~/ 3;
+    final int semInCycle = (pastSemsCount % 3) + 1; // 1, 2, or 3
+    final int remainingInCycle = 3 - semInCycle;
+
+    // 5. Cycle's completed semesters
+    final cycleStartIdx = currentCycleIndex * 3;
+    final List<SemesterResult> completedInCycle = [];
+    for (int i = cycleStartIdx; i < semsSinceAdmit.length; i++) {
+        completedInCycle.add(semsSinceAdmit[i]);
+    }
+
+    // Compute cycle year and term positions
+    // Removed unused cycleTermStart and simplified logic
+    final int cycleYearOffset = currentCycleIndex; 
+
+    // Simple label: Year N (K/3)
+    final cycleName = "Year ${currentCycleIndex + 1} ($semInCycle/3)";
+
+    // 6. Calculate Earned in this Cycle (Past terms)
+    double cyclePoints = 0.0;
+    double cycleCredits = 0.0;
+    for (var sem in completedInCycle) {
+      cyclePoints += sem.termGPA * sem.totalCredits;
+      cycleCredits += sem.totalCredits;
+    }
+
+    // 7. Current Semester Projection (Target vs Live)
+    double targetCurrentPoints = 0.0; 
+    double liveCurrentPoints = 0.0;
+    double currentCredits = 0.0;
+    
     for (var s in summaries) {
-      final gp = _gradeToPoint(s.gradeGoal ?? "B"); // Default to B if no goal
-      projectedSemPoints += gp * s.credits;
-      projectedSemCredits += s.credits;
+      final targetGp = _gradeToPoint(s.gradeGoal ?? 'B');
+      targetCurrentPoints += targetGp * s.credits;
+
+      // Normalize using projectedMarks (totalObtained/totalPossibleSoFar × 100)
+      // projectedMarks is already computed in CourseSummary constructor
+      final liveGp = _marksToPoint(s.projectedMarks);
+      liveCurrentPoints += liveGp * s.credits;
+      currentCredits += s.credits;
     }
 
-    double projectedSGPA = projectedSemCredits > 0 ? projectedSemPoints / projectedSemCredits : 0.0;
-    double projectedCGPA = (profile.totalCreditsEarned + projectedSemCredits) > 0 
-        ? (currentTotalPoints + projectedSemPoints) / (profile.totalCreditsEarned + projectedSemCredits) 
-        : profile.cgpa;
-    
-    // Determine Threshold Era based on Student ID
-    final parts = profile.studentId.split('-');
-    int term = 0;
-    int year = 0;
-    if (parts.length >= 2) {
-      term = int.tryParse(parts[1]) ?? 0;
-      year = int.tryParse(parts[0]) ?? 0;
+    // 8. Historical before this cycle
+    double historyPoints = 0.0;
+    double historyCredits = 0.0;
+    for (int i = 0; i < cycleStartIdx; i++) {
+      historyPoints += semsSinceAdmit[i].termGPA * semsSinceAdmit[i].totalCredits;
+      historyCredits += semsSinceAdmit[i].totalCredits;
     }
-    bool isNewCGPARules = year > 2026 || (year == 2026 && term >= 1);
 
-    // Dynamic Thresholds
-    List<double> thresholds;
-    List<String> tierNames;
-    if (isNewCGPARules) {
-      thresholds = [3.75, 3.85, 3.95];
-      tierNames = ["Medha Lalon (3.75+)", "Dean's List (3.85+)", "100% Merit (3.95+)"];
+    // Combine Metrics
+    double totalCyclePointsTarget = cyclePoints + targetCurrentPoints;
+    double totalCyclePointsLive = cyclePoints + liveCurrentPoints;
+    double totalCycleCredits = cycleCredits + currentCredits;
+
+    double projectedYearlyGPA = totalCycleCredits > 0 ? totalCyclePointsTarget / totalCycleCredits : 0.0;
+    double liveYearlyGPA = totalCycleCredits > 0 ? totalCyclePointsLive / totalCycleCredits : 0.0;
+
+    double totalCumulativePointsLive = historyPoints + totalCyclePointsLive;
+    double totalCumulativeCredits = historyCredits + totalCycleCredits;
+    double liveCGPA = totalCumulativeCredits > 0 ? totalCumulativePointsLive / totalCumulativeCredits : profile.cgpa;
+
+    // Goal-based cumulative CGPA: what would CGPA be if I hit all my grade goals?
+    double totalCumulativePointsGoal = historyPoints + totalCyclePointsTarget;
+    double goalCGPA = totalCumulativeCredits > 0 ? totalCumulativePointsGoal / totalCumulativeCredits : profile.cgpa;
+
+    // 9. Thresholds — from DB rule if available, else fallback based on admit year
+    double medhaMin, deansMin, meritMin;
+    if (rule != null) {
+      medhaMin = rule.tierMedhaLalonMin;
+      deansMin = rule.tierDeansListMin;
+      meritMin = rule.tierMerit100Min;
     } else {
-      thresholds = [3.50, 3.75, 3.90];
-      tierNames = ["Medha Lalon (3.50+)", "Dean's List (3.75+)", "100% Merit (3.90+)"];
+      // Fallback: Spring 2026+ gets raised thresholds
+      final isNewRules = (admitYear > 2025) || (admitYear == 2025 && admitTerm == 1 /* Spring */);
+      medhaMin = isNewRules ? 3.75 : 3.50;
+      deansMin = isNewRules ? 3.85 : 3.75;
+      meritMin = isNewRules ? 3.95 : 3.90;
     }
-    
-    String currentTier = "";
-    String nextTier = thresholds[0].toString();
-    double distance = 0.0;
-    double? requiredSGPA;
+
+    final thresholds = [medhaMin, deansMin, meritMin];
+    final tierNames = [
+      'Medha Lalon ($medhaMin+)',
+      "Dean's List ($deansMin+)",
+      '100% Merit ($meritMin+)',
+    ];
+
+    List<TierRequirement> tierReqs = [];
+    // Estimate future credits per semester for remaining semesters AFTER the current one
+    const double estimatedFutureCredits = 15.0;
+    // Total credits if we include future semesters beyond the current one
+    final double totalProjectedYearlyCredits = totalCycleCredits + (remainingInCycle * estimatedFutureCredits);
 
     for (int i = 0; i < thresholds.length; i++) {
-      if (projectedCGPA >= thresholds[i]) {
-        currentTier = tierNames[i];
-        if (i < thresholds.length - 1) {
-          nextTier = tierNames[i + 1];
-          distance = thresholds[i + 1] - projectedCGPA;
-          
-          // Calculate required SGPA for next tier
-          if (projectedSemCredits > 0) {
-            double targetTotalPoints = thresholds[i + 1] * (profile.totalCreditsEarned + projectedSemCredits);
-            double requiredSemPoints = targetTotalPoints - currentTotalPoints;
-            requiredSGPA = requiredSemPoints / projectedSemCredits;
-            if (requiredSGPA! > 4.0) requiredSGPA = null; // Impossible
-            if (requiredSGPA != null && requiredSGPA! < 0.0) requiredSGPA = 0.0;
+        double targetThreshold = thresholds[i];
+        double? reqRemainingSGPA;
+
+        // FIX 2: Use LIVE yearly GPA (marks-based) to determine if already achieved
+        // Not the goal-based projected GPA. If the student hasn't got the marks yet, it's not achieved.
+        bool isAchieved = liveYearlyGPA >= targetThreshold;
+        bool isImpossible = false;
+
+        if (!isAchieved) {
+          if (remainingInCycle == 0 && currentCredits > 0) {
+            // FIX 3: This is the LAST (or only) semester of the cycle.
+            // Compute: what SGPA does the student need in THIS semester?
+            // Based on past completed cycle points only (not goal projections).
+            final double totalPointsTarget = targetThreshold * totalCycleCredits;
+            final double pointsNeededThisSem = totalPointsTarget - cyclePoints;
+            reqRemainingSGPA = pointsNeededThisSem / currentCredits;
+            if (reqRemainingSGPA > 4.0) {
+              isImpossible = true;
+              reqRemainingSGPA = null;
+            } else if (reqRemainingSGPA <= 0.0) {
+              isAchieved = true;
+              reqRemainingSGPA = null;
+            }
+          } else if (totalProjectedYearlyCredits > totalCycleCredits) {
+            // Future semesters remain — compute average SGPA needed across them
+            final double totalPointsNeeded = targetThreshold * totalProjectedYearlyCredits;
+            final double pointsNeededInFuture = totalPointsNeeded - (cyclePoints + liveCurrentPoints);
+            final double creditsRemaining = totalProjectedYearlyCredits - totalCycleCredits;
+            reqRemainingSGPA = pointsNeededInFuture / creditsRemaining;
+            if (reqRemainingSGPA > 4.0) {
+              isImpossible = true;
+              reqRemainingSGPA = null;
+            } else if (reqRemainingSGPA < 0.0) {
+              reqRemainingSGPA = 0.0;
+              isAchieved = true;
+            }
+          } else {
+            isImpossible = true;
           }
-        } else {
-          nextTier = "Max Tier reached!";
-          distance = 0.0;
         }
-      } else {
-        if (currentTier.isEmpty) {
-          nextTier = tierNames[i];
-          distance = thresholds[i] - projectedCGPA;
-          
-          // Calculate required SGPA for first tier
-          if (projectedSemCredits > 0) {
-            double targetTotalPoints = thresholds[i] * (profile.totalCreditsEarned + projectedSemCredits);
-            double requiredSemPoints = targetTotalPoints - currentTotalPoints;
-            requiredSGPA = requiredSemPoints / projectedSemCredits;
-            if (requiredSGPA! > 4.0) requiredSGPA = null; // Impossible
-            if (requiredSGPA != null && requiredSGPA! < 0.0) requiredSGPA = 0.0;
-          }
-        }
-        break;
-      }
+
+        tierReqs.add(TierRequirement(
+            name: tierNames[i],
+            threshold: targetThreshold,
+            requiredSGPA: reqRemainingSGPA,
+            isAchieved: isAchieved,
+            isImpossible: isImpossible,
+        ));
     }
+
+    String currentTier = '';
+    for (var req in tierReqs) {
+        if (req.isAchieved) currentTier = req.name;
+    }
+
+    // FIX 1: Completed = only PAST finished semesters (not the current ongoing one)
+    // Current semester credits are "in progress" → count as Left
+    final double cycleCreditsGoal = rule?.annualCreditsRequired ?? 30.0;
+    final double cycleCreditsCompleted = cycleCredits; // past sems only
+    final double cycleCreditsInProgress = currentCredits; // current semester
+    final double cycleCreditsRemaining = (cycleCreditsGoal - cycleCreditsCompleted - cycleCreditsInProgress).clamp(0.0, 40.0);
 
     return ScholarshipProjection(
       currentCGPA: profile.cgpa,
-      projectedCGPA: projectedCGPA,
-      projectedSGPA: projectedSGPA,
+      projectedCGPA: projectedYearlyGPA,
+      liveYearlyGPA: liveYearlyGPA,
+      liveCGPA: liveCGPA,
+      goalCGPA: goalCGPA,
+      projectedYearlyGPA: projectedYearlyGPA,
+      projectedSGPA: currentCredits > 0 ? targetCurrentPoints / currentCredits : 0.0,
       currentTier: currentTier,
-      nextTier: nextTier,
-      distanceToNext: distance,
-      requiredSGPA: requiredSGPA,
+      cycleSemestersCount: semInCycle,
+      cycleName: cycleName,
+      tierRequirements: tierReqs,
+      cycleCreditsGoal: cycleCreditsGoal,
+      cycleCreditsCompleted: cycleCreditsCompleted,
+      cycleCreditsThisSemester: cycleCreditsInProgress,
+      cycleCreditsRemaining: cycleCreditsInProgress + cycleCreditsRemaining,
     );
+  }
+
+  double _marksToPoint(double marks) {
+    if (marks >= 80) return 4.0;
+    if (marks >= 75) return 3.75;
+    if (marks >= 70) return 3.5;
+    if (marks >= 65) return 3.25;
+    if (marks >= 60) return 3.0;
+    if (marks >= 55) return 2.75;
+    if (marks >= 50) return 2.5;
+    if (marks >= 45) return 2.25;
+    if (marks >= 40) return 2.0;
+    return 0.0;
   }
 
   List<String> get availableGrades {

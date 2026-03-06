@@ -43,7 +43,24 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
         future: Future.wait([
           _repo.fetchSemesterSummary(_currentSemester!),
           _repo.fetchAcademicProfile(),
-        ]),
+        ]).then((data) async {
+          final profile = data[1] as AcademicProfile;
+          // Derive admitted semester string from student ID (YYYY-T-...)
+          final parts = profile.studentId.split('-');
+          final admitYear = parts.isNotEmpty ? (parts[0]) : '2024';
+          final admitTermNum = parts.length >= 2 ? int.tryParse(parts[1]) ?? 2 : 2;
+          String admitTermName;
+          if (admitTermNum == 1) {
+            admitTermName = 'Spring';
+          } else if (admitTermNum == 3) {
+            admitTermName = 'Fall';
+          } else {
+            admitTermName = 'Summer';
+          }
+          final admitSemester = '$admitTermName $admitYear';
+          final rule = await _repo.fetchScholarshipRule(profile.programId, admitSemester);
+          return [...data, rule];
+        }),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Colors.cyanAccent));
@@ -54,10 +71,11 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
 
           final summaries = snapshot.data![0] as List<CourseSummary>;
           final profile = snapshot.data![1] as AcademicProfile;
+          final rule = snapshot.data!.length > 2 ? snapshot.data![2] : null;
 
           if (summaries.isEmpty) return _buildEmptyState();
 
-          final projection = _repo.getScholarshipProjection(profile, summaries);
+          final projection = _repo.getScholarshipProjection(profile, summaries, rule: rule);
 
           return Column(
             children: [
@@ -78,25 +96,17 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
                       style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 15),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth > 600) {
-                          return Wrap(
-                            spacing: 20,
-                            runSpacing: 20,
-                            children: summaries.map((s) => SizedBox(
-                              width: (constraints.maxWidth - 20) / 2,
-                              child: _buildCourseCard(s)
-                            )).toList(),
-                          );
-                        }
-                        return Column(
-                          children: summaries.map((s) => Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: _buildCourseCard(s),
-                          )).toList(),
-                        );
-                      }
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        mainAxisExtent: 270, // Enough for ring + info + exam chips
+                      ),
+                      itemCount: summaries.length,
+                      itemBuilder: (context, index) => _buildCourseCard(summaries[index]),
                     ),
                     const SizedBox(height: 50),
                   ],
@@ -138,21 +148,30 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
             children: [
               const Text("🏆 Scholarship Projection",
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  Text("Existing CGPA: ${projection.currentCGPA.toStringAsFixed(2)}", 
-                    style: const TextStyle(color: Colors.white70, fontSize: 11)),
-                  const SizedBox(height: 4),
+                  if (projection.currentTier.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        projection.currentTier,
+                        style: const TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.amberAccent.withValues(alpha: 0.1),
+                      color: Colors.cyanAccent.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      "Target SGPA: ${projection.projectedSGPA.toStringAsFixed(2)}",
-                      style: const TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                      projection.cycleName,
+                      style: const TextStyle(color: Colors.cyanAccent, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -160,58 +179,141 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          if (projection.currentTier.isNotEmpty)
-             _buildTierInfo("Current Eligibility", "🎉 ${projection.currentTier}", Icons.verified, Colors.greenAccent)
-          else
-            const Text("🌱 Keep pushing! Set goals to unlock scholarships.", style: TextStyle(color: Colors.white70, fontSize: 13)),
+          
+          // Yearly Progress info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   const Text("Current CGPA", style: TextStyle(color: Colors.white54, fontSize: 11)),
+                   Text(projection.currentCGPA.toStringAsFixed(2), 
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Live Yearly GPA", style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  Text(projection.liveYearlyGPA.toStringAsFixed(2), 
+                    style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text("Goal Yearly GPA", style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  Text(projection.projectedYearlyGPA.toStringAsFixed(2), 
+                    style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 18)),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Column(
+                children: [
+                  const Text("Live CGPA", style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  const SizedBox(height: 2),
+                  Text(projection.liveCGPA.toStringAsFixed(2),
+                    style: const TextStyle(color: Colors.white60, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text("↑ Based on marks", style: TextStyle(color: Colors.white24, fontSize: 9, fontStyle: FontStyle.italic)),
+                ],
+              ),
+              Container(width: 1, height: 36, color: Colors.white10),
+              Column(
+                children: [
+                  const Text("If Goals Hit", style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  const SizedBox(height: 2),
+                  Text(projection.goalCGPA.toStringAsFixed(2),
+                    style: TextStyle(
+                      color: projection.goalCGPA > projection.currentCGPA ? Colors.greenAccent : Colors.orangeAccent,
+                      fontWeight: FontWeight.bold, fontSize: 14)),
+                  const Text("↑ Based on grade goals", style: TextStyle(color: Colors.white24, fontSize: 9, fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ],
+          ),
           
           const Divider(height: 30, color: Colors.white10),
           
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(Icons.rocket_launch, color: Colors.cyanAccent, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Next Milestone: ${projection.nextTier}", 
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(
-                      projection.distanceToNext > 0 
-                        ? "Expected CGPA: ${projection.projectedCGPA.toStringAsFixed(2)}. You are ${projection.distanceToNext.toStringAsFixed(2)} away! ✨"
-                        : "Expected CGPA: ${projection.projectedCGPA.toStringAsFixed(2)}. Awesome! Keep it up! 🔥",
-                      style: TextStyle(color: projection.distanceToNext > 0 ? Colors.cyanAccent : Colors.amberAccent, fontSize: 12),
-                    ),
-                    if (projection.requiredSGPA != null && projection.distanceToNext > 0) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.cyanAccent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          "💡 Suggestion: You need an SGPA of ${projection.requiredSGPA!.toStringAsFixed(2)} this semester to reach this tier.",
-                          style: const TextStyle(color: Colors.cyanAccent, fontSize: 11, fontStyle: FontStyle.italic),
-                        ),
-                      ),
-                    ] else if (projection.requiredSGPA == null && projection.distanceToNext > 0) ...[
-                       const SizedBox(height: 6),
-                       const Text(
-                          "⚠️ This tier is mathematically out of reach this semester based on your current credits. Keep pushing for the next one!",
-                          style: TextStyle(color: Colors.orangeAccent, fontSize: 11),
-                        ),
-                    ]
-                  ],
-                ),
-              ),
+              _creditInfo("Annual Goal", projection.cycleCreditsGoal, Colors.white54),
+              _creditInfo("✓ Done", projection.cycleCreditsCompleted, Colors.greenAccent),
+              _creditInfo("This Sem", projection.cycleCreditsThisSemester, Colors.cyanAccent),
+              _creditInfo("Remaining", projection.cycleCreditsRemaining - projection.cycleCreditsThisSemester, Colors.amberAccent),
             ],
           ),
+
+          const Divider(height: 30, color: Colors.white10),
+          
+          Text(
+            projection.cycleSemestersCount >= 3
+              ? "SGPA needed this semester to achieve:"
+              : "Avg SGPA needed in remaining ${3 - projection.cycleSemestersCount} semester(s):", 
+            style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          
+          ...projection.tierRequirements.map((req) => _buildRequirementRow(req)),
         ],
       ),
     );
+  }
+
+  Widget _creditInfo(String label, double value, Color color) {
+    return Column(
+      children: [
+        Text(value.toStringAsFixed(1), 
+          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
+        Text(label, style: const TextStyle(color: Colors.white30, fontSize: 10)),
+      ],
+    );
+  }
+
+  Widget _buildRequirementRow(TierRequirement req) {
+    Color color;
+    if (req.isAchieved) {
+      color = Colors.greenAccent;
+    } else if (req.isImpossible) {
+      color = Colors.redAccent;
+    } else {
+      color = Colors.cyanAccent;
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(
+            _getRequirementIcon(req), 
+            color: color.withValues(alpha: 0.7), 
+            size: 16
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(req.name, style: const TextStyle(color: Colors.white, fontSize: 13)),
+          ),
+          if (req.isAchieved)
+            const Text("✓ Achieved", style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold))
+          else if (req.isImpossible)
+            const Text("Impossible", style: TextStyle(color: Colors.redAccent, fontSize: 11))
+          else
+            Text("Need: ${req.requiredSGPA?.toStringAsFixed(2) ?? '--'}", 
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  IconData _getRequirementIcon(TierRequirement req) {
+    if (req.isAchieved) return Icons.check_circle;
+    if (req.isImpossible) return Icons.cancel_outlined;
+    return Icons.radio_button_unchecked;
   }
 
   Widget _buildTierInfo(String label, String value, IconData icon, Color color) {
@@ -296,95 +398,140 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
 
   Widget _buildCourseCard(CourseSummary summary) {
     bool isHampered = summary.upcomingTasks.any((t) => t.dueDate.isBefore(DateTime.now()));
+    final activeColor = isHampered ? Colors.redAccent : const Color(0xFF2BD8D5);
     
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF141927), // deep navy background from image
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF29314F), width: 1.5),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
-        ]
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.drag_indicator, size: 14, color: Colors.white24),
-              const SizedBox(width: 4),
-              const Icon(Icons.inventory_2_outlined, size: 18, color: Color(0xFFE5B585)), // box icon from image
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(summary.title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis,),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _showGoalManager(summary),
-                child: const Icon(Icons.edit, size: 14, color: Colors.white54),
-              ),
-              const SizedBox(width: 12),
-              // Dummy Switch
-              Container(
-                width: 32,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4B61D1), // Active blue track
-                  borderRadius: BorderRadius.circular(10),
+    return GestureDetector(
+      onTap: () => _showGoalManager(summary),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF141927),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF29314F), width: 1.5),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 15, offset: const Offset(0, 5)),
+          ]
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(Icons.inventory_2_outlined, size: 13, color: Color(0xFFE5B585)),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    summary.title, 
+                    style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold), 
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                alignment: Alignment.centerRight,
-                padding: const EdgeInsets.all(3),
-                child: Container(
-                  width: 12, height: 12,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                ),
+                const Icon(Icons.edit, size: 11, color: Colors.white24),
+              ],
+            ),
+            
+            const SizedBox(height: 14),
+            
+            // Centered ring
+            _buildSmallRing(summary.marksObtained, activeColor),
+            
+            const SizedBox(height: 10),
+            
+            // Course code
+            Text(summary.code, style: const TextStyle(color: Colors.white38, fontSize: 9.5)),
+            
+            const SizedBox(height: 8),
+
+            // Info rows below ring
+            _buildCompactRow("Goal", summary.gradeGoal ?? "—"),
+            if (summary.gradeGoal != null)
+              _buildCompactRow(
+                "Need Final", 
+                "${summary.targetFinalScore.toStringAsFixed(1)}%",
+                color: summary.targetFinalScore > 100 ? Colors.redAccent : Colors.white70,
+              ),
+            _buildCompactRow(
+              "Status", 
+              isHampered ? "⚠ Danger" : "✓ Healthy",
+              color: isHampered ? Colors.redAccent : activeColor,
+            ),
+
+            // Exam chips
+            if (summary.midExam != null || summary.finalExam != null) ...[
+              const SizedBox(height: 8),
+              const _DashedDivider(),
+              const SizedBox(height: 6),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 5,
+                runSpacing: 4,
+                children: [
+                  if (summary.midExam != null)
+                    _buildChip("Mid: ${_formatDate(summary.midExam!['date'])}", small: true),
+                  if (summary.finalExam != null)
+                    _buildChip("Final: ${_formatDate(summary.finalExam!['exam_date'])}", small: true),
+                ],
               ),
             ],
-          ),
-          
-          const SizedBox(height: 30),
-          
-          Center(
-            child: _buildLargePerformanceRing(summary.marksObtained, isHampered),
-          ),
-          
-          const SizedBox(height: 30),
-          
-          _buildDetailRow("Course Code", summary.code),
-          const SizedBox(height: 12),
-          _buildDetailRow("Target Goal", summary.gradeGoal ?? "Not Set"),
-          const SizedBox(height: 12),
-          if (summary.gradeGoal != null) ...[
-             _buildDetailRow("Need In Final", "${summary.targetFinalScore.toStringAsFixed(2)}%"),
-             const SizedBox(height: 12),
           ],
-          _buildDetailRow("Status", isHampered ? "Danger" : "Healthy", 
-             valueColor: isHampered ? Colors.redAccent : const Color(0xFF2BD8D5)),
-             
-          const SizedBox(height: 16),
-          const _DashedDivider(),
-          const SizedBox(height: 16),
-          
-          Text("Included Exams (${(summary.midExam != null ? 1 : 0) + (summary.finalExam != null ? 1 : 0)}):", 
-             style: const TextStyle(color: Colors.white30, fontSize: 11)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-               if (summary.midExam != null)
-                 _buildChip("Mid: ${_formatDate(summary.midExam!['date'])}"),
-               if (summary.finalExam != null)
-                 _buildChip("Final: ${_formatDate(summary.finalExam!['exam_date'])}"),
-               if (summary.midExam == null && summary.finalExam == null)
-                 _buildChip("No exams mapped")
-            ],
-          )
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallRing(double marks, Color activeColor) {
+    final progress = (marks / 100).clamp(0.0, 1.0);
+    const size = 72.0;
+    return SizedBox(
+      width: size, height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: size, height: size,
+            child: CircularProgressIndicator(
+              value: 1.0, strokeWidth: 6,
+              valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF1B2236)),
+            ),
+          ),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 1200),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, _) => SizedBox(
+              width: size, height: size,
+              child: CircularProgressIndicator(
+                value: value, strokeWidth: 6,
+                backgroundColor: Colors.transparent,
+                valueColor: AlwaysStoppedAnimation<Color>(activeColor),
+                strokeCap: StrokeCap.round,
+              ),
+            ),
+          ),
+          Text(
+            "${marks.toStringAsFixed(1)}%",
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 11),
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildCompactRow(String label, String value, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 3),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+          Text(value, style: TextStyle(color: color ?? Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
 
   String _formatDate(String? dateStr) {
     if (dateStr == null) return "TBA";
@@ -416,15 +563,15 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
     );
   }
 
-  Widget _buildChip(String label) {
+  Widget _buildChip(String label, {bool small = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: small ? 8 : 14, vertical: small ? 3 : 6),
       decoration: BoxDecoration(
         color: Colors.transparent,
-        border: Border.all(color: const Color(0xFF2B3A70)), // blueish badge border
+        border: Border.all(color: const Color(0xFF2B3A70)),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: const TextStyle(color: Color(0xFF7B8DD8), fontSize: 11, fontWeight: FontWeight.w500)),
+      child: Text(label, style: TextStyle(color: const Color(0xFF7B8DD8), fontSize: small ? 9 : 11, fontWeight: FontWeight.w500)),
     );
   }
 

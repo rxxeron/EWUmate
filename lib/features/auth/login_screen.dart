@@ -19,12 +19,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() => _loading = true);
     try {
+      if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+        throw const AuthException("Please enter email and password");
+      }
       await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
       // Navigate to CheckAuthScreen which will redirect based on onboarding status
-      if (mounted) context.go('/');
+      if (mounted) {
+        context.go('/');
+      }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -40,7 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 

@@ -2,7 +2,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    // id("com.google.gms.google-services") // Temporarily disabled for local APK build
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -21,21 +21,28 @@ android {
 
     defaultConfig {
         applicationId = "com.rxxeron.ewumate"
-        minSdk = flutter.minSdkVersion  // CRITICAL: Keeps Android 10 support active
+        minSdk = 28
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("release-key.jks")
+            storePassword = "ewumate123"
+            keyAlias = "upload"
+            keyPassword = "ewumate123"
+        }
+    }
+
     buildTypes {
         debug {
-            // Ensures the APK is signed with the default Android debug key
             signingConfig = signingConfigs.getByName("debug")
             isDebuggable = true
         }
         release {
-            // We are using debug keys here too, just in case you run release by accident
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

@@ -26,6 +26,12 @@ class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
       GlobalKey<NavigatorState>();
 
+  static const String loginPath = '/login';
+  static const String dashboardPath = '/dashboard';
+  static const String tasksPath = '/tasks';
+  static const String semesterProgressPath = '/semester-progress';
+  static const String registerPath = '/register';
+
   static final router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
@@ -35,26 +41,26 @@ class AppRouter {
         builder: (context, state) => const CheckAuthScreen(),
       ),
       GoRoute(
-        path: '/login',
+        path: loginPath,
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/register',
+        path: registerPath,
         builder: (context, state) => const RegisterScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
           GoRoute(
-            path: '/dashboard',
+            path: dashboardPath,
             builder: (context, state) => const DashboardScreen(),
           ),
           GoRoute(
-            path: '/tasks',
+            path: tasksPath,
             builder: (context, state) => const TasksScreen(),
           ),
           GoRoute(
-            path: '/semester-progress',
+            path: semesterProgressPath,
             builder: (context, state) => const SemesterProgressScreen(),
           ),
           GoRoute(
@@ -107,7 +113,7 @@ class AppRouter {
         path: '/gatekeeper',
         builder: (context, state) => GradeEntryGatekeeperScreen(
           onTransitionComplete: () {
-            context.go('/dashboard');
+            context.go(dashboardPath);
           },
         ),
       ),
@@ -118,9 +124,9 @@ class AppRouter {
       final path = state.uri.toString();
 
       // Define public routes
-      final isPublic = path == '/login' || path == '/register';
+      final isPublic = path == loginPath || path == registerPath;
 
-      if (user == null && !isPublic) return '/login';
+      if (user == null && !isPublic) return loginPath;
       if (user != null && isPublic) return '/';
 
       return null;

@@ -25,34 +25,39 @@ class AcademicRepository {
   }
 
   Future<Map<String, dynamic>> getActiveSemesterConfig() async {
-    // 1. Try cache first
     final cached = OfflineCacheService().getCachedAcademicConfig();
     if (cached != null) {
       _configCache = cached;
-      // If we have cache, we can return it immediately and refresh in background
       _refreshConfigInBackground(); 
       return _configCache;
     }
 
-    // 2. No cache, must wait for network if online
     if (await ConnectivityService().isOnline()) {
-      try {
-        final res = await _supabase
-            .from('active_semester')
-            .select()
-            .eq('is_active', true)
-            .maybeSingle();
-
-        if (res != null) {
-          _configCache = Map<String, dynamic>.from(res);
-          await OfflineCacheService().cacheAcademicConfig(_configCache);
-        }
-      } catch (e) {
-        debugPrint("Error fetching active semester config: $e");
-      }
+      await _fetchAndCacheActiveConfig().timeout(
+        const Duration(seconds: 3),
+        onTimeout: () => debugPrint("AcademicRepo: Config fetch timed out."),
+      );
     }
     
     return _configCache;
+  }
+
+  Future<void> _fetchAndCacheActiveConfig() async {
+    try {
+      final res = await _supabase
+          .from('active_semester')
+          .select()
+          .eq('is_active', true)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 3));
+
+      if (res != null) {
+        _configCache = Map<String, dynamic>.from(res);
+        await OfflineCacheService().cacheAcademicConfig(_configCache);
+      }
+    } catch (e) {
+      debugPrint("Error fetching active semester config: $e");
+    }
   }
 
   void _refreshConfigInBackground() async {
@@ -76,6 +81,10 @@ class AcademicRepository {
   }
 
   Future<void> promoteSemester() async {
+    if (!(await ConnectivityService().isOnline())) {
+      debugPrint("[AcademicRepo] Offline: Skipping semester promotion RPC.");
+      return;
+    }
     try {
       await _supabase.rpc('promote_active_semester');
       await getActiveSemesterConfig(); // Refresh cache
@@ -100,33 +109,32 @@ class AcademicRepository {
 
   Future<List<AcademicEvent>> fetchHolidays(String semesterCode) async {
     final cleanSem = semesterCode.replaceAll(' ', '');
-    // 1. Try cache first
     final cached = OfflineCacheService().getCachedHolidays(cleanSem);
     if (cached.isNotEmpty) {
       return cached.map((e) => AcademicEvent.fromMap(e)).toList();
     }
 
     try {
-      // Table names are lowercase in Postgres (e.g. calendar_spring2026)
-      final tableName = 'calendar_${cleanSem.toLowerCase()}';
-      final data = await _supabase
-          .from(tableName)
-          .select();
-
-      final events = (data as List)
-          .map((d) => AcademicEvent(
-              date: d['date'] ?? d['date_string'] ?? '',
-              title: d['name'] ?? d['event'] ?? d['title'] ?? ''))
-          .toList();
-
-      // 2. Update cache
-      await OfflineCacheService().cacheHolidays(cleanSem, events.map((e) => e.toMap()).toList());
-
+      final events = await _fetchHolidaysFromSupabase(cleanSem);
+      if (events.isNotEmpty) {
+        await OfflineCacheService().cacheHolidays(cleanSem, events.map((e) => e.toMap()).toList());
+      }
       return events;
     } catch (e) {
       debugPrint("Error fetching holidays for $semesterCode: $e");
       return [];
     }
+  }
+
+  Future<List<AcademicEvent>> _fetchHolidaysFromSupabase(String semesterCode) async {
+    final tableName = 'calendar_${semesterCode.toLowerCase()}';
+    final data = await _supabase.from(tableName).select();
+
+    return (data as List)
+        .map((d) => AcademicEvent(
+            date: (d['date'] ?? d['date_string'] ?? '').toString(),
+            title: (d['name'] ?? d['event'] ?? d['title'] ?? '').toString()))
+        .toList();
   }
 
   Future<List<Map<String, dynamic>>> fetchExamSchedule(
@@ -310,55 +318,17 @@ class AcademicRepository {
   /// [contextStr] can be a semester code (Spring2026) to help infer year if missing
   DateTime? parseDateForHolidays(String dateStr, [String? contextStr]) {
     try {
-      final months = {
-        'january': 1,
-        'february': 2,
-        'march': 3,
-        'april': 4,
-        'may': 5,
-        'june': 6,
-        'july': 7,
-        'august': 8,
-        'september': 9,
-        'october': 10,
-        'november': 11,
-        'december': 12,
-      };
-
-      final parts = dateStr
-          .replaceAll(',', '')
-          .split(' ')
-          .where((p) => p.isNotEmpty)
-          .toList();
-
-      // Need at least day and month
+      final parts = dateStr.replaceAll(',', '').split(' ').where((p) => p.isNotEmpty).toList();
       if (parts.length < 2) return null;
 
-      int? day, month, year;
+      final extracted = _extractDateComponents(parts);
+      int? day = extracted['day'];
+      int? month = extracted['month'];
+      int? year = extracted['year'];
 
-      for (var p in parts) {
-        final lower = p.toLowerCase();
-        if (months.containsKey(lower)) {
-          month = months[lower];
-        } else if (int.tryParse(p) != null) {
-          final num = int.parse(p);
-          if (num > 31) {
-            year = num;
-          } else {
-            day = num;
-          }
-        }
-      }
-
-      // If year is missing, try to infer from context (e.g. Spring2026)
       if (year == null && contextStr != null) {
-        final yearMatch = RegExp(r'\d{4}').firstMatch(contextStr);
-        if (yearMatch != null) {
-          year = int.parse(yearMatch.group(0)!);
-        }
+        year = _inferYear(contextStr);
       }
-
-      // Default to current year if still missing (fallback)
       year ??= DateTime.now().year;
 
       if (day != null && month != null) {
@@ -368,6 +338,36 @@ class AcademicRepository {
       debugPrint("Date parse error: $e");
     }
     return null;
+  }
+
+  Map<String, int?> _extractDateComponents(List<String> parts) {
+    const months = {
+      'january': 1, 'february': 2, 'march': 3, 'april': 4, 'may': 5, 'june': 6,
+      'july': 7, 'august': 8, 'september': 9, 'october': 10, 'november': 11, 'december': 12,
+    };
+
+    int? day, month, year;
+    for (var p in parts) {
+      final lower = p.toLowerCase();
+      if (months.containsKey(lower)) {
+        month = months[lower];
+      } else {
+        final num = int.tryParse(p);
+        if (num != null) {
+          if (num > 31) {
+            year = num;
+          } else {
+            day = num;
+          }
+        }
+      }
+    }
+    return {'day': day, 'month': month, 'year': year};
+  }
+
+  int? _inferYear(String contextStr) {
+    final yearMatch = RegExp(r'\d{4}').firstMatch(contextStr);
+    return yearMatch != null ? int.parse(yearMatch.group(0)!) : null;
   }
 
   /// Fetches enrolled courses for the given semester by checking user profile

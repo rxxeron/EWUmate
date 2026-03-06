@@ -67,7 +67,7 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
       await _loadCourses();
     } catch (e) {
       debugPrint('Error initializing screen: $e');
-      if(mounted) {
+      if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Error initializing screen. Please try again.'),
@@ -137,12 +137,7 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
     final query = _searchController.text.toLowerCase();
 
     if (query.isNotEmpty) {
-      _allCourses.forEach((code, sections) {
-        if (code.toLowerCase().contains(query) ||
-            sections.first.courseName.toLowerCase().contains(query)) {
-          partiallyFiltered[code] = sections;
-        }
-      });
+      partiallyFiltered = _filterByQuery(query);
     } else {
       partiallyFiltered = Map.from(_allCourses);
     }
@@ -150,53 +145,45 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
     final Map<String, List<Course>> fullyFiltered = {};
 
     partiallyFiltered.forEach((code, sections) {
-      final isCourseTaken = _completedCourses.contains(code);
-      final isCourseEnrolled = sections.any((s) => _enrolledSections.contains(s.docId ?? s.id));
-      
-      // If it's a search, we want to show all sections of the matched course so they can switch
-      if (query.isNotEmpty) {
-        fullyFiltered[code] = sections;
-        return;
-      }
-      
-      // No filters active? Show all sections.
-      if (_filters.isEmpty) {
-        fullyFiltered[code] = sections;
-        return;
-      }
-
-      if (code == 'ICE107') {
-        debugPrint('ICE107 Filtering -> isCourseEnrolled: $isCourseEnrolled, isCourseTaken: $isCourseTaken, filters: $_filters');
-      }
-
-      // If 'Taken' is active and we are enrolled, we only want to show the ENROLLED section in the Taken view,
-      // UNLESS 'Available' is ALSO active, then they're probably looking to switch, so show all.
-      // Or if it's completed, show all sections that we took (usually just the one in the past, but we might just show all to indicate "Completed").
-      if (_filters.contains('Taken')) {
-        if (isCourseTaken) {
-          fullyFiltered[code] = sections; 
-        } else if (isCourseEnrolled) {
-          // Only show the specific sections they are enrolled in
-          final enrolledOnly = sections.where((s) => _enrolledSections.contains(s.docId ?? s.id)).toList();
-          if (enrolledOnly.isNotEmpty) {
-            fullyFiltered[code] = enrolledOnly;
-          }
-        }
-      } 
-      else if (_filters.contains('Available')) {
-        // If they are enrolled, show all sections so they can switch
-        if (isCourseEnrolled) {
-          fullyFiltered[code] = sections;
-        } 
-        // If not enrolled and not taken, show all sections
-        else if (!isCourseTaken) {
-           fullyFiltered[code] = sections;
-        }
+      final filteredSections = _applyUserFilters(code, sections, query);
+      if (filteredSections.isNotEmpty) {
+        fullyFiltered[code] = filteredSections;
       }
     });
 
     debugPrint('fullyFiltered length after applyFilters: ${fullyFiltered.length}');
-    if(mounted) setState(() => _filteredCourses = fullyFiltered);
+    if (mounted) {
+      setState(() => _filteredCourses = fullyFiltered);
+    }
+  }
+
+  Map<String, List<Course>> _filterByQuery(String query) {
+    final Map<String, List<Course>> matched = {};
+    _allCourses.forEach((code, sections) {
+      if (code.toLowerCase().contains(query) ||
+          sections.first.courseName.toLowerCase().contains(query)) {
+        matched[code] = sections;
+      }
+    });
+    return matched;
+  }
+
+  List<Course> _applyUserFilters(String code, List<Course> sections, String query) {
+    if (query.isNotEmpty) return sections;
+    if (_filters.isEmpty) return sections;
+
+    final isCourseTaken = _completedCourses.contains(code);
+    final isCourseEnrolled = sections.any((s) => _enrolledSections.contains(s.docId ?? s.id));
+
+    if (_filters.contains('Taken')) {
+      if (isCourseTaken) return sections;
+      if (isCourseEnrolled) {
+        return sections.where((s) => _enrolledSections.contains(s.docId ?? s.id)).toList();
+      }
+    } else if (_filters.contains('Available')) {
+      if (isCourseEnrolled || !isCourseTaken) return sections;
+    }
+    return [];
   }
 
   void _toggleFilter(String filter) {
@@ -219,50 +206,12 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
   void _toggleEnrollment(Course course, bool enroll) async {
     if (!mounted) return;
 
-    // --- TIME CONFLICT CHECK ---
-    if (enroll) {
-      // Build a list of currently enrolled courses to check against.
-      // We skip any sections that belong to the SAME course code, because 
-      // when switching, the old section will be dropped anyway.
-      List<Course> currentlyEnrolledCourses = [];
-      _filteredCourses.forEach((code, sections) {
-        if (code == course.code) return; // Skip the course being switched
-        
-        for (var s in sections) {
-          if (_enrolledSections.contains(s.docId ?? s.id)) {
-            currentlyEnrolledCourses.add(s);
-          }
-        }
-      });
-
-      final conflictCourse = CourseUtils.hasTimeConflict(currentlyEnrolledCourses, course);
-      if (conflictCourse != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Time conflict with ${conflictCourse.code} (${conflictCourse.courseName}).'),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(seconds: 4),
-          ));
-        }
-        return; // Abort enrollment
-      }
+    if (enroll && _checkTimeConflict(course)) {
+      return;
     }
 
     final originalEnrolled = Set<String>.from(_enrolledSections);
-
-    setState(() {
-      if (enroll) {
-        // Switching logic: remove any other sections of the same course first
-        final sections = _allCourses[course.code] ?? [];
-        for (var s in sections) {
-          _enrolledSections.remove(s.docId ?? s.id);
-        }
-        _enrolledSections.add(course.docId ?? course.id);
-      } else {
-        _enrolledSections.remove(course.docId ?? course.id);
-      }
-      _applyFilters();
-    });
+    _updateLocalEnrollment(course, enroll);
 
     try {
       await _courseRepo.toggleEnrolled(
@@ -273,7 +222,7 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
         courseCode: course.code,
       );
       if (!mounted) return;
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(enroll ? 'Enrolled in ${course.code}' : 'Dropped ${course.code}'),
         backgroundColor: enroll ? Colors.green : Colors.red,
       ));
@@ -290,6 +239,47 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
         ));
       }
     }
+  }
+
+  bool _checkTimeConflict(Course course) {
+    // We skip any sections that belong to the SAME course code, because 
+    // when switching, the old section will be dropped anyway.
+    final List<Course> currentlyEnrolled = [];
+    _filteredCourses.forEach((code, sections) {
+      if (code == course.code) return;
+      for (var s in sections) {
+        if (_enrolledSections.contains(s.docId ?? s.id)) {
+          currentlyEnrolled.add(s);
+        }
+      }
+    });
+
+    final conflict = CourseUtils.hasTimeConflict(currentlyEnrolled, course);
+    if (conflict != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Time conflict with ${conflict.code} (${conflict.courseName}).'),
+        backgroundColor: Colors.redAccent,
+        duration: const Duration(seconds: 4),
+      ));
+      return true;
+    }
+    return false;
+  }
+
+  void _updateLocalEnrollment(Course course, bool enroll) {
+    setState(() {
+      if (enroll) {
+        // Switching logic: remove any other sections of the same course first
+        final sections = _allCourses[course.code] ?? [];
+        for (var s in sections) {
+          _enrolledSections.remove(s.docId ?? s.id);
+        }
+        _enrolledSections.add(course.docId ?? course.id);
+      } else {
+        _enrolledSections.remove(course.docId ?? course.id);
+      }
+      _applyFilters();
+    });
   }
 
   @override
@@ -401,7 +391,9 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
       itemBuilder: (context, index) {
         final code = courseCodes[index];
         final sections = _filteredCourses[code]!;
-        if (sections.isEmpty) return const SizedBox.shrink();
+        if (sections.isEmpty) {
+          return const SizedBox.shrink();
+        }
         
         final courseName = sections.first.courseName;
         final isTaken = _completedCourses.contains(code);

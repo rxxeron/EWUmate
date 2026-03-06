@@ -34,13 +34,8 @@ serve(async (req) => {
         const safeSem = semCode.toLowerCase().replace(/\s/g, "");
         log(`Active Semester: ${semCode}`);
 
-        const overrides = await sql`SELECT * FROM schedule_overrides WHERE is_active = true`;
-        const overridesMap: Record<string, any> = {};
-        overrides.forEach((o: any) => {
-            const key = `${o.original_start}-${o.original_end}`;
-            overridesMap[key] = o;
-            if (!overridesMap[o.original_start]) overridesMap[o.original_start] = o;
-        });
+        // The flutter app already saves the shifted Ramadan times into user_schedules.
+        // There is no need to map them here, we just use the verbatim `startTime`.
 
         const now = new Date();
         const dhakaTime = new Date(now.getTime() + (6 * 60 * 60 * 1000));
@@ -58,15 +53,20 @@ serve(async (req) => {
                     for (let offset = 0; offset <= 1; offset++) {
                         const dhakaTarget = new Date(now.getTime() + (6 * 60 * 60 * 1000) + (offset * 24 * 60 * 60 * 1000));
                         const dayName = days[dhakaTarget.getUTCDay()];
+                        const dateStr = dhakaTarget.toISOString().split('T')[0];
+
+                        // Fetch exceptions once per day for this user
+                        const exceptions = await sql`SELECT * FROM schedule_exceptions WHERE user_id = ${userId} AND date = ${dateStr} AND (type = 'cancel' OR type = 'makeup')`;
+
                         const originalClasses = template[dayName] || [];
 
                         if (originalClasses.length === 0) continue;
-                        log(`  ${dayName} (offset ${offset}) - ${originalClasses.length} classes`);
+                        log(`  ${dayName} (${dateStr}) - ${originalClasses.length} classes`);
 
                         const classes = originalClasses.map((c: any) => ({
                             ...c,
-                            startTime: overridesMap[c.startTime]?.new_start || c.startTime,
-                            endTime: overridesMap[c.startTime]?.new_end || c.endTime
+                            startTime: c.startTime,
+                            endTime: c.endTime
                         })).sort((a: any, b: any) => {
                             const ta = parseTime(a.startTime);
                             const tb = parseTime(b.startTime);
@@ -79,6 +79,13 @@ serve(async (req) => {
                             const triggerUTC = new Date(Date.UTC(dhakaTarget.getUTCFullYear(), dhakaTarget.getUTCMonth(), dhakaTarget.getUTCDate(), time.h - 6, time.m, 0));
                             const venue = c.room || c.venue || 'TBA';
                             const dateStr = dhakaTarget.toISOString().split('T')[0];
+
+                            // Skip if class is cancelled
+                            const isCancelled = exceptions.some((ex: any) => ex.type === 'cancel' && ex.course_code === c.courseCode);
+                            if (isCancelled) {
+                                log(`    Skipped cancelled class: ${c.courseCode}`);
+                                continue;
+                            }
 
                             if (i === 0) {
                                 for (const m of [45, 30, 15]) {

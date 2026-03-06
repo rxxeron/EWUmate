@@ -56,7 +56,9 @@ class TaskRepository {
 
   Future<void> addTask(Task task) async {
     final user = _supabase.auth.currentUser;
-    if (user == null) throw Exception("User not logged in");
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
 
     // Local update
     final currentTasks = OfflineCacheService().getCachedTasks();
@@ -78,7 +80,9 @@ class TaskRepository {
 
   Future<void> updateTask(Task task) async {
     final user = _supabase.auth.currentUser;
-    if (user == null) throw Exception("User not logged in");
+    if (user == null) {
+      throw Exception("User not logged in");
+    }
 
     // Local update
     final currentTasks = OfflineCacheService().getCachedTasks();
@@ -86,7 +90,7 @@ class TaskRepository {
     if (index != -1) {
       currentTasks[index] = task.toMap();
       await OfflineCacheService().cacheTasks(currentTasks);
-      _emitCachedTasks(); // Notify UI immediately
+      _emitCachedTasks(); 
 
       // Sync if online
       if (await ConnectivityService().isOnline()) {
@@ -103,66 +107,82 @@ class TaskRepository {
   }
 
   Future<List<Task>> fetchTasks() async {
-    // 1. Return cached data immediately
     final cachedData = OfflineCacheService().getCachedTasks();
     List<Task> cachedTasks = cachedData.map((d) => Task.fromMap(d, d['id'] ?? '')).toList();
 
     final user = _supabase.auth.currentUser;
-    if (user == null) return cachedTasks;
+    if (user == null) {
+      return cachedTasks;
+    }
 
     try {
       final data =
           await _supabase.from('tasks').select().eq('user_id', user.id);
 
       final remoteTasks = (data as List).map((d) => Task.fromSupabase(d)).toList();
-      
-      // 2. Update cache with fresh data
       await OfflineCacheService().cacheTasks(remoteTasks.map((t) => t.toMap()).toList());
       
       return remoteTasks;
     } catch (e) {
-      debugPrint("Error fetching tasks from Supabase, using cache: $e");
+      debugPrint("Error fetching tasks from Supabase: $e");
       return cachedTasks;
     }
   }
 
   Future<void> toggleTaskCompletion(String taskId, bool isCompleted) async {
-    // Local update
+    await updateTaskStatus(taskId, isCompleted: isCompleted, isMissed: false);
+  }
+
+  Future<void> updateTaskStatus(String taskId, {bool? isCompleted, bool? isMissed}) async {
     final currentTasks = OfflineCacheService().getCachedTasks();
     final index = currentTasks.indexWhere((t) => t['id'] == taskId);
     if (index != -1) {
       final taskMap = Map<String, dynamic>.from(currentTasks[index]);
-      taskMap['isCompleted'] = isCompleted;
+      if (isCompleted != null) {
+        taskMap['isCompleted'] = isCompleted;
+      }
+      if (isMissed != null) {
+        taskMap['isMissed'] = isMissed;
+      }
       currentTasks[index] = taskMap;
       await OfflineCacheService().cacheTasks(currentTasks);
-      _emitCachedTasks(); // Notify UI immediately
+      _emitCachedTasks();
 
-      // Sync if online
       if (await ConnectivityService().isOnline()) {
         try {
+          final updates = <String, dynamic>{};
+          if (isCompleted != null) {
+            updates['is_completed'] = isCompleted;
+          }
+          if (isMissed != null) {
+            updates['is_missed'] = isMissed;
+          }
+          
           await _supabase
               .from('tasks')
-              .update({'is_completed': isCompleted}).eq('id', taskId);
+              .update(updates).eq('id', taskId);
         } catch (e) {
-          debugPrint("Error syncing task completion to Supabase: $e");
+          debugPrint("Error syncing task status: $e");
         }
       }
     }
   }
 
+  Future<void> toggleTaskMissed(String taskId, bool isMissed) async {
+     await updateTaskStatus(taskId, isCompleted: false, isMissed: isMissed);
+  }
+
   Future<void> deleteTask(String taskId) async {
-    // Local update
     final currentTasks = OfflineCacheService().getCachedTasks();
     currentTasks.removeWhere((t) => t['id'] == taskId);
     await OfflineCacheService().cacheTasks(currentTasks);
-    _emitCachedTasks(); // Notify UI immediately
+    _emitCachedTasks();
 
-    // Sync if online
     if (await ConnectivityService().isOnline()) {
       try {
         await _supabase.from('tasks').delete().eq('id', taskId);
       } catch (e) {
-        debugPrint("Error syncing task deletion to Supabase: $e");
+        debugPrint("Error syncing task deletion: $e");
       }
     }
   }

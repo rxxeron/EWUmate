@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../router/app_router.dart';
 
 class RealtimeNotificationService {
+  static final RealtimeNotificationService _instance = RealtimeNotificationService._internal();
+  factory RealtimeNotificationService() => _instance;
+  RealtimeNotificationService._internal();
+
   final SupabaseClient _supabase = Supabase.instance.client;
   final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  static const String _defaultIcon = '@mipmap/ic_launcher';
 
   Future<void> initialize() async {
     try {
@@ -41,7 +48,10 @@ class RealtimeNotificationService {
     // 1. Sync future alerts for offline support
     await syncScheduledAlerts();
 
-    // 2. Listen to Realtime INSERTs for active app pushes
+    // 2. Sync FCM Token with Supabase
+    await _syncFcmToken(user.id);
+
+    // 3. Listen to Realtime INSERTs for active app pushes (Legacy/Redundant, keeping for safety)
     _supabase
         .channel('public:notifications:${user.id}')
         .onPostgresChanges(
@@ -65,6 +75,51 @@ class RealtimeNotificationService {
           },
         )
         .subscribe();
+
+    // 4. Listen to incoming FCM messages when app is in foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        final title = message.notification!.title ?? 'New Notification';
+        final body = message.notification!.body ?? '';
+
+        _showNativeNotification(title, body);
+        showNotificationOverlay(title, body);
+      }
+    });
+
+    // Handle token refresh
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      await _saveTokenToSupabase(user.id, newToken);
+    });
+  }
+
+  Future<void> _syncFcmToken(String userId) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 4),
+        onTimeout: () {
+          debugPrint('[FCM] Token retrieval timed out.');
+          return null;
+        },
+      );
+      if (token != null) {
+        await _saveTokenToSupabase(userId, token);
+      }
+    } catch (e) {
+      debugPrint('[FCM] Error getting token: $e');
+    }
+  }
+
+  Future<void> _saveTokenToSupabase(String userId, String token) async {
+    try {
+      await _supabase.from('fcm_tokens').upsert({
+        'user_id': userId,
+        'token': token,
+      }, onConflict: 'token').timeout(const Duration(seconds: 3));
+      debugPrint('[FCM] Token synced successfully.');
+    } catch (e) {
+      debugPrint('[FCM] Error saving token to Supabase: $e');
+    }
   }
 
   /// Fetches future alerts from Supabase and schedules them locally
@@ -81,7 +136,8 @@ class RealtimeNotificationService {
           .select()
           .eq('user_id', user.id)
           .eq('is_dispatched', false)
-          .gte('trigger_at', now);
+          .gte('trigger_at', now)
+          .timeout(const Duration(seconds: 5));
 
       final List alerts = response as List;
       int count = 0;
@@ -129,6 +185,7 @@ class RealtimeNotificationService {
         channelDescription: 'Stored reminders that trigger even without internet.',
         importance: Importance.max,
         priority: Priority.high,
+        icon: _defaultIcon,
       );
 
       const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
@@ -148,7 +205,7 @@ class RealtimeNotificationService {
 
   Future<void> _initLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings(_defaultIcon);
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     
@@ -158,6 +215,16 @@ class RealtimeNotificationService {
         debugPrint('Notification clicked: ${response.payload}');
       },
     );
+
+    // Request permissions for Android 13+
+    final androidImplementation =
+        _localNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+            
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+      await androidImplementation.requestExactAlarmsPermission();
+    }
   }
 
   Future<void> _showNativeNotification(String title, String body) async {
@@ -169,7 +236,7 @@ class RealtimeNotificationService {
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
-      icon: '@mipmap/ic_launcher',
+      icon: _defaultIcon,
     );
     const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
@@ -252,5 +319,35 @@ class RealtimeNotificationService {
         ),
       ),
     );
+  }
+
+  // --- Test Notification Logic ---
+  Future<void> scheduleTestNotification(int minutes) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    final triggerTime = DateTime.now().add(Duration(minutes: minutes));
+    
+    // 1. Schedule locally
+    await _scheduleLocalNotification(
+      id: 9999,
+      title: "Test Reminder ($minutes min)",
+      body: "If you see this, local notifications are working!",
+      scheduledDate: triggerTime,
+    );
+
+    // 2. Insert into Supabase (Optional: but good for testing dispatcher/real-time)
+    try {
+      await _supabase.from('scheduled_alerts').upsert({
+        'user_id': user.id,
+        'title': "Supabase Test Alert",
+        'body': "This came from the database!",
+        'trigger_at': triggerTime.toUtc().toIso8601String(),
+        'alert_key': "test_${DateTime.now().millisecondsSinceEpoch}",
+        'is_dispatched': false,
+      });
+    } catch (e) {
+      debugPrint('[NotificationTest] Supabase Insert Error: $e');
+    }
   }
 }

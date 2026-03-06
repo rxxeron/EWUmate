@@ -177,9 +177,10 @@ class StreamBuilderLike {
     bool hasB = false;
 
     void update() {
-      if (hasA && hasB) {
+      // Logic: If we have A, we can emit even if B is missing (defaults to empty list)
+      if (hasA) {
         try {
-          controller.add(combiner(lastA as A, lastB as B));
+          controller.add(combiner(lastA as A, (lastB ?? []) as B));
         } catch (e) {
           debugPrint("DataMerger combined error: $e");
         }

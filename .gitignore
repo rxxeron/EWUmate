@@ -80,3 +80,16 @@ venv/
 __pycache__/
 *.env
 config/serviceAccountKey.json
+
+# Firebase Admin SDK & Service Accounts
+*-firebase-adminsdk-*.json
+*-serviceAccountKey.json
+ewumatefcm-firebase-adminsdk-fbsvc-*.json
+
+# Local scripts and logs
+parse_mobsf.ps1
+rem_smells.txt
+final_issues.txt
+build_log.txt
+build_error_log.txt
+certification_evidence/*.apk

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,8 +15,6 @@ import 'task_card.dart';
 import 'task_editor_modal.dart';
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/animations/loading_shimmer.dart';
-import '../../core/widgets/animations/fade_in_slide.dart';
-import '../../core/widgets/onboarding_overlay.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -33,66 +32,40 @@ class TasksScreenState extends State<TasksScreen> {
   List<Course> _enrolledCourses = [];
   bool _initializing = true;
   String _semesterCode = "";
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _loadCachedData(); // Fast initial load
-    _initData(); // Full refresh
-    // Proactive sync
+    _loadCachedData();
+    _initData();
     SyncService().performFullSync();
-    _showTutorial();
+
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
-  void _showTutorial() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      OnboardingOverlay.show(
-        context: context,
-        featureKey: 'tasks_main',
-        steps: [
-          const OnboardingStep(
-            title: "Never Miss a Deadline",
-            description: "Keep track of your assignments, quizzes, and project deadlines. We'll categorize them for you automatically.",
-            icon: Icons.notifications_active_rounded,
-          ),
-          const OnboardingStep(
-            title: "Proximity Alerts",
-            description: "Get notified 1-3 days before a task is due. We'll pulse the dashboard to keep you on your toes!",
-            icon: Icons.timer_rounded,
-          ),
-          const OnboardingStep(
-            title: "Auto-Exam Sync",
-            description: "When the university releases exam dates, we'll automatically add them to your task list so you can study in advance.",
-            icon: Icons.calendar_month_rounded,
-          ),
-        ],
-      );
-    });
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCachedData() async {
     final userData = OfflineCacheService().getCachedAcademicProfile();
     List<String> enrolledIds = [];
-
     if (userData != null) {
       enrolledIds = ((userData['enrolled_sections'] as List?) ?? [])
           .map((e) => e.toString())
           .toList();
-    } 
-    
-    // Fallback: Check explicitly cached sections if profile is missing
-    if (enrolledIds.isEmpty) {
-      enrolledIds = OfflineCacheService().getCachedEnrolledSections();
     }
-
     if (enrolledIds.isEmpty) return;
 
     List<Course> enrolled = [];
     for (var id in enrolledIds) {
       final data = OfflineCacheService().getCachedCourseDetails(id);
-      if (data != null) {
-        enrolled.add(Course.fromSupabase(data, id));
-      }
+      if (data != null) enrolled.add(Course.fromSupabase(data, id));
     }
 
     if (enrolled.isNotEmpty && mounted) {
@@ -102,13 +75,8 @@ class TasksScreenState extends State<TasksScreen> {
           if (!uniqueCourses.containsKey(c.code)) uniqueCourses[c.code] = c;
         }
         _enrolledCourses = uniqueCourses.values.toList();
-        // Don't set _initializing = false yet, we still want the full refresh
       });
     }
-  }
-
-  void refreshData() {
-    _initData();
   }
 
   Future<void> _initData() async {
@@ -122,10 +90,7 @@ class TasksScreenState extends State<TasksScreen> {
 
       List<Course> enrolled = [];
       if (enrolledIds.isNotEmpty) {
-        enrolled = await _courseRepo.fetchCoursesByIds(
-          _semesterCode,
-          enrolledIds,
-        );
+        enrolled = await _courseRepo.fetchCoursesByIds(_semesterCode, enrolledIds);
       }
 
       final uniqueCourses = <String, Course>{};
@@ -133,12 +98,8 @@ class TasksScreenState extends State<TasksScreen> {
         if (!uniqueCourses.containsKey(c.code)) uniqueCourses[c.code] = c;
       }
 
-      try {
-        final tasks = await _taskRepo.fetchTasks();
-        await _examSyncLogic.syncExams(enrolled, tasks, _semesterCode);
-      } catch (e) {
-        debugPrint("Error syncing exams: $e");
-      }
+      final tasks = await _taskRepo.fetchTasks();
+      await _examSyncLogic.syncExams(enrolled, tasks, _semesterCode);
 
       if (mounted) {
         setState(() {
@@ -154,183 +115,137 @@ class TasksScreenState extends State<TasksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return const Center(child: Text("Please log in"));
-
-    return StreamBuilder<List<Task>>(
-      stream: _taskRepo.getTasksStream(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            _initializing) {
-          return Column(
-            children: [
-              const EWUmateAppBar(title: "All Tasks", showMenu: true),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(20),
-                  itemCount: 6,
-                  itemBuilder: (context, index) => LoadingShimmer.listTile(
-                    margin: const EdgeInsets.only(bottom: 12),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-
-        if (snapshot.hasError) {
-          debugPrint("TasksStream Error: ${snapshot.error}");
-        }
-
-        final tasks = snapshot.data ?? [];
-        tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-
-        final upcoming = tasks.where((t) => !t.isCompleted).toList();
-        final completed = tasks.where((t) => t.isCompleted).toList();
-
-        return Column(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F0F1E),
+        body: Column(
           children: [
-            const EWUmateAppBar(
-              title: "All Tasks",
-              showMenu: true,
+            const EWUmateAppBar(title: "All Tasks", showMenu: true),
+            TabBar(
+              labelColor: Colors.cyanAccent,
+              unselectedLabelColor: Colors.white54,
+              indicatorColor: Colors.cyanAccent,
+              indicatorWeight: 3,
+              dividerColor: Colors.white.withOpacity(0.05),
+              tabs: [
+                _buildTab("Upcoming", Colors.cyanAccent),
+                _buildTab("Overdue", Colors.redAccent),
+                _buildTab("Completed", Colors.greenAccent),
+              ],
             ),
             Expanded(
-              child: Stack(
-                children: [
-                  CustomScrollView(
-                slivers: [
-                  if (tasks.isEmpty && !_initializing)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.task_alt,
-                              size: 64,
-                              color: Colors.white24,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              "No tasks yet",
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
+              child: StreamBuilder<List<Task>>(
+                stream: _taskRepo.getTasksStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting && _initializing) {
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(20),
+                      itemCount: 6,
+                      itemBuilder: (_, __) => LoadingShimmer.listTile(margin: const EdgeInsets.only(bottom: 12)),
+                    );
+                  }
+
+                  final tasks = snapshot.data ?? [];
+                  final now = DateTime.now();
+
+                  // Categorize
+                  final overdue = tasks.where((t) => !t.isCompleted && !t.isMissed && t.dueDate.isBefore(now)).toList();
+                  final upcoming = tasks.where((t) => !t.isCompleted && !t.isMissed && !t.dueDate.isBefore(now)).toList();
+                  final completed = tasks.where((t) => t.isCompleted || t.isMissed).toList();
+
+                  // Sort
+                  overdue.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+                  upcoming.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+                  completed.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+
+                  return Stack(
+                    children: [
+                      TabBarView(
+                        children: [
+                          _buildTaskList(upcoming, "No upcoming tasks", Icons.upcoming),
+                          _buildTaskList(overdue, "No overdue tasks", Icons.error_outline),
+                          _buildTaskList(completed, "No completed tasks", Icons.check_circle_outline),
+                        ],
                       ),
-                    )
-                  else ...[
-                    if (upcoming.isNotEmpty) ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildSectionHeader(
-                            "Upcoming",
-                            upcoming.length,
+                      Positioned(
+                        bottom: 20,
+                        right: 20,
+                        child: FloatingActionButton.extended(
+                          onPressed: () => _showTaskEditor(null),
+                          backgroundColor: Colors.cyanAccent.withValues(alpha: 0.15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            side: BorderSide(color: Colors.cyanAccent.withValues(alpha: 0.4)),
                           ),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => FadeInSlide(
-                              delay: Duration(milliseconds: i * 50),
-                              child: _buildTaskItem(upcoming[i]),
-                            ),
-                            childCount: upcoming.length,
-                          ),
+                          icon: const Icon(Icons.add, color: Colors.cyanAccent),
+                          label: const Text("New Task", style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
-                    if (completed.isNotEmpty) ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 10),
-                        sliver: SliverToBoxAdapter(
-                          child: _buildSectionHeader(
-                            "Completed",
-                            completed.length,
-                          ),
-                        ),
-                      ),
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (ctx, i) => _buildTaskItem(completed[i]),
-                            childCount: completed.length,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-                ],
-              ),
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: FloatingActionButton.extended(
-                  onPressed: () => _showTaskEditor(null),
-                  backgroundColor: Colors.cyanAccent.withOpacity(0.2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(
-                      color: Colors.cyanAccent.withOpacity(0.5),
-                    ),
-                  ),
-                  icon: const Icon(Icons.add, color: Colors.cyanAccent),
-                  label: const Text(
-                    "New Task",
-                    style: TextStyle(
-                      color: Colors.cyanAccent,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-                ],
+                  );
+                },
               ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 
-  // Removed manual _buildAppBar as it's replaced by EWUmateAppBar
+  Widget _buildTab(String label, Color color) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          const SizedBox(width: 4),
+          StreamBuilder<List<Task>>(
+            stream: _taskRepo.getTasksStream(),
+            builder: (context, snapshot) {
+              final tasks = snapshot.data ?? [];
+              final now = DateTime.now();
+              int count = 0;
+              if (label == "Upcoming") {
+                count = tasks.where((t) => !t.isCompleted && !t.isMissed && !t.dueDate.isBefore(now)).length;
+              } else if (label == "Overdue") {
+                count = tasks.where((t) => !t.isCompleted && !t.isMissed && t.dueDate.isBefore(now)).length;
+              } else {
+                count = tasks.where((t) => t.isCompleted || t.isMissed).length;
+              }
 
-  Widget _buildSectionHeader(String title, int count) {
-    return Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+              if (count == 0) return const SizedBox.shrink();
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+                child: Text(count.toString(), style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10)),
+              );
+            },
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaskList(List<Task> items, String emptyMessage, IconData emptyIcon) {
+    if (items.isEmpty && !_initializing) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(emptyIcon, size: 64, color: Colors.white24),
+            const SizedBox(height: 16),
+            Text(emptyMessage, style: const TextStyle(color: Colors.white38)),
+          ],
         ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.cyanAccent.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            count.toString(),
-            style: const TextStyle(
-              color: Colors.cyanAccent,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+      itemCount: items.length,
+      itemBuilder: (context, index) => _buildTaskItem(items[index]),
     );
   }
 
@@ -338,56 +253,19 @@ class TasksScreenState extends State<TasksScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Dismissible(
-        key: Key(task.id),
+        key: Key("task_${task.id}"),
         direction: DismissDirection.endToStart,
         background: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
-          decoration: BoxDecoration(
-            color: Colors.redAccent.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
-          ),
+          decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
           child: const Icon(Icons.delete, color: Colors.redAccent),
         ),
-        confirmDismiss: (dir) async {
-          return await showDialog(
-            context: context,
-            builder: (ctx) => AlertDialog(
-              backgroundColor: const Color(0xFF1A1A2E),
-              title: const Text(
-                "Delete Task?",
-                style: TextStyle(color: Colors.white),
-              ),
-              content: Text(
-                "Are you sure you want to delete '${task.title}'?",
-                style: const TextStyle(color: Colors.white70),
-              ),
-              actions: [
-                TextButton(
-                  child: const Text("Cancel"),
-                  onPressed: () => Navigator.pop(ctx, false),
-                ),
-                TextButton(
-                  child: const Text(
-                    "Delete",
-                    style: TextStyle(color: Colors.redAccent),
-                  ),
-                  onPressed: () {
-                    _taskRepo.deleteTask(task.id);
-                    Navigator.pop(ctx, true);
-                  },
-                ),
-              ],
-            ),
-          );
-        },
+        onDismissed: (_) => _taskRepo.deleteTask(task.id),
         child: TaskCard(
           task: task,
           onTap: () => _showTaskEditor(task),
-          onStatusChange: (val) {
-            _taskRepo.toggleTaskCompletion(task.id, val);
-          },
-          onDelete: () {},
+          onStatusChange: (comp, miss) => _taskRepo.updateTaskStatus(task.id, isCompleted: comp, isMissed: miss),
         ),
       ),
     );
@@ -401,10 +279,7 @@ class TasksScreenState extends State<TasksScreen> {
       builder: (_) => TaskEditorModal(
         availableCourses: _enrolledCourses,
         taskToEdit: task,
-        onTaskSaved: (_) {
-          // Force immediate refresh since web realtime streams can lag
-          if (mounted) setState(() {});
-        },
+        onTaskSaved: (_) => setState(() {}),
       ),
     );
   }

@@ -67,7 +67,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-    const sections = ['broadcast', 'files', 'migration'];
+    const sections = ['broadcast', 'files', 'holidays', 'direct-message'];
     sections.forEach(s => {
         const el = document.getElementById(`section-${s}`);
         const tabEl = document.getElementById(`tab-${s}`);
@@ -156,28 +156,76 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     }
 });
 
-async function runGlobalMigration() {
-    if (!confirm("⚠️ DANGER: EXECUTE FULL SYSTEM RESET?\n\nThis will purge and reschedule ALL notifications. Are you sure?")) return;
-    const btn = document.getElementById('resetBtn');
-    setBtnLoading(btn, true, "Executing Master Reset...");
+// HOLIDAY LOGIC
+document.getElementById('holidayForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('addHolidayBtn');
+    setBtnLoading(btn, true, "Saving Holiday...");
+
+    const data = {
+        name: document.getElementById('holidayName').value,
+        date: document.getElementById('holidayDate').value,
+        secret: currentKey
+    };
 
     try {
-        await fetch(`${BASE_URL}/alert-scheduler`, {
+        const res = await fetch(`${BASE_URL}/admin-holiday`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
                 'apikey': SUPABASE_ANON_KEY
             },
-            body: JSON.stringify({ secret: currentKey, forceReset: true })
+            body: JSON.stringify(data)
         });
-        showAlert("success", "System Reset Complete!", "bi-check-circle-fill");
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Failed to add holiday");
+
+        showAlert("success", `Holiday added to ${json.semester} successfully!`, "bi-check-circle-fill");
+        document.getElementById('holidayForm').reset();
     } catch (err) {
         showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
     } finally {
-        setBtnLoading(btn, false, `<i class="bi bi-radioactive"></i> EXECUTE FULL SYSTEM RESET`);
+        setBtnLoading(btn, false, `<i class="bi bi-calendar-plus-fill"></i> <span class="btn-text">Add Holiday</span>`);
     }
-}
+});
+
+// DIRECT MESSAGE LOGIC
+document.getElementById('dmForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('sendDmBtn');
+    setBtnLoading(btn, true, "Sending Message...");
+
+    const data = {
+        user_id: document.getElementById('dmUserId').value,
+        title: document.getElementById('dmTitle').value,
+        body: document.getElementById('dmBody').value,
+        secret: currentKey
+    };
+
+    try {
+        const res = await fetch(`${BASE_URL}/admin-direct-message`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Failed to send message");
+
+        showAlert("success", "Direct Message sent successfully!", "bi-check-circle-fill");
+        document.getElementById('dmForm').reset();
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-send-fill"></i> <span class="btn-text">Send Message</span>`);
+    }
+});
 
 let currentSemester = "";
 async function fetchCurrentSemester() {

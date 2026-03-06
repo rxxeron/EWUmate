@@ -134,10 +134,16 @@
                     <span class="text-sm font-medium">Data Ingestion</span>
                 </button>
 
-                <button onclick="switchTab('migration')" id="tab-migration" 
+                <button onclick="switchTab('holidays')" id="tab-holidays" 
                     class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
-                    <i class="bi bi-database-gear text-lg"></i>
-                    <span class="text-sm font-medium">System Maintenance</span>
+                    <i class="bi bi-calendar-check text-lg"></i>
+                    <span class="text-sm font-medium">Holidays</span>
+                </button>
+
+                <button onclick="switchTab('direct-message')" id="tab-direct-message" 
+                    class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                    <i class="bi bi-person-lines-fill text-lg"></i>
+                    <span class="text-sm font-medium">Direct Message</span>
                 </button>
             </nav>
 
@@ -348,64 +354,79 @@
                     </div>
                 </div>
 
-                <!-- ============ SECTION: MAINTENANCE ============ -->
-                <div id="section-migration" class="hidden fade-in max-w-4xl mx-auto space-y-6">
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Migration Card -->
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                             <div class="flex items-center gap-4 mb-4">
-                                <div class="bg-blue-100 p-3 rounded-lg text-blue-600">
-                                    <i class="bi bi-arrow-repeat text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-900">User Schedule Sync</h4>
-                                    <p class="text-xs text-gray-500">Syncs enrolment data to weekly calendars.</p>
-                                </div>
-                             </div>
-                             <p class="text-sm text-gray-600 mb-6">
-                                Corrects schedule mismatches for all users. Updates 'enrolledSections' to 'weeklySchedule'.
-                             </p>
-                             <button onclick="runMasterSync()" id="syncBtn" 
-                                class="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 rounded-lg transition">
-                                <span class="btn-text">Start Sync</span>
-                             </button>
+                <!-- ============ SECTION: HOLIDAYS ============ -->
+                <div id="section-holidays" class="hidden fade-in max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="mb-6 pb-4 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900">Holiday Management</h3>
+                            <p class="text-gray-500 text-sm">Add custom holidays to the active semester calendar.</p>
                         </div>
 
-                        <!-- Stats Card -->
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                            <div class="flex items-center gap-4 mb-4">
-                               <div class="bg-purple-100 p-3 rounded-lg text-purple-600">
-                                   <i class="bi bi-calculator text-xl"></i>
-                               </div>
-                               <div>
-                                   <h4 class="font-bold text-gray-900">Stats Recalculation</h4>
-                                   <p class="text-xs text-gray-500">Recalculates CGPA/Credits for everyone.</p>
-                               </div>
+                        <form id="holidayForm" class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Holiday Name</label>
+                                    <input type="text" id="holidayName" required 
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition" 
+                                        placeholder="e.g. Eid-ul-Fitr (Expected)">
+                                </div>
+                                
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                    <input type="date" id="holidayDate" required 
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition">
+                                </div>
                             </div>
-                            <p class="text-sm text-gray-600 mb-6">
-                               Force updates academic statistics based on latest grade sheets.
-                            </p>
-                            <button onclick="runStatsCalc()" id="statsBtn" 
-                               class="w-full border border-purple-600 text-purple-600 hover:bg-purple-50 font-medium py-2 rounded-lg transition">
-                               <span class="btn-text">Recalculate Stats</span>
-                            </button>
-                       </div>
+                            
+                            <div class="pt-2">
+                                <button type="submit" id="addHolidayBtn" 
+                                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                                    <i class="bi bi-calendar-plus-fill"></i> <span class="btn-text">Add Holiday</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
 
-                        <!-- Admin Config -->
-                       <div class="col-span-1 md:col-span-2 bg-red-50 p-6 rounded-2xl border border-red-100">
-                            <div class="flex items-center gap-3 mb-2">
-                                <i class="bi bi-exclamation-triangle-fill text-red-600 text-xl"></i>
-                                <h4 class="font-bold text-red-800">Danger Zone</h4>
+                <!-- ============ SECTION: DIRECT MESSAGE ============ -->
+                <div id="section-direct-message" class="hidden fade-in max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="mb-6 pb-4 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900">Direct Message</h3>
+                            <p class="text-gray-500 text-sm">Send a notification to a specific user.</p>
+                        </div>
+
+                        <form id="dmForm" class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">User ID (UUID)</label>
+                                    <input type="text" id="dmUserId" required 
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 font-mono text-sm outline-none transition" 
+                                        placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000">
+                                </div>
+
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Notification Title</label>
+                                    <input type="text" id="dmTitle" required 
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition" 
+                                        placeholder="e.g. Action Required">
+                                </div>
+                                
+                                <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Message Body</label>
+                                    <textarea id="dmBody" required rows="3" 
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition resize-none" 
+                                        placeholder="Detailed message content..."></textarea>
+                                </div>
                             </div>
-                            <p class="text-sm text-red-600 mb-6">
-                                Critical system reset. This will re-sync schedules, recalculate all stats, purge the notification queue, and reschedule all notifications from scratch.
-                            </p>
-                            <button onclick="runGlobalMigration()" id="resetBtn" 
-                                class="bg-red-600 text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-red-700 hover:shadow-lg transition-all flex items-center gap-2 w-full md:w-auto justify-center">
-                                <i class="bi bi-radioactive"></i> EXECUTE FULL SYSTEM RESET
-                            </button>
-                       </div>
+                            
+                            <div class="pt-2">
+                                <button type="submit" id="sendDmBtn" 
+                                    class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
+                                    <i class="bi bi-send-fill"></i> <span class="btn-text">Send Message</span>
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 

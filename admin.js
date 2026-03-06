@@ -164,7 +164,8 @@ document.getElementById('holidayForm').addEventListener('submit', async (e) => {
 
     const data = {
         name: document.getElementById('holidayName').value,
-        date: document.getElementById('holidayDate').value,
+        startDate: document.getElementById('holidayStartDate').value,
+        endDate: document.getElementById('holidayEndDate').value,
         secret: currentKey
     };
 

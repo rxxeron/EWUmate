@@ -103,4 +103,8 @@ We welcome contributions to improve EWUmate. To contribute:
 5. Open a Pull Request.
 
 ---
+<<<<<<< HEAD
 *Built to empower the students of East West University.*
+=======
+*Built to empower the students of East West University.*
+>>>>>>> 3f989da (docs: add comprehensive README, Architecture Report, and Release Features)

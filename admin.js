@@ -84,11 +84,23 @@ document.getElementById('broadcastForm').addEventListener('submit', async (e) =>
     setBtnLoading(btn, true, "Transmitting...");
 
     const isScheduled = document.getElementById('scheduleToggle').checked;
+
+    // Fix: Convert local HTML datetime string into absolute UTC ISOString.
+    let scheduledAtLocal = null;
+    if (isScheduled) {
+        const localTimeString = document.getElementById('scheduleTime').value;
+        if (localTimeString) {
+            // Note: input type="datetime-local" returns something like "2026-03-10T11:00"
+            // Passing it straight to `new Date()` parses it in the local timezone of the admin's browser.
+            scheduledAtLocal = new Date(localTimeString).toISOString();
+        }
+    }
+
     const data = {
         title: document.getElementById('title').value,
         body: document.getElementById('body').value,
         link: document.getElementById('link').value,
-        scheduledAt: isScheduled ? document.getElementById('scheduleTime').value : null,
+        scheduledAt: scheduledAtLocal,
         secret: currentKey
     };
 

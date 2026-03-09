@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart';
 import '../router/app_router.dart';
 
 class RealtimeNotificationService {
@@ -81,9 +82,28 @@ class RealtimeNotificationService {
       if (message.notification != null) {
         final title = message.notification!.title ?? 'New Notification';
         final body = message.notification!.body ?? '';
+        final link = message.data['link'] as String? ?? message.data['url'] as String?;
 
-        _showNativeNotification(title, body);
-        showNotificationOverlay(title, body);
+        _showNativeNotification(title, body, payload: link);
+        showNotificationOverlay(title, body, link: link);
+      }
+    });
+
+    // 5. Handle taps on notification when app is in background
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      final link = message.data['link'] as String? ?? message.data['url'] as String?;
+      if (link != null && link.isNotEmpty) {
+        _launchUrl(link);
+      }
+    });
+
+    // 6. Handle taps on notification when app was completely terminated
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        final link = message.data['link'] as String? ?? message.data['url'] as String?;
+        if (link != null && link.isNotEmpty) {
+          Future.delayed(const Duration(milliseconds: 500), () => _launchUrl(link));
+        }
       }
     });
 
@@ -213,6 +233,9 @@ class RealtimeNotificationService {
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         debugPrint('Notification clicked: ${response.payload}');
+        if (response.payload != null && response.payload!.isNotEmpty) {
+          _launchUrl(response.payload!);
+        }
       },
     );
 
@@ -227,7 +250,7 @@ class RealtimeNotificationService {
     }
   }
 
-  Future<void> _showNativeNotification(String title, String body) async {
+  Future<void> _showNativeNotification(String title, String body, {String? payload}) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'ewumate_alerts_channel',
@@ -245,12 +268,26 @@ class RealtimeNotificationService {
       id: DateTime.now().millisecond, // unique ID
       title: title,
       body: body,
+      payload: payload,
       notificationDetails: platformChannelSpecifics,
     );
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    try {
+      final Uri url = Uri.parse(urlString);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint('[RealtimeNotification] Could not launch $urlString');
+      }
+    } catch (e) {
+      debugPrint('[RealtimeNotification] Error launching url: $e');
+    }
+  }
+
   // --- Overlay Logic ---
-  void showNotificationOverlay(String title, String body) {
+  void showNotificationOverlay(String title, String body, {String? link}) {
     final context = AppRouter.rootNavigatorKey.currentContext;
     if (context == null) return;
 
@@ -306,7 +343,7 @@ class RealtimeNotificationService {
 
               // Body
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                padding: EdgeInsets.fromLTRB(20, 20, 20, link != null ? 10 : 30),
                 child: Text(
                   body,
                   style: const TextStyle(
@@ -314,6 +351,38 @@ class RealtimeNotificationService {
                   textAlign: TextAlign.left,
                 ),
               ),
+              if (link != null) ...[
+                const Divider(color: Colors.white12, height: 1),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton.icon(
+                        style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                        icon: const Icon(Icons.open_in_new, size: 18),
+                        label: const Text("Open Link"),
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          _launchUrl(link);
+                        },
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.cyanAccent,
+                          backgroundColor: Colors.cyanAccent.withValues(alpha: 0.1),
+                        ),
+                        icon: const Icon(Icons.download, size: 18),
+                        label: const Text("Download"),
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          _launchUrl(link);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

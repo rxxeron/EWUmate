@@ -5,6 +5,7 @@ import 'notification_repository.dart';
 import '../../core/models/notification_model.dart';
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/glass_kit.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -60,13 +61,58 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.dispose();
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    try {
+      final Uri url = Uri.parse(urlString);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        debugPrint('Could not launch $urlString');
+      }
+    } catch (e) {
+      debugPrint('Error launching url: $e');
+    }
+  }
+
+  Future<void> _confirmClearAll() async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text("Clear Notifications", style: TextStyle(color: Colors.white)),
+        content: const Text("Are you sure you want to delete all personal notifications? This cannot be undone.", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text("Cancel", style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text("Delete All", style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _repo.deleteAllNotifications();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const EWUmateAppBar(
+        EWUmateAppBar(
           title: "Notifications",
           showMenu: true,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.delete_sweep, color: Colors.white70),
+              tooltip: 'Clear All',
+              onPressed: _confirmClearAll,
+            ),
+          ],
         ),
         Expanded(
           child: StreamBuilder<List<AppNotification>>(
@@ -146,42 +192,81 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             BoxShadow(
                 color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
           ]),
-      child: ListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 24),
-        ),
-        title: Text(
-          n.title,
-          style: TextStyle(
-              color: Colors.white,
-              fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              n.body,
-              style: const TextStyle(color: Colors.white70),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(height: 8),
-            Text(
-              _formatDate(n.createdAt),
-              style: const TextStyle(color: Colors.white38, fontSize: 12),
+            title: Text(
+              n.title,
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: n.isRead ? FontWeight.normal : FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  n.body,
+                  style: const TextStyle(color: Colors.white70),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _formatDate(n.createdAt),
+                  style: const TextStyle(color: Colors.white38, fontSize: 12),
+                ),
+              ],
+            ),
+            trailing: n.type == NotificationType.broadcast 
+                ? null 
+                : IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.white54, size: 20),
+                    onPressed: () {
+                      _repo.deleteNotification(n.id);
+                    },
+                  ),
+            onTap: () {
+              // Mark as read logic
+              _repo.markAsRead(n.id);
+            },
+          ),
+          if (n.link != null && n.link!.isNotEmpty) ...[
+            const Divider(color: Colors.white12, height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: Colors.white70),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text("Open Link", style: TextStyle(fontSize: 13)),
+                    onPressed: () => _launchUrl(n.link!),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.cyanAccent,
+                      backgroundColor: Colors.cyanAccent.withValues(alpha: 0.1),
+                    ),
+                    icon: const Icon(Icons.download, size: 16),
+                    label: const Text("Download", style: TextStyle(fontSize: 13)),
+                    onPressed: () => _launchUrl(n.link!),
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
-        onTap: () {
-          // Mark as read logic
-          _repo.markAsRead(n.id);
-        },
+        ],
       ),
     );
   }

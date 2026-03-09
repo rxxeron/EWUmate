@@ -49,4 +49,33 @@ class NotificationRepository {
       // Ignore
     }
   }
+
+  Future<void> deleteNotification(String id) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      await _supabase
+          .from('notifications')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      await _supabase
+          .from('notifications')
+          .delete()
+          .eq('user_id', user.id);
+    } catch (e) {
+      // Ignore
+    }
+  }
 }

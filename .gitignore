@@ -93,3 +93,15 @@ final_issues.txt
 build_log.txt
 build_error_log.txt
 certification_evidence/*.apk
+
+# Large and Internal Folders
+university_erp/
+EWUerp/
+
+# Internal Docs and Scripts
+clean_docs.md
+cleanup.js
+ewu_full_scrape.jsonl
+debug-info/
+build/
+

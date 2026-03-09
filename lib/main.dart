@@ -141,6 +141,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp.router(
       title: 'EWUmate',
+      debugShowCheckedModeBanner: false,
       themeMode: themeProvider.themeMode,
       theme: ThemeData(
         brightness: Brightness.light,

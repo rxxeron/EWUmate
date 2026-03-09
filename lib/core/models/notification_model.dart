@@ -7,6 +7,7 @@ class AppNotification {
   final DateTime createdAt;
   final bool isRead;
   final NotificationType type;
+  final String? link;
 
   AppNotification({
     required this.id,
@@ -15,6 +16,7 @@ class AppNotification {
     required this.createdAt,
     this.isRead = false,
     this.type = NotificationType.unknown,
+    this.link,
   });
 
   factory AppNotification.fromMap(Map<String, dynamic> map, String id) {
@@ -39,6 +41,7 @@ class AppNotification {
       createdAt: parseDate(map['createdAt']),
       isRead: map['read'] ?? false,
       type: parseType(map['type']),
+      link: map['link'] ?? map['url'],
     );
   }
 }

@@ -244,21 +244,17 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
         const tableName = `calendar_${semesterId.toLowerCase()}`;
 
         const records = data.map(event => ({
-          doc_id: event.docId,
           date: event.date,
-          day: event.day,
-          event: event.event,
+          name: event.event || event.name,
           type: event.type,
           semester: event.semester
         }));
 
-        // Delete existing
-        await supabase.from(tableName).delete().neq('doc_id', '__DUMMY__');
-
-        // Insert
+        // Delete existing (Clear and refill since we don't have a stable doc_id anymore)
+        await supabase.from(tableName).delete().neq('id', '00000000-0000-0000-0000-000000000000');
         const { data: inserted, error } = await supabase
           .from(tableName)
-          .upsert(records, { onConflict: 'doc_id' });
+          .insert(records);
 
         if (error) {
           results.errors = records.length;

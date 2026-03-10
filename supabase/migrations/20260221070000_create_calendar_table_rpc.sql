@@ -6,9 +6,7 @@ BEGIN
         CREATE TABLE IF NOT EXISTS public.calendar_%s (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             date TEXT,
-            day TEXT,
             name TEXT,
-            event TEXT,
             type TEXT,
             semester TEXT,
             created_at TIMESTAMPTZ DEFAULT NOW()

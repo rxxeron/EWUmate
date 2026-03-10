@@ -52,12 +52,6 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     folder = file_name.split("/")[0].lower() if "/" in file_name else ""
     basename = os.path.basename(file_name)
 
-    if folder != "advisingschedule" and not file_name.lower().endswith(".pdf"):
-        return func.HttpResponse(
-            json.dumps({"status": "skipped", "reason": "Not a PDF file (and not an advising schedule)"}),
-            status_code=200, mimetype="application/json"
-        )
-
     logging.info(f"Folder: '{folder}', File: '{basename}'")
 
     # ── Route 1: Faculty List ──────────────────────────────────────────
@@ -71,7 +65,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         return func.HttpResponse(json.dumps(result), status_code=200, mimetype="application/json")
 
     # ── Route 2: Academic Calendar ─────────────────────────────────────
-    if folder == "calendar":
+    if folder in ("calendar", "academiccalendar"):
         logging.info(f"→ parse_calendar: {file_name}")
         try:
             result = _do_parse_calendar(file_name)

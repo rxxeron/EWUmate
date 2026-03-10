@@ -726,7 +726,7 @@ def _get_semester_from_path(file_path: str) -> tuple:
     
     sem = match.group(1).capitalize()
     year = match.group(2)
-    is_dept = "(PHRM_LLB)" in filename.upper() or "(LAW_PHRM)" in filename.upper()
+    is_dept = any(kw in filename.upper() for kw in ["PHRM", "LAW", "LLB"])
     sem_code = f"{sem}{year}"
     table_sem_code = f"{sem_code}_phrm_llb" if is_dept else sem_code
         
@@ -860,29 +860,50 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
         existing_data = existing.data if existing else None
         existing_curr_code = existing_data.get("current_semester_code") if existing_data else None
 
-        # 3. Extract milestones (Picking earliest dates found)
-        advising_start_date = None
-        classes_start_date = None
+        # 3. Extract milestones (Picking earliest/latest dates found)
+        advising_start = None
+        classes_start = None
+        grades_start = None
+        grades_deadline = None
+        u_reopens = None
+        next_sem_start = None
         
         for evt in events:
             evt_name = evt.get("name", "").lower()
             evt_date = evt.get("date")
-            if not evt_date: continue
+            if not evt_date or not isinstance(evt_date, str) or len(evt_date) < 10: continue
 
             if "online advising" in evt_name or "advising of courses" in evt_name:
-                if not advising_start_date or evt_date < advising_start_date:
-                    advising_start_date = evt_date
+                if not advising_start or evt_date < advising_start:
+                    advising_start = evt_date
 
             if "first day of classes" in evt_name or "classes begin" in evt_name:
-                if not classes_start_date or evt_date < classes_start_date:
-                    classes_start_date = evt_date
+                # If it mentions "next" or a future semester, it's for next sem
+                if "summer" in evt_name or "fall" in evt_name or "spring" in evt_name:
+                    if not next_sem_start or evt_date < next_sem_start:
+                        next_sem_start = evt_date
+                else:
+                    if not classes_start or evt_date < classes_start:
+                        classes_start = evt_date
+
+            if "grade submission" in evt_name:
+                if not grades_start or evt_date < grades_start:
+                    grades_start = evt_date
+                if not grades_deadline or evt_date > grades_deadline:
+                    grades_deadline = evt_date
+
+            if "university reopens" in evt_name:
+                if not u_reopens or evt_date < u_reopens:
+                    u_reopens = evt_date
 
         # 4. Integrate Metadata from Parser (High Precision)
         meta = metadata or {}
         
         # 5. Decide what to update
         payload = {"semester_type": semester_type, "is_active": True, "updated_at": _dt.now().isoformat()}
-        
+        if existing_data and 'id' in existing_data:
+            payload['id'] = existing_data['id']
+            
         is_early_upload = False
         if curr_code and existing_curr_code and curr_code != existing_curr_code:
             is_early_upload = True
@@ -893,38 +914,31 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
             payload["next_semester"] = curr_sem
             payload["next_semester_code"] = curr_code
             
-            # Map precise metadata for NEXT semester
-            payload["upcoming_semester_start_date"] = meta.get("upcomingSemesterStartDate")
-            payload["switch_date"] = meta.get("switchDate")
-            payload["grade_submission_start"] = meta.get("gradeSubmissionStart")
-            payload["grade_submission_deadline"] = meta.get("gradeSubmissionDeadline")
-            payload["advising_start_date"] = meta.get("advisingStartDate")
+            # Map precise metadata with fallbacks
+            payload["upcoming_semester_start_date"] = meta.get("upcomingSemesterStartDate") or next_sem_start
+            payload["switch_date"] = meta.get("switchDate") or u_reopens
+            payload["grade_submission_start"] = meta.get("gradeSubmissionStart") or grades_start
+            payload["grade_submission_deadline"] = meta.get("gradeSubmissionDeadline") or grades_deadline
+            payload["advising_start_date"] = meta.get("advisingStartDate") or advising_start
         else:
             payload["current_semester"] = curr_sem
             payload["current_semester_code"] = curr_code
             
-            # For current semester, update the start date if found
-            if meta.get("currentSemesterStartDate"):
-                payload["current_semester_start_date"] = meta.get("currentSemesterStartDate")
+            # Map current milestones
+            payload["current_semester_start_date"] = meta.get("currentSemesterStartDate") or classes_start
+            payload["advising_start_date"] = meta.get("advisingStartDate") or advising_start
+            payload["grade_submission_start"] = meta.get("gradeSubmissionStart") or grades_start
+            payload["grade_submission_deadline"] = meta.get("gradeSubmissionDeadline") or grades_deadline
+            payload["switch_date"] = meta.get("switchDate") or u_reopens
 
-            # **[Always save impending semester metadata if available in the text block]**
+            # Impending semester metadata if available
             if meta.get("nextSemester"):
                  payload["next_semester"] = meta.get("nextSemester")
                  match = re.search(r"(Spring|Summer|Fall)\s*(\d{4})", meta.get("nextSemester"), re.IGNORECASE)
                  if match: payload["next_semester_code"] = f"{match.group(1).capitalize()}{match.group(2)}"
                  
-            if meta.get("upcomingSemesterStartDate"):
-                 payload["upcoming_semester_start_date"] = meta.get("upcomingSemesterStartDate")
-
-            # Fallback/Update advising if found in current calendar
-            if meta.get("advisingStartDate"):
-                 payload["advising_start_date"] = meta.get("advisingStartDate")
-
-            # Update windows if they are from the current calendar and missing
-            if not existing_data or not existing_data.get("grade_submission_deadline"):
-                 payload["grade_submission_start"] = meta.get("gradeSubmissionStart")
-                 payload["grade_submission_deadline"] = meta.get("gradeSubmissionDeadline")
-                 payload["switch_date"] = meta.get("switchDate")
+            if meta.get("upcomingSemesterStartDate") or next_sem_start:
+                 payload["upcoming_semester_start_date"] = meta.get("upcomingSemesterStartDate") or next_sem_start
             
         logging.info(f"Upserting active_semester payload: {payload}")
         sb.table("active_semester").upsert(payload).execute()

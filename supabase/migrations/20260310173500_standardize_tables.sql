@@ -41,7 +41,6 @@ BEGIN
     EXECUTE format('
         CREATE TABLE IF NOT EXISTS public.calendar_%s (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            doc_id TEXT UNIQUE,
             date TEXT,
             day TEXT,
             name TEXT,

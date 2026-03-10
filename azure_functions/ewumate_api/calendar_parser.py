@@ -182,9 +182,7 @@ def parse_calendar_pdf(pdf_file, debug=False):
                       metadata["nextSemester"] = f"{match.group(1)} {match.group(2)}"
             
             unique_str = f"{metadata.get('currentSemester')}|{date}|{full_event}"
-            evt_hash = hashlib.md5(unique_str.encode()).hexdigest()[:12]
-            
-            etype = "Holiday" if "holiday" in full_event.lower() and "academic" not in full_event.lower() else "Academic"
+            # etype logic...
             if "holiday" in full_event.lower(): etype = "Holiday" 
 
             # Standardize event date if possible
@@ -195,7 +193,9 @@ def parse_calendar_pdf(pdf_file, debug=False):
 
             events.append({
                 "date": std_date,
-                "name": full_event, 
+                "day": day,
+                "name": full_event,
+                "event": full_event, # Keep for compatibility
                 "semester": metadata.get("currentSemester"),
                 "type": etype,
             })

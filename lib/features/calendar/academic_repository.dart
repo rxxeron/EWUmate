@@ -212,7 +212,7 @@ class AcademicRepository {
       if (tableName.contains('_phrm_llb')) {
         // Fallback to standard if departmental table doesn't exist
         debugPrint("Dept calendar $tableName not found, falling back to standard.");
-        return _fetchHolidaysFromSupabase(semesterCode); 
+        return _fetchHolidaysFromSupabase(semesterCode, forceStandard: true); 
       }
       debugPrint("Error fetching holidays: $e");
       return [];

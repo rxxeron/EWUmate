@@ -64,7 +64,9 @@ serve(async (req: Request) => {
     // Extract semester from filename (e.g., "Faculty List Spring 2026.pdf" -> "Spring2026")
     // Patterns: "Spring 2026", "Spring2026", "Summer 2026", "Fall 2026"
     let semesterId = providedSemesterId;
+    let baseSemesterId = semesterId; // Clean code for active_semester
     let prettySemester = "";
+    let semesterType = 'tri';
 
     if (filename) {
       const match = filename.match(/(Spring|Summer|Fall)\s*(\d{4})/i);
@@ -78,9 +80,13 @@ serve(async (req: Request) => {
         const deptMatch = filename.match(/\((PHRM_LLB|LAW_PHRM)\)/i);
         if (deptMatch) {
           semesterId = `${extractedSemId}_phrm_llb`;
-          console.log(`Detected departmental calendar. Updating semesterId to: ${semesterId}`);
-        } else if (!semesterId) { // Use extracted semester if not provided and no departmental suffix
+          baseSemesterId = extractedSemId;
+          semesterType = 'bi';
+          console.log(`Detected departmental calendar. Table semesterId: ${semesterId}, Base: ${baseSemesterId}`);
+        } else {
           semesterId = extractedSemId;
+          baseSemesterId = extractedSemId;
+          semesterType = 'tri';
         }
       }
     }
@@ -137,7 +143,7 @@ serve(async (req: Request) => {
     let insertResults = null;
     if (saveToDatabase && parsedData.length > 0) {
       console.log(`Saving ${parsedData.length} items to database...`);
-      insertResults = await saveToDatabase_func(supabase, type, parsedData, semesterId, prettySemester, filename);
+      insertResults = await saveToDatabase_func(supabase, type, parsedData, semesterId, prettySemester, filename, baseSemesterId, semesterType);
     }
 
     const totalTime = Date.now() - startTime;
@@ -184,7 +190,7 @@ serve(async (req: Request) => {
 /**
  * Save parsed data to appropriate database tables
  */
-async function saveToDatabase_func(supabase: any, type: string, data: any[], semesterId?: string, prettySemester?: string, filename?: string) {
+async function saveToDatabase_func(supabase: any, type: string, data: any[], semesterId?: string, prettySemester?: string, filename?: string, baseSemesterId?: string, semesterType: string = 'tri') {
   const results = { saved: 0, errors: 0, details: [] as any[] };
 
   try {
@@ -329,16 +335,14 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
         }
 
         // Update active_semester table (Replacing config entries)
-        if (prettySemester && semesterId) {
-          const semesterType = semesterId.includes('_') ? 'bi' : 'tri';
-          const currentCode = semesterId; // e.g. "Spring2026"
+        if (prettySemester && baseSemesterId) {
+          const currentCode = baseSemesterId; // Clean code: e.g. "Spring2026" (not Spring2026_phrm_llb)
 
           let nextCode = null;
           if (nextSemesterFound) {
             const match = nextSemesterFound.match(/(Spring|Summer|Fall)\s*(\d{4})/i);
             if (match) {
               nextCode = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}${match[2]}`;
-              if (semesterType === 'bi') nextCode = `${nextCode}_phrm_llb`;
             }
           }
 
@@ -354,7 +358,7 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
             updated_at: new Date().toISOString()
           }, { onConflict: 'semester_type' });
 
-          console.log(`✅ active_semester table updated for cycle: ${semesterType}`);
+          console.log(`✅ active_semester table updated for cycle: ${semesterType} with clean code: ${currentCode}`);
         }
 
         break;

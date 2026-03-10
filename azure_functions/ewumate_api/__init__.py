@@ -1036,6 +1036,33 @@ def _do_parse_advising(file_path: str) -> dict:
         for i in range(0, len(slots), 100):
             sb.table(table_name).insert(slots[i:i+100]).execute()
             
+        # [NEW] Trigger the Supabase Edge Function to match and assign advising slots to user profiles
+        try:
+            import urllib.request
+            import urllib.parse
+            import json
+            
+            edge_func_url = f"{SUPABASE_URL}/functions/v1/match-advising"
+            req_data = json.dumps({"semester": table_sem_code.lower()}).encode("utf-8")
+            edge_req = urllib.request.Request(
+                edge_func_url,
+                data=req_data,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}"
+                },
+                method="POST"
+            )
+            
+            try:
+                urllib.request.urlopen(edge_req, timeout=10)
+                logging.info(f"Successfully triggered match-advising for {table_sem_code}")
+            except Exception as e:
+                logging.warning(f"Timeout or error invoking match-advising Edge Function: {str(e)}")
+                
+        except Exception as e:
+            logging.error(f"Failed to prepare match-advising invocation: {str(e)}")
+            
         return {"status": "ok", "semester": pretty_sem, "table": table_name, "count": len(slots)}
     except Exception as e:
         logging.exception("_do_parse_advising failed")

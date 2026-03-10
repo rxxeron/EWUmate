@@ -114,9 +114,16 @@ def _parse_criteria(criteria):
         max_c = max(v1, v3)
     
     # Departments
-    known_depts = ["CSE", "EEE", "ECE", "BBA", "ECO", "ENG", "SOC", "GEB", "PHR", "B.PHARM", "LAW", "MATH", "POP", "MPS", "IS", "PPHS", "ICE", "DSA", "CE"]
+    known_depts = [
+        "CSE", "EEE", "ECE", "BBA", "ECO", "ENG", "SOC", "GEB", "PHR", "B.PHARM", 
+        "LAW", "MATH", "POP", "MPS", "IS", "PPHS", "ICE", "DSA", "CE", "EEE", "PHARMACY"
+    ]
     for d in known_depts:
-        if re.search(r"\b" + re.escape(d.lower()) + r"\b", criteria_lower):
+        # Use word boundaries and handle multi-word/aliased departments
+        pattern = r"\b" + re.escape(d.lower()) + r"\b"
+        if d == "B.PHARM": pattern = r"b\.?\s?pharm"
+        
+        if re.search(pattern, criteria_lower, re.IGNORECASE):
             target_depts.append(d)
             
-    return min_c, max_c, target_depts
+    return min_c, max_c, list(set(target_depts)) # Unique depts

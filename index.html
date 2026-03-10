@@ -359,6 +359,18 @@
                                     <p class="text-xs text-gray-500 mt-1">Leave empty to use auto-generated name.</p>
                                 </div>
 
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Target
+                                        Department</label>
+                                    <select id="departmentSelect" onchange="suggestFilename()"
+                                        class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 outline-none transition">
+                                        <option value="default">University (Standard)</option>
+                                        <option value="phrm_llb">Pharmacy & Law (Specialized)</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">Specialized calendars will use _phrm_llb
+                                        tables.</p>
+                                </div>
+
                                 <div
                                     class="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:bg-gray-50 hover:border-primary-400 transition text-center cursor-pointer relative">
                                     <input type="file" id="fileInput"

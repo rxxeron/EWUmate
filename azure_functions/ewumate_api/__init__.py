@@ -727,12 +727,10 @@ def _get_semester_from_path(file_path: str) -> tuple:
     sem = match.group(1).capitalize()
     year = match.group(2)
     is_dept = "(PHRM_LLB)" in filename.upper() or "(LAW_PHRM)" in filename.upper()
-    
     sem_code = f"{sem}{year}"
-    if is_dept:
-        sem_code = f"{sem_code}_phrm_llb"
+    table_sem_code = f"{sem_code}_phrm_llb" if is_dept else sem_code
         
-    return sem_code, f"{sem} {year}", filename, is_dept
+    return sem_code, table_sem_code, f"{sem} {year}", filename, is_dept
 
 def handle_parse_faculty(body: dict) -> dict:
     """Manual trigger: { "file_path": "facultylist/Spring 2026.pdf" }"""
@@ -761,10 +759,10 @@ def handle_parse_advising(body: dict) -> dict:
 # ─── Logic: Faculty List (Course Schedule) ───────────────────────────
 
 def _do_parse_faculty(file_path: str) -> dict:
-    sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
+    sem_code, table_sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
     if not sem_code: return {"error": f"Semester not found in filename: {file_path}"}
     
-    table_name = f"courses_{sem_code.lower()}"
+    table_name = f"courses_{table_sem_code.lower()}"
     sb = _get_supabase()
 
     try:
@@ -778,7 +776,7 @@ def _do_parse_faculty(file_path: str) -> dict:
         if not courses: return {"status": "warning", "message": "No courses found."}
         
         # Create table if it doesn't exist (idempotent RPC)
-        sb.rpc("create_course_table", {"p_semester_code": sem_code.lower()}).execute()
+        sb.rpc("create_course_table", {"p_semester_code": table_sem_code.lower()}).execute()
         # Clear ALL existing data (table is per-semester, no filter needed)
         sb.table(table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
         
@@ -793,7 +791,7 @@ def _do_parse_faculty(file_path: str) -> dict:
 # ─── Logic: Academic Calendar ────────────────────────────────────────
 
 def _do_parse_calendar(file_path: str) -> dict:
-    sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
+    sem_code, table_sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
     # Note: Calendar usually contains semester IN content, but we use filename as backup
     
     sb = _get_supabase()
@@ -811,13 +809,13 @@ def _do_parse_calendar(file_path: str) -> dict:
             match = re.search(r"(Spring|Summer|Fall)\s*(\d{4})", detected_sem, re.IGNORECASE)
             if match:
                 sem_code = f"{match.group(1).capitalize()}{match.group(2)}"
-                if is_dept: sem_code = f"{sem_code}_phrm_llb"
+                table_sem_code = f"{sem_code}_phrm_llb" if is_dept else sem_code
                 pretty_sem = f"{match.group(1).capitalize()} {match.group(2)}"
         
         if not sem_code: return {"error": "Semester not detected from filename or content."}
-        table_name = f"calendar_{sem_code.lower()}"
+        table_name = f"calendar_{table_sem_code.lower()}"
         
-        sb.rpc("create_calendar_table", {"p_semester_code": sem_code.lower()}).execute()
+        sb.rpc("create_calendar_table", {"p_semester_code": table_sem_code.lower()}).execute()
         # Clear ALL rows in the table (table is per-semester, so no filter needed)
         # Previous bug: delete().eq("semester", "Spring2026") missed rows stored as "Spring 2026"
         sb.table(table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
@@ -944,10 +942,10 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
 # ─── Logic: Exam Schedule ───────────────────────────────────────────
 
 def _do_parse_exam(file_path: str) -> dict:
-    sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
+    sem_code, table_sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
     if not sem_code: return {"error": f"Semester not found in filename: {file_path}"}
     
-    table_name = f"exams_{sem_code.lower()}"
+    table_name = f"exams_{table_sem_code.lower()}"
     sb = _get_supabase()
 
     try:
@@ -958,7 +956,7 @@ def _do_parse_exam(file_path: str) -> dict:
         if not exams: return {"status": "warning", "message": "No exam mappings found."}
         
         # Create table if it doesn't exist (idempotent RPC)
-        sb.rpc("create_exam_table", {"p_semester_code": sem_code.lower()}).execute()
+        sb.rpc("create_exam_table", {"p_semester_code": table_sem_code.lower()}).execute()
         # Clear ALL existing data (table is per-semester, no filter needed)
         sb.table(table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
         
@@ -972,7 +970,7 @@ def _do_parse_exam(file_path: str) -> dict:
             import json
             
             edge_func_url = f"{SUPABASE_URL}/functions/v1/match-exams"
-            req_data = json.dumps({"semester": sem_code.lower()}).encode("utf-8")
+            req_data = json.dumps({"semester": table_sem_code.lower()}).encode("utf-8")
             edge_req = urllib.request.Request(
                 edge_func_url,
                 data=req_data,
@@ -1000,10 +998,10 @@ def _do_parse_exam(file_path: str) -> dict:
 # ─── Logic: Advising Schedule ────────────────────────────────────────
 
 def _do_parse_advising(file_path: str) -> dict:
-    sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
+    sem_code, table_sem_code, pretty_sem, filename, is_dept = _get_semester_from_path(file_path)
     if not sem_code: return {"error": f"Semester not found in filename: {file_path}"}
     
-    table_name = f"advising_{sem_code.lower()}"
+    table_name = f"advising_{table_sem_code.lower()}"
     sb = _get_supabase()
 
     try:
@@ -1017,7 +1015,7 @@ def _do_parse_advising(file_path: str) -> dict:
         if not slots: return {"status": "warning", "message": "No advising slots found."}
         
         # Create table if it doesn't exist (idempotent RPC)
-        sb.rpc("create_advising_table", {"p_semester_code": sem_code.lower()}).execute()
+        sb.rpc("create_advising_table", {"p_semester_code": table_sem_code.lower()}).execute()
         # Clear ALL existing data (table is per-semester, no filter needed)
         sb.table(table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
         

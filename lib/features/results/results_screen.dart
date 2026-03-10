@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'results_repository.dart';
 import '../../core/models/result_models.dart';
@@ -17,21 +18,29 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   bool _loading = true;
   AcademicProfile? _profile;
+  StreamSubscription<AcademicProfile>? _subscription;
 
   @override
   void initState() {
     super.initState();
-    _fetchData();
+    _listenToStream();
   }
 
-  Future<void> _fetchData() async {
-    final profile = await _repo.fetchAcademicProfile();
-    if (mounted) {
-      setState(() {
-        _profile = profile;
-        _loading = false;
-      });
-    }
+  void _listenToStream() {
+    _subscription = _repo.streamAcademicProfile().listen((profile) {
+      if (mounted) {
+        setState(() {
+          _profile = profile;
+          _loading = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   @override

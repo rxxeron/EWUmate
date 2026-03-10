@@ -69,7 +69,16 @@ class AzureFunctionsService {
       throw Exception(_notLoggedIn);
     }
 
-    return _post('recalculate_stats', {'user_id': uid});
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'recalculate-stats',
+        body: {'user_id': uid},
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('[EdgeFunc] recalculate-stats failed: $e');
+      rethrow;
+    }
   }
 
   /// Updates live semester progress (mark tracking → predicted SGPA).
@@ -80,10 +89,19 @@ class AzureFunctionsService {
       throw Exception(_notLoggedIn);
     }
 
-    return _post('update_progress', {
-      'user_id': uid,
-      'semester_code': semesterCode,
-    });
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'update-progress',
+        body: {
+          'user_id': uid,
+          'semester_code': semesterCode,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('[EdgeFunc] update-progress failed: $e');
+      rethrow;
+    }
   }
 
   /// Generates schedule combinations via backtracking algorithm.
@@ -98,6 +116,7 @@ class AzureFunctionsService {
       throw Exception(_notLoggedIn);
     }
 
+    // Schedule generation stays in Azure due to compute intensity
     return _post('generate_schedules', {
       'user_id': uid,
       'semester': semester,

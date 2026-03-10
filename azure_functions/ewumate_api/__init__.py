@@ -11,10 +11,11 @@ import logging
 import os
 import io
 import re
+import uuid
+from datetime import datetime as _dt
 import azure.functions as func
 from supabase import create_client, Client
-import io
-from datetime import datetime as _dt
+
 try:
     from pypdf import PdfReader
 except ImportError:
@@ -31,16 +32,6 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 def _get_supabase() -> Client:
     return create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  GRADE TABLES
-# ═══════════════════════════════════════════════════════════════════
-GRADE_POINTS = {
-    "A+": 4.00, "A": 3.75, "A-": 3.50,
-    "B+": 3.25, "B": 3.00, "B-": 2.75,
-    "C+": 2.50, "C": 2.25, "D": 2.00, "F": 0.00,
-}
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -217,7 +208,7 @@ def _fetch_sections_fuzzy(sb, table_name, semester, code):
             possible_codes.append(f"{letters}{prefix}{digits}")
     elif len(digits) == 4:
         # If 4 digits, also look for 3 digits by dropping the first digit
-        possible_codes.append(f"{letters}{digits[1:]}")
+        possible_codes.append(f"{letters}{str(digits)[1:]}")
 
     # Query using 'in' filter
     try:
@@ -541,7 +532,7 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
         
         # 5. Decide what to update
         payload = {"semester_type": semester_type, "is_active": True, "updated_at": _dt.now().isoformat()}
-        if existing_data and 'id' in existing_data:
+        if isinstance(existing_data, dict) and 'id' in existing_data:
             payload['id'] = existing_data['id']
             
         is_early_upload = False
@@ -551,8 +542,8 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
         logging.info(f"Semester Sync: Detected={curr_code}, Existing={existing_curr_code}, is_early={is_early_upload}")
 
         if is_early_upload:
-            payload["next_semester"] = curr_sem
-            payload["next_semester_code"] = curr_code
+            payload["next_semester"] = str(curr_sem)
+            payload["next_semester_code"] = str(curr_code)
             
             # Map precise metadata with fallbacks
             payload["upcoming_semester_start_date"] = meta.get("upcomingSemesterStartDate") or next_sem_start
@@ -561,8 +552,8 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
             payload["grade_submission_deadline"] = meta.get("gradeSubmissionDeadline") or grades_deadline
             payload["advising_start_date"] = meta.get("advisingStartDate") or advising_start
         else:
-            payload["current_semester"] = curr_sem
-            payload["current_semester_code"] = curr_code
+            payload["current_semester"] = str(curr_sem)
+            payload["current_semester_code"] = str(curr_code)
             
             # Map current milestones
             payload["current_semester_start_date"] = meta.get("currentSemesterStartDate") or classes_start
@@ -572,9 +563,10 @@ def _update_semester_config(sb, detected_semester, metadata, events=None, is_dep
             payload["switch_date"] = meta.get("switchDate") or u_reopens
 
             # Impending semester metadata if available
-            if meta.get("nextSemester"):
-                 payload["next_semester"] = meta.get("nextSemester")
-                 match = re.search(r"(Spring|Summer|Fall)\s*(\d{4})", meta.get("nextSemester"), re.IGNORECASE)
+            next_sem_meta = meta.get("nextSemester")
+            if next_sem_meta:
+                 payload["next_semester"] = str(next_sem_meta)
+                 match = re.search(r"(Spring|Summer|Fall)\s*(\d{4})", str(next_sem_meta), re.IGNORECASE)
                  if match: payload["next_semester_code"] = f"{match.group(1).capitalize()}{match.group(2)}"
                  
             if meta.get("upcomingSemesterStartDate") or next_sem_start:

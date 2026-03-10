@@ -66,6 +66,16 @@ class CourseUtils {
     return '${prefix}_$safeSem';
   }
 
+  /// Builds a safe, lowercase cache key for Hive.
+  /// Optionally includes cycleType (tri/bi) to separate departmental data.
+  static String safeCacheKey(String prefix, String semesterCode, {String? cycleType}) {
+    final safeSem = semesterCode.toLowerCase().replaceAll(' ', '');
+    if (cycleType != null && cycleType.isNotEmpty) {
+      return '${prefix}_${safeSem}_$cycleType';
+    }
+    return '${prefix}_$safeSem';
+  }
+
   /// Parses a time string like "10:10 AM" into total minutes from midnight
   static int _parseTime(String timeStr) {
     timeStr = timeStr.trim().toUpperCase();

@@ -158,19 +158,21 @@ class AcademicRepository {
   }
 
   Future<List<AcademicEvent>> fetchHolidays(String semesterCode) async {
-    final cleanSem = semesterCode.replaceAll(' ', '');
-    final cached = OfflineCacheService().getCachedHolidays(cleanSem);
+    final semesterType = _configCache['semester_type'] ?? 'tri';
+    final cacheKey = CourseUtils.safeCacheKey('holidays', semesterCode, cycleType: semesterType);
+    
+    final cached = OfflineCacheService().getCachedHolidays(cacheKey);
     if (cached.isNotEmpty) {
       return cached.map((e) => AcademicEvent.fromMap(e)).toList();
     }
 
     try {
-      final isBi = _configCache['semester_type'] == 'bi';
-      final events = await _fetchHolidaysFromSupabase(cleanSem);
+      final isBi = semesterType == 'bi';
+      final events = await _fetchHolidaysFromSupabase(semesterCode);
       
       // If Bi-semester, also fetch standard holidays if not already the same table
       if (isBi) {
-        final stdEvents = await _fetchHolidaysFromSupabase(cleanSem, forceStandard: true);
+        final stdEvents = await _fetchHolidaysFromSupabase(semesterCode, forceStandard: true);
         final seen = events.map((e) => "${e.date}_${e.title}").toSet();
         for (var e in stdEvents) {
           if (!seen.contains("${e.date}_${e.title}")) {
@@ -180,7 +182,7 @@ class AcademicRepository {
       }
 
       if (events.isNotEmpty) {
-        await OfflineCacheService().cacheHolidays(cleanSem, events.map((e) => e.toMap()).toList());
+        await OfflineCacheService().cacheHolidays(cacheKey, events.map((e) => e.toMap()).toList());
       }
       return events;
     } catch (e) {
@@ -219,14 +221,17 @@ class AcademicRepository {
 
   Future<List<Map<String, dynamic>>> fetchExamSchedule(
       String semesterCode) async {
+    final semesterType = _configCache['semester_type'] ?? 'tri';
+    final cacheKey = CourseUtils.safeCacheKey('exams', semesterCode, cycleType: semesterType);
+
     // 1. Try cache first
-    final cached = OfflineCacheService().getCachedSemesterSummaryMap("${semesterCode}_exams");
+    final cached = OfflineCacheService().getCachedSemesterSummaryMap(cacheKey);
     if (cached != null) {
       return (cached['exams'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     }
 
     try {
-      final isBi = _configCache['semester_type'] == 'bi';
+      final isBi = semesterType == 'bi';
       
       // Fetch data from standard table
       final standardTable = CourseUtils.semesterTable('exams', semesterCode);
@@ -254,7 +259,7 @@ class AcademicRepository {
 
       // 2. Update cache
       if (examList.isNotEmpty) {
-        await OfflineCacheService().cacheSemesterSummaryMap("${semesterCode}_exams", {'exams': examList});
+        await OfflineCacheService().cacheSemesterSummaryMap(cacheKey, {'exams': examList});
       }
       
       return examList;

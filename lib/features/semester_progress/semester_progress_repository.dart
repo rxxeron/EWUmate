@@ -53,8 +53,9 @@ class SemesterProgressRepository {
         }).toList();
 
         // Update cache with fresh data
+        final safeKey = CourseUtils.safeCacheKey('progress', semesterCode);
         OfflineCacheService().cacheSemesterProgress(
-            semesterCode, remoteMarks.map((m) => m.toMap()).toList());
+            safeKey, remoteMarks.map((m) => m.toMap()).toList());
 
         if (!_controller.isClosed) {
           _controller.add(remoteMarks);
@@ -69,17 +70,16 @@ class SemesterProgressRepository {
     return _controller.stream;
   }
 
-  void _emitCachedProgress(String semesterCode) {
     Future.microtask(() {
       if (!_controller.isClosed) {
+        final safeKey = CourseUtils.safeCacheKey('progress', semesterCode);
         final cachedData =
-            OfflineCacheService().getCachedSemesterProgress(semesterCode);
+            OfflineCacheService().getCachedSemesterProgress(safeKey);
         final cachedMarks =
             cachedData.map((d) => CourseMarks.fromMap(d)).toList();
         _controller.add(cachedMarks);
       }
     });
-  }
 
   /// Fetches all courses with marks for a given semester
   Future<List<CourseMarks>> fetchSemesterProgress(String semesterCode) async {
@@ -119,9 +119,10 @@ class SemesterProgressRepository {
   Future<Map<String, dynamic>?> fetchSemesterSummary(
     String semesterCode,
   ) async {
+    final safeKey = CourseUtils.safeCacheKey('summary', semesterCode);
     // 1. Try cache first
     final cachedSummary =
-        OfflineCacheService().getCachedSemesterSummaryMap(semesterCode);
+        OfflineCacheService().getCachedSemesterSummaryMap(safeKey);
     if (cachedSummary != null) {
       return cachedSummary;
     }
@@ -142,8 +143,9 @@ class SemesterProgressRepository {
       final Map<String, dynamic>? summary = summaryRaw != null ? Map<String, dynamic>.from(summaryRaw) : null;
       if (summary != null) {
         // Update cache with fresh summary
+        final safeKey = CourseUtils.safeCacheKey('summary', semesterCode);
         await OfflineCacheService()
-            .cacheSemesterSummaryMap(semesterCode, summary);
+            .cacheSemesterSummaryMap(safeKey, summary);
       }
       return summary;
     } catch (e) {
@@ -168,12 +170,14 @@ class SemesterProgressRepository {
       return CourseMarks.fromMap(val);
     }).toList();
     
+    final progressKey = CourseUtils.safeCacheKey('progress', semesterCode);
     await OfflineCacheService().cacheSemesterProgress(
-      semesterCode, 
+      progressKey, 
       marksList.map((m) => m.toMap()).toList()
     );
     // Also cache the full summary map
-    await OfflineCacheService().cacheSemesterSummaryMap(semesterCode, summary);
+    final summaryKey = CourseUtils.safeCacheKey('summary', semesterCode);
+    await OfflineCacheService().cacheSemesterSummaryMap(summaryKey, summary);
     _emitCachedProgress(semesterCode); // Notify UI immediately
 
     // Sync to Summary Stats (The high-level table used by Semester Summary screen)
@@ -264,7 +268,8 @@ class SemesterProgressRepository {
     String courseCode,
   ) async {
     // Try cache first
-    final cachedProgress = OfflineCacheService().getCachedSemesterProgress(semesterCode);
+    final safeKey = CourseUtils.safeCacheKey('progress', semesterCode);
+    final cachedProgress = OfflineCacheService().getCachedSemesterProgress(safeKey);
     final cachedCourse = cachedProgress.firstWhere(
       (m) => m['courseCode'] == courseCode,
       orElse: () => {},

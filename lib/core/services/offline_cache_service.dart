@@ -14,6 +14,9 @@ class OfflineCacheService {
   static const String _settingsBoxName = 'settings_box';
   static const String _metadataBoxName = 'metadata_box';
 
+  // Cache Version (Increment this when structural changes occur)
+  static const int _currentVersion = 2; 
+
   Future<void> init() async {
     await Hive.initFlutter();
     
@@ -27,10 +30,29 @@ class OfflineCacheService {
         Hive.openBox(_settingsBoxName),
         Hive.openBox(_metadataBoxName),
       ]).timeout(const Duration(seconds: 4));
+      
+      await _handleMigration();
       debugPrint('OfflineCacheService: Hive initialized and boxes opened.');
     } catch (e) {
       debugPrint('OfflineCacheService: Hive initialization error or timeout $e');
-      // If Hive fails, the app might crash later, but at least we tried to move on
+    }
+  }
+
+  Future<void> _handleMigration() async {
+    final settings = Hive.box(_settingsBoxName);
+    final oldVersion = settings.get('cache_version', defaultValue: 1) as int;
+
+    if (oldVersion < _currentVersion) {
+      debugPrint('OfflineCacheService: Migrating cache from v$oldVersion to v$_currentVersion');
+      
+      // For version 2, we changed key naming to be strictly lowercase and standardized.
+      // Easiest and safest way to clear stale data is to wipe the semester and metadata boxes.
+      await Hive.box(_semesterBoxName).clear();
+      await Hive.box(_metadataBoxName).clear();
+      await Hive.box(_tasksBoxName).clear();
+      
+      await settings.put('cache_version', _currentVersion);
+      debugPrint('OfflineCacheService: Stale semester cache cleared for new standardization.');
     }
   }
 

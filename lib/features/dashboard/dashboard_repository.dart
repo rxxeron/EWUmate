@@ -14,9 +14,10 @@ class DashboardRepository {
     final user = _supabase.auth.currentUser;
     final controller = StreamController<Map<String, dynamic>>();
 
+    final safeKey = CourseUtils.safeCacheKey('schedule', semesterCode);
     // 1. Initial cached value
     final cachedSchedule =
-        OfflineCacheService().getCachedSchedule(semesterCode);
+        OfflineCacheService().getCachedSchedule(safeKey);
     if (cachedSchedule != null) {
       controller.add(cachedSchedule);
     }
@@ -46,7 +47,7 @@ class DashboardRepository {
         DataMerger.combine(scheduleStream, exceptionsStream).listen(
       (mergedData) {
         // Update cache
-        OfflineCacheService().cacheSchedule(semesterCode, mergedData);
+        OfflineCacheService().cacheSchedule(safeKey, mergedData);
         controller.add(mergedData);
       },
       onError: (e) {
@@ -61,8 +62,9 @@ class DashboardRepository {
   /// Fetches the schedule data a single time using REST instead of WebSockets.
   /// Use this for screens that don't need realtime or when WebSockets fail.
   Future<Map<String, dynamic>> getScheduleFuture(String semesterCode) async {
+    final safeKey = CourseUtils.safeCacheKey('schedule', semesterCode);
     // 1. Try cache first
-    final cached = OfflineCacheService().getCachedSchedule(semesterCode);
+    final cached = OfflineCacheService().getCachedSchedule(safeKey);
     if (cached != null) {
       // Also fetch exceptions from cache if available
       final cachedEx = OfflineCacheService().getCachedExceptions();
@@ -99,7 +101,7 @@ class DashboardRepository {
         final exceptionsList = List<Map<String, dynamic>>.from(exceptionsResult as List? ?? []);
         merged['exceptions'] = exceptionsList;
         
-        await OfflineCacheService().cacheSchedule(semesterCode, merged);
+        await OfflineCacheService().cacheSchedule(safeKey, merged);
         await OfflineCacheService().cacheExceptions(exceptionsList);
         
         return merged;
@@ -134,7 +136,8 @@ class DashboardRepository {
         final Map<String, dynamic> merged = Map<String, dynamic>.from(scheduleResult);
         merged['exceptions'] = exceptionsList;
 
-        await OfflineCacheService().cacheSchedule(semesterCode, merged);
+        final safeKey = CourseUtils.safeCacheKey('schedule', semesterCode);
+        await OfflineCacheService().cacheSchedule(safeKey, merged);
         await OfflineCacheService().cacheExceptions(exceptionsList);
         debugPrint("[DashboardRepo] Schedule refreshed in background.");
       }

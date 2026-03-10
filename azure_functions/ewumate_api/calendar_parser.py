@@ -144,51 +144,77 @@ def parse_calendar_pdf(pdf_file, filename=None, debug=False):
                  except: pass
             
             # 2. Submission of Final Grades
-            if "submission of final grades" in full_lower:
+            # 2. Grade Submission
+            if "grade submission" in full_lower or "submission of final grade" in full_lower:
                 try:
                     d_range = re.split(r'[-–]', date)
                     if len(d_range) > 0 and current_year:
                         dt_start = try_parse_date(d_range[0].strip(), current_year)
                         if dt_start:
-                            metadata["gradeSubmissionStart"] = dt_start.strftime("%Y-%m-%d")
+                            # BDT offset
+                            metadata["gradeSubmissionStart"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
                             if len(d_range) > 1:
                                 end_part = d_range[1].strip()
                                 if re.match(r'^\d+$', end_part):
                                     end_part = f"{d_range[0].strip().split(' ')[0]} {end_part}"
                                 dt_end = try_parse_date(end_part, current_year)
-                                metadata["gradeSubmissionDeadline"] = dt_end.strftime("%Y-%m-%d") if dt_end else dt_start.strftime("%Y-%m-%d")
+                                metadata["gradeSubmissionDeadline"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00" if dt_end else f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
                             else:
-                                metadata["gradeSubmissionDeadline"] = dt_start.strftime("%Y-%m-%d")
+                                metadata["gradeSubmissionDeadline"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
                 except: pass
 
             # 3. First Day of Classes (Current vs Next)
             if "first day of classes" in full_lower or "classes begin" in full_lower:
                 dt = try_parse_date(date, current_year)
                 if dt:
+                    bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
                     # Check if it mentions a specific semester
                     sem_match = semester_pattern.search(full_event)
                     if sem_match:
                         # "First Day of Classes for Summer 2026"
-                        metadata["upcomingSemesterStartDate"] = dt.strftime("%Y-%m-%d")
+                        metadata["upcomingSemesterStartDate"] = bdt_date
                     else:
                         # Just "First Day of Classes" (Current)
-                        metadata["currentSemesterStartDate"] = dt.strftime("%Y-%m-%d")
+                        metadata["currentSemesterStartDate"] = bdt_date
 
-            # 4. Online Advising
-            if "online advising" in full_lower or "advising of courses" in full_lower:
+            # 4. Advising (Online/In-person)
+            if any(k in full_lower for k in ["online advising", "advising of courses", "advising for"]):
                 try:
                     d_range = re.split(r'[-–]', date)
                     if len(d_range) > 0 and current_year:
                         dt_start = try_parse_date(d_range[0].strip(), current_year)
                         if dt_start:
-                            metadata["advisingStartDate"] = dt_start.strftime("%Y-%m-%d")
+                            bdt_date = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                            metadata["advisingStartDate"] = bdt_date
+                            
+                            # If this line mentions a semester, it might be the upcoming one
+                            sem_match = semester_pattern.search(full_event)
+                            if sem_match:
+                                metadata["nextSemester"] = f"{sem_match.group(1).capitalize()} {sem_match.group(2)}"
                 except: pass
 
-            # 5. Admission Test (Fallback for next semester detection)
+            # 5. University Reopens (Correct Semester Detection)
+            if "university reopens" in full_lower:
+                dt = try_parse_date(date, current_year)
+                if dt:
+                    # BDT is UTC+6
+                    bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                    
+                    # Check for "University Reopens for [Semester] [Year]"
+                    reopen_match = re.search(r"University Reopens for\s+(Spring|Summer|Fall)\s+(\d{4})", full_event, re.IGNORECASE)
+                    if reopen_match:
+                        metadata["nextSemester"] = f"{reopen_match.group(1).capitalize()} {reopen_match.group(2)}"
+                        metadata["switchDate"] = bdt_date
+                        metadata["upcomingSemesterStartDate"] = bdt_date
+                    elif not metadata.get("switchDate"):
+                        # Generic reopen (break over)
+                        metadata["switchDate"] = bdt_date
+
+            # 6. Admission Test (Fallback for next semester detection)
             if "admission test" in full_lower and not metadata.get("nextSemester"):
                  match = admission_test_pattern.search(full_event)
                  if match:
-                      metadata["nextSemester"] = f"{match.group(1)} {match.group(2)}"
+                      metadata["nextSemester"] = f"{match.group(1).capitalize()} {match.group(2)}"
             
             unique_str = f"{metadata.get('currentSemester')}|{date}|{full_event}"
             # etype logic

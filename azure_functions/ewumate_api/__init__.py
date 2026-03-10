@@ -799,7 +799,7 @@ def _do_parse_calendar(file_path: str) -> dict:
         res = sb.storage.from_("academic_documents").download(file_path)
         pdf_bytes = io.BytesIO(res)
         
-        parsed = calendar_parser.parse_calendar_pdf(pdf_bytes)
+        parsed = calendar_parser.parse_calendar_pdf(pdf_bytes, filename=filename)
         events = parsed.get("events", [])
         metadata = parsed.get("metadata", {})
         

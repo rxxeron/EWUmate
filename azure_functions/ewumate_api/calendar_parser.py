@@ -3,7 +3,7 @@ import hashlib
 import pdfplumber
 from datetime import datetime
 
-def parse_calendar_pdf(pdf_file, debug=False):
+def parse_calendar_pdf(pdf_file, filename=None, debug=False):
     events = []
     metadata = {
         "currentSemester": None,
@@ -65,9 +65,8 @@ def parse_calendar_pdf(pdf_file, debug=False):
         page = pdf.pages[0]
         
         # 1. Metadata from Filename (Primary)
-        if hasattr(pdf_file, 'name') or isinstance(pdf_file, str):
-            fname = str(getattr(pdf_file, 'name', pdf_file))
-            filename_match = semester_pattern.search(fname)
+        if filename:
+            filename_match = semester_pattern.search(filename)
             if filename_match:
                 metadata["currentSemester"] = f"{filename_match.group(1)} {filename_match.group(2)}"
                 metadata["year"] = filename_match.group(2)
@@ -75,6 +74,16 @@ def parse_calendar_pdf(pdf_file, debug=False):
         
         # 1b. Fallback: Metadata from Header (Searching top of first page)
         all_text = page.extract_text() or ""
+        if not metadata["currentSemester"]:
+             # Try to get it from object itself if possible (BytesIO might not have it, but just in case)
+             fname = str(getattr(pdf_file, 'name', ''))
+             if fname:
+                 filename_match = semester_pattern.search(fname)
+                 if filename_match:
+                     metadata["currentSemester"] = f"{filename_match.group(1)} {filename_match.group(2)}"
+                     metadata["year"] = filename_match.group(2)
+                     current_year = metadata["year"]
+
         if not metadata["currentSemester"]:
             for line in all_text.split('\n')[:20]: # Check first 20 lines for semester header
                 sem_match = semester_pattern.search(line)
@@ -182,8 +191,8 @@ def parse_calendar_pdf(pdf_file, debug=False):
                       metadata["nextSemester"] = f"{match.group(1)} {match.group(2)}"
             
             unique_str = f"{metadata.get('currentSemester')}|{date}|{full_event}"
-            # etype logic...
-            if "holiday" in full_event.lower(): etype = "Holiday" 
+            # etype logic
+            etype = "Holiday" if "holiday" in full_event.lower() else "Academic"
 
             # Standardize event date if possible
             std_date = date
@@ -193,9 +202,7 @@ def parse_calendar_pdf(pdf_file, debug=False):
 
             events.append({
                 "date": std_date,
-                "day": day,
                 "name": full_event,
-                "event": full_event, # Keep for compatibility
                 "semester": metadata.get("currentSemester"),
                 "type": etype,
             })

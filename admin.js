@@ -139,7 +139,8 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
 
     const folder = document.getElementById('folderSelect').value;
     const filename = document.getElementById('filenameInput').value || file.name;
-    const filePath = `${folder}/${filename}`;
+    // URL encode segments to handle spaces/special characters
+    const filePath = `${encodeURIComponent(folder)}/${encodeURIComponent(filename)}`;
 
     try {
         const uploadUrl = `${SUPABASE_URL}/storage/v1/object/academic_documents/${filePath}`;

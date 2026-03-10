@@ -44,16 +44,43 @@ class AcademicRepository {
 
   Future<void> _fetchAndCacheActiveConfig() async {
     try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      // 1. Get user's profile info
+      final profile = await _supabase
+          .from('profiles')
+          .select('department, semester_type')
+          .eq('id', user.id)
+          .maybeSingle();
+ 
+      final deptName = profile?['department'] ?? '';
+      String? semesterType = profile?['semester_type'];
+      
+      // 2. If semester_type not in profile (old user), fetch from departments
+      if (semesterType == null && deptName.isNotEmpty) {
+        final deptTable = await _supabase
+            .from('departments')
+            .select('semester_type')
+            .eq('name', deptName)
+            .maybeSingle();
+        semesterType = deptTable?['semester_type'];
+      }
+      
+      semesterType ??= 'tri';
+
+      // 3. Fetch specific active record matching that semester_type
       final res = await _supabase
           .from('active_semester')
           .select()
-          .eq('is_active', true)
+          .eq('semester_type', semesterType)
           .maybeSingle()
           .timeout(const Duration(seconds: 3));
 
       if (res != null) {
         _configCache = Map<String, dynamic>.from(res);
         await OfflineCacheService().cacheAcademicConfig(_configCache);
+        debugPrint("AcademicRepo: Config cached for $deptName (Cycle: $semesterType)");
       }
     } catch (e) {
       debugPrint("Error fetching active semester config: $e");
@@ -63,18 +90,41 @@ class AcademicRepository {
   void _refreshConfigInBackground() async {
     if (!(await ConnectivityService().isOnline())) return;
     try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      final profile = await _supabase
+          .from('profiles')
+          .select('department, semester_type')
+          .eq('id', user.id)
+          .maybeSingle();
+ 
+      final deptName = profile?['department'] ?? '';
+      String? semesterType = profile?['semester_type'];
+      
+      if (semesterType == null && deptName.isNotEmpty) {
+        final deptTable = await _supabase
+            .from('departments')
+            .select('semester_type')
+            .eq('name', deptName)
+            .maybeSingle();
+        semesterType = deptTable?['semester_type'];
+      }
+      
+      semesterType ??= 'tri';
+
       final res = await _supabase
           .from('active_semester')
           .select()
-          .eq('is_active', true)
+          .eq('semester_type', semesterType)
           .maybeSingle();
 
       if (res != null) {
         final freshConfig = Map<String, dynamic>.from(res);
-        if (freshConfig['active_semester'] != _configCache['active_semester']) {
+        if (freshConfig['current_semester_code'] != _configCache['current_semester_code']) {
            _configCache = freshConfig;
            await OfflineCacheService().cacheAcademicConfig(_configCache);
-           debugPrint("[AcademicRepo] Config refreshed in background.");
+           debugPrint("[AcademicRepo] Config refreshed in background for $semesterType cycle.");
         }
       }
     } catch (_) {}
@@ -115,7 +165,20 @@ class AcademicRepository {
     }
 
     try {
+      final isBi = _configCache['semester_type'] == 'bi';
       final events = await _fetchHolidaysFromSupabase(cleanSem);
+      
+      // If Bi-semester, also fetch standard holidays if not already the same table
+      if (isBi) {
+        final stdEvents = await _fetchHolidaysFromSupabase(cleanSem, forceStandard: true);
+        final seen = events.map((e) => "${e.date}_${e.title}").toSet();
+        for (var e in stdEvents) {
+          if (!seen.contains("${e.date}_${e.title}")) {
+            events.add(e);
+          }
+        }
+      }
+
       if (events.isNotEmpty) {
         await OfflineCacheService().cacheHolidays(cleanSem, events.map((e) => e.toMap()).toList());
       }
@@ -126,15 +189,32 @@ class AcademicRepository {
     }
   }
 
-  Future<List<AcademicEvent>> _fetchHolidaysFromSupabase(String semesterCode) async {
-    final tableName = 'calendar_${semesterCode.toLowerCase()}';
-    final data = await _supabase.from(tableName).select();
+  Future<List<AcademicEvent>> _fetchHolidaysFromSupabase(String semesterCode, {bool forceStandard = false}) async {
+    final cleanSem = semesterCode.replaceAll(' ', '').toLowerCase();
+    String tableName = 'calendar_$cleanSem';
+    
+    // Check if we are in a bi-semester cycle from the cached config
+    final isBi = _configCache['semester_type'] == 'bi';
+    if (isBi && !forceStandard) {
+      tableName = 'calendar_${cleanSem}_phrm_llb';
+    }
 
-    return (data as List)
-        .map((d) => AcademicEvent(
-            date: (d['date'] ?? d['date_string'] ?? '').toString(),
-            title: (d['name'] ?? d['event'] ?? d['title'] ?? '').toString()))
-        .toList();
+    try {
+      final data = await _supabase.from(tableName).select();
+      return (data as List)
+          .map((d) => AcademicEvent(
+              date: (d['date'] ?? d['date_string'] ?? '').toString(),
+              title: (d['name'] ?? d['event'] ?? d['title'] ?? '').toString()))
+          .toList();
+    } catch (e) {
+      if (tableName.contains('_phrm_llb')) {
+        // Fallback to standard if departmental table doesn't exist
+        debugPrint("Dept calendar $tableName not found, falling back to standard.");
+        return _fetchHolidaysFromSupabase(semesterCode); 
+      }
+      debugPrint("Error fetching holidays: $e");
+      return [];
+    }
   }
 
   Future<List<Map<String, dynamic>>> fetchExamSchedule(
@@ -146,16 +226,40 @@ class AcademicRepository {
     }
 
     try {
-      final data =
-          await _supabase.from(CourseUtils.semesterTable('exams', semesterCode)).select();
+      final isBi = _configCache['semester_type'] == 'bi';
       
-      final examList = List<Map<String, dynamic>>.from(data as List? ?? []);
+      // Fetch data from standard table
+      final standardTable = CourseUtils.semesterTable('exams', semesterCode);
+      final stdData = await _supabase.from(standardTable).select();
+      final List<Map<String, dynamic>> examList = List<Map<String, dynamic>>.from(stdData as List? ?? []);
+
+      // If bi-semester, also fetch departmental exams and merge
+      if (isBi) {
+        final deptTable = "${standardTable}_phrm_llb";
+        try {
+          final deptData = await _supabase.from(deptTable).select();
+          final List<Map<String, dynamic>> deptList = List<Map<String, dynamic>>.from(deptData as List? ?? []);
+          
+          // Merge logic: Add if not already present (checking by course code)
+          final seenCodes = examList.map((e) => e['code']?.toString()).toSet();
+          for (var deptExam in deptList) {
+             if (!seenCodes.contains(deptExam['code']?.toString())) {
+               examList.add(deptExam);
+             }
+          }
+        } catch (e) {
+          debugPrint("Note: Dept exam table $deptTable might not exist yet: $e");
+        }
+      }
+
       // 2. Update cache
-      await OfflineCacheService().cacheSemesterSummaryMap("${semesterCode}_exams", {'exams': examList});
+      if (examList.isNotEmpty) {
+        await OfflineCacheService().cacheSemesterSummaryMap("${semesterCode}_exams", {'exams': examList});
+      }
       
       return examList;
     } catch (e) {
-      debugPrint("Error fetching exams: $e");
+      debugPrint("Error fetching exams for $semesterCode: $e");
       return [];
     }
   }
@@ -213,8 +317,18 @@ class AcademicRepository {
   }
 
   /// Gets the "Final Examinations" start date for a semester
-  Future<DateTime?> getFinalExamDate(String semesterCode) async {
-    final event = await findEvent(semesterCode, [
+  Future<DateTime?> getFinalExamDate(String semesterCode, {String? courseCode}) async {
+    String sem = semesterCode;
+    
+    // If course provided, determine which calendar to use based on course prefix
+    if (courseCode != null) {
+      final upper = courseCode.toUpperCase();
+      if (upper.startsWith("PHRM") || upper.startsWith("LAW")) {
+        sem = "${semesterCode}_phrm_llb";
+      }
+    }
+
+    final event = await findEvent(sem, [
       "Final Examinations",
       "Final Exam",
       "Final Exams Begin",
@@ -225,7 +339,13 @@ class AcademicRepository {
 
   /// Gets the "Submission of Final Grades" date for a semester
   Future<DateTime?> getFinalGradeSubmissionDate(String semesterCode) async {
-    final event = await findEvent(semesterCode, [
+    String sem = semesterCode;
+    // Grade submission ALWAYS follows the user's active cycle
+    if (_configCache['semester_type'] == 'bi') {
+      sem = "${semesterCode}_phrm_llb";
+    }
+
+    final event = await findEvent(sem, [
       "Submission of Final Grades",
       "Final Grades Submission",
       "Grade Submission",
@@ -243,12 +363,22 @@ class AcademicRepository {
         return DateTime.parse(config['advising_start_date'] as String);
       }
 
-      // 2. Fallback to keyword search in calendar
-      final event = await findEvent(currentSemesterCode, [
+      // 2. Fallback to keyword search in the appropriate calendar
+      String sem = currentSemesterCode;
+      if (_configCache['semester_type'] == 'bi') {
+        sem = "${currentSemesterCode}_phrm_llb";
+      }
+
+      final event = await findEvent(sem, [
         "Online Advising of Courses",
         "Online Advising",
         "Advising of Courses",
       ]);
+      if (event == null && sem.contains('_phrm_llb')) {
+        // Fallback to standard if department-specific event not found
+        return getOnlineAdvisingDate(currentSemesterCode.replaceAll('_phrm_llb', ''));
+      }
+
       if (event == null) return null;
       return parseDateForHolidays(event.date, currentSemesterCode);
     } catch (e) {
@@ -277,25 +407,36 @@ class AcademicRepository {
 
   /// Gets the "Adding of Courses" date for the NEXT semester
   Future<DateTime?> getAddingOfCoursesDate(String currentSemesterCode) async {
-    final event = await findEvent(currentSemesterCode, [
+    String sem = currentSemesterCode;
+    if (_configCache['semester_type'] == 'bi') {
+      sem = "${currentSemesterCode}_phrm_llb";
+    }
+
+    final event = await findEvent(sem, [
       "Adding of Courses",
       "Add Courses",
       "Course Add",
     ]);
+    if (event == null && sem.contains('_phrm_llb')) {
+       return getAddingOfCoursesDate(currentSemesterCode.replaceAll('_phrm_llb', ''));
+    }
+
     if (event == null) return null;
     return parseDateForHolidays(event.date, currentSemesterCode);
   }
 
   /// Determines the next semester code based on current
   /// Spring -> Summer, Summer -> Fall, Fall -> Spring (next year)
+  /// EXCEPT for Bi-semester: Spring -> Fall (skipping Summer)
   String getNextSemesterCode(String currentCode) {
+    final isBi = _configCache['semester_type'] == 'bi';
+    
     // Parse current code (e.g., "Spring2026" or "Fall2026")
     final regExp = RegExp(r'(Spring|Summer|Fall)(\d{4})');
     final match = regExp.firstMatch(currentCode);
     if (match == null) {
-      // Fallback
       final year = DateTime.now().year;
-      return 'Summer$year';
+      return isBi ? 'Fall$year' : 'Summer$year';
     }
 
     final season = match.group(1) ?? 'Spring';
@@ -304,7 +445,7 @@ class AcademicRepository {
 
     switch (season) {
       case 'Spring':
-        return 'Summer$year';
+        return isBi ? 'Fall$year' : 'Summer$year';
       case 'Summer':
         return 'Fall$year';
       case 'Fall':

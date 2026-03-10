@@ -15,7 +15,7 @@ class OnboardingRepository {
       debugPrint('[Onboarding] Fetching structured departments...');
       final data = await _supabase
           .from('departments')
-          .select('id, name, programs')
+          .select('id, name, programs, semester_type')
           .timeout(const Duration(seconds: 5));
 
       if (data.isNotEmpty) {
@@ -169,20 +169,31 @@ class OnboardingRepository {
             "credits": 135
           }
         ]
+      },
+      {
+        "name": "Dept. of Social Relations",
+        "programs": [
+          {
+            "id": "pphs",
+            "name": "B.S.S. in Population and Public Health Sciences",
+            "credits": 123
+          }
+        ]
       }
     ];
   }
 
   Future<void> saveProgram(
-      String programId, String deptName, String admittedSemester) async {
+      String programId, String deptName, String admittedSemester, String semesterType) async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception("User not logged in");
-
+ 
     await _supabase.from('profiles').upsert({
       'id': user.id,
       'program_id': programId,
       'department': deptName,
       'admitted_semester': admittedSemester,
+      'semester_type': semesterType,
       'onboarding_status': 'program_selected',
     });
   }
@@ -281,6 +292,27 @@ class OnboardingRepository {
       {String? semester, bool isCurrent = false, String? searchQuery}) async {
     final queryStr = searchQuery?.toUpperCase().replaceAll(' ', '').trim();
 
+    // Normalization logic: Bidirectional loose matching (104 <-> 7104)
+    String? normalizedQuery;
+    if (queryStr != null && queryStr.isNotEmpty) {
+      // Case 1: Search is 3 digits (e.g., CSE104) -> also check 7-prefixed (CSE7104)
+      final match3 = RegExp(r'^([A-Z]*?)(\d{3})$').firstMatch(queryStr);
+      if (match3 != null) {
+        final letters = match3.group(1) ?? "";
+        final digits = match3.group(2)!;
+        normalizedQuery = "${letters}7$digits";
+      } 
+      // Case 2: Search is 4 digits starting with 7 (e.g., CSE7104) -> also check 3-digit (CSE104)
+      else {
+        final match4 = RegExp(r'^([A-Z]*?)7(\d{3})$').firstMatch(queryStr);
+        if (match4 != null) {
+          final letters = match4.group(1) ?? "";
+          final digits = match4.group(2)!;
+          normalizedQuery = "$letters$digits";
+        }
+      }
+    }
+
     // Determine if we should use dynamic sections (Active) or Metadata (Past)
     bool useDynamic = false;
     if (semester != null) {
@@ -294,7 +326,11 @@ class OnboardingRepository {
         var queryBuilder = _supabase.from(actualTable).select();
 
         if (queryStr != null && queryStr.isNotEmpty) {
-          queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
+          if (normalizedQuery != null) {
+            queryBuilder = queryBuilder.or('code.ilike.%$queryStr%,code.ilike.%$normalizedQuery%');
+          } else {
+            queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
+          }
         }
 
         final List<dynamic> data = await queryBuilder
@@ -363,7 +399,11 @@ class OnboardingRepository {
       var queryBuilder = _supabase.from('course_metadata').select();
 
       if (queryStr != null && queryStr.isNotEmpty) {
-        queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
+        if (normalizedQuery != null) {
+          queryBuilder = queryBuilder.or('code.ilike.%$queryStr%,code.ilike.%$normalizedQuery%');
+        } else {
+          queryBuilder = queryBuilder.ilike('code', '%$queryStr%');
+        }
       }
 
       // If we have a programId, we could optimize, but for safety we just increase limit

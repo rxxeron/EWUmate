@@ -40,11 +40,21 @@ serve(async (req) => {
 
         console.log(`Processing schedule sync for user ${userId} with ${enrolledSections.length} sections`);
 
-        // 1. Determine active semester
+        // 1. Determine active semester cycle via department mapping
+        const deptName = record.department || '';
+
+        const { data: deptData } = await supabase
+            .from('departments')
+            .select('semester_type')
+            .eq('name', deptName)
+            .maybeSingle();
+
+        const semesterType = deptData?.semester_type || 'tri';
+
         const { data: configData, error: configError } = await supabase
             .from('active_semester')
             .select('current_semester_code')
-            .eq('id', 1)
+            .eq('semester_type', semesterType)
             .single();
 
         if (configError) throw new Error(`Failed to fetch active semester: ${configError.message}`);
@@ -74,23 +84,55 @@ serve(async (req) => {
             return new Response(JSON.stringify({ message: "Schedule cleared" }), { headers: corsHeaders, status: 200 });
         }
 
-        // 3. Fetch full Course details from courses_[Semester]
-        // Check if table exists by doing a small query, or just assume it exists
-        let { data: courses, error: coursesError } = await supabase
+        // 3. Fetch full Course details
+        const isBi = cleanSemester.toLowerCase().endsWith('_phrm_llb');
+        let combinedCourses: any[] = [];
+        let remainingIds = [...enrolledSections];
+
+        // 3.1 Try Specialized Table first
+        const { data: mainCourses } = await supabase
             .from(courseTableName)
             .select('*')
             .in('doc_id', enrolledSections);
 
-        if (coursesError) {
-            console.log(`Failed to fetch from ${courseTableName}, trying metadata fallback`);
-            const { data: fallbackCourses, error: fallbackError } = await supabase
+        if (mainCourses) {
+            combinedCourses = [...mainCourses];
+            const foundIds = mainCourses.map(c => c.doc_id);
+            remainingIds = remainingIds.filter(id => !foundIds.includes(id));
+        }
+
+        // 3.2 Try Standard Table for missing IDs (if user is bi-semester)
+        if (isBi && remainingIds.length > 0) {
+            const standardCode = cleanSemester.split('_')[0];
+            const standardTable = `courses_${standardCode.toLowerCase()}`;
+            console.log(`Checking standard table ${standardTable} for remaining ${remainingIds.length} sections`);
+
+            const { data: stdCourses } = await supabase
+                .from(standardTable)
+                .select('*')
+                .in('doc_id', remainingIds);
+
+            if (stdCourses) {
+                combinedCourses = [...combinedCourses, ...stdCourses];
+                const foundIds = stdCourses.map(c => c.doc_id);
+                remainingIds = remainingIds.filter(id => !foundIds.includes(id));
+            }
+        }
+
+        // 3.3 Metadata Fallback
+        if (remainingIds.length > 0) {
+            console.log(`Still missing ${remainingIds.length} sections, trying metadata fallback`);
+            const { data: fallbackCourses } = await supabase
                 .from('course_metadata')
                 .select('*')
-                .in('id', enrolledSections);
+                .in('id', remainingIds);
 
-            if (fallbackError) throw new Error(`Fallback fetch failed: ${fallbackError.message}`);
-            courses = fallbackCourses;
+            if (fallbackCourses) {
+                combinedCourses = [...combinedCourses, ...fallbackCourses];
+            }
         }
+
+        const courses = combinedCourses;
 
         if (!courses || courses.length === 0) {
             console.log("No matching courses found for the enrolled sections.");

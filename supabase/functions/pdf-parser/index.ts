@@ -72,12 +72,16 @@ serve(async (req: Request) => {
         const extractedSemId = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}${match[2]}`; // "Spring2026"
         prettySemester = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()} ${match[2]}`; // "Spring 2026"
 
-        // Use extracted semester if not provided
-        if (!semesterId) {
+        console.log(`Extracted semester from filename: ${extractedSemId}, pretty: ${prettySemester}`);
+
+        // Handle Departmental Suffixes in filename (e.g., "Academic Calendar Spring 2026 (PHRM_LLB).pdf")
+        const deptMatch = filename.match(/\((PHRM_LLB|LAW_PHRM)\)/i);
+        if (deptMatch) {
+          semesterId = `${extractedSemId}_phrm_llb`;
+          console.log(`Detected departmental calendar. Updating semesterId to: ${semesterId}`);
+        } else if (!semesterId) { // Use extracted semester if not provided and no departmental suffix
           semesterId = extractedSemId;
         }
-
-        console.log(`Extracted semester from filename: ${extractedSemId}, pretty: ${prettySemester}`);
       }
     }
 
@@ -231,7 +235,7 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
       }
 
       case 'calendar': {
-        const tableName = `calendar_${semesterId}`;
+        const tableName = `calendar_${semesterId.toLowerCase()}`;
 
         const records = data.map(event => ({
           doc_id: event.docId,
@@ -325,7 +329,8 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
         }
 
         // Update active_semester table (Replacing config entries)
-        if (prettySemester) {
+        if (prettySemester && semesterId) {
+          const semesterType = semesterId.includes('_') ? 'bi' : 'tri';
           const currentCode = semesterId; // e.g. "Spring2026"
 
           let nextCode = null;
@@ -333,11 +338,12 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
             const match = nextSemesterFound.match(/(Spring|Summer|Fall)\s*(\d{4})/i);
             if (match) {
               nextCode = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}${match[2]}`;
+              if (semesterType === 'bi') nextCode = `${nextCode}_phrm_llb`;
             }
           }
 
           await supabase.from('active_semester').upsert({
-            id: 1,
+            semester_type: semesterType,
             is_active: true,
             current_semester: prettySemester,
             current_semester_code: currentCode,
@@ -346,16 +352,16 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
             switch_date: switchDate,
             status: (nextSemesterFound && switchDate) ? 'pending' : 'active',
             updated_at: new Date().toISOString()
-          }, { onConflict: 'id' });
+          }, { onConflict: 'semester_type' });
 
-          console.log(`✅ active_semester table updated: ${prettySemester} (${currentCode})`);
+          console.log(`✅ active_semester table updated for cycle: ${semesterType}`);
         }
 
         break;
       }
 
       case 'exam': {
-        const tableName = `exams_${semesterId}`;
+        const tableName = `exams_${semesterId.toLowerCase()}`;
 
         // Note: exam schema needs to match the parsed data structure
         // Adjust field mapping based on actual parsed exam data structure

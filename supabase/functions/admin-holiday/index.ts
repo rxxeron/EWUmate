@@ -35,25 +35,19 @@ serve(async (req) => {
             })
         }
 
-        // 2. Determine Active Semester
-        const { data: activeSemData, error: activeSemError } = await supabase
+        // 2. Determine All Active Semesters
+        const { data: activeSems, error: activeSemError } = await supabase
             .from('active_semester')
             .select('current_semester_code, current_semester')
             .eq('is_active', true)
-            .maybeSingle()
 
         if (activeSemError) throw activeSemError
-        if (!activeSemData || !activeSemData.current_semester_code) {
-            return new Response(JSON.stringify({ error: 'No active semester found' }), {
+        if (!activeSems || activeSems.length === 0) {
+            return new Response(JSON.stringify({ error: 'No active semesters found' }), {
                 status: 400,
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' }
             })
         }
-
-        const semesterCode = activeSemData.current_semester_code
-        const prettySemester = activeSemData.current_semester || semesterCode
-        // Table name format: calendar_spring2026
-        const tableName = `calendar_${semesterCode.toLowerCase()}`
 
         // 3. Prepare inserts for Date Range
         const start = new Date(startDate);
@@ -82,24 +76,34 @@ serve(async (req) => {
                 day: dayOfWeek,
                 name: name,
                 type: 'Holiday',
-                semester: prettySemester
+                // The 'semester' field will be re-mapped for each specific semester during insertion
+                semester: ''
             });
 
             // Increment day
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        // 4. Insert Holidays (Bulk)
-        const { error: insertError } = await supabase
-            .from(tableName)
-            .insert(datesToInsert);
+        // 4. Insert Holidays (Bulk) into ALL active calendars
+        let totalInserted = 0;
+        for (const sem of activeSems) {
+            const table = `calendar_${sem.current_semester_code.toLowerCase()}`;
+            const pretty = sem.current_semester || sem.current_semester_code;
 
-        if (insertError) throw insertError
+            // Re-map with current pretty semester name
+            const semanticDates = datesToInsert.map(d => ({ ...d, semester: pretty }));
+
+            const { error: insertError } = await supabase
+                .from(table)
+                .insert(semanticDates);
+
+            if (!insertError) totalInserted += semanticDates.length;
+            else console.error(`Failed to insert into ${table}:`, insertError);
+        }
 
         return new Response(JSON.stringify({
             success: true,
-            semester: semesterCode,
-            message: `Added ${datesToInsert.length} holiday(s) successfully`
+            message: `Added holidays to ${activeSems.length} active calendars (${totalInserted} total rows)`
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })

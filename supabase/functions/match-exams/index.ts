@@ -19,10 +19,24 @@ serve(async (req) => {
         const supabase = createClient(supabaseUrl, supabaseKey)
 
         if (!semester) {
+            let semesterType = 'tri';
+            if (user_id) {
+                const { data: profile } = await supabase.from('profiles').select('department').eq('id', user_id).maybeSingle();
+                const deptName = profile?.department || '';
+
+                const { data: deptData } = await supabase
+                    .from('departments')
+                    .select('semester_type')
+                    .eq('name', deptName)
+                    .maybeSingle();
+
+                semesterType = deptData?.semester_type || 'tri';
+            }
+
             const { data: activeSemData, error: activeSemError } = await supabase
                 .from('active_semester')
                 .select('current_semester_code')
-                .eq('id', 1)
+                .eq('semester_type', semesterType)
                 .single()
 
             if (activeSemError || !activeSemData) {
@@ -40,34 +54,38 @@ serve(async (req) => {
         // If RPC doesn't exist or returns false, we might need a fallback check
         // For now, let's try to query and see if it fails with 404/42P01
 
-        // 2. Fetch Exam Schedule
-        const { data: exams, error: examError } = await supabase
-            .from(`exams_${semester.toLowerCase()}`)
-            .select('*')
+        // 1.5 Fetch Course & Exam Lists
+        let mainCourses: any[] = []
+        let mainExams: any[] = []
+        let standardCourses: any[] = []
+        let standardExams: any[] = []
 
-        if (examError) {
-            if (examError.code === '42P01') {
-                console.log(`Exam table exams_${semester.toLowerCase()} does not exist yet.`);
-                return new Response(
-                    JSON.stringify({ status: 'skipped', message: "Exam schedule not uploaded yet." }),
-                    { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-                )
-            }
-            throw examError;
+        // Fetch Main (Departmental if applicable)
+        const { data: cData } = await supabase.from(`courses_${semester.toLowerCase()}`).select('doc_id, code, course_name, sessions')
+        const { data: eData } = await supabase.from(`exams_${semester.toLowerCase()}`).select('*')
+        mainCourses = cData || []
+        mainExams = eData || []
+
+        // If it's a departmental semester, fetch the standard trimester tables as well
+        const isBi = semester.toLowerCase().endsWith('_phrm_llb')
+        if (isBi) {
+            const standardCode = semester.split('_')[0] // e.g. "Spring2026"
+            const { data: scData } = await supabase.from(`courses_${standardCode.toLowerCase()}`).select('doc_id, code, course_name, sessions')
+            const { data: seData } = await supabase.from(`exams_${standardCode.toLowerCase()}`).select('*')
+            standardCourses = scData || []
+            standardExams = seData || []
         }
 
-        if (!exams || exams.length === 0) {
+        const allCourses = [...mainCourses, ...standardCourses]
+
+        // Check if any exam data was fetched
+        if ((!mainExams || mainExams.length === 0) && (!standardExams || standardExams.length === 0)) {
+            console.log(`No exam tables found for semester: ${semester}`);
             return new Response(
-                JSON.stringify({ status: 'skipped', message: "Exam schedule table is empty." }),
+                JSON.stringify({ status: 'skipped', message: "Exam schedule not uploaded yet or is empty." }),
                 { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
             )
         }
-
-        // 1.5 Fetch Master Course List
-        const { data: courses, error: courseError } = await supabase
-            .from(`courses_${semester.toLowerCase()}`)
-            .select('doc_id, code, course_name, sessions')
-        if (courseError || !courses) throw new Error(`Missing courses for ${semester}`)
 
         // 2. Fetch Profiles
         let query = supabase.from('profiles').select('id, enrolled_sections')
@@ -92,9 +110,13 @@ serve(async (req) => {
             const newCache: Record<string, any> = {}
 
             for (const sectionId of profile.enrolled_sections) {
-                // Find the full course object using the doc_id from the profile
-                const course = courses.find((c: any) => c.doc_id === sectionId)
+                // Find the full course object in the unified list
+                const course = allCourses.find((c: any) => c.doc_id === sectionId)
                 if (!course || !course.sessions) continue
+
+                const code = (course.code || '').toUpperCase()
+                const isDeptCourse = code.startsWith('PHRM') || code.startsWith('LAW')
+                const targetExams = isDeptCourse ? mainExams : (isBi ? standardExams : mainExams)
 
                 // Generate pattern
                 const days = new Set<string>()
@@ -133,8 +155,8 @@ serve(async (req) => {
                 codes.sort((a, b) => (order[a] ?? 99) - (order[b] ?? 99))
                 const pattern = codes.join('')
 
-                // Find Exam Match
-                const match = exams.find(e => e.class_days?.toUpperCase() === pattern.toUpperCase())
+                // Find Exam Match in the determined target list
+                const match = targetExams.find((e: any) => e.class_days?.toUpperCase() === pattern.toUpperCase())
                 if (match) {
                     const dayName = match.exam_day?.toLowerCase()?.trim() || ''
                     let dayChar = ''
@@ -206,7 +228,7 @@ serve(async (req) => {
             const tasksToInsert = []
             for (const courseCode of Object.keys(newCache)) {
                 const cacheData = newCache[courseCode]
-                const course = courses.find((c: any) => c.code === courseCode)
+                const course = allCourses.find((c: any) => c.code === courseCode)
 
                 let examDateTime = new Date(cacheData.exam_date + " 23:59:00") // default end of day
 

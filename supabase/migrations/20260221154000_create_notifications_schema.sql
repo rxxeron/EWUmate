@@ -27,14 +27,37 @@ CREATE TABLE IF NOT EXISTS public.scheduled_alerts (
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.scheduled_alerts ENABLE ROW LEVEL SECURITY;
 
--- Create Policies
-CREATE POLICY "Users can manage own notifications" 
-ON public.notifications FOR ALL 
-USING (auth.uid() = user_id);
+-- Create Policies (Safely)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'notifications' AND policyname = 'Users can manage own notifications'
+    ) THEN
+        CREATE POLICY "Users can manage own notifications" 
+        ON public.notifications FOR ALL 
+        USING (auth.uid() = user_id);
+    END IF;
 
-CREATE POLICY "Users can manage own scheduled_alerts" 
-ON public.scheduled_alerts FOR ALL 
-USING (auth.uid() = user_id);
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'scheduled_alerts' AND policyname = 'Users can manage own scheduled_alerts'
+    ) THEN
+        CREATE POLICY "Users can manage own scheduled_alerts" 
+        ON public.scheduled_alerts FOR ALL 
+        USING (auth.uid() = user_id);
+    END IF;
+END
+$$;
 
--- Enable Supabase Realtime for notifications
-alter publication supabase_realtime add table notifications;
+-- Enable Supabase Realtime for notifications (Safely)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND tablename = 'notifications'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+    END IF;
+END
+$$;

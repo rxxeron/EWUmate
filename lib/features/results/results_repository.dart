@@ -31,6 +31,7 @@ class ResultsRepository {
     'soc': 'B.S.S. (Hons) in Sociology',
     'islm': 'B.S.S. in Info. Studies & Library Management',
     'law': 'LL.B. (Hons)',
+    'pphs': 'B.S.S. in Population and Public Health Sciences',
   };
 
   Future<AcademicProfile> fetchAcademicProfile() async {
@@ -57,7 +58,11 @@ class ResultsRepository {
           user.id,
         );
         
-        final profile = _mapToAcademicProfile(profileData, academicData, semesters);
+        final isBi = (profileData['semester_type'] ?? '') == 'bi' 
+            || academicData['semester_type'] == 'bi' // Fallback if we haven't synced yet
+            || (await _isDepartmentBi(profileData['department'] ?? ''));
+
+        final profile = _mapToAcademicProfile(profileData, academicData, semesters, isBiSemester: isBi);
 
         // 2. Cache the fresh profile
         final profileMap = profile.toMap();
@@ -77,6 +82,7 @@ class ResultsRepository {
     Map<String, dynamic> profileData,
     Map<String, dynamic> academicData,
     List<SemesterResult> semesters,
+    {bool isBiSemester = false}
   ) {
     int ongoing = 0;
     int completed = 0;
@@ -129,6 +135,7 @@ class ResultsRepository {
         (profileData['program_id'] ?? 'N/A').toString(),
         cgpa,
         semesters,
+        isBiSemester: isBiSemester,
       ),
     );
   }
@@ -153,12 +160,9 @@ class ResultsRepository {
   Future<List<SemesterResult>> _injectOngoingSemester(
       List<SemesterResult> currentHistory, String userId) async {
     try {
-      final res = await _supabase
-          .from('active_semester')
-          .select('current_semester_code')
-          .eq('is_active', true)
-          .maybeSingle();
-      final currentCode = res?['current_semester_code']?.toString();
+      final academicRepo = AcademicRepository();
+      final config = await academicRepo.getActiveSemesterConfig();
+      final currentCode = config['current_semester_code']?.toString();
       if (currentCode == null) return currentHistory;
 
       // If already in history, we still want to merge/refresh to ensure latest details from progress table
@@ -341,6 +345,9 @@ class ResultsRepository {
 
   Future<AcademicProfile> _fetchCombinedData(Map<String, dynamic> academicData,
       Map<String, dynamic> profileData, String userId) async {
+    final isBi = (profileData['semester_type'] ?? '') == 'bi' 
+        || (await _isDepartmentBi(profileData['department'] ?? ''));
+
     final semesters = await _injectOngoingSemester(
       _parseCloudSemesters(academicData['semesters']),
       userId,
@@ -388,6 +395,7 @@ class ResultsRepository {
         (profileData['program_id'] ?? 'N/A').toString(),
         cgpa,
         semesters,
+        isBiSemester: isBi,
       ),
     );
   }
@@ -622,7 +630,13 @@ class ResultsRepository {
     return (term, year);
   }
 
-  String _calculateScholarship(String studentId, String programId, double cgpa, List<SemesterResult> semesters) {
+  String _calculateScholarship(
+    String studentId, 
+    String programId, 
+    double cgpa, 
+    List<SemesterResult> semesters,
+    {bool isBiSemester = false}
+  ) {
     if (cgpa < 3.50) {
       return "";
     }
@@ -631,14 +645,26 @@ class ResultsRepository {
     if (year == 0) {
       return "";
     }
-
+ 
     final potential = _getPotentialTier(cgpa, year, term);
     if (potential.isEmpty) {
       return "";
     }
-
-    final double lastYearCredits = _calculateLastYearCredits(semesters);
-    final double requiredCredits = _getRequiredCredits(programId, year, term);
+ 
+    String department,
+    int year,
+    int term,
+  ) async {
+    // Determine cycle type from database
+    final deptRes = await _supabase
+        .from('departments')
+        .select('semester_type')
+        .eq('name', department)
+        .maybeSingle();
+    
+    final isBi = deptRes?['semester_type'] == 'bi';
+    final double lastYearCredits = _calculateLastYearCredits(semesters, isBiSemester: isBi);
+    final double requiredCredits = _getRequiredCredits(programId, year: year, term: term, isBiSemester: isBi);
     
     return lastYearCredits >= requiredCredits ? potential : "";
   }
@@ -659,21 +685,24 @@ class ResultsRepository {
     return "";
   }
 
-  double _calculateLastYearCredits(List<SemesterResult> semesters) {
-    // "Last one year" means the last 3 consecutive completed semesters
+  double _calculateLastYearCredits(List<SemesterResult> semesters, {bool isBiSemester = false}) {
+    // "Last one year" means the last 3 consecutive completed semesters for most
+    // But for Pharmacy/Law (Bi-semester), it means the last 2 semesters.
+    final int limit = isBiSemester ? 2 : 3;
+
     final completed = semesters
         .where((s) => s.courses.any((c) => c.grade != 'Ongoing' && c.grade != 'I' && c.grade != 'W'))
         .toList();
     completed.sort((a, b) => _compareSemesterName(b.semesterName, a.semesterName));
 
     double credits = 0;
-    for (var i = 0; i < completed.length && i < 3; i++) {
+    for (var i = 0; i < completed.length && i < limit; i++) {
       credits += completed[i].totalCredits;
     }
     return credits;
   }
 
-  double _getRequiredCredits(String program, int year, int term) {
+  double _getRequiredCredits(String program, {int year = 0, int term = 0, bool isBiSemester = false}) {
     final p = program.toUpperCase();
     
     bool isUpto(int targetYear, int targetTerm) {
@@ -681,16 +710,16 @@ class ResultsRepository {
       if (year == targetYear && term <= targetTerm) return true;
       return false;
     }
-
+ 
     if (p.contains('CSE') || p.contains('ICE') || p.contains('EEE')) return 35.0;
-    if (p.contains('PHARM')) return 39.0;
+    if (isBiSemester) return 21.0; 
     if (p.contains('MATHEMATICS') || p.contains('DSA')) return 33.0;
     if (p.contains('INFORMATION STUDIES') || p.contains('ISLM')) return 30.0;
     
     if (p.contains('ECONOMICS') || p.contains('ENGLISH') || p.contains('PPHS')) {
       return isUpto(2024, 1) ? 30.0 : 33.0;
     }
-    if (p.contains('LL.B') || p.contains('LAW')) return 33.0;
+    if (p.contains('LL.B') || p.contains('LAW')) return 21.0; 
     if (p.contains('CE') || p.contains('CIVIL')) {
       return isUpto(2024, 1) ? 37.0 : 35.0;
     }
@@ -700,7 +729,7 @@ class ResultsRepository {
     if (p.contains('GEB') || p.contains('GENETIC')) {
       return isUpto(2025, 3) ? 33.0 : 35.0;
     }
-
+ 
     return 30.0;
   }
 

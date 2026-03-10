@@ -88,8 +88,11 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
     setState(() => _saving = true);
 
     try {
+      final dept = _departments.firstWhere((d) => d['name'] == _selectedDeptName);
+      final semType = dept['semester_type'] ?? 'tri';
+      
       await _repo.saveProgram(
-          _selectedProgramId!, _selectedDeptName!, _selectedAdmittedSemester!);
+          _selectedProgramId!, _selectedDeptName!, _selectedAdmittedSemester!, semType);
       if (mounted) context.push('/onboarding/course-history');
     } catch (e) {
       if (mounted) {
@@ -234,7 +237,13 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
                         initialValue: _selectedAdmittedSemester,
-                        items: _semesters.map((sem) {
+                        items: _semesters.where((sem) {
+                          final dept = _departments.firstWhere((d) => d['name'] == _selectedDeptName);
+                          if (dept['semester_type'] == 'bi') {
+                            return !sem.contains("Summer");
+                          }
+                          return true;
+                        }).map((sem) {
                           return DropdownMenuItem(value: sem, child: Text(sem));
                         }).toList(),
                         onChanged: (val) {

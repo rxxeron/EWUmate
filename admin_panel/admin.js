@@ -270,7 +270,13 @@ function suggestFilename() {
         case 'examschedule': filename = `Exam ${semester}.pdf`; break;
         case 'advisingschedule': filename = `Advising Schedule ${semester}.pdf`; break;
     }
-    if (filename) document.getElementById('filenameInput').value = filename;
+    if (filename) {
+        const isDept = document.getElementById('departmentSelect').value === 'phrm_llb';
+        if (isDept) {
+            filename = filename.replace('.pdf', ' (PHRM_LLB).pdf');
+        }
+        document.getElementById('filenameInput').value = filename;
+    }
 }
 
 function setBtnLoading(btn, isLoading, originalHtml) {

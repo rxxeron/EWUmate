@@ -19,8 +19,7 @@ BEGIN
         grade_submission_start = NULL,
         grade_submission_deadline = NULL,
         updated_at = NOW()
-    WHERE id = 1 
-      AND next_semester_code IS NOT NULL 
+    WHERE next_semester_code IS NOT NULL 
       AND (switch_date IS NULL OR switch_date <= CURRENT_DATE);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

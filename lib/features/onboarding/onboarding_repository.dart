@@ -317,7 +317,6 @@ class OnboardingRepository {
     bool useDynamic = false;
     if (semester != null) {
       useDynamic = await _academicRepo.isSemesterActive(semester);
-      debugPrint('[Onboarding Diagnostic] Semester: "$semester", isSemesterActive: $useDynamic');
     }
 
     if (useDynamic) {
@@ -326,7 +325,6 @@ class OnboardingRepository {
         final cycleType = config['semester_type']?.toString();
         
         final actualTable = CourseUtils.semesterTable('courses', semester!, cycleType: cycleType);
-        debugPrint('[Onboarding Diagnostic] Querying dynamic table: "$actualTable"');
         
         var queryBuilder = _supabase.from(actualTable).select();
 
@@ -338,11 +336,24 @@ class OnboardingRepository {
           }
         }
 
-        final List<dynamic> data = await queryBuilder
+        List<dynamic> data = await queryBuilder
             .limit(500)
             .timeout(const Duration(seconds: 10));
 
-        debugPrint('[Onboarding Diagnostic] Dynamic table query returned ${data.length} results.');
+        // SECONDARY FALLBACK: If the semester-specific table is empty, try the global 'courses' table
+        // This handles cases where data hasn't been migrated to the semester table yet.
+        if (data.isEmpty) {
+          debugPrint('[Onboarding] $actualTable is empty. Trying global "courses" table...');
+          var globalQuery = _supabase.from('courses').select();
+          if (queryStr != null && queryStr.isNotEmpty) {
+            if (normalizedQuery != null) {
+              globalQuery = globalQuery.or('code.ilike.%$queryStr%,code.ilike.%$normalizedQuery%');
+            } else {
+              globalQuery = globalQuery.ilike('code', '%$queryStr%');
+            }
+          }
+          data = await globalQuery.limit(500).timeout(const Duration(seconds: 10));
+        }
 
         if (data.isNotEmpty) {
           final groups = <String, Map<String, dynamic>>{};
@@ -389,11 +400,11 @@ class OnboardingRepository {
           }).toList();
         } else {
           // If active table is totally empty (e.g., scraper hasn't run yet for Summer 2025), fallback to course_metadata
-          debugPrint('[Onboarding Diagnostic] Dynamic table "$actualTable" returned no results. Falling back to course_metadata.');
+          debugPrint('[Onboarding] Dynamic table "$actualTable" returned no results. Falling back to course_metadata.');
           useDynamic = false; // Trigger fallback
         }
       } catch (e) {
-        debugPrint("[Onboarding Diagnostic] Dynamic table error: $e");
+        debugPrint("[Onboarding] Dynamic table error: $e");
         useDynamic = false; // Trigger fallback on error too
       }
     }
@@ -401,7 +412,7 @@ class OnboardingRepository {
     if (!useDynamic) {
       // FALLBACK: Use course_metadata for Past Semesters (or empty Active Semesters)
       try {
-      debugPrint('[Onboarding Diagnostic] Falling back to course_metadata...');
+      debugPrint('[Onboarding] Loading courses from course_metadata...');
 
       var queryBuilder = _supabase.from('course_metadata').select();
 
@@ -415,8 +426,6 @@ class OnboardingRepository {
 
       final List<dynamic> list = await queryBuilder.limit(1000); 
 
-      debugPrint('[Onboarding Diagnostic] Found ${list.length} courses in course_metadata');
-
       return list.map((m) {
         final rawCode = (m['code'] ?? '???').toString();
         // Normalize code for UI
@@ -427,7 +436,7 @@ class OnboardingRepository {
         };
       }).toList();
     } catch (e) {
-      debugPrint("[Onboarding Diagnostic] course_metadata error: $e");
+      debugPrint("course_metadata error: $e");
     }
     }
 

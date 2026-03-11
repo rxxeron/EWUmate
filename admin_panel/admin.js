@@ -105,7 +105,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-    const sections = ['broadcast', 'files', 'holidays', 'direct-message', 'system-fix', 'security'];
+    const sections = ['broadcast', 'files', 'holidays', 'direct-message', 'system-fix', 'config', 'security'];
     sections.forEach(s => {
         const el = document.getElementById(`section-${s}`);
         const tabEl = document.getElementById(`tab-${s}`);
@@ -113,6 +113,75 @@ function switchTab(tab) {
         if (tabEl) tabEl.classList.toggle('active', s === tab);
     });
     alertBox.classList.add('hidden');
+    
+    if (tab === 'config') {
+        loadSemesterConfigs();
+    }
+}
+
+async function loadSemesterConfigs() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?select=*&order=id.asc`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        const data = await res.json();
+        
+        data.forEach(cfg => {
+            const cycle = cfg.semester_type === 'tri' ? 'tri' : 'bi';
+            const form = document.getElementById(`configForm-${cycle}`);
+            if (form) {
+                // Populate all inputs
+                Object.keys(cfg).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) input.value = cfg[key] || "";
+                });
+            }
+        });
+    } catch (err) {
+        console.error("Failed to load configs:", err);
+    }
+}
+
+async function saveSemesterConfig(cycle) {
+    const form = document.getElementById(`configForm-${cycle}`);
+    const formData = new FormData(form);
+    const id = formData.get('id');
+    const updateData = {};
+    
+    formData.forEach((value, key) => {
+        if (key !== 'id') updateData[key] = value || null;
+    });
+
+    const btn = form.querySelector('button');
+    const originalText = btn.innerText;
+    btn.disabled = true;
+    btn.innerText = "Applying Changes...";
+
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (!res.ok) throw new Error("Update failed");
+
+        showAlert("success", `${cycle.toUpperCase()} Cycle Configuration Updated!`, "bi-check-all");
+        await fetchCurrentSemester(); // Refresh badge
+    } catch (err) {
+        showAlert("danger", "Failed to update config: " + err.message, "bi-bug");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
 }
 
 // BROADCAST LOGIC
@@ -354,6 +423,41 @@ async function runRepairAction(target) {
     }
 }
 
+async function syncAcademicConfig() {
+    if (!confirm("This will scan all active calendars and update the Academic configuration (Dates, Advising, etc.). Proceed?")) return;
+
+    const btn = document.getElementById('syncConfigBtn');
+    setBtnLoading(btn, true, "Scanning Calendars...");
+
+    try {
+        const res = await fetch(`${BASE_URL}/sync-academic-config`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({ secret: currentKey })
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Sync failed");
+
+        let details = "";
+        if (json.results) {
+            details = json.results.map(r => 
+                `${r.cycle.toUpperCase()}: ${r.status === 'success' ? 'Updated ' + r.fieldsUpdated.join(', ') : (r.error || r.status)}`
+            ).join("\n");
+        }
+
+        showAlert("success", `Sync operation complete!\n${details}`, "bi-stars");
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-cloud-download-fill"></i> Sync Config from Calendars`);
+    }
+}
+
 let currentSemester = "";
 async function fetchCurrentSemester() {
     try {
@@ -366,10 +470,14 @@ async function fetchCurrentSemester() {
         const json = await res.json();
         if (json && json.length > 0) {
             currentSemester = json[0].current_semester;
+            const badge = document.getElementById('activeSemesterBadge');
+            if (badge) badge.innerText = `${currentSemester} Active`;
             suggestFilename();
         }
     } catch (err) {
-        currentSemester = "Spring 2026";
+        currentSemester = "";
+        const badge = document.getElementById('activeSemesterBadge');
+        if (badge) badge.innerText = `Error Loading Semester`;
         suggestFilename();
     }
 }

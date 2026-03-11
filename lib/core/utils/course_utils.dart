@@ -64,7 +64,9 @@ class CourseUtils {
   static String semesterTable(String prefix, String semesterCode, {String? cycleType}) {
     final safeSem = semesterCode.toLowerCase().replaceAll(' ', '');
     String table = '${prefix}_$safeSem';
-    if (cycleType == 'bi') {
+    
+    // As per user clarification: course tables are unified, calendars/exams are department-specific
+    if (cycleType == 'bi' && prefix != 'courses' && !table.endsWith('_phrm_llb')) {
       table = '${table}_phrm_llb';
     }
     return table;

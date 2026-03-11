@@ -209,13 +209,10 @@ class AcademicRepository {
 
   Future<List<AcademicEvent>> _fetchHolidaysFromSupabase(String semesterCode, {bool forceStandard = false}) async {
     final cleanSem = semesterCode.replaceAll(' ', '').toLowerCase();
-    String tableName = 'calendar_$cleanSem';
     
     // Check if we are in a bi-semester cycle from the cached config
-    final isBi = _configCache['semester_type'] == 'bi';
-    if (isBi && !forceStandard) {
-      tableName = 'calendar_${cleanSem}_phrm_llb';
-    }
+    final semesterType = _configCache['semester_type']?.toString();
+    final tableName = CourseUtils.semesterTable('calendar', semesterCode, cycleType: forceStandard ? null : semesterType);
 
     try {
       final data = await _supabase.from(tableName).select();
@@ -247,6 +244,7 @@ class AcademicRepository {
     }
 
     try {
+      final semesterType = _configCache['semester_type']?.toString();
       final isBi = semesterType == 'bi';
       
       // Fetch data from standard table
@@ -256,7 +254,7 @@ class AcademicRepository {
 
       // If bi-semester, also fetch departmental exams and merge
       if (isBi) {
-        final deptTable = "${standardTable}_phrm_llb";
+        final deptTable = CourseUtils.semesterTable('exams', semesterCode, cycleType: 'bi');
         try {
           final deptData = await _supabase.from(deptTable).select();
           final List<Map<String, dynamic>> deptList = List<Map<String, dynamic>>.from(deptData as List? ?? []);

@@ -47,7 +47,7 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
     "Fall 2026"
   ];
 
-  String _runningSemester = "Spring 2026"; // Made non-final, default fallback
+  String _runningSemester = "Loading..."; // Generic fallback until fetched
   final AcademicRepository _academicRepo = AcademicRepository();
 
   // Current State
@@ -170,7 +170,10 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
       _currentSemester = semester;
       _currentIndex = _allSemesters.indexOf(semester);
       _initializing = false;
-      _isCurrentSemester = (semester == _runningSemester);
+      
+      final cleanRunning = _runningSemester.trim().toLowerCase();
+      final cleanCurrent = semester.trim().toLowerCase();
+      _isCurrentSemester = (cleanCurrent == cleanRunning);
       _catalog = []; // Clear current
     });
     _loadCatalog(); // Trigger load
@@ -190,7 +193,10 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
         _currentIndex = nextIndex;
         _currentSemester = nextSem;
         _searchQuery = "";
-        _isCurrentSemester = (nextSem == _runningSemester);
+        
+        final cleanRunning = _runningSemester.trim().toLowerCase();
+        final cleanNext = nextSem.trim().toLowerCase();
+        _isCurrentSemester = (cleanNext == cleanRunning);
         _catalog = []; // Clear
 
         if (_isCurrentSemester) {

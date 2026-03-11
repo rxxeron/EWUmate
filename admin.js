@@ -604,9 +604,10 @@ async function syncAcademicConfig() {
 }
 
 let currentSemester = "";
+let nextSemester = "";
 async function fetchCurrentSemester() {
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?select=current_semester,semester_type`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?select=current_semester,next_semester,semester_type`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -623,9 +624,10 @@ async function fetchCurrentSemester() {
                 badge.innerHTML = `<i class="bi bi-${isTri ? '3' : '2'}-square-fill"></i> ${isTri ? 'Tri' : 'Bi'}: ${item.current_semester}`;
             }
 
-            // Default global currentSemester to Tri cycle for file suggestions
+            // Store Tri cycle names globally for UI suggestions
             if (isTri) {
                 currentSemester = item.current_semester;
+                nextSemester = item.next_semester;
             }
         });
 
@@ -637,9 +639,29 @@ async function fetchCurrentSemester() {
     }
 }
 
+function setSemesterContext(ctx) {
+    document.getElementById('semesterContext').value = ctx;
+    
+    // Update UI buttons
+    const curBtn = document.getElementById('ctx-current');
+    const upcBtn = document.getElementById('ctx-upcoming');
+    
+    if (ctx === 'current') {
+        curBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all bg-white text-primary-700 shadow-sm border border-gray-200";
+        upcBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all text-gray-500 hover:bg-gray-200";
+    } else {
+        curBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all text-gray-500 hover:bg-gray-200";
+        upcBtn.className = "flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all bg-white text-primary-700 shadow-sm border border-gray-200";
+    }
+    
+    suggestFilename();
+}
+
 function suggestFilename() {
     const folder = document.getElementById('folderSelect').value;
-    const semester = currentSemester || "Spring 2026";
+    const ctx = document.getElementById('semesterContext').value;
+    const semester = (ctx === 'current') ? (currentSemester || "Spring 2026") : (nextSemester || "Summer 2026");
+    
     let filename = "";
     switch (folder) {
         case 'facultylist': filename = `Faculty List ${semester}.pdf`; break;

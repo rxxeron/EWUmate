@@ -105,7 +105,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-    const sections = ['broadcast', 'files', 'holidays', 'direct-message', 'system-fix', 'config', 'security'];
+    const sections = ['broadcast', 'files', 'holidays', 'direct-message', 'system-fix', 'config', 'security', 'semesters'];
     sections.forEach(s => {
         const el = document.getElementById(`section-${s}`);
         const tabEl = document.getElementById(`tab-${s}`);
@@ -116,6 +116,41 @@ function switchTab(tab) {
     
     if (tab === 'config') {
         loadSemesterConfigs();
+    }
+    if (tab === 'semesters') {
+        loadSemesterRecords();
+    }
+}
+
+async function loadSemesterRecords() {
+    const tableBody = document.getElementById('semester-records-body');
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading semesters...</td></tr>';
+
+    try {
+        const { data, error } = await supabase
+            .from('semesters')
+            .select('*')
+            .order('year', { ascending: false })
+            .order('season', { ascending: false });
+
+        if (error) throw error;
+
+        tableBody.innerHTML = data.map(sem => `
+            <tr>
+                <td class="fw-bold">${sem.name}</td>
+                <td><code class="text-cyan">${sem.code}</code></td>
+                <td>${sem.year}</td>
+                <td>${sem.season}</td>
+                <td>
+                    <span class="badge ${sem.is_historical ? 'bg-secondary' : 'bg-success'}">
+                        ${sem.is_historical ? 'Historical' : 'Active'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    } catch (e) {
+        console.error('Error loading semesters:', e);
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${e.message}</td></tr>`;
     }
 }
 

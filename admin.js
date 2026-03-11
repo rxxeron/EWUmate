@@ -243,7 +243,30 @@ async function loadSemesterConfigs() {
                 // Populate all inputs
                 Object.keys(cfg).forEach(key => {
                     const input = form.querySelector(`[name="${key}"]`);
-                    if (input) input.value = cfg[key] || "";
+                    if (!input) return;
+
+                    if (input.type === 'checkbox') {
+                        input.checked = cfg[key] === true;
+                    } else if (input.type === 'date') {
+                        // Format ISO date (YYYY-MM-DD...) to YYYY-MM-DD
+                        if (cfg[key]) {
+                            input.value = cfg[key].split('T')[0];
+                        } else {
+                            input.value = "";
+                        }
+                    } else if (input.type === 'datetime-local') {
+                        // Format ISO date to YYYY-MM-DDTHH:MM
+                        if (cfg[key]) {
+                            const date = new Date(cfg[key]);
+                            const offset = date.getTimezoneOffset() * 60000;
+                            const localISOTime = (new Date(date - offset)).toISOString().slice(0, 16);
+                            input.value = localISOTime;
+                        } else {
+                            input.value = "";
+                        }
+                    } else {
+                        input.value = cfg[key] || "";
+                    }
                 });
             }
         });
@@ -255,17 +278,31 @@ async function loadSemesterConfigs() {
 async function saveSemesterConfig(cycle) {
     const form = document.getElementById(`configForm-${cycle}`);
     const formData = new FormData(form);
-    const id = formData.get('id');
     const updateData = {};
     
-    formData.forEach((value, key) => {
-        if (key !== 'id') updateData[key] = value || null;
+    // Manual mapping for ID from cycle since I removed hidden ID to simplify UI
+    const id = cycle === 'tri' ? 1 : 2;
+
+    // Get all inputs including those not in FormData (like unchecked checkboxes)
+    const inputs = form.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        if (!input.name) return;
+        
+        if (input.type === 'checkbox') {
+            updateData[input.name] = input.checked;
+        } else if (input.type === 'number') {
+            updateData[input.name] = input.value ? parseInt(input.value) : null;
+        } else if (input.type === 'datetime-local' && input.value) {
+            updateData[input.name] = new Date(input.value).toISOString();
+        } else {
+            updateData[input.name] = input.value || null;
+        }
     });
 
     const btn = form.querySelector('button');
-    const originalText = btn.innerText;
+    const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerText = "Applying Changes...";
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Syncing...';
 
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?id=eq.${id}`, {
@@ -279,15 +316,18 @@ async function saveSemesterConfig(cycle) {
             body: JSON.stringify(updateData)
         });
 
-        if (!res.ok) throw new Error("Update failed");
+        if (!res.ok) {
+             const err = await res.json();
+             throw new Error(err.message || "Update failed");
+        }
 
-        showAlert("success", `${cycle.toUpperCase()} Cycle Configuration Updated!`, "bi-check-all");
+        showAlert("success", `${cycle.toUpperCase()} Cycle Synchronized with Database!`, "bi-check-all");
         await fetchCurrentSemester(); // Refresh badge
     } catch (err) {
-        showAlert("danger", "Failed to update config: " + err.message, "bi-bug");
+        showAlert("danger", "Sync Error: " + err.message, "bi-bug");
     } finally {
         btn.disabled = false;
-        btn.innerText = originalText;
+        btn.innerHTML = originalText;
     }
 }
 

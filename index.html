@@ -661,7 +661,6 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                 <h4 class="font-bold text-gray-800">Tri-Semester Cycle (Standard)</h4>
                             </div>
                             <form id="configForm-tri" class="space-y-4">
-                                <input type="hidden" name="id" value="1">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="col-span-1">
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Semester Name</label>
@@ -669,17 +668,37 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                     </div>
                                     <div class="col-span-1">
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Semester Code</label>
-                                        <input type="text" name="current_semester_code" placeholder="spring2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono">
+                                        <input type="text" name="current_semester_code" placeholder="spring2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="col-span-1">
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Next Semester</label>
+                                        <input type="text" name="next_semester" placeholder="Summer 2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
+                                    </div>
+                                    <div class="col-span-1">
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Next Code</label>
+                                        <input type="text" name="next_semester_code" placeholder="summer2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono text-xs">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cur. Start Date</label>
                                         <input type="date" name="current_semester_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                     <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Switch Date</label>
+                                        <input type="datetime-local" name="switch_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Advising Date</label>
                                         <input type="date" name="advising_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upc. Start Date</label>
+                                        <input type="date" name="upcoming_semester_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
@@ -692,7 +711,26 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                         <input type="date" name="grade_submission_deadline" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                 </div>
-                                <button type="button" onclick="saveSemesterConfig('tri')" class="w-full bg-primary-600 text-white py-2 rounded-lg font-bold hover:bg-primary-700 transition">Save Tri Config</button>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
+                                        <select name="status" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none bg-white">
+                                            <option value="active">Active</option>
+                                            <option value="advising">Advising</option>
+                                            <option value="exams">Exams</option>
+                                            <option value="transition">Transition</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <label class="flex items-center gap-2 cursor-pointer py-2">
+                                            <input type="checkbox" name="is_active" value="true" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-50">
+                                            <span class="text-xs font-bold text-gray-500 uppercase">Is Active Cycle</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="saveSemesterConfig('tri')" class="w-full bg-primary-600 text-white py-3 rounded-xl font-bold hover:bg-primary-700 shadow-lg shadow-primary-100 transition mt-2 flex items-center justify-center gap-2">
+                                    <i class="bi bi-save"></i> Save Tri Config
+                                </button>
                             </form>
                         </div>
 
@@ -705,7 +743,6 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                 <h4 class="font-bold text-gray-800">Bi-Semester Cycle (PHRM/LLB)</h4>
                             </div>
                             <form id="configForm-bi" class="space-y-4">
-                                <input type="hidden" name="id" value="2">
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="col-span-1">
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Semester Name</label>
@@ -713,17 +750,37 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                     </div>
                                     <div class="col-span-1">
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Semester Code</label>
-                                        <input type="text" name="current_semester_code" placeholder="spring2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono">
+                                        <input type="text" name="current_semester_code" placeholder="spring2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="col-span-1">
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Next Semester</label>
+                                        <input type="text" name="next_semester" placeholder="Fall 2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
+                                    </div>
+                                    <div class="col-span-1">
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Next Code</label>
+                                        <input type="text" name="next_semester_code" placeholder="fall2026" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none font-mono text-xs">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Cur. Start Date</label>
                                         <input type="date" name="current_semester_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                     <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Switch Date</label>
+                                        <input type="datetime-local" name="switch_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none text-xs">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
                                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Advising Date</label>
                                         <input type="date" name="advising_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upc. Start Date</label>
+                                        <input type="date" name="upcoming_semester_start_date" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
@@ -736,7 +793,26 @@ span>Upload <b>Faculty List</b> for class routines. Parsing happens
                                         <input type="date" name="grade_submission_deadline" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none">
                                     </div>
                                 </div>
-                                <button type="button" onclick="saveSemesterConfig('bi')" class="w-full bg-primary-600 text-white py-2 rounded-lg font-bold hover:bg-primary-700 transition">Save Bi Config</button>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Status</label>
+                                        <select name="status" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-50 outline-none bg-white font-medium">
+                                            <option value="active">Active</option>
+                                            <option value="advising">Advising</option>
+                                            <option value="exams">Exams</option>
+                                            <option value="transition">Transition</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <label class="flex items-center gap-2 cursor-pointer py-2">
+                                            <input type="checkbox" name="is_active" value="true" class="w-4 h-4 rounded text-purple-600 focus:ring-purple-50">
+                                            <span class="text-xs font-bold text-gray-500 uppercase">Is Active Cycle</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="saveSemesterConfig('bi')" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 shadow-lg shadow-purple-100 transition mt-2 flex items-center justify-center gap-2">
+                                    <i class="bi bi-save"></i> Save Bi Config
+                                </button>
                             </form>
                         </div>
                     </div>

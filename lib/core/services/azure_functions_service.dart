@@ -116,12 +116,28 @@ class AzureFunctionsService {
       throw Exception(_notLoggedIn);
     }
 
-    // Schedule generation stays in Azure due to compute intensity
     return _post('generate_schedules', {
       'user_id': uid,
       'semester': semester,
       'courses': courses,
       'filters': filters ?? {},
     });
+  }
+
+  /// Calls the general purpose app-logic Edge Function for remote-controlled logic.
+  Future<Map<String, dynamic>> invokeAppLogic(String action, Map<String, dynamic> data) async {
+    try {
+      final response = await Supabase.instance.client.functions.invoke(
+        'app-logic',
+        body: {
+          'action': action,
+          'data': data,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('[EdgeFunc] app-logic failed for $action: $e');
+      rethrow;
+    }
   }
 }

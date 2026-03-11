@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'onboarding_repository.dart';
+import '../calendar/academic_repository.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
 
@@ -12,6 +14,7 @@ class ProgramSelectionScreen extends StatefulWidget {
 }
 
 class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
+  final _supabase = Supabase.instance.client;
   final OnboardingRepository _repo = OnboardingRepository();
   List<Map<String, dynamic>> _departments = [];
   String? _selectedProgramId;
@@ -110,22 +113,22 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 40),
-                  const Icon(Icons.account_balance_rounded,
-                      size: 64, color: Colors.cyanAccent),
+                  const Icon(Icons.school_rounded,
+                      size: 80, color: Colors.cyanAccent),
                   const SizedBox(height: 24),
-                  const Text(
-                    "Academic Profile",
-                    style: TextStyle(
-                        fontSize: 24,
+                  Text(
+                    "${_supabase.auth.currentUser?.email?.split('@').first ?? 'Student'}, welcome to EWUmate!",
+                    style: const TextStyle(
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   const Text(
-                    "Please select your department and program to personalize your experience.",
+                    "Let's get your profile set up.\nPlease select your department and program to personalize your experience.",
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
                   ),
                   const SizedBox(height: 32),
 

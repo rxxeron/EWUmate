@@ -17,6 +17,8 @@ import 'core/config/supabase_config.dart';
 import 'core/services/offline_cache_service.dart';
 import 'core/services/sync_service.dart';
 import 'core/services/connectivity_service.dart';
+import 'core/repositories/app_config_repository.dart';
+import 'core/widgets/maintenance_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -32,15 +34,25 @@ void main() async {
   // Create a future for the initialization logic
   final initFuture = _initializeServices();
 
-  // Wait for init with a hard timeout of 7 seconds
+  // Wait for init with a hard timeout of 10 seconds (increased from 7 for remote config)
   await initFuture.timeout(
-    const Duration(seconds: 7),
+    const Duration(seconds: 10),
     onTimeout: () {
       debugPrint('[Main] STARTUP TIMEOUT: Initialization took too long, proceeding to runApp.');
     },
   ).catchError((e) {
     debugPrint('[Main] STARTUP ERROR: $e');
   });
+
+  // Check for Maintenance Mode before launch
+  final config = AppConfigRepository();
+  if (config.isFeatureEnabled('maintenance_mode', defaultValue: false)) {
+    runApp(const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MaintenanceScreen(),
+    ));
+    return;
+  }
 
   runApp(
     ChangeNotifierProvider(
@@ -75,10 +87,11 @@ Future<void> _initializeServices() async {
       debugPrint('[Main] Supabase Init Timeout/Error: $e');
     });
 
-    // 1.5. Initialize Offline Storage & Connectivity
+    // 1.5. Initialize Offline Storage, Connectivity & App Config
     await OfflineCacheService().init();
     await OfflineCacheService().clearRamadanCache(); 
     await ConnectivityService().init();
+    await AppConfigRepository().init();
 
     // 2. Request Permissions with Timeout
     await Permission.notification.request().timeout(

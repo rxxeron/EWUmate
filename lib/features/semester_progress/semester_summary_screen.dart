@@ -7,6 +7,7 @@ import '../../core/models/result_models.dart';
 import '../../core/models/task_model.dart';
 import '../calendar/academic_repository.dart';
 import 'semester_repository.dart';
+import '../../core/repositories/app_config_repository.dart';
 
 class SemesterSummaryScreen extends StatefulWidget {
   const SemesterSummaryScreen({super.key});
@@ -89,7 +90,18 @@ class _SemesterSummaryScreenState extends State<SemesterSummaryScreen> {
                   children: [
                     _buildOverviewHeader(summaries),
                     const SizedBox(height: 20),
-                    _buildScholarshipCard(projection),
+                    if (AppConfigRepository().isFeatureEnabled('scholarship_projection'))
+                      _buildScholarshipCard(projection)
+                    else 
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Text(
+                            "Scholarship projection is temporarily unavailable.",
+                            style: TextStyle(color: Colors.white24, fontSize: 12, fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 30),
                     const Text(
                       "Course Performance",

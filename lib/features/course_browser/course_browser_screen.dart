@@ -56,7 +56,7 @@ class _CourseBrowserScreenState extends State<CourseBrowserScreen> {
 
       setState(() => _loadingStatus = "Finding active semester...");
       final config = await _academicRepo.getActiveSemesterConfig();
-      final activeSemester = config['active_semester_code'] ?? await _academicRepo.getCurrentSemesterCode();
+      final activeSemester = config['current_semester_code'] ?? await _academicRepo.getCurrentSemesterCode();
       
       if (mounted) {
         setState(() {

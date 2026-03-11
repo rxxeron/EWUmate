@@ -61,26 +61,12 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
       final user = _supabase.auth.currentUser;
       if (user == null) return;
 
-      final active = await _supabase.from('active_semester').select().eq('is_active', true).single();
-      _semesterCode = active['current_semester_code'];
+      final academicRepo = AcademicRepository();
+      final config = await academicRepo.getActiveSemesterConfig().timeout(const Duration(seconds: 4));
+      _semesterCode = config['current_semester_code'] ?? 'Spring2026';
+      _nextSemCode = config['next_semester_code'] ?? 'Summer2026';
 
-      // Calculate next semester code
-      final match = RegExp(r'([a-zA-Z]+)(\d{4})').firstMatch(_semesterCode);
-      if (match != null) {
-        final season = match.group(1)!;
-        final year = int.parse(match.group(2)!);
-        if (season.contains('Spring')) {
-          _nextSemCode = 'Summer$year';
-        } else if (season.contains('Summer')) {
-          _nextSemCode = 'Fall$year';
-        } else if (season.contains('Fall')) {
-          _nextSemCode = 'Spring${year + 1}';
-        } else {
-          _nextSemCode = _semesterCode;
-        }
-      }
-
-      _courses = await _repo.fetchSemesterSummary(_semesterCode);
+      _courses = await _repo.fetchSemesterSummary(_semesterCode).timeout(const Duration(seconds: 4));
       
       for (var c in _courses) {
         _grades[c.code] = "A"; // Default
@@ -89,7 +75,9 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
       final profile = await _supabase.from('profiles')
           .select('force_grade_entry, enrolled_sections_next, favorite_schedules')
           .eq('id', user.id)
-          .single();
+          .single()
+          .timeout(const Duration(seconds: 4));
+          
       _isForced = profile['force_grade_entry'] ?? false;
 
       // Check if enrollment for next semester is needed
@@ -100,7 +88,7 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
 
         // Load available courses for the next semester
         try {
-          final raw = await _courseRepo.fetchCourses(_nextSemCode);
+          final raw = await _courseRepo.fetchCourses(_nextSemCode).timeout(const Duration(seconds: 6));
           _availableCourses = {};
           raw.forEach((code, sections) {
             final available = sections.where((s) => CourseUtils.isAvailable(s.capacity)).toList();
@@ -125,8 +113,10 @@ class _GradeEntryGatekeeperScreenState extends State<GradeEntryGatekeeperScreen>
 
     } catch (e) {
       debugPrint('Error loading gatekeeper data: $e');
+      // If forced, we MUST try to show something, otherwise navigate back or to dashboard
+      if (!_isForced && mounted) Navigator.pop(context);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

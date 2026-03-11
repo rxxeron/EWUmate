@@ -25,6 +25,7 @@ import '../../core/services/schedule_service.dart';
 import '../../core/services/offline_cache_service.dart';
 import '../../core/services/connectivity_service.dart';
 import '../../core/services/sync_service.dart';
+import '../../core/repositories/app_config_repository.dart';
 import '../../core/utils/time_utils.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
@@ -414,6 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            FadeInSlide(delay: const Duration(milliseconds: 50), child: _buildEmergencyNotice()),
                             FadeInSlide(delay: const Duration(milliseconds: 100), child: _buildTransitionBanner()),
                             FadeInSlide(delay: const Duration(milliseconds: 200), child: _buildAdvisingBanner()),
                             FadeInSlide(delay: const Duration(milliseconds: 300), child: _buildRamadanWidget()),
@@ -789,6 +791,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmergencyNotice() {
+    final notice = AppConfigRepository().getEmergencyNotice();
+    if (notice == null) return const SizedBox.shrink();
+
+    final title = notice['title'] ?? "Important Notice";
+    final message = notice['message'] ?? "";
+    final type = notice['type'] ?? "info";
+
+    Color bgColor = Colors.blueAccent.withOpacity(0.1);
+    Color iconColor = Colors.blueAccent;
+    IconData icon = Icons.info_outline_rounded;
+
+    if (type == 'warning') {
+      bgColor = Colors.orangeAccent.withOpacity(0.1);
+      iconColor = Colors.orangeAccent;
+      icon = Icons.warning_amber_rounded;
+    } else if (type == 'danger') {
+      bgColor = Colors.redAccent.withOpacity(0.1);
+      iconColor = Colors.redAccent;
+      icon = Icons.error_outline_rounded;
+    }
+
+    return GlassContainer(
+      margin: const EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.all(18),
+      borderRadius: 22,
+      borderColor: iconColor.withOpacity(0.3),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

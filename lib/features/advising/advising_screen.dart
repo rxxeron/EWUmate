@@ -891,9 +891,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              "${_manualDraft.length} courses drafted (Need 3-5)",
-              style: TextStyle(
-                color: (_manualDraft.length >=3) ? Colors.cyanAccent : Colors.orangeAccent,
+              "${_manualDraft.length} courses drafted",
+              style: const TextStyle(
+                color: Colors.cyanAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -919,10 +919,6 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       if (_selectedCodes.contains(code)) {
         _selectedCodes.remove(code);
       } else {
-        if (_selectedCodes.length >= 5) {
-          _showSnack("Maximum 5 courses allowed.");
-          return;
-        }
         _selectedCodes.add(code);
       }
     });
@@ -943,11 +939,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
       return;
     }
  
-    // 2. Check for 5 course limit
-    if (_manualDraft.length >= 5) {
-      _showSnack("Maximum 5 courses allowed.");
-      return;
-    }
+    // 2. Removed 5 course limit
  
     // 3. Time Clash Check
     for (final existing in _manualDraft) {
@@ -1031,8 +1023,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   }
 
   Widget _buildGeneratorActions() {
-    final canGenerate =
-        _selectedCodes.length >= 3 && _selectedCodes.length <= 5;
+    final canGenerate = _selectedCodes.isNotEmpty;
 
     return Column(
       children: [
@@ -1040,9 +1031,9 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              "${_selectedCodes.length} courses selected (Need 3-5)",
-              style: TextStyle(
-                color: canGenerate ? Colors.cyanAccent : Colors.orangeAccent,
+              "${_selectedCodes.length} courses selected",
+              style: const TextStyle(
+                color: Colors.cyanAccent,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -1127,7 +1118,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     final List<List<Course>> allCombos = [];
     
     // Add manual draft if it has 3-5 courses
-    if (_manualDraft.length >= 3 && _manualDraft.length <= 5) {
+    if (_manualDraft.isNotEmpty) {
       allCombos.add(_manualDraft);
     }
  
@@ -1146,7 +1137,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
           const Text('Combinations will appear here.',
               style: TextStyle(color: Colors.white38)),
           const SizedBox(height: 10),
-          const Text('(Select 3-5 courses/sections)',
+          const Text('(Select courses/sections)',
               style: TextStyle(color: Colors.white24, fontSize: 12)),
           if (_generatedHistory.isNotEmpty) ...[
             const SizedBox(height: 20),

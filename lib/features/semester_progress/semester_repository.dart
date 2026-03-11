@@ -8,6 +8,8 @@ import '../../core/models/course_model.dart';
 import '../../core/models/scholarship_rule_model.dart';
 import '../../core/models/semester_progress_models.dart';
 import '../../core/utils/course_utils.dart';
+import '../../core/services/azure_functions_service.dart';
+import '../../core/services/offline_cache_service.dart';
 
 
 class CourseSummary {
@@ -113,53 +115,55 @@ class SemesterRepository {
   static final Map<String, ScholarshipRule> _ruleCache = {};
 
   /// Fetch the scholarship rule for a given [program] and [admitSemester].
-  /// Returns a matching rule from Supabase, or a fallback default.
+  /// Returns a matching rule from the cloud logic, or a fallback default.
   Future<ScholarshipRule> fetchScholarshipRule(String programId, String admitSemester) async {
-    final cacheKey = '$programId|$admitSemester';
+    final cacheKey = '${programId}_$admitSemester'.replaceAll(' ', '_');
     if (_ruleCache.containsKey(cacheKey)) return _ruleCache[cacheKey]!;
 
+    // 1. Try Disk Cache
+    final diskCache = OfflineCacheService().getCachedScholarshipRule(cacheKey);
+    if (diskCache != null) {
+      final rule = ScholarshipRule.fromMap(diskCache);
+      _ruleCache[cacheKey] = rule;
+      debugPrint('[ScholarshipRule] Loaded from disk cache for $programId');
+      return rule;
+    }
+
     try {
-      final rows = await _supabase
-          .from('scholarship_rules')
-          .select()
-          .eq('program_id', programId.toLowerCase())
-          .eq('level', 'undergraduate');
-
-      if (rows.isEmpty) return _defaultRule(programId);
-
       final (admitTerm, admitYear) = _parseSemesterName(admitSemester);
-      final admitKeyVal = _semesterSortKey(admitTerm, admitYear);
+      
+      final logicResponse = await AzureFunctionsService().invokeAppLogic('get_scholarship_rule', {
+        'programId': programId,
+        'admitYear': admitYear,
+        'admitTerm': admitTerm,
+      }).timeout(const Duration(seconds: 4)); // Fail fast if offline
 
-      // Find the best matching row for the student's admit semester
-      ScholarshipRule? best;
-      for (final row in rows) {
-        final rule = ScholarshipRule.fromMap(row);
+      final thresholds = logicResponse['thresholds'] as Map<String, dynamic>;
+      
+      final result = ScholarshipRule(
+        id: 0,
+        program: programId,
+        annualCreditsRequired: (logicResponse['annualCreditsRequired'] as num).toDouble(),
+        degreeCreditsRequired: 140.0,
+        tierMedhaLalonMin: (thresholds['medha_lalon'] as num).toDouble(),
+        tierDeansListMin: (thresholds['deans_list'] as num).toDouble(),
+        tierMerit100Min: (thresholds['merit_100'] as num).toDouble(),
+      );
 
-        if (rule.admittedFrom != null) {
-          final (ft, fy) = _parseSemesterName(rule.admittedFrom!);
-          if (admitKeyVal < _semesterSortKey(ft, fy)) continue;
-        }
-
-        if (rule.admittedUpto != null) {
-          final (tt, ty) = _parseSemesterName(rule.admittedUpto!);
-          if (admitKeyVal > _semesterSortKey(tt, ty)) continue;
-        }
-
-        best = rule;
-      }
-
-      final result = best ?? _defaultRule(programId);
       _ruleCache[cacheKey] = result;
-      debugPrint('[ScholarshipRule] $programId / $admitSemester -> annualCredits: ${result.annualCreditsRequired}');
+      // Persist to disk for offline use
+      await OfflineCacheService().cacheScholarshipRule(cacheKey, result.toMap());
+      
+      debugPrint('[ScholarshipRule] Cloud resolution synced and cached for $programId');
       return result;
     } catch (e) {
-      debugPrint('[ScholarshipRule] Error fetching rule: $e');
+      debugPrint('[ScholarshipRule] Cloud fetch failed, using fallback: $e');
       return _defaultRule(programId);
     }
   }
 
   ScholarshipRule _defaultRule(String program) {
-    // Fallback: engineering programs need 35, everyone else 30
+    // Basic fallback if cloud is unreachable
     final isEng = program.contains('CSE') || program.contains('ICE') ||
         program.contains('EEE') || program.contains('GEB') ||
         program.contains('Civil') || program.contains('Pharmacy');
@@ -168,6 +172,9 @@ class SemesterRepository {
       program: program,
       annualCreditsRequired: isEng ? 35 : 30,
       degreeCreditsRequired: isEng ? 140 : 130,
+      tierMedhaLalonMin: 3.50,
+      tierDeansListMin: 3.75,
+      tierMerit100Min: 3.90,
     );
   }
 

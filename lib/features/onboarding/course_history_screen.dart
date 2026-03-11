@@ -20,7 +20,6 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
   final _supabase = Supabase.instance.client;
 
   // State
-  bool _initializing = false; // Changed from true to avoid flash
   bool _profileLoading = true; // New state to handle initial fetch
   bool _loading = false;
   Timer? _debounce;
@@ -52,81 +51,9 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeData();
+    _loadInitialData();
   }
 
-  Future<void> _initializeData() async {
-    // 1. Fetch Dynamic Semester Code (e.g. Spring2026)
-    final code = await _academicRepo.getCurrentSemesterCode();
-
-    // 2. Format to match UI (Spring 2026)
-    String formatted = code;
-    if (code.contains("20")) {
-      final yearIdx = code.indexOf("20");
-      final name = code.substring(0, yearIdx);
-      final year = code.substring(yearIdx);
-      formatted = "$name $year";
-    }
-
-    // 3. Fetch User Profile for Admitted Semester & History
-    String? savedSemester;
-    Map<String, dynamic>? savedHistory;
-    final user = _supabase.auth.currentUser;
-    if (user != null) {
-      // 1. Fetch Profile for Admitted Semester
-      final profileData = await _supabase
-          .from('profiles')
-          .select('admitted_semester')
-          .eq('id', user.id)
-          .maybeSingle();
-
-      if (profileData != null) {
-        savedSemester = profileData['admitted_semester']?.toString();
-      }
-
-      // 2. Fetch Academic History from academic_data table
-      final academicData = await _supabase
-          .from('academic_data')
-          .select('semesters')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      if (academicData != null) {
-        savedHistory = academicData['semesters'] as Map<String, dynamic>?;
-      }
-    }
-
-    if (mounted) {
-      setState(() {
-        _runningSemester = formatted;
-        if (!_allSemesters.contains(_runningSemester)) {
-          _allSemesters.add(_runningSemester);
-        }
-
-        // Restore History
-        if (savedHistory != null) {
-          savedHistory.forEach((sem, courses) {
-            if (courses is Map) {
-              final courseMap = Map<String, String>.from(
-                courses.map(
-                    (key, value) => MapEntry(key.toString(), value.toString())),
-              );
-              _history[sem] = courseMap;
-            }
-          });
-        }
-
-        if (savedSemester != null && _allSemesters.contains(savedSemester)) {
-          _confirmAdmittedSemester(savedSemester);
-          _initializing = false; // Skip prompt
-        } else {
-          _initializing = true; // Must select
-        }
-        _profileLoading = false;
-      });
-      if (_currentSemester != null) _loadCatalog();
-    }
-  }
 
   Future<void> _loadCatalog() async {
     setState(() => _loading = true);
@@ -156,7 +83,6 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
     setState(() {
       _currentSemester = semester;
       _currentIndex = _allSemesters.indexOf(semester);
-      _initializing = false;
       
       final cleanRunning = _runningSemester.trim().toLowerCase();
       final cleanCurrent = semester.trim().toLowerCase();
@@ -237,17 +163,6 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
       // Collect enrolled section IDs for the dashboard
       final currentSemMap = _history[_runningSemester] ?? {};
       
-      // Validation: Enforce minimum 3 courses for the ongoing semester
-      if (currentSemMap.length < 3) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Please select at least 3 courses for the current semester to proceed."),
-            backgroundColor: Colors.redAccent,
-          ));
-        }
-        return;
-      }
-
       final List<String> enrolledIds = [];
 
       for (final selection in currentSemMap.keys) {
@@ -309,36 +224,70 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
   }
 
   Future<void> _loadInitialData() async {
+    setState(() => _profileLoading = true);
+    
     try {
-      final results = await Future.wait([
-        _academicRepo.getActiveSemesterConfig(),
-        _academicRepo.getAllSemesters(), // 1. Dynamic semesters
-        _repo.fetchUserProfile(),
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
+
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[
+        _academicRepo.getActiveSemesterConfig().timeout(const Duration(seconds: 4)),
+        _academicRepo.getAllSemesters().timeout(const Duration(seconds: 4)),
+        _repo.fetchUserProfile().timeout(const Duration(seconds: 4)),
+        _supabase.from('academic_data').select('semesters').eq('user_id', user.id).maybeSingle().timeout(const Duration(seconds: 4)),
       ]);
 
       final config = results[0] as Map<String, dynamic>;
-      final allSems = results[1] as List<String>; // Spring 2020 -> Current
-      final profile = results[2] as Map<String, dynamic>;
+      final allSems = results[1] as List<String>;
+      final profileData = results[2] as Map<String, dynamic>;
+      final academicData = results[3] as Map<String, dynamic>?;
 
       if (mounted) {
         setState(() {
-          _runningSemester = (config['current_semester'] ?? "Spring 2026").toString();
-          _allSemesters = allSems;
-          _userProfile = profile;
+          _runningSemester = (config['current_semester_code'] ?? "Spring2026").toString();
           
-          final admittedSem = (profile['admitted_semester'] ?? "").toString();
+          // Format running semester for display if needed
+          String formatted = _runningSemester;
+          if (_runningSemester.contains("20")) {
+            final yearIdx = _runningSemester.indexOf("20");
+            final name = _runningSemester.substring(0, yearIdx);
+            final year = _runningSemester.substring(yearIdx);
+            formatted = "$name $year";
+          }
+          _runningSemester = formatted;
+
+          _allSemesters = allSems;
+          if (!_allSemesters.contains(_runningSemester)) {
+             _allSemesters.add(_runningSemester);
+          }
+
+          // Restore History
+          final savedHistory = academicData?['semesters'] as Map<String, dynamic>?;
+          if (savedHistory != null) {
+            savedHistory.forEach((sem, courses) {
+              if (courses is Map) {
+                _history[sem] = Map<String, String>.from(
+                  courses.map((key, value) => MapEntry(key.toString(), value.toString())),
+                );
+              }
+            });
+          }
+
+          final admittedSem = (profileData['admitted_semester'] ?? "").toString();
           if (admittedSem.isNotEmpty && _allSemesters.contains(admittedSem)) {
             _confirmAdmittedSemester(admittedSem);
           } else {
-            // If admitted semester is missing or invalid, default to current but ask user
+             // Default but don't show a prompt anymore
             _confirmAdmittedSemester(_runningSemester);
           }
         });
       }
     } catch (e) {
       debugPrint("Error loading initial data: $e");
+    } finally {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() => _profileLoading = false);
+        if (_currentSemester != null) _loadCatalog();
       }
     }
   }
@@ -349,13 +298,30 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
     final code = course['code'] as String;
     final selectionKey =
         _isCurrentSemester ? "${course['code']}_Sec${course['section']}" : code;
-    final currentMap = _history[_currentSemester!] ?? {};
+    
+    // Global Deduplication Check: Check all semesters in _history
+    String? foundInSemester;
+    bool isFailed = false;
 
-    if (currentMap.length >= 5 && !currentMap.containsKey(selectionKey)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Max 15 credits (approx 5 courses) allowed.")));
+    _history.forEach((sem, courses) {
+      if (courses.containsKey(code) || courses.keys.any((k) => k.startsWith("${code}_Sec"))) {
+         final grade = courses[code] ?? courses.entries.firstWhere((e) => e.key.startsWith("${code}_Sec")).value;
+         if (grade != "F") {
+           foundInSemester = sem;
+         } else {
+           isFailed = true;
+         }
+      }
+    });
+
+    if (foundInSemester != null && foundInSemester != _currentSemester) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("$code already passed in $foundInSemester"),
+          backgroundColor: Colors.orangeAccent));
       return;
     }
+
+    final currentMap = _history[_currentSemester!] ?? {};
 
     // Capture IDs immediately
     final List<String> ids = [];
@@ -418,67 +384,13 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
               child: CircularProgressIndicator(color: Colors.cyanAccent)));
     }
 
-    if (_initializing) {
-      return FullGradientScaffold(
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              const SizedBox(height: 40),
-              const Icon(Icons.school_rounded,
-                  size: 80, color: Colors.cyanAccent),
-              const SizedBox(height: 24),
-              Text(
-                "$nickname, welcome to EWUmate!",
-                style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "Let's get your profile set up.\nPlease select your admitted semester at EWU.",
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              ..._allSemesters.map((s) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: GlassContainer(
-                      borderRadius: 12,
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderColor: Colors.white.withValues(alpha: 0.1),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _confirmAdmittedSemester(s),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                                child: Text(s,
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.cyanAccent))),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ))
-            ],
-          ),
-        ),
-      );
-    }
 
     final currentMap = _history[_currentSemester] ?? {};
 
     return FullGradientScaffold(
       appBar: AppBar(
         title: Text(
-          _isCurrentSemester ? "Current Semester" : "$_currentSemester",
+          _currentSemester ?? (_isCurrentSemester ? "Current Semester" : "Select Semester"),
           style:
               const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
@@ -534,8 +446,8 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_isCurrentSemester)
-                    const Text("Courses for Current Session",
-                        style: TextStyle(
+                    Text("Courses for $_currentSemester",
+                        style: const TextStyle(
                             color: Colors.greenAccent,
                             fontWeight: FontWeight.bold,
                             fontSize: 18))
@@ -686,65 +598,110 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
                               itemCount: _getFilteredCourses().length,
                               itemBuilder: (ctx, i) {
                                 final filtered = _getFilteredCourses();
-                                final c = filtered[i];
-                                final code = c['code']?.toString() ?? "???";
-                                final selectionKey = _isCurrentSemester
-                                    ? "${c['code']}_Sec${c['section']}"
-                                    : code;
-                                final isAdded =
-                                    currentMap.containsKey(selectionKey);
+                                final c = filtered[i];                                 final code = c['code']?.toString() ?? "???";
+                                 final selectionKey = _isCurrentSemester
+                                     ? "${c['code']}_Sec${c['section']}"
+                                     : code;
+                                 final isThisSem =
+                                     currentMap.containsKey(selectionKey);
+                                 
+                                 // Check if taken in ANY other semester
+                                 String? passedSem;
+                                 bool previouslyFailed = false;
 
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: GlassContainer(
-                                    opacity: 0.1,
-                                    borderRadius: 12,
-                                    onTap: () => _addCourse(c),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(code,
-                                                    style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color:
-                                                            Colors.cyanAccent,
-                                                        fontSize: 16)),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                    c['name']?.toString() ?? "",
-                                                    style: const TextStyle(
-                                                        color: Colors.white70)),
-                                                if (_isCurrentSemester &&
-                                                    c.containsKey('section'))
-                                                  Text(
-                                                      "Sec: ${c['section']} | ${c['time']}",
-                                                      style: TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors
-                                                              .cyanAccent
-                                                              .withValues(
-                                                                  alpha: 0.8))),
-                                              ],
-                                            ),
-                                          ),
-                                          isAdded
-                                              ? const Icon(Icons.check_circle,
-                                                  color: Colors.greenAccent)
-                                              : const Icon(
-                                                  Icons.add_circle_outline,
-                                                  color: Colors.white38),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
+                                 _history.forEach((sem, courses) {
+                                   if (sem != _currentSemester) {
+                                      // Check for exact code or section-based key
+                                      final grade = courses[code] ?? 
+                                                   (courses.keys.any((k) => k.startsWith("${code}_Sec")) 
+                                                    ? courses.entries.firstWhere((e) => e.key.startsWith("${code}_Sec")).value 
+                                                    : null);
+                                      
+                                      if (grade != null) {
+                                        if (grade == "F") {
+                                          previouslyFailed = true;
+                                        } else {
+                                          passedSem = sem;
+                                        }
+                                      }
+                                   }
+                                 });
+
+                                 final isBlocked = passedSem != null;
+                                 final showRetake = previouslyFailed && !isBlocked;
+
+                                 return Padding(
+                                   padding: const EdgeInsets.only(bottom: 8.0),
+                                   child: GlassContainer(
+                                     opacity: isBlocked ? 0.05 : 0.1,
+                                     borderRadius: 12,
+                                     onTap: isBlocked ? null : () => _addCourse(c),
+                                     child: Padding(
+                                       padding: const EdgeInsets.all(12.0),
+                                       child: Row(
+                                         children: [
+                                           Expanded(
+                                             child: Column(
+                                               crossAxisAlignment:
+                                                   CrossAxisAlignment.start,
+                                               children: [
+                                                 Text(code,
+                                                     style: TextStyle(
+                                                         fontWeight:
+                                                             FontWeight.bold,
+                                                         color: isBlocked 
+                                                            ? Colors.white24
+                                                            : Colors.cyanAccent,
+                                                         fontSize: 16)),
+                                                 const SizedBox(height: 4),
+                                                 Text(
+                                                     c['name']?.toString() ?? "",
+                                                     style: TextStyle(
+                                                         color: isBlocked ? Colors.white10 : Colors.white70)),
+                                                 if (isBlocked)
+                                                   Text("Already passed in $passedSem",
+                                                       style: const TextStyle(
+                                                           fontSize: 10,
+                                                           color: Colors.orangeAccent,
+                                                           fontWeight: FontWeight.bold))
+                                                 else if (showRetake)
+                                                   const Text("Failed - Retake Available",
+                                                       style: TextStyle(
+                                                           fontSize: 10,
+                                                           color: Colors.greenAccent,
+                                                           fontWeight: FontWeight.bold))
+                                                 else if (_isCurrentSemester &&
+                                                     c.containsKey('section'))
+                                                   Text(
+                                                       "Sec: ${c['section']} | ${c['time']}",
+                                                       style: TextStyle(
+                                                           fontSize: 12,
+                                                           color: Colors
+                                                               .cyanAccent
+                                                               .withValues(
+                                                                   alpha: 0.8))),
+                                               ],
+                                             ),
+                                           ),
+                                           if (isThisSem)
+                                               const Icon(Icons.check_circle,
+                                                   color: Colors.greenAccent)
+                                           else if (isBlocked)
+                                               const Icon(Icons.history_rounded,
+                                                   color: Colors.white10)
+                                           else if (showRetake)
+                                               const Icon(Icons.refresh,
+                                                   color: Colors.greenAccent)
+                                           else
+                                               const Icon(
+                                                   Icons.add_circle_outline,
+                                                   color: Colors.white38),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                 );
+
                               },
                             ),
                 ),

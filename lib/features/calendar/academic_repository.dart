@@ -36,7 +36,10 @@ class AcademicRepository {
   }
 
   Future<String> getCurrentSemesterCode() async {
-    final active = await getActiveSemesterConfig();
+    final active = await getActiveSemesterConfig().timeout(
+      const Duration(seconds: 4),
+      onTimeout: () => {},
+    );
     return active['current_semester_code'] ?? 'Spring2026';
   }
 
@@ -173,7 +176,8 @@ class AcademicRepository {
       final res = await _supabase
           .from('semesters')
           .select('name, year, season')
-          .order('year', ascending: true);
+          .order('year', ascending: true)
+          .timeout(const Duration(seconds: 5));
 
       final List<Map<String, dynamic>> records = List<Map<String, dynamic>>.from(res as List);
       

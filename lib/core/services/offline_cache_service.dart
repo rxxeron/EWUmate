@@ -13,6 +13,7 @@ class OfflineCacheService {
   static const String _profileBoxName = 'profile_box';
   static const String _settingsBoxName = 'settings_box';
   static const String _metadataBoxName = 'metadata_box';
+  static const String _configBoxName = 'config_box'; // New box for app constants
 
   // Cache Version (Increment this when structural changes occur)
   static const int _currentVersion = 2; 
@@ -29,6 +30,7 @@ class OfflineCacheService {
         Hive.openBox(_profileBoxName),
         Hive.openBox(_settingsBoxName),
         Hive.openBox(_metadataBoxName),
+        Hive.openBox(_configBoxName),
       ]).timeout(const Duration(seconds: 4));
       
       await _handleMigration();
@@ -236,6 +238,55 @@ class OfflineCacheService {
     final box = Hive.box(_profileBoxName);
     final data = box.get('user_metadata');
     return data != null ? Map<String, dynamic>.from(data as Map) : null;
+  }
+
+  // --- App Config (Remote Flags) Methods ---
+  Future<void> cacheAppConfigs(Map<String, dynamic> configs) async {
+    final box = Hive.box(_configBoxName);
+    await box.put('remote_flags', configs);
+  }
+
+  Map<String, dynamic>? getCachedAppConfigs() {
+    final box = Hive.box(_configBoxName);
+    final data = box.get('remote_flags');
+    return data != null ? Map<String, dynamic>.from(data as Map) : null;
+  }
+
+  // --- Scholarship Rule Methods ---
+  Future<void> cacheScholarshipRule(String key, Map<String, dynamic> rule) async {
+    final box = Hive.box(_configBoxName);
+    await box.put('rule_$key', rule);
+  }
+
+  Map<String, dynamic>? getCachedScholarshipRule(String key) {
+    final box = Hive.box(_configBoxName);
+    final data = box.get('rule_$key');
+    return data != null ? Map<String, dynamic>.from(data as Map) : null;
+  }
+
+  // --- Program Metadata Methods ---
+  Future<void> cacheProgramMetadata(Map<String, dynamic> metadata) async {
+    final box = Hive.box(_configBoxName);
+    await box.put('program_metadata', metadata);
+  }
+
+  Map<String, dynamic>? getCachedProgramMetadata() {
+    final box = Hive.box(_configBoxName);
+    final data = box.get('program_metadata');
+    return data != null ? Map<String, dynamic>.from(data as Map) : null;
+  }
+
+  // --- Department Metadata Methods ---
+  Future<void> cacheDepartments(List<Map<String, dynamic>> departments) async {
+    final box = Hive.box(_configBoxName);
+    await box.put('departments_list', departments);
+  }
+
+  List<Map<String, dynamic>>? getCachedDepartments() {
+    final box = Hive.box(_configBoxName);
+    final data = box.get('departments_list');
+    if (data == null) return null;
+    return (data as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
   }
 
   // --- Generic Methods ---

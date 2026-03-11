@@ -18,26 +18,8 @@ class ResultsRepository {
   // Cache for metadata
   static final Map<String, double> _courseCreditsCache = {};
   static final Map<String, double> gradeScaleCache = {};
+  static Map<String, String> _programMapCache = {};
   static bool _metadataLoaded = false;
-
-  static const _programMap = {
-    'cse': 'B.Sc. in Computer Science & Engineering',
-    'ice': 'B.Sc. in Information & Communications Engineering',
-    'ete': 'B.Sc. in Electronic & Telecommunication Engineering',
-    'eee': 'B.Sc. in Electrical & Electronic Engineering',
-    'ce': 'B.Sc. in Civil Engineering',
-    'pharm': 'Bachelor of Pharmacy (B.Pharm) Professional',
-    'geb': 'B.Sc. in Genetic Engineering & Biotechnology',
-    'dsa': 'B.Sc. in Data Science & Analytics',
-    'math': 'B.Sc. (Hons) in Mathematics',
-    'bba': 'Bachelor of Business Administration',
-    'eco': 'B.S.S. (Hons) in Economics',
-    'eng': 'B.A. (Hons) in English',
-    'soc': 'B.S.S. (Hons) in Sociology',
-    'islm': 'B.S.S. in Info. Studies & Library Management',
-    'law': 'LL.B. (Hons)',
-    'pphs': 'B.S.S. in Population and Public Health Sciences',
-  };
 
   Future<AcademicProfile> fetchAcademicProfile() async {
     final cachedData = OfflineCacheService().getCachedAcademicProfile();
@@ -121,28 +103,26 @@ class ResultsRepository {
       resolvedOngoing = ongoing;
     }
 
-    return AcademicProfile(
-      semesters: semesters,
-      cgpa: cgpa,
-      ongoingCourses: resolvedOngoing,
-      totalCoursesCompleted: completed,
-      totalCreditsEarned: totalCreditsEarned,
-      studentName: (profileData['full_name'] ?? 'Student').toString(),
-      studentId: (profileData['student_id'] ?? 'N/A').toString(),
-      programId: (profileData['program_id'] ?? '').toString().toLowerCase(),
-      program: _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
-      department: (profileData['department'] ?? 'N/A').toString(),
-      nickname: (profileData['nickname'] ?? '').toString(),
-      photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '').toString(),
-      remainedCredits: remainedCredits,
-      scholarshipStatus: await _calculateScholarship(
-        (profileData['student_id'] ?? 'N/A').toString(),
-        (profileData['program_id'] ?? 'N/A').toString(),
-        cgpa,
-        semesters,
-        profileData,
-      ),
-    );
+      return AcademicProfile(
+        semesters: semesters,
+        cgpa: cgpa,
+        ongoingCourses: resolvedOngoing,
+        totalCoursesCompleted: completed,
+        totalCreditsEarned: totalCreditsEarned,
+        studentName: (profileData['full_name'] ?? 'Student').toString(),
+        studentId: (profileData['student_id'] ?? 'N/A').toString(),
+        programId: (profileData['program_id'] ?? '').toString().toLowerCase(),
+        program: await _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
+        department: (profileData['department'] ?? 'N/A').toString(),
+        nickname: (profileData['nickname'] ?? '').toString(),
+        photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '').toString(),
+        remainedCredits: remainedCredits,
+        scholarshipStatus: await _calculateScholarship(
+          (profileData['student_id'] ?? 'N/A').toString(),
+          (profileData['program_id'] ?? 'N/A').toString(),
+          cgpa,
+        ),
+      );
   }
 
   double _calculateTotalCreditsEarned(List<SemesterResult> semesters) {
@@ -158,8 +138,29 @@ class ResultsRepository {
     return total;
   }
 
-  String _getProgramName(String id) {
-    return _programMap[id.toLowerCase()] ?? id.toUpperCase();
+  Future<String> _getProgramName(String id) async {
+    final cleanId = id.toLowerCase();
+    
+    // 1. Check Memory Cache
+    if (_programMapCache.containsKey(cleanId)) return _programMapCache[cleanId]!;
+    
+    // 2. Check Disk Cache
+    final diskCache = OfflineCacheService().getCachedProgramMetadata();
+    if (diskCache != null) {
+      _programMapCache = Map<String, String>.from(diskCache);
+      if (_programMapCache.containsKey(cleanId)) return _programMapCache[cleanId]!;
+    }
+
+    // 3. Fallback/Initial Load
+    try {
+      final fresh = await AzureFunctionsService().invokeAppLogic('get_program_metadata', {});
+      final map = Map<String, String>.from(fresh);
+      _programMapCache = map;
+      await OfflineCacheService().cacheProgramMetadata(map);
+      return map[cleanId] ?? id.toUpperCase();
+    } catch (e) {
+      return diskCache?[cleanId] ?? id.toUpperCase();
+    }
   }
 
   Future<List<SemesterResult>> _injectOngoingSemester(
@@ -402,7 +403,7 @@ class ResultsRepository {
       totalCreditsEarned: _readDouble(academicData['total_credits_earned']),
       studentName: (profileData['full_name'] ?? 'Student').toString(),
       studentId: (profileData['student_id'] ?? 'N/A').toString(),
-      program: _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
+      program: await _getProgramName((profileData['program_id'] ?? 'N/A').toString()),
       department: (profileData['department'] ?? 'N/A').toString(),
       nickname: (profileData['nickname'] ?? '').toString(),
       photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '')
@@ -412,8 +413,6 @@ class ResultsRepository {
         (profileData['student_id'] ?? 'N/A').toString(),
         (profileData['program_id'] ?? 'N/A').toString(),
         cgpa,
-        semesters,
-        profileData,
       ),
     );
   }
@@ -652,26 +651,45 @@ class ResultsRepository {
     String studentId, 
     String programId, 
     double cgpa, 
-    List<SemesterResult> semesters,
-    Map<String, dynamic> profileData,
   ) async {
     if (cgpa < 3.50) return "";
-
-    final (term, year) = _parseAdmissionFromId(studentId);
-    if (year == 0) return "";
-
-    final potential = _getPotentialTier(cgpa, year, term);
-    if (potential.isEmpty) return "";
-
-    final isBi = (profileData['semester_type'] ?? '') == 'bi' 
-        || (await _isDepartmentBi(profileData['department'] ?? ''));
-
-
-
-    final double lastYearCredits = _calculateLastYearCredits(semesters, isBiSemester: isBi);
-    final double requiredCredits = _getRequiredCredits(programId, year: year, term: term, isBiSemester: isBi);
     
-    return lastYearCredits >= requiredCredits ? potential : "";
+    final cacheKey = "${studentId}_${cgpa.toStringAsFixed(2)}";
+    final cachedTier = OfflineCacheService().getCachedScholarshipRule('tier_$cacheKey');
+    
+    if (cachedTier != null) {
+      return cachedTier['tier']?.toString() ?? "";
+    }
+
+    try {
+      final (term, year) = _parseAdmissionFromId(studentId);
+      if (year == 0) return "";
+
+      final logicResponse = await AzureFunctionsService().invokeAppLogic('calculate_scholarship', {
+        'cgpa': cgpa,
+        'admitYear': year,
+        'admitTerm': term,
+        'programId': programId,
+      });
+
+      final tier = logicResponse['tier']?.toString() ?? "";
+      final requiredCredits = _readDouble(logicResponse['requiredCredits']);
+      
+      final user = _supabase.auth.currentUser;
+      final academicData = await _supabase.from('academic_data').select('semesters, semester_type').eq('user_id', user?.id ?? '').maybeSingle();
+      final isBi = academicData?['semester_type'] == 'bi';
+      final semesters = _parseCloudSemesters(academicData?['semesters']);
+      final double lastYearCredits = _calculateLastYearCredits(semesters, isBiSemester: isBi);
+      
+      final resolvedTier = lastYearCredits >= requiredCredits ? tier : "";
+      
+      await OfflineCacheService().cacheScholarshipRule('tier_$cacheKey', {'tier': resolvedTier});
+      
+      return resolvedTier;
+    } catch (e) {
+      debugPrint("Error in cloud scholarship calculation: $e");
+      return cachedTier?['tier']?.toString() ?? "";
+    }
   }
 
   Future<bool> _isDepartmentBi(String department) async {
@@ -683,25 +701,7 @@ class ResultsRepository {
     return deptRes?['semester_type'] == 'bi';
   }
 
-  String _getPotentialTier(double cgpa, int admitYear, int admitTerm) {
-    // PDF states "Admitted in Spring 2026 and onward" for new thresholds.
-    final bool isNewRules = admitYear > 2026 || (admitYear == 2026 && admitTerm >= 1);
-    
-    if (isNewRules) {
-      if (cgpa >= 3.95) return "100% Merit Scholarship";
-      if (cgpa >= 3.85) return "Dean’s List Scholarship";
-      if (cgpa >= 3.75) return "Medha Lalon Scholarship";
-    } else {
-      if (cgpa >= 3.90) return "100% Merit Scholarship";
-      if (cgpa >= 3.75) return "Dean’s List Scholarship";
-      if (cgpa >= 3.50) return "Medha Lalon Scholarship";
-    }
-    return "";
-  }
-
   double _calculateLastYearCredits(List<SemesterResult> semesters, {bool isBiSemester = false}) {
-    // "Last one year" means the last 3 consecutive completed semesters for most
-    // But for Pharmacy/Law (Bi-semester), it means the last 2 semesters.
     final int limit = isBiSemester ? 2 : 3;
 
     final completed = semesters
@@ -714,37 +714,6 @@ class ResultsRepository {
       credits += completed[i].totalCredits;
     }
     return credits;
-  }
-
-  double _getRequiredCredits(String program, {int year = 0, int term = 0, bool isBiSemester = false}) {
-    final p = program.toUpperCase();
-    
-    bool isUpto(int targetYear, int targetTerm) {
-      if (year < targetYear) return true;
-      if (year == targetYear && term <= targetTerm) return true;
-      return false;
-    }
- 
-    if (p.contains('CSE') || p.contains('ICE') || p.contains('EEE')) return 35.0;
-    if (isBiSemester) return 21.0; 
-    if (p.contains('MATHEMATICS') || p.contains('DSA')) return 33.0;
-    if (p.contains('INFORMATION STUDIES') || p.contains('ISLM')) return 30.0;
-    
-    if (p.contains('ECONOMICS') || p.contains('ENGLISH') || p.contains('PPHS')) {
-      return isUpto(2024, 1) ? 30.0 : 33.0;
-    }
-    if (p.contains('LL.B') || p.contains('LAW')) return 21.0; 
-    if (p.contains('CE') || p.contains('CIVIL')) {
-      return isUpto(2024, 1) ? 37.0 : 35.0;
-    }
-    if (p.contains('BBA') || p.contains('BUSINESS') || p.contains('SOC')) {
-      return isUpto(2024, 3) ? 30.0 : 33.0;
-    }
-    if (p.contains('GEB') || p.contains('GENETIC')) {
-      return isUpto(2025, 3) ? 33.0 : 35.0;
-    }
- 
-    return 30.0;
   }
 
   (int, int) _parseAdmissionFromId(String id) {

@@ -136,6 +136,9 @@ function switchTab(tab) {
     if (tab === 'semesters') {
         loadSemesterRecords();
     }
+    if (tab === 'app-config') {
+        loadAppConfigs();
+    }
 }
 
 async function loadSemesterRecords() {
@@ -772,5 +775,83 @@ async function syncSemestersWithActive() {
         showAlert('danger', 'Sync Failed: ' + err.message, 'bi-bug');
     } finally {
         setBtnLoading(btn, false, originalText);
+    }
+}
+
+// --- App Config (Remote Control) logic ---
+
+async function loadAppConfigs() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('app_config')
+            .select('*');
+        
+        if (error) throw error;
+
+        data.forEach(cfg => {
+            const toggle = document.getElementById(`flag-${cfg.key}`);
+            if (toggle) toggle.checked = cfg.is_enabled;
+
+            // Handle specific fields
+            if (cfg.key === 'maintenance_mode') {
+                document.getElementById('val-maintenance_mode').value = cfg.config_value.message || "";
+            } else if (cfg.key === 'emergency_notice') {
+                document.getElementById('val-emergency-title').value = cfg.config_value.title || "";
+                document.getElementById('val-emergency-msg').value = cfg.config_value.message || "";
+            }
+        });
+    } catch (err) {
+        console.error("Failed to load app configs:", err);
+    }
+}
+
+async function toggleFeatureFlag(key, isEnabled) {
+    try {
+        const { error } = await supabaseClient
+            .from('app_config')
+            .update({ is_enabled: isEnabled })
+            .eq('key', key);
+        
+        if (error) throw error;
+        showAlert('success', `Feature "${key}" updated locally. App will reflect this on next launch.`, 'bi-info-circle');
+    } catch (err) {
+        showAlert('error', `Update Failed: ${err.message}`, 'bi-exclamation-triangle');
+    }
+}
+
+async function saveFlagValue(key) {
+    const val = document.getElementById(`val-${key}`).value;
+    try {
+        const { error } = await supabaseClient
+            .from('app_config')
+            .update({ config_value: { message: val } })
+            .eq('key', key);
+        
+        if (error) throw error;
+        showAlert('success', `Updated config for ${key}`, 'bi-check-circle');
+    } catch (err) {
+        showAlert('error', err.message, 'bi-exclamation-triangle');
+    }
+}
+
+async function saveEmergencyFlag() {
+    const title = document.getElementById('val-emergency-title').value;
+    const message = document.getElementById('val-emergency-msg').value;
+    try {
+        const { error } = await supabaseClient
+            .from('app_config')
+            .update({ 
+                config_value: { 
+                    title, 
+                    message, 
+                    type: 'warning' 
+                } 
+            })
+            .eq('key', 'emergency_notice');
+        
+        if (error) throw error;
+        showAlert('success', `Emergency notice updated successfully.`, 'bi-megaphone');
+    } catch (err) {
+        showAlert('error', err.message, 'bi-exclamation-triangle');
     }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../features/calendar/academic_repository.dart';
 import '../../core/services/schedule_service.dart';
 import '../../core/utils/course_utils.dart';
+import '../../core/services/offline_cache_service.dart';
 
 class OnboardingRepository {
   final _supabase = Supabase.instance.client;
@@ -11,6 +12,13 @@ class OnboardingRepository {
   final _scheduleService = ScheduleService();
 
   Future<List<Map<String, dynamic>>> fetchDepartments() async {
+    // 1. Try Disk Cache first
+    final cached = OfflineCacheService().getCachedDepartments();
+    if (cached != null) {
+      debugPrint('[Onboarding] Departments loaded from disk cache');
+      return cached;
+    }
+
     try {
       debugPrint('[Onboarding] Fetching structured departments...');
       final data = await _supabase
@@ -19,168 +27,37 @@ class OnboardingRepository {
           .timeout(const Duration(seconds: 5));
 
       if (data.isNotEmpty) {
-        debugPrint('[Onboarding] Departments loaded from new structured DB');
-        // Sort by name for better UX
+        debugPrint('[Onboarding] Departments loaded from remote DB');
         final List<Map<String, dynamic>> departments = List<Map<String, dynamic>>.from(data);
         departments.sort((a, b) => (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
+        
+        // Save to disk cache
+        await OfflineCacheService().cacheDepartments(departments);
+        
         return departments;
       }
     } catch (e) {
-      debugPrint("Error fetching structured departments (using fallback): $e");
+      debugPrint("Error fetching structured departments: $e");
     }
 
-    return [
-      {
-        "name": "Dept. of Computer Science & Engineering",
-        "programs": [
-          {
-            "id": "cse",
-            "name": "B.Sc. in Computer Science & Engineering",
-            "credits": 140
-          },
-          {
-            "id": "ice",
-            "name": "B.Sc. in Information & Communications Engineering",
-            "credits": 140
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Electronics & Communications Engineering",
-        "programs": [
-          {
-            "id": "ete",
-            "name": "B.Sc. in Electronic & Telecommunication Engineering",
-            "credits": 140
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Electrical & Electronic Engineering",
-        "programs": [
-          {
-            "id": "eee",
-            "name": "B.Sc. in Electrical & Electronic Engineering",
-            "credits": 140
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Civil Engineering",
-        "programs": [
-          {
-            "id": "ce",
-            "name": "B.Sc. in Civil Engineering",
-            "credits": 156.5
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Pharmacy",
-        "programs": [
-          {
-            "id": "pharm",
-            "name": "Bachelor of Pharmacy (B.Pharm) Professional",
-            "credits": 158
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Genetic Engineering & Biotechnology",
-        "programs": [
-          {
-            "id": "geb",
-            "name": "B.Sc. in Genetic Engineering & Biotechnology",
-            "credits": 133
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Mathematical & Physical Sciences",
-        "programs": [
-          {
-            "id": "dsa",
-            "name": "B.Sc. in Data Science & Analytics",
-            "credits": 130
-          },
-          {
-            "id": "math",
-            "name": "B.Sc. (Hons) in Mathematics",
-            "credits": 128
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Business Administration",
-        "programs": [
-          {
-            "id": "bba",
-            "name": "Bachelor of Business Administration",
-            "credits": 123
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Economics",
-        "programs": [
-          {
-            "id": "eco",
-            "name": "B.S.S. (Hons) in Economics",
-            "credits": 123
-          }
-        ]
-      },
-      {
-        "name": "Dept. of English",
-        "programs": [
-          {
-            "id": "eng",
-            "name": "B.A. (Hons) in English",
-            "credits": 123
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Sociology",
-        "programs": [
-          {
-            "id": "soc",
-            "name": "B.S.S. (Hons) in Sociology",
-            "credits": 123
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Information Studies & Library Management",
-        "programs": [
-          {
-            "id": "islm",
-            "name": "B.S.S. in Info. Studies & Library Management",
-            "credits": 123
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Law",
-        "programs": [
-          {
-            "id": "law",
-            "name": "LL.B. (Hons)",
-            "credits": 135
-          }
-        ]
-      },
-      {
-        "name": "Dept. of Social Relations",
-        "programs": [
-          {
-            "id": "pphs",
-            "name": "B.S.S. in Population and Public Health Sciences",
-            "credits": 123
-          }
-        ]
-      }
-    ];
+    return []; // Return empty if truly offline and no cache
+  }
+
+  Future<Map<String, dynamic>> fetchUserProfile() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return {};
+    
+    try {
+      final data = await _supabase
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      return data ?? {};
+    } catch (e) {
+      debugPrint("Error fetching user profile in onboarding: $e");
+      return {};
+    }
   }
 
   Future<void> saveProgram(
@@ -340,27 +217,21 @@ class OnboardingRepository {
             .limit(500)
             .timeout(const Duration(seconds: 10));
 
-        // SECONDARY FALLBACK: If the semester-specific table is empty, try the global 'courses' table
-        // This handles cases where data hasn't been migrated to the semester table yet.
-        if (data.isEmpty) {
+        // IMPROVED LOGIC: Only fallback if the table itself is empty or missing, 
+        // NOT just because a specific search returned no results.
+        if (data.isEmpty && (queryStr == null || queryStr.isEmpty)) {
           debugPrint('[Onboarding] $actualTable is empty. Trying global "courses" table...');
           var globalQuery = _supabase.from('courses').select();
-          if (queryStr != null && queryStr.isNotEmpty) {
-            if (normalizedQuery != null) {
-              globalQuery = globalQuery.or('code.ilike.%$queryStr%,code.ilike.%$normalizedQuery%');
-            } else {
-              globalQuery = globalQuery.ilike('code', '%$queryStr%');
-            }
-          }
           data = await globalQuery.limit(500).timeout(const Duration(seconds: 10));
         }
 
         if (data.isNotEmpty) {
           final groups = <String, Map<String, dynamic>>{};
 
-          for (var d in data) {
-            final rawCode = d['code'] ?? "???";
-            final code = rawCode.toString().replaceAll(' ', '');
+          for (var dRaw in data) {
+            final d = Map<String, dynamic>.from(dRaw as Map);
+            final rawCode = (d['code'] ?? d['course_code'] ?? "???").toString();
+            final code = rawCode.replaceAll(' ', '');
             final section = (d['section'] ?? 'N/A').toString();
             final key = "${code}_Sec$section";
 
@@ -374,19 +245,21 @@ class OnboardingRepository {
                 return "$day $start-$end";
               }).toList();
               schedule = scheduleList.join(", ");
+            } else if (d['time'] != null) {
+              schedule = d['time'].toString();
             }
 
             if (!groups.containsKey(key)) {
               groups[key] = {
-                'id': d['doc_id'] ?? d['id'].toString(),
-                'allIds': [d['doc_id'] ?? d['id'].toString()],
+                'id': (d['doc_id'] ?? d['id'] ?? d['code']).toString(),
+                'allIds': [(d['doc_id'] ?? d['id'] ?? d['code']).toString()],
                 'code': code,
-                'name': (d['course_name'] ?? d['courseName'] ?? rawCode).toString(),
+                'name': (d['course_name'] ?? d['courseName'] ?? d['name'] ?? d['title'] ?? rawCode).toString(),
                 'section': section,
                 'schedules': [schedule],
               };
             } else {
-              groups[key]!['allIds'].add(d['doc_id'] ?? d['id'].toString());
+              groups[key]!['allIds'].add((d['doc_id'] ?? d['id'] ?? d['code']).toString());
               groups[key]!['schedules'].add(schedule);
             }
           }
@@ -400,8 +273,14 @@ class OnboardingRepository {
           }).toList();
         } else {
           // If active table is totally empty (e.g., scraper hasn't run yet for Summer 2025), fallback to course_metadata
-          debugPrint('[Onboarding] Dynamic table "$actualTable" returned no results. Falling back to course_metadata.');
-          useDynamic = false; // Trigger fallback
+          // But ONLY if we were looking for the full list (no search query)
+          if (queryStr == null || queryStr.isEmpty) {
+            debugPrint('[Onboarding] Dynamic table "$actualTable" is empty. Falling back to course_metadata.');
+            useDynamic = false;
+          } else {
+             debugPrint('[Onboarding] Search query returned no results in $actualTable.');
+             return []; // Just return empty list, don't fall back to metadata UI mode
+          }
         }
       } catch (e) {
         debugPrint("[Onboarding] Dynamic table error: $e");

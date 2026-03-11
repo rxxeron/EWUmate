@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/result_models.dart';
+import '../../core/utils/course_utils.dart';
 import '../../core/services/offline_cache_service.dart';
 import '../../core/services/schedule_cache_service.dart';
 import '../../core/services/azure_functions_service.dart';
 import '../calendar/academic_repository.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import '../../features/course_browser/course_repository.dart';
+import 'package:provider/provider.dart';
 
 class ResultsRepository {
   final _supabase = Supabase.instance.client;
+  final AcademicRepository _academicRepo = AcademicRepository();
 
   // Cache for metadata
   static final Map<String, double> _courseCreditsCache = {};
@@ -62,7 +67,7 @@ class ResultsRepository {
             || academicData['semester_type'] == 'bi' // Fallback if we haven't synced yet
             || (await _isDepartmentBi(profileData['department'] ?? ''));
 
-        final profile = _mapToAcademicProfile(profileData, academicData, semesters, isBiSemester: isBi);
+        final profile = await _mapToAcademicProfile(profileData, academicData, semesters, isBiSemester: isBi);
 
         // 2. Cache the fresh profile
         final profileMap = profile.toMap();
@@ -78,12 +83,12 @@ class ResultsRepository {
     return cachedProfile ?? AcademicProfile(semesters: [], cgpa: 0.0, totalCreditsEarned: 0.0);
   }
 
-  AcademicProfile _mapToAcademicProfile(
+  Future<AcademicProfile> _mapToAcademicProfile(
     Map<String, dynamic> profileData,
     Map<String, dynamic> academicData,
     List<SemesterResult> semesters,
     {bool isBiSemester = false}
-  ) {
+  ) async {
     int ongoing = 0;
     int completed = 0;
     for (var s in semesters) {
@@ -130,12 +135,12 @@ class ResultsRepository {
       nickname: (profileData['nickname'] ?? '').toString(),
       photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '').toString(),
       remainedCredits: remainedCredits,
-      scholarshipStatus: _calculateScholarship(
+      scholarshipStatus: await _calculateScholarship(
         (profileData['student_id'] ?? 'N/A').toString(),
         (profileData['program_id'] ?? 'N/A').toString(),
         cgpa,
         semesters,
-        isBiSemester: isBiSemester,
+        profileData,
       ),
     );
   }
@@ -299,12 +304,17 @@ class ResultsRepository {
         .eq('id', user.id)
         .map((data) => data.isNotEmpty ? data.first : null);
 
+    // Stream 3: Active Semester Config
+    final configStream = _academicRepo.streamActiveSemesterConfig();
+
     Map<String, dynamic>? lastAcademic;
     Map<String, dynamic>? lastProfile;
+    Map<String, dynamic>? lastConfig;
 
     Future<void> update() async {
       if (lastAcademic != null && lastProfile != null) {
         try {
+          // If we have config, we can use it to ensure we're injecting the right semester
           await ensureMetadataLoaded();
           final profile =
               await _fetchCombinedData(lastAcademic!, lastProfile!, user.id);
@@ -335,9 +345,17 @@ class ResultsRepository {
       debugPrint("Profile stream error: $e");
     });
 
+    final subC = configStream.listen((data) {
+      lastConfig = data;
+      update();
+    }, onError: (e) {
+      debugPrint("Config stream error: $e");
+    });
+
     controller.onCancel = () {
       subA.cancel();
       subP.cancel();
+      subC.cancel();
     };
 
     return controller.stream;
@@ -390,12 +408,12 @@ class ResultsRepository {
       photoUrl: (profileData['photo_url'] ?? profileData['avatar_url'] ?? '')
           .toString(),
       remainedCredits: _readDouble(academicData['remained_credits']),
-      scholarshipStatus: _calculateScholarship(
+      scholarshipStatus: await _calculateScholarship(
         (profileData['student_id'] ?? 'N/A').toString(),
         (profileData['program_id'] ?? 'N/A').toString(),
         cgpa,
         semesters,
-        isBiSemester: isBi,
+        profileData,
       ),
     );
   }
@@ -630,43 +648,39 @@ class ResultsRepository {
     return (term, year);
   }
 
-  String _calculateScholarship(
+  Future<String> _calculateScholarship(
     String studentId, 
     String programId, 
     double cgpa, 
     List<SemesterResult> semesters,
-    {bool isBiSemester = false}
-  ) {
-    if (cgpa < 3.50) {
-      return "";
-    }
-    
-    final (term, year) = _parseAdmissionFromId(studentId);
-    if (year == 0) {
-      return "";
-    }
- 
-    final potential = _getPotentialTier(cgpa, year, term);
-    if (potential.isEmpty) {
-      return "";
-    }
- 
-    String department,
-    int year,
-    int term,
+    Map<String, dynamic> profileData,
   ) async {
-    // Determine cycle type from database
+    if (cgpa < 3.50) return "";
+
+    final (term, year) = _parseAdmissionFromId(studentId);
+    if (year == 0) return "";
+
+    final potential = _getPotentialTier(cgpa, year, term);
+    if (potential.isEmpty) return "";
+
+    final isBi = (profileData['semester_type'] ?? '') == 'bi' 
+        || (await _isDepartmentBi(profileData['department'] ?? ''));
+
+
+
+    final double lastYearCredits = _calculateLastYearCredits(semesters, isBiSemester: isBi);
+    final double requiredCredits = _getRequiredCredits(programId, year: year, term: term, isBiSemester: isBi);
+    
+    return lastYearCredits >= requiredCredits ? potential : "";
+  }
+
+  Future<bool> _isDepartmentBi(String department) async {
     final deptRes = await _supabase
         .from('departments')
         .select('semester_type')
         .eq('name', department)
         .maybeSingle();
-    
-    final isBi = deptRes?['semester_type'] == 'bi';
-    final double lastYearCredits = _calculateLastYearCredits(semesters, isBiSemester: isBi);
-    final double requiredCredits = _getRequiredCredits(programId, year: year, term: term, isBiSemester: isBi);
-    
-    return lastYearCredits >= requiredCredits ? potential : "";
+    return deptRes?['semester_type'] == 'bi';
   }
 
   String _getPotentialTier(double cgpa, int admitYear, int admitTerm) {

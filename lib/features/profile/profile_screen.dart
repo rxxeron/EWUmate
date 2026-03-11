@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/theme_provider.dart';
 import '../../core/services/schedule_cache_service.dart';
+import '../../features/course_browser/course_repository.dart'; // Added import
 
 import '../../features/results/results_repository.dart';
 
@@ -37,53 +39,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _department;
   String? _admittedSemester;
 
+  StreamSubscription? _profileSub;
+  StreamSubscription? _academicSub;
+
   @override
   void initState() {
     super.initState();
-    _fetchUserData();
+    _setupStreams();
   }
 
-  Future<void> _fetchUserData() async {
+  void _setupStreams() {
     if (user == null) return;
-
-    setState(() => _loading = true);
     _emailCtrl.text = user!.email ?? '';
 
-    // Try cache first
-    final cached = await _cacheService.getCachedStats();
-    if (cached != null) {
-      _populateFields(cached);
-    }
+    // 1. Profile Data Stream (Name, ID, etc.)
+    _profileSub?.cancel();
+    _profileSub = CourseRepository().streamUserData().listen((data) {
+      if (mounted && data.isNotEmpty) {
+        _populateFields(data);
+      }
+    });
 
-    try {
-      final data =
-          await _supabase.from('profiles').select().eq('id', user!.id).single();
-
-      final academicProfile = await ResultsRepository().fetchAcademicProfile();
-
-      if (data.isNotEmpty) {
-        final merged = {
-          ...data,
-          'cgpa': academicProfile.cgpa,
-          'total_credits_earned': academicProfile.totalCreditsEarned,
-          'total_courses_completed': academicProfile.totalCoursesCompleted,
-          'ongoing_courses': academicProfile.ongoingCourses,
-          'remained_credits': academicProfile.remainedCredits,
-        };
-        await _cacheService.cacheStats(merged);
-        _populateFields(merged);
-      } else {
+    // 2. Academic Stats Stream (CGPA, Credits)
+    _academicSub?.cancel();
+    _academicSub = ResultsRepository().streamAcademicProfile().listen((ap) {
+      if (mounted) {
         setState(() {
-          _nameCtrl.text = user!.userMetadata?['fullName'] ?? '';
-          _photoUrl = user!.userMetadata?['photoURL'];
+          _stats = {
+            'cgpa': ap.cgpa,
+            'totalCredits': ap.totalCreditsEarned,
+            'coursesCompleted': ap.totalCoursesCompleted,
+            'remainedCredits': ap.remainedCredits,
+            'ongoingCourses': ap.ongoingCourses,
+          };
         });
       }
-    } catch (e) {
-      debugPrint("Error loading profile: $e");
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    });
   }
+
 
   void _populateFields(Map<String, dynamic> data) {
     if (!mounted) return;
@@ -150,6 +143,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _profileSub?.cancel();
+    _academicSub?.cancel();
+    _nameCtrl.dispose();
+    _nicknameCtrl.dispose();
+    _emailCtrl.dispose();
+    _idCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _saveProfile() async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/course_utils.dart';
 import '../../core/services/offline_cache_service.dart';
 import '../../core/services/connectivity_service.dart';
 

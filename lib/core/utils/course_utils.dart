@@ -61,9 +61,13 @@ class CourseUtils {
   ///
   /// This is the SINGLE SOURCE OF TRUTH for table name generation.
   /// All repositories MUST use this instead of manual string interpolation.
-  static String semesterTable(String prefix, String semesterCode) {
+  static String semesterTable(String prefix, String semesterCode, {String? cycleType}) {
     final safeSem = semesterCode.toLowerCase().replaceAll(' ', '');
-    return '${prefix}_$safeSem';
+    String table = '${prefix}_$safeSem';
+    if (cycleType == 'bi') {
+      table = '${table}_phrm_llb';
+    }
+    return table;
   }
 
   /// Builds a safe, lowercase cache key for Hive.

@@ -19,6 +19,22 @@ class AcademicRepository {
 
   Map<String, dynamic> getActiveSemesterConfigCache() => _configCache;
 
+  // Realtime stream of the active semester configuration
+  Stream<Map<String, dynamic>> streamActiveSemesterConfig() {
+    return _supabase
+        .from('active_semester')
+        .stream(primaryKey: ['id'])
+        .map((data) {
+          if (data.isNotEmpty) {
+            final config = data.first;
+            OfflineCacheService().cacheAcademicConfig(config);
+            _configCache = config;
+            return config;
+          }
+          return _configCache;
+        });
+  }
+
   Future<String> getCurrentSemesterCode() async {
     final active = await getActiveSemesterConfig();
     return active['current_semester_code'] ?? 'Spring2026';
@@ -534,7 +550,12 @@ class AcademicRepository {
 
       // 2. Fetch course details from the correct semester table
       final isActive = await isSemesterActive(semesterCode);
-      final actualTable = isActive ? CourseUtils.semesterTable('courses', semesterCode) : 'courses';
+      final config = await getActiveSemesterConfig();
+      final cycleType = config['semester_type']?.toString();
+
+      final actualTable = isActive 
+          ? CourseUtils.semesterTable('courses', semesterCode, cycleType: cycleType) 
+          : 'courses';
 
       final data = await _supabase
           .from(actualTable)

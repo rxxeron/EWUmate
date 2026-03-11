@@ -63,7 +63,9 @@ serve(async (req) => {
             .maybeSingle();
 
         const rawSemesters = acadData?.semesters;
-        if (!rawSemesters) {
+        const rawHistory = acadData?.course_history;
+
+        if (!rawSemesters && !rawHistory) {
             return new Response(JSON.stringify({ status: "no_data", message: "No course history found" }), { headers: corsHeaders });
         }
 
@@ -91,8 +93,22 @@ serve(async (req) => {
         // 3. Normalize Semesters
         let normalized: { name: string, courses: [string, string][] }[] = [];
 
-        if (Array.isArray(rawSemesters)) {
-            // New format: structured list
+        // Count courses to decide source of truth
+        const historyCount = rawHistory ? Object.values(rawHistory).reduce((acc: number, val: any) => acc + Object.keys(val || {}).length, 0) : 0;
+        const semestersCount = Array.isArray(rawSemesters) ? rawSemesters.reduce((acc: number, val: any) => acc + (val.courses?.length || 0), 0) : 0;
+
+        // If history has more data, use it. Otherwise use semesters.
+        if (rawHistory && (historyCount >= semestersCount || !rawSemesters)) {
+            const keys = Object.keys(rawHistory).sort((a, b) => semSortKey(a) - semSortKey(b));
+            normalized = keys.map(name => {
+                const coursesMap = rawHistory[name];
+                const courses: [string, string][] = Object.entries(coursesMap).map(([c, g]) => [
+                    c.toUpperCase().replace(/\s+/g, ""),
+                    String(g || "")
+                ]);
+                return { name, courses };
+            });
+        } else if (Array.isArray(rawSemesters)) {
             normalized = rawSemesters.map((item: any) => {
                 const name = item.semesterName || "";
                 const courses: [string, string][] = (item.courses || []).map((c: any) => [
@@ -101,17 +117,6 @@ serve(async (req) => {
                 ]);
                 return { name, courses };
             }).sort((a, b) => semSortKey(a.name) - semSortKey(b.name));
-        } else if (typeof rawSemesters === 'object') {
-            // Old format: { "Spring 2024": { "CSE101": "A+" } }
-            const keys = Object.keys(rawSemesters).sort((a, b) => semSortKey(a) - semSortKey(b));
-            normalized = keys.map(name => {
-                const coursesMap = rawSemesters[name];
-                const courses: [string, string][] = Object.entries(coursesMap).map(([c, g]) => [
-                    c.toUpperCase().replace(/\s+/g, ""),
-                    String(g || "")
-                ]);
-                return { name, courses };
-            });
         }
 
         // 4. Calculate
@@ -162,9 +167,23 @@ serve(async (req) => {
 
         const cgpa = cumCredits > 0 ? cumPoints / cumCredits : 0.0;
 
-        // 5. Credits Remained
+        // 5. Credits Remained & Program Name
         const { data: profile } = await supabase.from("profiles").select("program_id").eq("id", user_id).maybeSingle();
         const { data: depts } = await supabase.from("departments").select("programs");
+
+        let programName = "";
+        const pId = (profile?.program_id || "").toLowerCase().trim();
+        if (pId && depts) {
+            for (const dept of depts) {
+                for (const p of (dept.programs || [])) {
+                    if (p.id?.toLowerCase() === pId) {
+                        programName = p.name || "";
+                        break;
+                    }
+                }
+                if (programName) break;
+            }
+        }
 
         const totalRequired = getRequiredTotal(profile?.program_id, depts || []);
         const remained = Math.max(0.0, totalRequired - cumCredits);
@@ -175,7 +194,9 @@ serve(async (req) => {
             semesters: semestersList,
             cgpa: Number(cgpa.toFixed(2)),
             total_credits_earned: Number(cumCredits.toFixed(1)),
-            remained_credits: Number(remained.toFixed(1))
+            remained_credits: Number(remained.toFixed(1)),
+            program_name: programName,
+            last_updated: new Date().toISOString()
         };
 
         const { error: upsertError } = await supabase.from("academic_data").upsert(payload);

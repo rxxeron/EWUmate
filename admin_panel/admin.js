@@ -47,6 +47,44 @@ async function verifyKey() {
     }
 }
 
+// Security Management
+document.getElementById('adminSecurityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('updateAdminPassBtn');
+    const originalText = btn.innerHTML;
+
+    const currentPassword = document.getElementById('currentAdminPass').value;
+    const newPassword = document.getElementById('newAdminPass').value;
+
+    if (!confirm("Are you sure you want to change the Admin Password? This will update the system security settings.")) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Updating System Security...';
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/admin-security`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert("SUCCESS: Admin password has been updated. Please remember your new credentials.");
+            e.target.reset();
+            // Optional: Logout or redirect
+        } else {
+            alert("Error: " + (result.error || "Unknown error occurred"));
+        }
+    } catch (error) {
+        alert("Network Error: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+});
+
 function showLoginError(msg) {
     const loginErrorMessage = document.getElementById('loginErrorMessage');
     loginErrorMessage.textContent = msg;
@@ -67,7 +105,7 @@ function logout() {
 }
 
 function switchTab(tab) {
-    const sections = ['broadcast', 'files', 'holidays', 'direct-message'];
+    const sections = ['broadcast', 'files', 'holidays', 'direct-message', 'system-fix', 'security'];
     sections.forEach(s => {
         const el = document.getElementById(`section-${s}`);
         const tabEl = document.getElementById(`tab-${s}`);
@@ -240,6 +278,81 @@ document.getElementById('dmForm').addEventListener('submit', async (e) => {
         setBtnLoading(btn, false, `<i class="bi bi-send-fill"></i> <span class="btn-text">Send Message</span>`);
     }
 });
+
+// SYSTEM FIX LOGIC
+document.getElementById('singleRepairForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('repairSingleBtn');
+    const userId = document.getElementById('repairUserId').value.trim();
+    const action = document.querySelector('input[name="repairType"]:checked').value;
+
+    if (!userId) return;
+    setBtnLoading(btn, true, `Syncing ${action}...`);
+
+    try {
+        const res = await fetch(`${BASE_URL}/admin-data-repair`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({
+                secret: currentKey,
+                type: 'single',
+                action: action,
+                user_id: userId
+            })
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Execution failed");
+
+        showAlert("success", `${action.toUpperCase()} sync successful for user!`, "bi-check-circle-fill");
+        document.getElementById('singleRepairForm').reset();
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-play-fill text-lg"></i> Run Fix`);
+    }
+});
+
+async function runRepairAction(target) {
+    const action = document.querySelector('input[name="repairType"]:checked').value;
+    const confirmMsg = target === 'bulk'
+        ? `CRITICAL: This will execute ${action.toUpperCase()} sync for ALL users. Proceed?`
+        : `Execute ${action} repair?`;
+
+    if (target === 'bulk' && !confirm(confirmMsg)) return;
+
+    const btn = document.getElementById('repairBulkBtn');
+    setBtnLoading(btn, true, `Running Global ${action}...`);
+
+    try {
+        const res = await fetch(`${BASE_URL}/admin-data-repair`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'apikey': SUPABASE_ANON_KEY
+            },
+            body: JSON.stringify({
+                secret: currentKey,
+                type: target,
+                action: action
+            })
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Repair failed");
+
+        showAlert("success", json.message || "Operation completed successfully!", "bi-shield-check");
+    } catch (err) {
+        showAlert("danger", "System Error: " + err.message, "bi-bug-fill");
+    } finally {
+        setBtnLoading(btn, false, `<i class="bi bi-lightning-charge-fill"></i> Execute Global Sync`);
+    }
+}
 
 let currentSemester = "";
 async function fetchCurrentSemester() {

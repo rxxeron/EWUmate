@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/models/semester_progress_models.dart';
@@ -30,10 +31,13 @@ class _SemesterProgressScreenState extends State<SemesterProgressScreen> {
   // Map of CourseCode -> CourseProgressData (basic info)
   Map<String, CourseProgressData> _coursesMap = {};
 
+  StreamSubscription? _configSub;
+  StreamSubscription? _profileSub;
+
   @override
   void initState() {
     super.initState();
-    _initData();
+    _setupStreams();
     _showTutorial();
   }
 
@@ -63,48 +67,55 @@ class _SemesterProgressScreenState extends State<SemesterProgressScreen> {
     });
   }
 
-  Future<void> _initData() async {
+  void _setupStreams() {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    try {
-      // 1. Get Semester (Cached)
-      _semesterCode = await _academicRepo.getCurrentSemesterCode();
-
-      // 2. Get User Enrolled sections (Cached)
-      final profileData = await CourseRepository().fetchUserData();
-      final enrolledIds = List<String>.from(profileData['enrolled_sections'] ?? []);
-
-      if (enrolledIds.isEmpty) {
-        if (mounted) setState(() => _loading = false);
-        return;
-      }
-
-      // 3. Fetch Course Info (Cached)
-      final List<Course> enrolledCourses = await CourseRepository().fetchCoursesByIds(
-        _semesterCode,
-        enrolledIds,
-      );
-
-      final Map<String, CourseProgressData> courses = {};
-      for (var item in enrolledCourses) {
-        courses[item.code] = CourseProgressData(
-          code: item.code,
-          name: item.courseName,
-          section: item.section,
-        );
-      }
-
+    // 1. Semester Config Stream
+    _configSub?.cancel();
+    _configSub = _academicRepo.streamActiveSemesterConfig().listen((config) {
       if (mounted) {
         setState(() {
-          _coursesMap = courses;
-          _loading = false;
+          _semesterCode = config['current_semester_code'] ?? 'Spring2026';
         });
       }
-    } catch (e) {
-      debugPrint("Init error: $e");
-      if (mounted) setState(() => _loading = false);
-    }
+    });
+
+    // 2. Profile/Enrollment Stream
+    _profileSub?.cancel();
+    _profileSub = CourseRepository().streamUserData().listen((userData) async {
+       if (!mounted) return;
+       
+       final enrolledIds = List<String>.from(userData['enrolled_sections'] ?? []);
+       if (enrolledIds.isEmpty) {
+         if (mounted) setState(() => _loading = false);
+         return;
+       }
+
+       final enrolled = await CourseRepository().fetchCoursesByIds(_semesterCode, enrolledIds);
+       final Map<String, CourseProgressData> courses = {};
+       for (var item in enrolled) {
+         courses[item.code] = CourseProgressData(
+           code: item.code,
+           name: item.courseName,
+           section: item.section,
+         );
+       }
+
+       if (mounted) {
+         setState(() {
+           _coursesMap = courses;
+           _loading = false;
+         });
+       }
+    });
+  }
+
+  @override
+  void dispose() {
+    _configSub?.cancel();
+    _profileSub?.cancel();
+    super.dispose();
   }
 
   @override

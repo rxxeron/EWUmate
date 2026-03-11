@@ -88,7 +88,8 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
     setState(() => _saving = true);
 
     try {
-      final dept = _departments.firstWhere((d) => d['name'] == _selectedDeptName);
+      final dept = _departments.where((d) => d['name'] == _selectedDeptName).firstOrNull;
+      if (dept == null) throw Exception("Selected department not found");
       final semType = dept['semester_type'] ?? 'tri';
       
       await _repo.saveProgram(
@@ -199,9 +200,9 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         items: _selectedDeptName == null
                             ? []
                             : List<Map<String, dynamic>>.from(
-                                    _departments.firstWhere((d) =>
+                                    (_departments.where((d) =>
                                             d['name'] ==
-                                            _selectedDeptName)['programs'] ??
+                                            _selectedDeptName).firstOrNull?['programs'] as List?) ??
                                         [])
                                 .map((prog) => DropdownMenuItem(
                                     value: prog['id'] as String,
@@ -238,8 +239,9 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
                         style: const TextStyle(color: Colors.white),
                         initialValue: _selectedAdmittedSemester,
                         items: _semesters.where((sem) {
-                          final dept = _departments.firstWhere((d) => d['name'] == _selectedDeptName);
-                          if (dept['semester_type'] == 'bi') {
+                          if (_selectedDeptName == null) return true;
+                          final dept = _departments.where((d) => d['name'] == _selectedDeptName).firstOrNull;
+                          if (dept != null && dept['semester_type'] == 'bi') {
                             return !sem.contains("Summer");
                           }
                           return true;

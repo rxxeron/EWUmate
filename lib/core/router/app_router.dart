@@ -21,6 +21,8 @@ import '../../features/ramadan/ramadan_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/semester_progress/semester_summary_screen.dart';
 import '../../features/semester_progress/grade_entry_gatekeeper_screen.dart';
+import '../../features/auth/reset_password_screen.dart';
+import '../../features/auth/forgot_password_screen.dart';
 
 class AppRouter {
   static final GlobalKey<NavigatorState> rootNavigatorKey =
@@ -31,6 +33,8 @@ class AppRouter {
   static const String tasksPath = '/tasks';
   static const String semesterProgressPath = '/semester-progress';
   static const String registerPath = '/register';
+  static const String resetPasswordPath = '/reset-password';
+  static const String forgotPasswordPath = '/forgot-password';
 
   static final router = GoRouter(
     navigatorKey: rootNavigatorKey,
@@ -47,6 +51,14 @@ class AppRouter {
       GoRoute(
         path: registerPath,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: resetPasswordPath,
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: forgotPasswordPath,
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
@@ -124,7 +136,10 @@ class AppRouter {
       final path = state.uri.toString();
 
       // Define public routes
-      final isPublic = path == loginPath || path == registerPath;
+      final isPublic = path == loginPath ||
+          path == registerPath ||
+          path == resetPasswordPath ||
+          path == forgotPasswordPath;
 
       if (user == null && !isPublic) return loginPath;
       if (user != null && isPublic) return '/';

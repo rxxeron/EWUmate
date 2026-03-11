@@ -31,6 +31,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
   late TabController _tabController;
   StreamSubscription? _scheduleSubscription;
   StreamSubscription? _savedSchedulesSubscription;
+  StreamSubscription? _configSub;
 
   bool _loading = true;
   bool _isLocked = true;
@@ -69,7 +70,7 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     _tabController = TabController(length: 2, vsync: this);
     _searchController
         .addListener(() => _filterSchedules(_searchController.text));
-    _initData();
+    _setupConfigStream();
     _showTutorial();
   }
 
@@ -111,45 +112,52 @@ class _AdvisingScreenState extends State<AdvisingScreen>
     _facultyFilterController.dispose();
     _scheduleSubscription?.cancel();
     _savedSchedulesSubscription?.cancel();
+    _configSub?.cancel();
     super.dispose();
   }
 
-  Future<void> _initData() async {
-    try {
-      final currentCode = await _academicRepo.getCurrentSemesterCode();
-      _nextSemesterCode = _calculateNextSemester(currentCode);
+  void _setupConfigStream() {
+    _configSub?.cancel();
+    _configSub = _academicRepo.streamActiveSemesterConfig().listen((config) async {
+      final currentCode = config['current_semester_code'] ?? 'Spring2026';
+      
+      if (mounted) {
+        setState(() {
+          _nextSemesterCode = _calculateNextSemester(currentCode);
+        });
+      }
 
-      final advisingDate =
-          await _academicRepo.getOnlineAdvisingDate(currentCode);
-
-      if (advisingDate != null) {
+      final advisingDateStr = config['online_advising_date'] ?? 
+          await _academicRepo.getOnlineAdvisingDate(currentCode).then((d) => d?.toIso8601String());
+      
+      if (advisingDateStr != null) {
+        final advisingDate = DateTime.parse(advisingDateStr);
         final plannerOpenDate = advisingDate.subtract(const Duration(days: 7));
         final now = DateTime.now();
 
-        if (now.isBefore(plannerOpenDate)) {
-          _isLocked = true;
-          _lockMessage =
-              "Planner opens on ${DateFormat('MMM d').format(plannerOpenDate)}.\nAdvising starts on ${DateFormat('MMM d').format(advisingDate)}.";
-        } else {
-          _isLocked = false;
+        bool locked = now.isBefore(plannerOpenDate);
+        String msg = "Planner opens on ${DateFormat('MMM d').format(plannerOpenDate)}.\nAdvising starts on ${DateFormat('MMM d').format(advisingDate)}.";
+
+        if (mounted) {
+          setState(() {
+            _isLocked = locked;
+            _lockMessage = msg;
+            if (!locked && _allCourseCodes.isEmpty) {
+              _loadInitialData();
+            }
+          });
         }
       } else {
-        // Strict locking: if we don't know the date, it's locked until we fetch it online
-        _isLocked = true;
-        _lockMessage = "Advising details are pending. Please check back later.";
+        if (mounted) {
+          setState(() {
+            _isLocked = true;
+            _lockMessage = "Advising details are pending. Please check back later.";
+          });
+        }
       }
-
-      if (!_isLocked) {
-        await _loadInitialData();
-      }
-    } catch (e) {
-      debugPrint("Advising Init Error: $e");
-      _isLocked = true;
-      _lockMessage = "Unable to load advising status. Check your connection.";
+      
       if (mounted) setState(() => _loading = false);
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    });
   }
 
   String _calculateNextSemester(String current) {

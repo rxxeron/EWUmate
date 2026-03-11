@@ -212,15 +212,14 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
 
     for (final selection in currentSemMap.keys) {
       // Try to find matching catalog entry
-      final match = _catalog.firstWhere(
+      final match = _catalog.where(
         (c) {
           final key = _isCurrentSemester
               ? "${c['code']}_Sec${c['section']}"
               : c['code'].toString();
           return key == selection;
         },
-        orElse: () => {},
-      );
+      ).firstOrNull ?? {};
 
       if (match.isNotEmpty) {
         details.add({
@@ -266,15 +265,14 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
         }
 
         // Priority 2: Fallback to Catalog Lookup (e.g. restored data)
-        final match = _catalog.firstWhere(
+        final match = _catalog.where(
           (c) {
             final key = _isCurrentSemester
                 ? "${c['code']}_Sec${c['section']}"
                 : c['code'].toString();
             return key == selection;
           },
-          orElse: () => {},
-        );
+        ).firstOrNull ?? {};
 
         if (match.containsKey('allIds')) {
           enrolledIds.addAll(List<String>.from(match['allIds']));

@@ -104,6 +104,31 @@ class CourseRepository {
         .eq('user_id', user.id);
   }
 
+  // --- User Profile Realtime Stream ---
+
+  Stream<Map<String, dynamic>> streamUserData() {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return Stream.value({});
+
+    return _supabase
+        .from('profiles')
+        .stream(primaryKey: ['id'])
+        .eq('id', user.id)
+        .map((data) {
+          if (data.isNotEmpty) {
+            final profile = data.first;
+            final enrolled = ((profile['enrolled_sections'] as List?) ?? []).map((e) => e.toString()).toList();
+            
+            OfflineCacheService().cacheAcademicProfile(profile);
+            OfflineCacheService().cacheEnrolledSections(enrolled);
+            ScheduleCacheService().cacheStats(profile);
+            
+            return profile;
+          }
+          return {};
+        });
+  }
+
   // --- RESTORED METHODS ---
 
   Future<Map<String, dynamic>> fetchUserData() async {
@@ -320,8 +345,10 @@ class CourseRepository {
     }
 
     try {
-      // Always try the semester-specific table first
-      final semesterTable = CourseUtils.semesterTable('courses', semester);
+      // 1. Try the cycle-specific semester table
+      final config = await _academicRepo.getActiveSemesterConfig();
+      final cycleType = config['semester_type']?.toString();
+      final semesterTable = CourseUtils.semesterTable('courses', semester, cycleType: cycleType);
 
       var data = <Map<String, dynamic>>[];
       try {
@@ -387,8 +414,10 @@ class CourseRepository {
 
   Future<Map<String, List<Course>>> fetchCourses(String semester, {bool allowMetadataFallback = true}) async {
     try {
-      // Always try the semester-specific table first
-      final semesterTable = CourseUtils.semesterTable('courses', semester);
+      // 1. Try the cycle-specific semester table
+      final config = await _academicRepo.getActiveSemesterConfig();
+      final cycleType = config['semester_type']?.toString();
+      final semesterTable = CourseUtils.semesterTable('courses', semester, cycleType: cycleType);
 
       var data = <dynamic>[];
       try {

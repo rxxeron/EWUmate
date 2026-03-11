@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.rxxeron.ewumate"
-    compileSdk = 36 // REQUIRED: Upgraded to 36 to satisfy flutter plugins
+    compileSdk = 36 // RECOMMENDED: API 36 is required by some plugins
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId = "com.rxxeron.ewumate"
         minSdk = 28
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

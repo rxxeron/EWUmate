@@ -69,11 +69,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Object? _lastStreamError;
   Timer? _refreshTimer;
 
+  StreamSubscription? _taskSub;
+  StreamSubscription? _profileSub;
+  StreamSubscription? _configSub;
+
   @override
   void initState() {
     super.initState();
     _loadCachedData(); // Fast initial load
-    _initDashboard(); // Background refresh
+    _setupStreams(); // Realtime listeners
     SyncService().performFullSync(); // Proactive Sync
     _showDashboardTutorial();
 
@@ -95,6 +99,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    _taskSub?.cancel();
+    _profileSub?.cancel();
+    _configSub?.cancel();
     super.dispose();
   }
 
@@ -130,9 +137,81 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() {
         _semesterCode = cached['semester_code'] ?? "";
         _loadingInit = false; // Show something ASAP
-        // We'll trust the background fetch to fill the rest
       });
     }
+  }
+
+  void _setupStreams() {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    // 1. Config Stream
+    _configSub?.cancel();
+    _configSub = _academicRepo.streamActiveSemesterConfig().listen((config) {
+      if (mounted) {
+        setState(() {
+          _semConfig = config;
+          _semesterCode = config['current_semester_code'] ?? 'Spring2026';
+          _firstDayOfClasses = config['current_semester_start_date'] != null 
+              ? DateTime.parse(config['current_semester_start_date']) 
+              : null;
+        });
+        _checkAdvisingBanner(_semesterCode, config);
+      }
+    });
+
+    // 2. Task Stream
+    _taskSub?.cancel();
+    _taskSub = _taskRepo.getTasksStream().listen((tasks) {
+      if (mounted) {
+        setState(() {
+          _tasks = tasks..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        });
+      }
+    });
+
+    // 3. Profile/Enrollment Stream
+    _profileSub?.cancel();
+    _profileSub = _courseRepo.streamUserData().listen((userData) async {
+       if (!mounted) return;
+       
+       final enrolledIds = List<String>.from(userData['enrolled_sections'] ?? []);
+       List<Course> enrolled = [];
+       if (enrolledIds.isNotEmpty) {
+          enrolled = await _courseRepo.fetchCoursesByIds(_semesterCode, enrolledIds);
+       }
+
+       // Parse Exam Schedules
+       final examCacheRaw = userData['exam_dates_cache'];
+       final Map<String, dynamic> examCache = examCacheRaw is Map ? Map<String, dynamic>.from(examCacheRaw) : {};
+       final List<Map<String, dynamic>> examSchedules = [];
+       
+       for (var course in enrolled) {
+         if (examCache.containsKey(course.code)) {
+           final matchData = Map<String, dynamic>.from(examCache[course.code] ?? {});
+           examSchedules.add({
+             'course_code': course.code,
+             'course_name': course.courseName,
+             'section': course.section,
+             'class_time': matchData['class_time'] ?? (course.startTime != null ? "${course.startTime} - ${course.endTime}" : _timeTba),
+             'class_venue': matchData['class_venue'] ?? course.room ?? _venueTba,
+             'exam_match': matchData,
+           });
+         }
+       }
+
+       if (mounted) {
+         setState(() {
+           _enrolledCourses = enrolled;
+           _userExamSchedules = examSchedules;
+           _loadingInit = false;
+         });
+       }
+
+       if (enrolledIds.isNotEmpty && await ConnectivityService().isOnline()) {
+         ScheduleService().syncUserSchedule(_semesterCode, enrolledIds);
+       }
+    });
   }
 
   Future<void> _initDashboard() async {

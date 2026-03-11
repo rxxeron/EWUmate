@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../core/models/semester_progress_models.dart';
 import '../../core/services/offline_cache_service.dart';
 import '../../core/services/connectivity_service.dart';
+import '../../core/utils/course_utils.dart';
 
 class SemesterProgressRepository {
   final _supabase = Supabase.instance.client;
@@ -70,16 +71,16 @@ class SemesterProgressRepository {
     return _controller.stream;
   }
 
-    Future.microtask(() {
-      if (!_controller.isClosed) {
-        final safeKey = CourseUtils.safeCacheKey('progress', semesterCode);
-        final cachedData =
-            OfflineCacheService().getCachedSemesterProgress(safeKey);
-        final cachedMarks =
-            cachedData.map((d) => CourseMarks.fromMap(d)).toList();
-        _controller.add(cachedMarks);
-      }
-    });
+  void _emitCachedProgress(String semesterCode) {
+    if (!_controller.isClosed) {
+      final safeKey = CourseUtils.safeCacheKey('progress', semesterCode);
+      final cachedData =
+          OfflineCacheService().getCachedSemesterProgress(safeKey);
+      final cachedMarks =
+          cachedData.map((d) => CourseMarks.fromMap(d)).toList();
+      _controller.add(cachedMarks);
+    }
+  }
 
   /// Fetches all courses with marks for a given semester
   Future<List<CourseMarks>> fetchSemesterProgress(String semesterCode) async {

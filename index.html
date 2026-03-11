@@ -167,6 +167,18 @@
                     <i class="bi bi-person-lines-fill text-lg"></i>
                     <span class="text-sm font-medium">Direct Message</span>
                 </button>
+
+                <button onclick="switchTab('system-fix')" id="tab-system-fix"
+                    class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                    <i class="bi bi-tools text-lg"></i>
+                    <span class="text-sm font-medium">System Fix</span>
+                </button>
+
+                <button onclick="switchTab('security')" id="tab-security"
+                    class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50">
+                    <i class="bi bi-shield-lock text-lg"></i>
+                    <span class="text-sm font-medium">Security</span>
+                </button>
             </nav>
 
             <div class="p-4 border-t border-gray-100">
@@ -499,6 +511,155 @@
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+
+                <!-- ============ SECTION: SYSTEM FIX ============ -->
+                <div id="section-system-fix" class="hidden fade-in max-w-4xl mx-auto space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="mb-6 pb-4 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900">System Repair & Sync</h3>
+                            <p class="text-gray-500 text-sm">Recalculate and synchronize core user data across all
+                                features.</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <!-- Type Selection -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="repairType" value="academic" class="peer hidden" checked>
+                                    <div
+                                        class="p-4 border rounded-xl peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                        <i
+                                            class="bi bi-mortarboard text-xl block mb-2 text-gray-400 peer-checked:text-primary-600"></i>
+                                        <span class="text-sm font-bold block">Academic Data</span>
+                                        <span class="text-xs text-gray-500">CGPA, Credits, Program</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="repairType" value="schedule" class="peer hidden">
+                                    <div
+                                        class="p-4 border rounded-xl peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                        <i
+                                            class="bi bi-calendar3 block text-xl mb-2 text-gray-400 peer-checked:text-primary-600"></i>
+                                        <span class="text-sm font-bold block">Class Schedule</span>
+                                        <span class="text-xs text-gray-500">Routines from Sections</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer relative">
+                                    <input type="radio" name="repairType" value="exams" class="peer hidden">
+                                    <div
+                                        class="p-4 border rounded-xl peer-checked:border-primary-500 peer-checked:bg-primary-50 transition">
+                                        <i
+                                            class="bi bi-journal-check block text-xl mb-2 text-gray-400 peer-checked:text-primary-600"></i>
+                                        <span class="text-sm font-bold block">Exam Tasks</span>
+                                        <span class="text-xs text-gray-500">Dates & Task Generation</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="h-px bg-gray-100 w-full"></div>
+
+                            <!-- Single User Fix -->
+                            <div class="p-5 border border-gray-100 bg-gray-50 rounded-xl">
+                                <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                    <i class="bi bi-person-gear text-primary-600 text-lg"></i> Targeted Repair
+                                </h4>
+                                <p class="text-xs text-gray-500 mb-4">Regenerate data for a specific student using their
+                                    UUID.</p>
+                                <form id="singleRepairForm" class="flex flex-col md:flex-row gap-3">
+                                    <input type="text" id="repairUserId" required
+                                        class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-100 focus:border-primary-500 font-mono text-sm outline-none transition"
+                                        placeholder="Enter Student UUID...">
+                                    <button type="submit" id="repairSingleBtn"
+                                        class="bg-primary-600 hover:bg-primary-700 text-white font-medium px-6 py-2 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2">
+                                        <i class="bi bi-play-fill text-lg"></i> Run Fix
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Bulk Fix -->
+                            <div class="p-5 border border-red-100 bg-red-50 rounded-xl">
+                                <h4 class="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                                    <i class="bi bi-database-exclamation text-red-600 text-lg"></i> Global Synchronize
+                                </h4>
+                                <p class="text-xs text-red-500 mb-4">Execute this operation for ALL registered users.
+                                    This balances the entire system.</p>
+                                <button onclick="runRepairAction('bulk')" id="repairBulkBtn"
+                                    class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-medium px-8 py-3 rounded-lg shadow-md shadow-red-500/20 transition-all flex items-center justify-center gap-2">
+                                    <i class="bi bi-lightning-charge-fill"></i> Execute Global Sync
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Card -->
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-6 rounded-2xl">
+                        <h4 class="font-bold flex items-center gap-2 mb-2">
+                            <i class="bi bi-exclamation-triangle-fill text-amber-600"></i> Operation Warning
+                        </h4>
+                        <ul class="text-sm list-disc list-inside space-y-1">
+                            <li><b>Academic</b> repair syncs raw history with the UI summary (overwrites manual edits).
+                            </li>
+                            <li><b>Schedule</b> sync rebuilds class routines based on enrolled section IDs.</li>
+                            <li><b>Exams</b> sync generates automated tasks for upcoming final exams.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- ============ SECTION: SECURITY ============ -->
+                <div id="section-security" class="hidden fade-in max-w-2xl mx-auto space-y-6">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="mb-8 text-center">
+                            <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="bi bi-shield-lock-fill text-red-600 text-2xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">Admin Security Settings</h3>
+                            <p class="text-gray-500 text-sm">Update the global access password for this dashboard.</p>
+                        </div>
+
+                        <form id="adminSecurityForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1.5">Current Admin
+                                    Password</label>
+                                <div class="relative">
+                                    <input type="password" id="currentAdminPass" required
+                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition"
+                                        placeholder="Enter current password...">
+                                    <i class="bi bi-key absolute left-3.5 top-2.5 text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="pt-2">
+                                <label class="block text-sm font-bold text-gray-700 mb-1.5">New Admin Password</label>
+                                <div class="relative">
+                                    <input type="password" id="newAdminPass" required
+                                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition"
+                                        placeholder="Enter new complex password...">
+                                    <i class="bi bi-shield-plus absolute left-3.5 top-2.5 text-gray-400"></i>
+                                </div>
+                                <p class="mt-2 text-[11px] text-gray-400">
+                                    <i class="bi bi-info-circle"></i> This will update the password stored in the
+                                    <b>config</b> table. Previous environment variables will be ignored.
+                                </p>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" id="updateAdminPassBtn"
+                                    class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-red-200 transition-all flex items-center justify-center gap-2">
+                                    <i class="bi bi-arrow-repeat"></i> Update Access Credentials
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 p-6 rounded-2xl">
+                        <h4 class="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                            <i class="bi bi-lightning-fill text-amber-500"></i> Session Reminder
+                        </h4>
+                        <p class="text-xs text-gray-600 leading-relaxed">Changing the password will not automatically
+                            log out current sessions, but all future login attempts (including from your browser if you
+                            refresh) will require the new password.</p>
                     </div>
                 </div>
 

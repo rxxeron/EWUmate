@@ -187,10 +187,24 @@ async function loadSemesterRecords() {
 // Global UI Helpers
 function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
+    if (id === 'semesterModal') {
+        updateModalSemesterFields();
+    }
 }
 
 function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
+}
+
+// Modal Field Automation
+function updateModalSemesterFields() {
+    const year = document.getElementById('semYear').value;
+    const season = document.getElementById('semSeason').value;
+    
+    if (year && season) {
+        document.getElementById('semName').value = `${season} ${year}`;
+        document.getElementById('semCode').value = `${season.toLowerCase()}${year}`;
+    }
 }
 
 // Add Semester Handler
@@ -204,13 +218,33 @@ document.getElementById('addSemesterForm')?.addEventListener('submit', async (e)
     const year = parseInt(document.getElementById('semYear').value);
     const season = document.getElementById('semSeason').value;
 
+    // Detect Historical status:
+    // We compare with currentSemester (Tri cycle)
+    // currentSemester format: "Spring 2026"
+    let is_historical = true;
+    if (currentSemester) {
+        const parts = currentSemester.split(' ');
+        const curSeason = parts[0];
+        const curYear = parseInt(parts[1]);
+        
+        const seasonPriority = { 'Spring': 1, 'Summer': 2, 'Fall': 3 };
+        
+        if (year > curYear) {
+            is_historical = false;
+        } else if (year === curYear) {
+            if (seasonPriority[season] >= seasonPriority[curSeason]) {
+                is_historical = false;
+            }
+        }
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Saving...';
 
     try {
         const { error } = await supabaseClient
             .from('semesters')
-            .insert([{ name, code, year, season, is_historical: true }]); // Default to historical for new manual adds
+            .insert([{ name, code, year, season, is_historical }]);
 
         if (error) throw error;
 
@@ -694,4 +728,49 @@ function showAlert(type, msg, icon) {
     alertBody.innerText = msg;
     alertBox.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function syncSemestersWithActive() {
+    const btn = document.getElementById('btnSyncSemesters');
+    const originalText = btn.innerHTML;
+    setBtnLoading(btn, true, "Syncing...");
+    
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?select=current_semester,current_semester_code`, {
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            }
+        });
+        const activeData = await res.json();
+
+        if (!activeData || activeData.length === 0) {
+            showAlert('warning', 'No active semesters found to sync from.', 'bi-info-circle');
+            return;
+        }
+
+        const records = activeData.map(item => {
+            const parts = item.current_semester.split(' ');
+            return {
+                name: item.current_semester,
+                code: item.current_semester_code,
+                year: parseInt(parts[1]) || 2026,
+                season: parts[0],
+                is_historical: false
+            };
+        });
+
+        const { error } = await supabaseClient
+            .from('semesters')
+            .upsert(records, { onConflict: 'name' });
+
+        if (error) throw error;
+
+        showAlert('success', 'Semester list synchronized with active status.', 'bi-check-circle');
+        loadSemesterRecords();
+    } catch (err) {
+        showAlert('danger', 'Sync Failed: ' + err.message, 'bi-bug');
+    } finally {
+        setBtnLoading(btn, false, originalText);
+    }
 }

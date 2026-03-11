@@ -7,6 +7,10 @@ let currentKey = "";
 const alertBox = document.getElementById('alertBox');
 const loginError = document.getElementById('loginError');
 
+// Initialize Supabase Client
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 async function verifyKey() {
     const inputKey = document.getElementById('loginKey').value.trim();
     const btn = document.getElementById('loginBtn');
@@ -110,8 +114,20 @@ function switchTab(tab) {
         const el = document.getElementById(`section-${s}`);
         const tabEl = document.getElementById(`tab-${s}`);
         if (el) el.classList.toggle('hidden', s !== tab);
-        if (tabEl) tabEl.classList.toggle('active', s === tab);
+        
+        // Handle Tailwind active classes
+        if (tabEl) {
+            if (s === tab) {
+                tabEl.classList.add('active', 'bg-primary-50', 'text-primary-600', 'font-semibold');
+                tabEl.classList.remove('text-gray-600');
+            } else {
+                tabEl.classList.remove('active', 'bg-primary-50', 'text-primary-600', 'font-semibold');
+                tabEl.classList.add('text-gray-600');
+            }
+        }
     });
+    
+    document.getElementById('sectionTitle').textContent = tab.charAt(0).toUpperCase() + tab.slice(1).replace('-', ' ');
     alertBox.classList.add('hidden');
     
     if (tab === 'config') {
@@ -124,10 +140,17 @@ function switchTab(tab) {
 
 async function loadSemesterRecords() {
     const tableBody = document.getElementById('semester-records-body');
-    tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading semesters...</td></tr>';
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-gray-400">
+                <i class="bi bi-arrow-repeat animate-spin text-2xl block mb-2 text-primary-500"></i>
+                Syncing timeline...
+            </td>
+        </tr>
+    `;
 
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('semesters')
             .select('*')
             .order('year', { ascending: false })
@@ -135,24 +158,73 @@ async function loadSemesterRecords() {
 
         if (error) throw error;
 
+        if (data.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-gray-500 italic">No semesters found in record.</td></tr>';
+            return;
+        }
+
         tableBody.innerHTML = data.map(sem => `
-            <tr>
-                <td class="fw-bold">${sem.name}</td>
-                <td><code class="text-cyan">${sem.code}</code></td>
-                <td>${sem.year}</td>
-                <td>${sem.season}</td>
-                <td>
-                    <span class="badge ${sem.is_historical ? 'bg-secondary' : 'bg-success'}">
-                        ${sem.is_historical ? 'Historical' : 'Active'}
+            <tr class="hover:bg-gray-50 transition-colors group">
+                <td class="px-6 py-4">
+                    <div class="font-bold text-gray-900">${sem.name}</div>
+                </td>
+                <td class="px-6 py-4 font-mono text-xs text-primary-600 font-bold">${sem.code}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">${sem.year}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">${sem.season}</td>
+                <td class="px-6 py-4 text-right">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${sem.is_historical ? 'bg-gray-100 text-gray-800' : 'bg-green-100 text-green-800'}">
+                        ${sem.is_historical ? 'Historical' : 'Live'}
                     </span>
                 </td>
             </tr>
         `).join('');
     } catch (e) {
         console.error('Error loading semesters:', e);
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${e.message}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-red-500 font-medium">Failed to load: ${e.message}</td></tr>`;
     }
 }
+
+// Global UI Helpers
+function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+}
+
+// Add Semester Handler
+document.getElementById('addSemesterForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    
+    const name = document.getElementById('semName').value;
+    const code = document.getElementById('semCode').value;
+    const year = parseInt(document.getElementById('semYear').value);
+    const season = document.getElementById('semSeason').value;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Saving...';
+
+    try {
+        const { error } = await supabaseClient
+            .from('semesters')
+            .insert([{ name, code, year, season, is_historical: true }]); // Default to historical for new manual adds
+
+        if (error) throw error;
+
+        showAlert('success', `${name} has been added to the academic record.`, 'bi-check-circle');
+        closeModal('semesterModal');
+        e.target.reset();
+        loadSemesterRecords();
+    } catch (err) {
+        showAlert('error', err.message, 'bi-exclamation-triangle');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+});
 
 async function loadSemesterConfigs() {
     try {

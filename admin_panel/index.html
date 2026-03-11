@@ -380,6 +380,21 @@
                                 </div>
 
                                 <div class="col-span-1 md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Semester Context</label>
+                                    <div class="flex p-1 bg-gray-100 rounded-xl gap-1">
+                                        <button type="button" onclick="setSemesterContext('current')" id="ctx-current"
+                                            class="flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all bg-white text-primary-700 shadow-sm border border-gray-200">
+                                            Current Semester
+                                        </button>
+                                        <button type="button" onclick="setSemesterContext('upcoming')" id="ctx-upcoming"
+                                            class="flex-1 py-1.5 px-3 rounded-lg text-[10px] font-bold transition-all text-gray-500 hover:bg-gray-200">
+                                            Upcoming Semester
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="semesterContext" value="current">
+                                </div>
+
+                                <div class="col-span-1 md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Target Filename</label>
                                     <div class="relative">
                                         <input type="text" id="filenameInput"

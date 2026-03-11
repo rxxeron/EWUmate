@@ -172,11 +172,24 @@ class AcademicRepository {
     try {
       final res = await _supabase
           .from('semesters')
-          .select('name')
-          .order('year', ascending: true)
-          .order('season', ascending: false); // Note: Fall > Summer > Spring alphabetically is tricky, but works for most EWU seasons
+          .select('name, year, season')
+          .order('year', ascending: true);
 
-      final List<String> names = (res as List).map((s) => s['name'].toString()).toList();
+      final List<Map<String, dynamic>> records = List<Map<String, dynamic>>.from(res as List);
+      
+      // Custom season order: Spring < Summer < Fall
+      const seasonOrder = {'Spring': 1, 'Summer': 2, 'Fall': 3};
+      
+      records.sort((a, b) {
+        int yearComp = (a['year'] as int).compareTo(b['year'] as int);
+        if (yearComp != 0) return yearComp;
+        
+        int s1 = seasonOrder[a['season']] ?? 0;
+        int s2 = seasonOrder[b['season']] ?? 0;
+        return s1.compareTo(s2);
+      });
+
+      final List<String> names = records.map((s) => s['name'].toString()).toList();
       
       if (names.isNotEmpty) return names;
     } catch (e) {

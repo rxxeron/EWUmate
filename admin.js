@@ -277,13 +277,11 @@ async function loadSemesterConfigs() {
 
 async function saveSemesterConfig(cycle) {
     const form = document.getElementById(`configForm-${cycle}`);
-    const formData = new FormData(form);
-    const updateData = {};
+    const updateData = {
+        semester_type: cycle
+    };
     
-    // Manual mapping for ID from cycle since I removed hidden ID to simplify UI
-    const id = cycle === 'tri' ? 1 : 2;
-
-    // Get all inputs including those not in FormData (like unchecked checkboxes)
+    // Get all inputs
     const inputs = form.querySelectorAll('input, select');
     inputs.forEach(input => {
         if (!input.name) return;
@@ -305,7 +303,7 @@ async function saveSemesterConfig(cycle) {
     btn.innerHTML = '<i class="bi bi-arrow-repeat animate-spin"></i> Syncing...';
 
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?id=eq.${id}`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?semester_type=eq.${cycle}`, {
             method: 'PATCH',
             headers: {
                 'apikey': SUPABASE_ANON_KEY,

@@ -20,20 +20,7 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
   bool _loading = true;
   bool _saving = false;
 
-  final List<String> _semesters = [
-    "Spring 2023",
-    "Summer 2023",
-    "Fall 2023",
-    "Spring 2024",
-    "Summer 2024",
-    "Fall 2024",
-    "Spring 2025",
-    "Summer 2025",
-    "Fall 2025",
-    "Spring 2026",
-    "Summer 2026",
-    "Fall 2026"
-  ];
+  List<String> _semesters = [];
 
   @override
   void initState() {
@@ -69,10 +56,16 @@ class _ProgramSelectionScreenState extends State<ProgramSelectionScreen> {
   }
 
   Future<void> _loadDepartments() async {
-    final depts = await _repo.fetchDepartments();
+    final results = await Future.wait([
+      _repo.fetchDepartments(),
+      AcademicRepository().getAllSemesters(),
+    ]);
+
     if (mounted) {
       setState(() {
-        _departments = depts;
+        _departments = results[0] as List<Map<String, dynamic>>;
+        // We want chronological for admission semester dropdown
+        _semesters = results[1] as List<String>;
         _loading = false;
       });
     }

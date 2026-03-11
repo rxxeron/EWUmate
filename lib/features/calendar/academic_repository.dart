@@ -167,6 +167,31 @@ class AcademicRepository {
     ].where((s) => s.isNotEmpty).toList();
   }
 
+  /// Fetches the full list of semesters from the database (Spring 2020 -> Current)
+  Future<List<String>> getAllSemesters() async {
+    try {
+      final res = await _supabase
+          .from('semesters')
+          .select('name')
+          .order('year', ascending: true)
+          .order('season', ascending: false); // Note: Fall > Summer > Spring alphabetically is tricky, but works for most EWU seasons
+
+      final List<String> names = (res as List).map((s) => s['name'].toString()).toList();
+      
+      if (names.isNotEmpty) return names;
+    } catch (e) {
+      debugPrint("Error fetching semesters table: $e");
+    }
+
+    // Fallback if table is empty or fetch fails
+    return [
+      "Spring 2023", "Summer 2023", "Fall 2023",
+      "Spring 2024", "Summer 2024", "Fall 2024",
+      "Spring 2025", "Summer 2025", "Fall 2025",
+      "Spring 2026"
+    ];
+  }
+
   Future<bool> isSemesterActive(String semesterCode) async {
     final actives = await getActiveSemesterCodes();
     final clean = semesterCode.replaceAll(' ', '');

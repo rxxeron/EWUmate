@@ -32,20 +32,7 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
   // New: Store IDs explicitly so we don't lose them when catalog changes
   final Map<String, List<String>> _selectedSectionIds = {};
 
-  final List<String> _allSemesters = [
-    "Spring 2023",
-    "Summer 2023",
-    "Fall 2023",
-    "Spring 2024",
-    "Summer 2024",
-    "Fall 2024",
-    "Spring 2025",
-    "Summer 2025",
-    "Fall 2025",
-    "Spring 2026",
-    "Summer 2026",
-    "Fall 2026"
-  ];
+  List<String> _allSemesters = [];
 
   String _runningSemester = "Loading..."; // Generic fallback until fetched
   final AcademicRepository _academicRepo = AcademicRepository();
@@ -317,6 +304,41 @@ class _CourseHistoryScreenState extends State<CourseHistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text("Error saving data: $e")));
+      }
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      final results = await Future.wait([
+        _academicRepo.getActiveSemesterConfig(),
+        _academicRepo.getAllSemesters(), // 1. Dynamic semesters
+        _repo.fetchUserProfile(),
+      ]);
+
+      final config = results[0] as Map<String, dynamic>;
+      final allSems = results[1] as List<String>; // Spring 2020 -> Current
+      final profile = results[2] as Map<String, dynamic>;
+
+      if (mounted) {
+        setState(() {
+          _runningSemester = (config['current_semester'] ?? "Spring 2026").toString();
+          _allSemesters = allSems;
+          _userProfile = profile;
+          
+          final admittedSem = (profile['admitted_semester'] ?? "").toString();
+          if (admittedSem.isNotEmpty && _allSemesters.contains(admittedSem)) {
+            _confirmAdmittedSemester(admittedSem);
+          } else {
+            // If admitted semester is missing or invalid, default to current but ask user
+            _confirmAdmittedSemester(_runningSemester);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading initial data: $e");
+      if (mounted) {
+        setState(() => _loading = false);
       }
     }
   }

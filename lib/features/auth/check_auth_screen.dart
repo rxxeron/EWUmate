@@ -17,17 +17,6 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
   void initState() {
     super.initState();
     _checkStatus();
-    
-    // Emergency navigation if nothing happens in 5 seconds
-    Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        final currentPath = GoRouterState.of(context).uri.toString();
-        if (currentPath == '/' || currentPath == '/check-auth') {
-          debugPrint("CheckAuth: Emergency navigation triggered from path: $currentPath");
-          context.go('/dashboard');
-        }
-      }
-    });
   }
 
   Future<void> _checkStatus() async {
@@ -61,13 +50,13 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
       );
 
       if (!isOnline) {
-        debugPrint("CheckAuth: Offline and no cache. Defaulting to Dashboard.");
-        if (mounted) context.go('/dashboard');
+        debugPrint("CheckAuth: Offline and no cache. Redirecting to login.");
+        if (mounted) context.go('/login');
         return;
       }
 
       debugPrint("CheckAuth: Online. Fetching fresh metadata...");
-      final data = await _fetchMetadata(user.id).timeout(const Duration(seconds: 3));
+      final data = await _fetchMetadata(user.id).timeout(const Duration(seconds: 5));
       if (data != null) {
         _navigateBasedOnStatus(data);
         return;
@@ -76,9 +65,10 @@ class _CheckAuthScreenState extends State<CheckAuthScreen> {
       debugPrint("CheckAuth: Initial check failed or timed out: $e");
     }
 
-    // Final Fallback
-    debugPrint("CheckAuth: Final fallback to Dashboard.");
-    if (mounted) context.go('/dashboard');
+    // Final Fallback: If we reach here, we couldn't determine status even while online.
+    // Better to go to login or show an error than to bypass to dashboard.
+    debugPrint("CheckAuth: Final fallback to Login.");
+    if (mounted) context.go('/login');
   }
 
   Future<Map<String, dynamic>?> _fetchMetadata(String userId) async {

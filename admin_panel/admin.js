@@ -608,24 +608,34 @@ async function syncAcademicConfig() {
 let currentSemester = "";
 async function fetchCurrentSemester() {
     try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?is_active=eq.true&select=current_semester`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/active_semester?select=current_semester,semester_type`, {
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
                 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
-        const json = await res.json();
-        if (json && json.length > 0) {
-            currentSemester = json[0].current_semester;
-            const badge = document.getElementById('activeSemesterBadge');
-            if (badge) badge.innerText = `${currentSemester} Active`;
-            suggestFilename();
-        }
-    } catch (err) {
-        currentSemester = "";
-        const badge = document.getElementById('activeSemesterBadge');
-        if (badge) badge.innerText = `Error Loading Semester`;
+        const data = await res.json();
+        
+        data.forEach(item => {
+            const isTri = item.semester_type === 'tri';
+            const badgeId = isTri ? 'activeSemesterTri' : 'activeSemesterBi';
+            const badge = document.getElementById(badgeId);
+            
+            if (badge) {
+                badge.innerHTML = `<i class="bi bi-${isTri ? '3' : '2'}-square-fill"></i> ${isTri ? 'Tri' : 'Bi'}: ${item.current_semester}`;
+            }
+
+            // Default global currentSemester to Tri cycle for file suggestions
+            if (isTri) {
+                currentSemester = item.current_semester;
+            }
+        });
+
         suggestFilename();
+    } catch (err) {
+        console.error("Error loading active semesters:", err);
+        const container = document.getElementById('activeSemestersContainer');
+        if (container) container.innerHTML = `<span class="text-red-500 text-[10px] font-bold">Error Syncing Header</span>`;
     }
 }
 

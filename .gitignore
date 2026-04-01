@@ -84,3 +84,6 @@ scheduler_output.json
 # Crash Logs
 hs_err_pid*.log
 replay_pid*.log
+
+# Production Build Folder
+ewumate_production_build/

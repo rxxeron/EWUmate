@@ -3,6 +3,7 @@ name: Deploy Admin Panel to GitHub Pages
 on:
   push:
     branches:
+      - production
       - main
       - master
     paths:

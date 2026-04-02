@@ -32,7 +32,7 @@ export function CoursesList() {
 
   async function fetchCourses() {
     setLoading(true);
-    let tableName = `courses_${selectedSemester.toLowerCase()}`;
+    let tableName = `courses_${selectedSemester.toLowerCase().replace(/_/g, '')}`;
 
     let query = supabase
       .from(tableName)

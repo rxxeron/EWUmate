@@ -52,7 +52,7 @@ export function Dashboard() {
             };
 
             if (sem.current_semester_code) {
-               const { data: cData } = await supabase.from(`courses_${sem.current_semester_code.toLowerCase()}`).select('course_code');
+               const { data: cData } = await supabase.from(`courses_${sem.current_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
                if (cData && Array.isArray(cData)) {
                  semStats[sem.track].current_sections = cData.length;
                  const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
@@ -62,7 +62,7 @@ export function Dashboard() {
             }
 
             if (sem.next_semester_code) {
-               const { data: nData } = await supabase.from(`courses_${sem.next_semester_code.toLowerCase()}`).select('course_code');
+               const { data: nData } = await supabase.from(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
                if (nData && Array.isArray(nData)) {
                  semStats[sem.track].next_sections = nData.length;
                  semStats[sem.track].next_courses = new Set(nData.map(c => c.course_code)).size;

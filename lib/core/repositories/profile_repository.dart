@@ -58,24 +58,23 @@ class ProfileRepository {
     required String courseCode,
     required String semesterCode,
     required String sectionId,
-    required List<String> currentSections,
-  }) async {
-    try {
-      // 1. Update Profile Array
-      final updatedSections = List<String>.from(currentSections)..add(sectionId);
-      
-      await Future.wait([
-        _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
-        _supabase.from('enrollments').insert({
-          'user_id': userId,
-          'course_code': courseCode,
-          'semester_code': semesterCode,
-          'section_id': sectionId,
-          'status': 'enrolled',
-        }),
-      ]);
-      
-      // Update local cache manually or fetch fresh
+      required String sectionNumber,
+      required List<String> currentSections,
+    }) async {
+      try {
+        // 1. Update Profile Array
+        final updatedSections = List<String>.from(currentSections)..add(sectionId);
+
+        await Future.wait([
+          _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
+          _supabase.from('enrollments').insert({
+            'user_id': userId,
+            'course_code': courseCode,
+            'semester_code': semesterCode,
+            'section_id': sectionId,
+            'section': sectionNumber,
+          })
+        ]);
       await _fetchAndCache(userId);
     } catch (e) {
       throw Exception('Failed to enroll course: $e');
@@ -107,42 +106,50 @@ class ProfileRepository {
     required String semesterCode,
     required String oldSectionId,
     required String newSectionId,
-    required List<String> currentSections,
-  }) async {
-    try {
-      final updatedSections = List<String>.from(currentSections)
-        ..remove(oldSectionId)
-        ..add(newSectionId);
-      
-      await Future.wait([
-        _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
-        _supabase.from('enrollments').delete().eq('user_id', userId).eq('section_id', oldSectionId),
-        _supabase.from('enrollments').insert({
-          'user_id': userId,
-          'course_code': courseCode,
-          'semester_code': semesterCode,
-          'section_id': newSectionId,
-          'status': 'enrolled',
-        }),
-      ]);
-      
+      required String newSectionNumber,
+      required List<String> currentSections,
+    }) async {
+      try {
+        final updatedSections = List<String>.from(currentSections)
+          ..remove(oldSectionId)
+          ..add(newSectionId);
+
+        await Future.wait([
+          _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
+          _supabase.from('enrollments').delete().eq('user_id', userId).eq('section_id', oldSectionId),
+          _supabase.from('enrollments').insert({
+            'user_id': userId,
+            'course_code': courseCode,
+            'semester_code': semesterCode,
+            'section_id': newSectionId,
+            'section': newSectionNumber,
+          })
+        ]);
       await _fetchAndCache(userId);
     } catch (e) {
       throw Exception('Failed to switch section: $e');
     }
   }
 
-  Stream<Profile?> streamProfile(String userId) {
-    return _supabase
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .eq('id', userId)
-        .map((event) {
-          if (event.isEmpty) return null;
+  Stream<Profile?> streamProfile(String userId) async* {
+    final cached = _cache.getCachedProfile(userId);
+    if (cached != null) {
+      yield Profile.fromJson(cached);
+    }
+    try {
+      await for (final event in _supabase
+          .from('profiles')
+          .stream(primaryKey: ['id'])
+          .eq('id', userId)) {
+        if (event.isNotEmpty) {
           final data = event.first;
           _cache.cacheProfile(userId, data);
-          return Profile.fromJson(data);
-        });
+          yield Profile.fromJson(data);
+        }
+      }
+    } catch (e) {
+      // Offline
+    }
   }
 }
 

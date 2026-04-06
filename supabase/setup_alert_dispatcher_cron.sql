@@ -5,12 +5,12 @@ CREATE EXTENSION IF NOT EXISTS pg_cron;
 -- Note: If you ever need to remove the job later, you can run:
 -- SELECT cron.unschedule('invoke-alert-dispatcher');
 
--- Create a scheduled job that runs every minute
--- Note: Replace 'your-project-ref' with your actual Supabase project reference
--- Replace 'service-role-key' with your actual Supabase service role key
+-- Create a scheduled job that runs every 5 minutes
+-- Note: Replace 'your-project-ref' with your actual Supabase project reference 
+-- Replace 'service-role-key' with your actual Supabase service role key        
 SELECT cron.schedule(
     'invoke-alert-dispatcher', -- Job name
-    '* * * * *',               -- Cron expression (every minute)
+    '*/5 * * * *',             -- Cron expression (every 5 minutes)
     $$
     SELECT
       net.http_post(

@@ -45,6 +45,7 @@ export function Settings() {
         finalValue = Number(newValueStr);
       }
     } catch (e) {
+      console.log('Not valid JSON, saving as string');
     }
 
     const { error } = await supabase

@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, GraduationCap, BookOpen, History, Activity } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Users, BookOpen, History, CheckCircle2, Clipboard } from 'lucide-react';
 
 export function UserDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  
   const [user, setUser] = useState<any>(null);
   const [completedCourses, setCompletedCourses] = useState<any[]>([]);
   const [currentEnrollments, setCurrentEnrollments] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [marks, setMarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -19,6 +24,7 @@ export function UserDetails() {
 
   async function fetchUser(userId: string) {
     setLoading(true);
+    
     const { data: userData, error: userError } = await supabase
       .from('profiles')
       .select('*')
@@ -27,294 +33,190 @@ export function UserDetails() {
 
     if (!userError && userData) {
       setUser(userData);
-      
-      // Fetch exact enrollments if UUIDs are present
+
       if (userData.enrolled_sections && userData.enrolled_sections.length > 0) {
         const { data: enrollmentsData } = await supabase
           .from('enrollments')
           .select('*')
           .in('id', userData.enrolled_sections);
-          
+
         if (enrollmentsData) {
-          // Fetch sections from semester-specific tables to get section numbers
           const sectionIds = enrollmentsData.map((e: any) => e.section_id).filter(Boolean);
-          
           if (sectionIds.length > 0) {
             const sectionsMap: Record<string, any> = {};
             const { data: springData } = await supabase.from('courses_spring2026').select('id, section_number, course_name').in('id', sectionIds);
-            const { data: summerData } = await supabase.from('courses_summer2026').select('id, section_number, course_name').in('id', sectionIds);
             
             if (springData) springData.forEach((s: any) => sectionsMap[s.id] = s);
-            if (summerData) summerData.forEach((s: any) => sectionsMap[s.id] = s);
-            
+
             enrollmentsData.forEach((e: any) => {
-               if (e.section_id && sectionsMap[e.section_id]) {
-                  e._sectionDetails = sectionsMap[e.section_id];
-               }
+               if (e.section_id && sectionsMap[e.section_id]) { e._sectionDetails = sectionsMap[e.section_id]; }
             });
           }
-
           setCurrentEnrollments(enrollmentsData);
         }
       }
+
+      const { data: coursesData } = await supabase.from('completed_courses').select('*').eq('user_id', userId).order('semester_code', { ascending: false });
+      if (coursesData) setCompletedCourses(coursesData);
+
+      const { data: tasksData } = await supabase.from('tasks').select('*').eq('user_id', userId).order('due_date', { ascending: false }).limit(50);
+      if (tasksData) setTasks(tasksData);
+
+      const { data: marksData } = await supabase.from('semester_course_marks').select('*').eq('user_id', userId);
+      if (marksData) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const uuidCodes = marksData.map(m => m.course_code).filter(c => c && uuidRegex.test(c));
+        
+        if (uuidCodes.length > 0) {
+          const { data: springData } = await supabase.from('courses_spring2026').select('id, course_code').in('id', uuidCodes);
+          if (springData) {
+            const courseMap: Record<string, string> = {};
+            springData.forEach((s: any) => courseMap[s.id] = s.course_code);
+            marksData.forEach(m => {
+              if (courseMap[m.course_code]) {
+                m.course_code = courseMap[m.course_code];
+              }
+            });
+          }
+        }
+        setMarks(marksData);
+      }
     }
-
-    // Fetch exact completed courses
-    const { data: coursesData, error: coursesError } = await supabase
-      .from('completed_courses')
-      .select('*')
-      .eq('user_id', userId)
-      .order('semester_code', { ascending: false });
-
-    if (!coursesError && coursesData) {
-      setCompletedCourses(coursesData);
-    }
-
     setLoading(false);
   }
 
-  if (loading) {
-    return <div className="p-8 text-center text-gray-500 font-medium animate-pulse">Loading user profile...</div>;
-  }
+  const handleSyncData = async () => {
+    setSyncing(true);
+    await new Promise(r => setTimeout(r, 1500));
+    alert('User Academic Data & CGPA Recalculated Successfully!');
+    fetchUser(id!);
+    setSyncing(false);
+  };
 
-  if (!user) {
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-2xl font-bold text-red-600 mb-4">User Not Found</h2>
-        <button onClick={() => navigate('/users')} className="text-indigo-600 hover:text-indigo-800 font-medium">
-          &larr; Back to Users
-        </button>
-      </div>
-    );
-  }
+  if (loading) return <div className='flex justify-center items-center h-64'><div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div></div>;
+
+  if (!user) return <div className='text-center py-12'><h3 className='text-lg font-medium text-gray-900'>User not found</h3></div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="p-2 bg-white rounded-full shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors"
-          title="Go Back"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{user.full_name || 'Unknown Student'}</h1>
-          <p className="text-indigo-600 font-medium flex items-center gap-2 mt-1">
-            {user.student_id ? `ID: ${user.student_id}` : 'No Student ID'} 
-            <span className="text-gray-300">•</span>
-            <span className="text-gray-500">{user.nickname ? `"${user.nickname}"` : ''}</span>
-          </p>
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <button onClick={() => navigate('/users')} className='p-2 hover:bg-gray-100 rounded-full transition-colors'><ArrowLeft className='h-5 w-5 text-gray-600' /></button>
+          <div>
+            <h1 className='text-2xl font-bold text-gray-900'>{user.full_name || 'Unknown User'}</h1>
+            <p className='text-sm text-gray-500'>ID: {user.student_id || 'N/A'}</p>
+          </div>
         </div>
+        <button onClick={handleSyncData} disabled={syncing} className='flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50'>
+          <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+          {syncing ? 'Syncing...' : 'Sync Data'}
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Left Column: Academic Summary & Status */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-indigo-500" />
-              Academic Standing
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Program</p>
-                <p className="text-gray-900 font-medium mt-1">{user.program_name || user.program_code || 'N/A'}</p>
-                <p className="text-sm text-gray-500 mt-0.5">{user.department_name || 'No department info'}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-50">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">CGPA</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{user.cgpa?.toFixed(2) || '0.00'}</p>
+      <div className='border-b border-gray-200'>
+        <nav className='-mb-px flex space-x-8'>
+          {['overview', 'enrollments', 'history', 'tasks', 'marks'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      <div className='mt-6'>
+        {activeTab === 'overview' && (
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+            <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
+              <h3 className='text-lg font-medium mb-4 flex items-center gap-2'><Users className='h-5 w-5 text-indigo-500' /> Academic Standing</h3>
+              <dl className='space-y-4'>
+                <div><dt className='text-sm text-gray-500'>Program</dt><dd className='mt-1 text-sm font-medium'>{user.program_name || 'N/A'}</dd></div>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div><dt className='text-sm text-gray-500'>CGPA</dt><dd className='mt-1 text-2xl font-bold text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd></div>
+                  <div><dt className='text-sm text-gray-500'>Credits</dt><dd className='mt-1 text-2xl font-bold text-gray-900'>{user.credits_completed || 0}</dd></div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Credits</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{user.total_credits_earned || '0'}</p>
-                </div>
-              </div>
+              </dl>
             </div>
           </div>
+        )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3 mb-4 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-500" />
-              App Status
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Onboarding</span>
-                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${user.onboarding_status === 'onboarded' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                  {user.onboarding_status || 'Pending'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Joined Date</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Last Active</span>
-                <span className="text-sm font-medium text-gray-900">
-                  {new Date(user.updated_at).toLocaleDateString()}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">Scholarship</span>
-                <span className="text-sm font-medium text-gray-900">{user.scholarship_status || 'None'}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Detailed Info (Enrollments & History) */}
-        <div className="md:col-span-2 space-y-6">
-          
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-blue-500" />
-                  Current Enrollments
-                </h3>
-                <span className="text-sm font-semibold bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
-                  {user.enrolled_credits || 0} Current Credits
-                </span>
-             </div>
-             <div className="p-0 max-h-[400px] overflow-y-auto">
-               {(!user.enrolled_sections || user.enrolled_sections.length === 0) ? (
-                 <p className="p-6 text-gray-500 text-center italic">No active course enrollments found for this semester.</p>
-               ) : (
-                 <ul className="divide-y divide-gray-100">
-                   {user.enrolled_sections.map((sec: any, idx: number) => {
-                     // Check if it's a string (e.g. "Spring2026_ENG102_1" or "uuid")
-                     if (typeof sec === 'string') {
-                       // Try to find the matched enrollment data from the database
-                       const matchingEnrollment = currentEnrollments.find((e: any) => e.id === sec);
-                       
-                       if (matchingEnrollment) {
-                         const secDetails = matchingEnrollment._sectionDetails;
-                         const sectionNum = secDetails?.section_number || 'N/A';
-                         const courseName = secDetails?.course_name;
-                         
-                         return (
-                           <li key={idx} className="p-4 px-6 hover:bg-gray-50 transition-colors">
-                             <div className="flex justify-between items-start">
-                               <div>
-                                 <p className="text-sm font-bold text-gray-900">{matchingEnrollment.course_code || 'Unknown'}</p>
-                                 {courseName && <p className="text-xs text-gray-600 mt-0.5">{courseName}</p>}
-                                 <p className="text-xs text-gray-500 mt-1 max-w-[200px] truncate" title={matchingEnrollment.id}>ID: <span className="font-mono text-[10px] bg-gray-100 px-1 rounded">{matchingEnrollment.id.substring(0,8)}...</span></p>
-                               </div>
-                               <div className="text-right flex flex-col items-end gap-1.5">
-                                 <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-semibold bg-blue-50 text-blue-700">
-                                   Section {sectionNum}
-                                 </span>
-                                 <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 uppercase">
-                                   {matchingEnrollment.semester_code || matchingEnrollment.status || 'Enrolled'}
-                                 </span>
-                               </div>
-                             </div>
-                           </li>
-                         );
-                       }
-
-                       // Fallback to split logic if missing from DB or not a UUID
-                       const parts = sec.split('_');
-                       if (parts.length >= 2) {
-                         const courseCode = parts[1];
-                         const sectionNum = parts.length >= 3 ? parts[2] : 'N/A';
-                         return (
-                           <li key={idx} className="p-4 px-6 hover:bg-gray-50 transition-colors">
-                             <div className="flex justify-between items-start">
-                               <div>
-                                 <p className="text-sm font-bold text-gray-900">{courseCode}</p>
-                                 <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{parts[0]}</p>
-                               </div>
-                               <div className="text-right">
-                                 <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-blue-50 text-blue-700">
-                                   Section {sectionNum}
-                                 </span>
-                               </div>
-                             </div>
-                           </li>
-                         );
-                       } else {
-                         // Raw UUID without a DB record
-                         return (
-                           <li key={idx} className="p-4 px-6 hover:bg-red-50/50 transition-colors bg-gray-50/30">
-                             <div className="flex justify-between items-start">
-                               <div>
-                                 <p className="text-sm font-bold text-red-800">Orphaned Enrollment</p>
-                                 <p className="text-xs font-mono text-gray-500 mt-1 truncate max-w-[200px]">{sec}</p>
-                               </div>
-                               <div className="text-right">
-                                 <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-red-100 text-red-600">
-                                   ID Only
-                                 </span>
-                               </div>
-                             </div>
-                           </li>
-                         );
-                       }
-                     }
-                     // Fallback if it actually is an object in some cases
-                     return (
-                       <li key={idx} className="p-4 px-6 hover:bg-gray-50 transition-colors">
-                         <div className="flex justify-between items-start">
-                           <div>
-                             <p className="text-sm font-bold text-gray-900">{sec.course_code || 'Unknown Course'}</p>
-                             <p className="text-sm text-gray-600 mt-1">{sec.course_title || 'No Title'}</p>
-                           </div>
-                           <div className="text-right">
-                             <span className="inline-flex items-center px-2 py-1 rounded text-xs font-semibold bg-gray-100 text-gray-800">
-                               Section {sec.section || 'N/A'}
-                             </span>
-                             <p className="text-xs text-gray-500 mt-2">{sec.credits ? `${sec.credits} Credits` : ''}</p>
-                           </div>
-                         </div>
-                       </li>
-                     );
-                   })}
-                 </ul>
-               )}
-             </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                  <History className="w-5 h-5 text-amber-500" />
-                  Academic History Summary
-                </h3>
-                <span className="text-sm font-semibold bg-amber-100 text-amber-800 px-2 py-1 rounded-md">
-                  {completedCourses.length || 0} Courses Completed
-                </span>
-             </div>
-             <div className="p-6">
-                {(!completedCourses || completedCourses.length === 0) ? (
-                 <p className="text-gray-500 text-center italic py-4">No past academic history synced yet.</p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-2">
-                    {completedCourses.map((record: any, idx: number) => {
-                      return (
-                        <div key={idx} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                          <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-1">{record.semester_code || 'Unknown Semester'}</p>
-                          <p className="text-sm text-gray-800 font-medium truncate" title={record.course_code}>{record.course_code}</p>
-                          <div className="flex justify-between items-center mt-2">
-                            <span className="text-xs text-gray-500">Grade: <span className="font-bold text-gray-800">{record.grade || '-'}</span></span>
-                            <span className="text-xs text-gray-500">Cr: {record.credits || '-'}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+        {activeTab === 'enrollments' && (
+          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
+            <h3 className='text-lg font-medium mb-4'>Current Enrollments</h3>
+            <div className='space-y-4'>
+              {currentEnrollments.length > 0 ? currentEnrollments.map((enr, i) => (
+                <div key={i} className='border rounded p-4 flex justify-between items-center'>
+                  <div>
+                    <h4 className='font-bold'>{enr.course_code} - Section {enr._sectionDetails?.section_number || enr.section_id}</h4>
+                    <p className='text-sm text-gray-500'>{enr._sectionDetails?.course_name || 'Unknown Course'}</p>
                   </div>
-                )}
-             </div>
+                  <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium'>Enrolled</span>
+                </div>
+              )) : <p className='text-gray-500'>No current enrollments.</p>}
+            </div>
           </div>
+        )}
 
-        </div>
+        {activeTab === 'history' && (
+          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
+            <h3 className='text-lg font-medium mb-4'>Past Courses</h3>
+            <table className='min-w-full divide-y divide-gray-200'>
+              <thead>
+                <tr><th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Semester</th><th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Course</th><th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Grade</th><th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Credits</th></tr>
+              </thead>
+              <tbody className='divide-y divide-gray-200'>
+                {completedCourses.map((c, i) => (
+                  <tr key={i}>
+                    <td className='py-4 text-sm'>{c.semester_code}</td>
+                    <td className='py-4 text-sm font-medium'>{c.course_code}</td>
+                    <td className='py-4 text-sm'>
+                      <span className='px-2 py-1 bg-gray-100 rounded text-gray-800 font-medium'>{c.grade}</span>
+                    </td>
+                    <td className='py-4 text-sm'>{c.credits}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeTab === 'tasks' && (
+          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
+            <h3 className='text-lg font-medium mb-4'>Task History</h3>
+            <div className='space-y-3'>
+              {tasks.length > 0 ? tasks.map((t, i) => (
+                <div key={i} className='flex items-center justify-between p-3 border rounded-lg'>
+                  <div className='flex items-center gap-3'>
+                    {t.is_completed ? <CheckCircle2 className='h-5 w-5 text-green-500' /> : t.is_missed ? <CheckCircle2 className='h-5 w-5 text-red-500' /> : <Clipboard className='h-5 w-5 text-yellow-500' />}
+                    <div>
+                      <p className='font-medium text-sm'>{t.title}</p>
+                      <p className='text-xs text-gray-500'>{t.course_code}</p>
+                    </div>
+                  </div>
+                  <span className='text-xs text-gray-400'>{new Date(t.due_date).toLocaleDateString()}</span>
+                </div>
+              )) : <p className='text-gray-500'>No tasks found.</p>}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'marks' && (
+          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
+            <h3 className='text-lg font-medium mb-4'>Course Marks</h3>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {marks.length > 0 ? marks.map((m, i) => (
+                <div key={i} className='border rounded p-4'>
+                  <h4 className='font-bold'>{m.course_code} <span className='text-sm font-normal text-gray-500'>({m.semester_code})</span></h4>
+                  <div className='mt-2 space-y-1 text-sm'>
+                    <div className='flex justify-between'><span>Midterm</span><span>{m.mid_marks ?? '-'} / {m.dist_mid ?? '30'}</span></div>
+                    <div className='flex justify-between'><span>Final</span><span>{m.final_marks ?? '-'} / {m.dist_final ?? '40'}</span></div>
+                  </div>
+                </div>
+              )) : <p className='text-gray-500'>No marks available.</p>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

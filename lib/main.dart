@@ -20,11 +20,13 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
+    debugPrint('Firebase init error: $e');
   }
 
   try {
     await SupabaseConfig.initialize();
   } catch (e) {
+    debugPrint('Supabase init error: $e');
   }
 
   // Set up Firebase Cloud Messaging bindings if user is authenticated natively
@@ -35,10 +37,12 @@ void main() async {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
         FCMService().initialize().catchError((err) {
+          debugPrint('FCM Init Error: $err');
         });
       }
     });
   } catch (e) {
+    debugPrint('FCM Auth listener error: $e');
   }
 
   runApp(

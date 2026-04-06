@@ -30,6 +30,7 @@ mixin _$Enrollment {
   String get courseCode => throw _privateConstructorUsedError;
   @JsonKey(name: 'section_id')
   String? get sectionId => throw _privateConstructorUsedError;
+  String? get section => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   String? get grade => throw _privateConstructorUsedError;
   @JsonKey(name: 'grade_points')
@@ -60,6 +61,7 @@ abstract class $EnrollmentCopyWith<$Res> {
     @JsonKey(name: 'semester_code') String semesterCode,
     @JsonKey(name: 'course_code') String courseCode,
     @JsonKey(name: 'section_id') String? sectionId,
+    String? section,
     String status,
     String? grade,
     @JsonKey(name: 'grade_points') double? gradePoints,
@@ -87,6 +89,7 @@ class _$EnrollmentCopyWithImpl<$Res, $Val extends Enrollment>
     Object? semesterCode = null,
     Object? courseCode = null,
     Object? sectionId = freezed,
+    Object? section = freezed,
     Object? status = null,
     Object? grade = freezed,
     Object? gradePoints = freezed,
@@ -113,6 +116,10 @@ class _$EnrollmentCopyWithImpl<$Res, $Val extends Enrollment>
             sectionId: freezed == sectionId
                 ? _value.sectionId
                 : sectionId // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            section: freezed == section
+                ? _value.section
+                : section // ignore: cast_nullable_to_non_nullable
                       as String?,
             status: null == status
                 ? _value.status
@@ -151,6 +158,7 @@ abstract class _$$EnrollmentImplCopyWith<$Res>
     @JsonKey(name: 'semester_code') String semesterCode,
     @JsonKey(name: 'course_code') String courseCode,
     @JsonKey(name: 'section_id') String? sectionId,
+    String? section,
     String status,
     String? grade,
     @JsonKey(name: 'grade_points') double? gradePoints,
@@ -177,6 +185,7 @@ class __$$EnrollmentImplCopyWithImpl<$Res>
     Object? semesterCode = null,
     Object? courseCode = null,
     Object? sectionId = freezed,
+    Object? section = freezed,
     Object? status = null,
     Object? grade = freezed,
     Object? gradePoints = freezed,
@@ -203,6 +212,10 @@ class __$$EnrollmentImplCopyWithImpl<$Res>
         sectionId: freezed == sectionId
             ? _value.sectionId
             : sectionId // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        section: freezed == section
+            ? _value.section
+            : section // ignore: cast_nullable_to_non_nullable
                   as String?,
         status: null == status
             ? _value.status
@@ -234,6 +247,7 @@ class _$EnrollmentImpl implements _Enrollment {
     @JsonKey(name: 'semester_code') required this.semesterCode,
     @JsonKey(name: 'course_code') required this.courseCode,
     @JsonKey(name: 'section_id') this.sectionId,
+    this.section,
     this.status = 'enrolled',
     this.grade,
     @JsonKey(name: 'grade_points') this.gradePoints,
@@ -258,6 +272,8 @@ class _$EnrollmentImpl implements _Enrollment {
   @JsonKey(name: 'section_id')
   final String? sectionId;
   @override
+  final String? section;
+  @override
   @JsonKey()
   final String status;
   @override
@@ -271,7 +287,7 @@ class _$EnrollmentImpl implements _Enrollment {
 
   @override
   String toString() {
-    return 'Enrollment(id: $id, userId: $userId, semesterCode: $semesterCode, courseCode: $courseCode, sectionId: $sectionId, status: $status, grade: $grade, gradePoints: $gradePoints, updatedAt: $updatedAt)';
+    return 'Enrollment(id: $id, userId: $userId, semesterCode: $semesterCode, courseCode: $courseCode, sectionId: $sectionId, section: $section, status: $status, grade: $grade, gradePoints: $gradePoints, updatedAt: $updatedAt)';
   }
 
   @override
@@ -287,6 +303,7 @@ class _$EnrollmentImpl implements _Enrollment {
                 other.courseCode == courseCode) &&
             (identical(other.sectionId, sectionId) ||
                 other.sectionId == sectionId) &&
+            (identical(other.section, section) || other.section == section) &&
             (identical(other.status, status) || other.status == status) &&
             (identical(other.grade, grade) || other.grade == grade) &&
             (identical(other.gradePoints, gradePoints) ||
@@ -304,6 +321,7 @@ class _$EnrollmentImpl implements _Enrollment {
     semesterCode,
     courseCode,
     sectionId,
+    section,
     status,
     grade,
     gradePoints,
@@ -331,6 +349,7 @@ abstract class _Enrollment implements Enrollment {
     @JsonKey(name: 'semester_code') required final String semesterCode,
     @JsonKey(name: 'course_code') required final String courseCode,
     @JsonKey(name: 'section_id') final String? sectionId,
+    final String? section,
     final String status,
     final String? grade,
     @JsonKey(name: 'grade_points') final double? gradePoints,
@@ -354,6 +373,8 @@ abstract class _Enrollment implements Enrollment {
   @override
   @JsonKey(name: 'section_id')
   String? get sectionId;
+  @override
+  String? get section;
   @override
   String get status;
   @override

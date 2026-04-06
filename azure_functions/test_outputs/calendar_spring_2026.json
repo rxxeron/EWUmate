@@ -1,0 +1,354 @@
+{
+  "events": [
+    {
+      "date": "2026-01-06",
+      "name": "University Reopens",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-08",
+      "name": "Orientation and Advising of Newly Admitted Students and Knowing your Campus: Orientation with the academic and other facilities of the University",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-11",
+      "name": "First Day of Classes",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-11",
+      "name": "Adding of Courses",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-12",
+      "name": "Adding of Courses",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-13",
+      "name": "Adding of Courses",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-20",
+      "name": "Last day to clear Incomplete grades ( \u201cI\u201d grade )",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-21",
+      "name": "Last day to Drop Course(s)/Semester with 100% Refund \u2022 Last date of full payment of tuition fees without late fee",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-22",
+      "name": "\u2022 Last day of payment of the 1st Installment: 60% of the tuition fees without late fee",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-01-23",
+      "name": "Holiday: Saraswati Puja",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-01-29",
+      "name": "Last day to Drop Course(s)/Semester with 85% Refund",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-02-02",
+      "name": "25th Convocation 2026 (Classes will remain suspended)",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-02-03",
+      "name": "Holiday on account of 25th convocation 2026",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-02-04",
+      "name": "Holiday: Shab-E-Barat",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-02-21",
+      "name": "Holiday: Shaheed Day & International Mother Language Day",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-02-22",
+      "name": "Last day of payment of the 2nd Installment: 40% of the tuition fees without late fee",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-02-26",
+      "name": "Last day of Tuition Payment with Late Fee of Tk. 500/-",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-03-05",
+      "name": "Last day of Tuition Payment with Late Fee of Tk. 1000/-",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-03-15",
+      "name": "Blocking of ID Numbers of Defaulting Students",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-03-15",
+      "name": "Last day of Submission of Mid-Semester Assessment",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-03-17",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-18",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-19",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-20",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-21",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-22",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-23",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-24",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-25",
+      "name": "Holiday: Shab-E-Qadr, Jumat-Ul-Wida and Eid-Ul-Fitr",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-26",
+      "name": "Holiday: Independence & National Day",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-03-31",
+      "name": "Last Day to Drop Course(s)/Semester with 50% Refund",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-09",
+      "name": "Last day of Withdrawal of Course(s)/Semester (\u201cW\u201d grade)",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-12",
+      "name": "Regular Tuesday Classes Advising for Summer 2026 (in-person) for CGPA 2.15 or less",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-12",
+      "name": "(students admitted up-to Summer 2023) and for CGPA 2.40 or less (students admitted in Fall 2023 and onward) including on probation",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-13",
+      "name": "(students admitted up-to Summer 2023) and for CGPA 2.40 or less (students admitted in Fall 2023 and onward) including on probation",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-15",
+      "name": "Online Advising of Courses for Summer 2026 (ongoing students)",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-16",
+      "name": "Online Advising of Courses for Summer 2026 (ongoing students)",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-17",
+      "name": "Online Advising of Courses for Summer 2026 (ongoing students)",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-14",
+      "name": "Holiday: Bengali New Year\u2019s Day",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-04-18",
+      "name": "Admission Test for Summer 2026",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-23",
+      "name": "Last Day of Classes",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-26",
+      "name": "Final Examinations",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-27",
+      "name": "Final Examinations",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-28",
+      "name": "Final Examinations",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-29",
+      "name": "Final Examinations",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-04-30",
+      "name": "Final Examinations",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-05-01",
+      "name": "Holiday: May Day and Buddha Purnima",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-05",
+      "name": "Submission of Final Grades",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-05-07",
+      "name": "Semester Break",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-08",
+      "name": "Semester Break",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-09",
+      "name": "Semester Break",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-10",
+      "name": "Semester Break",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-11",
+      "name": "Semester Break",
+      "semester": "Spring 2026",
+      "type": "Holiday"
+    },
+    {
+      "date": "2026-05-12",
+      "name": "University Reopens for Summer 2026",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-05-14",
+      "name": "Orientation for Summer 2026",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    },
+    {
+      "date": "2026-05-17",
+      "name": "First Day of Classes for Summer 2026 Any advanced amount in the student account will be adjusted with the tuition of the next semester. No cash refund is permissible. Note:",
+      "semester": "Spring 2026",
+      "type": "Academic"
+    }
+  ],
+  "metadata": {
+    "currentSemester": "Spring 2026",
+    "nextSemester": "Summer 2026",
+    "switchDate": "2026-05-12T00:00:00+06:00",
+    "year": "2026",
+    "currentSemesterStartDate": "2026-01-11T00:00:00+06:00",
+    "advisingStartDate": "2026-04-15T00:00:00+06:00",
+    "advisingEndDate": "2026-04-17T00:00:00+06:00",
+    "finalExamStart": "2026-04-26T00:00:00+06:00",
+    "finalExamEnd": "2026-04-30T00:00:00+06:00",
+    "gradeSubmissionStart": "2026-05-05T00:00:00+06:00",
+    "gradeSubmissionDeadline": "2026-05-05T00:00:00+06:00",
+    "upcomingSemesterStartDate": "2026-05-17T00:00:00+06:00"
+  }
+}

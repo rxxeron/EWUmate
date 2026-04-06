@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Send, Link as LinkIcon, Clock, Building, Target } from 'lucide-react'; 
 
@@ -49,7 +49,7 @@ export function Notifications() {
         title,
         body: message,
         link: url || undefined,
-        targetUserId: targetUserId || undefined,
+        targetUserId: targetUserId ? targetUserId.trim() : undefined,
         targetDepartment: targetDepartment || undefined,
         scheduledAt: utcIsoString
       };

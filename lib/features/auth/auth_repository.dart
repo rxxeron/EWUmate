@@ -44,6 +44,7 @@ class AuthRepository {
       if (response.isEmpty) return null;
       return Profile.fromJson(response.first);
     } catch (e) {
+      print("AuthRepository: Profile fetch failed/timed out: $e");
       // Throwing instead of returning null so FutureProvider enters 'error' state
       throw Exception("Connection timed out. Please check your internet.");
     }

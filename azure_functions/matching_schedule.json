@@ -1,0 +1,189 @@
+{
+    "sections": {
+        "0": {
+            "id": "8675dbb4-bf0e-4b77-9038-e5288dfe5458",
+            "code": "ICE204",
+            "credits": "0.0",
+            "section": "14",
+            "capacity": "18/20",
+            "sessions": [
+                {
+                    "day": "TR",
+                    "room": "AB2-702",
+                    "type": "Theory",
+                    "endTime": "11:40 AM",
+                    "faculty": "MOON",
+                    "startTime": "10:10 AM"
+                }
+            ],
+            "courseName": "Discrete Mathematics",
+            "credit_val": 0.0,
+            "course_code": "ICE204",
+            "course_name": "Discrete Mathematics",
+            "original_code": "ICE204",
+            "schedule_data": [
+                {
+                    "day": "TR",
+                    "room": "AB2-702",
+                    "type": "Theory",
+                    "endTime": "11:40 AM",
+                    "faculty": "MOON",
+                    "startTime": "10:10 AM"
+                }
+            ],
+            "section_number": "14",
+            "faculty_initials": "MOON"
+        },
+        "1": {
+            "id": "087b2eb9-c177-462d-b0be-b85d0e6dea48",
+            "code": "ICE107",
+            "credits": "0.0",
+            "section": "12",
+            "capacity": "0/5",
+            "sessions": [
+                {
+                    "day": "SR",
+                    "room": "AB2-502",
+                    "type": "Theory",
+                    "endTime": "06:20 PM",
+                    "faculty": "FZRN",
+                    "startTime": "04:50 PM"
+                },
+                {
+                    "day": "W",
+                    "room": "450 (Networking Lab)",
+                    "type": "Lab",
+                    "endTime": "07:50 PM",
+                    "faculty": "FZRN",
+                    "startTime": "04:50 PM"
+                }
+            ],
+            "courseName": "Object Oriented Programming",
+            "credit_val": 0.0,
+            "course_code": "ICE107",
+            "course_name": "Object Oriented Programming",
+            "original_code": "ICE107",
+            "schedule_data": [
+                {
+                    "day": "SR",
+                    "room": "AB2-502",
+                    "type": "Theory",
+                    "endTime": "06:20 PM",
+                    "faculty": "FZRN",
+                    "startTime": "04:50 PM"
+                },
+                {
+                    "day": "W",
+                    "room": "450 (Networking Lab)",
+                    "type": "Lab",
+                    "endTime": "07:50 PM",
+                    "faculty": "FZRN",
+                    "startTime": "04:50 PM"
+                }
+            ],
+            "section_number": "12",
+            "faculty_initials": "FZRN"
+        },
+        "2": {
+            "id": "9678cffc-04b2-468f-955b-f0b18de8c964",
+            "code": "CHE109",
+            "credits": "0.0",
+            "section": "6",
+            "capacity": "20/30",
+            "sessions": [
+                {
+                    "day": "R",
+                    "room": "AB2-601",
+                    "type": "Theory",
+                    "endTime": "10:00 AM",
+                    "faculty": "DMLN",
+                    "startTime": "08:30 AM"
+                },
+                {
+                    "day": "S",
+                    "room": "FUB-804 (Chemistry Lab)",
+                    "type": "Lab",
+                    "endTime": "03:30 PM",
+                    "faculty": "ZUH",
+                    "startTime": "01:30 PM"
+                },
+                {
+                    "day": "T",
+                    "room": "AB3-901",
+                    "type": "Theory",
+                    "endTime": "10:00 AM",
+                    "faculty": "DMLN",
+                    "startTime": "08:30 AM"
+                }
+            ],
+            "courseName": "Engineering Chemistry \u2013 I",
+            "credit_val": 0.0,
+            "course_code": "CHE109",
+            "course_name": "Engineering Chemistry \u2013 I",
+            "original_code": "CHE109",
+            "schedule_data": [
+                {
+                    "day": "R",
+                    "room": "AB2-601",
+                    "type": "Theory",
+                    "endTime": "10:00 AM",
+                    "faculty": "DMLN",
+                    "startTime": "08:30 AM"
+                },
+                {
+                    "day": "S",
+                    "room": "FUB-804 (Chemistry Lab)",
+                    "type": "Lab",
+                    "endTime": "03:30 PM",
+                    "faculty": "ZUH",
+                    "startTime": "01:30 PM"
+                },
+                {
+                    "day": "T",
+                    "room": "AB3-901",
+                    "type": "Theory",
+                    "endTime": "10:00 AM",
+                    "faculty": "DMLN",
+                    "startTime": "08:30 AM"
+                }
+            ],
+            "section_number": "6",
+            "faculty_initials": "DMLN"
+        },
+        "3": {
+            "id": "9d74b9a0-c9ef-4503-86ce-e27c0068471d",
+            "code": "MAT102",
+            "credits": "0.0",
+            "section": "4",
+            "capacity": "35/41",
+            "sessions": [
+                {
+                    "day": "SR",
+                    "room": "AB1-902",
+                    "type": "Theory",
+                    "endTime": "01:20 PM",
+                    "faculty": "TD",
+                    "startTime": "11:50 AM"
+                }
+            ],
+            "courseName": "Differential Equations and Special Functions",
+            "credit_val": 0.0,
+            "course_code": "MAT102",
+            "course_name": "Differential Equations and Special Functions",
+            "original_code": "MAT102",
+            "schedule_data": [
+                {
+                    "day": "SR",
+                    "room": "AB1-902",
+                    "type": "Theory",
+                    "endTime": "01:20 PM",
+                    "faculty": "TD",
+                    "startTime": "11:50 AM"
+                }
+            ],
+            "section_number": "4",
+            "faculty_initials": "TD"
+        }
+    },
+    "scheduleId": 90
+}

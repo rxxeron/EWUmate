@@ -52,6 +52,7 @@ serve(async (req: Request) => {
     const requestData: ParseRequest = await req.json();
     const { type, url, base64Data, filename, semesterId: providedSemesterId, saveToDatabase = true, debug } = requestData;
 
+    console.log(`Request received - type: ${type}, filename: ${filename}, providedSemesterId: ${providedSemesterId}`);
 
     if (!type) {
       return new Response(
@@ -73,6 +74,7 @@ serve(async (req: Request) => {
         const extractedSemId = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()}${match[2]}`; // "Spring2026"
         prettySemester = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()} ${match[2]}`; // "Spring 2026"
 
+        console.log(`Extracted semester from filename: ${extractedSemId}, pretty: ${prettySemester}`);
 
         // Handle Departmental Suffixes in filename (e.g., "Academic Calendar Spring 2026 (PHRM_LLB).pdf")
         const deptMatch = filename.match(/\((PHRM_LLB|LAW_PHRM)\)/i);
@@ -80,6 +82,7 @@ serve(async (req: Request) => {
           semesterId = `${extractedSemId}_phrm_llb`;
           baseSemesterId = extractedSemId;
           semesterType = 'bi';
+          console.log(`Detected departmental calendar. Table semesterId: ${semesterId}, Base: ${baseSemesterId}`);
         } else {
           semesterId = extractedSemId;
           baseSemesterId = extractedSemId;
@@ -104,9 +107,11 @@ serve(async (req: Request) => {
       }
     }
 
+    console.log(`Using semesterId: ${semesterId}, prettySemester: ${prettySemester}`);
 
 
     // Call Azure Functions for parsing
+    console.log(`Calling Azure Functions for ${type} parsing...`);
     const azureResponse = await fetch(`${azureFunctionUrl}?code=${azureFunctionKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -132,10 +137,12 @@ serve(async (req: Request) => {
     const parsedData = azureResult.data;
     const parseTime = Date.now() - startTime;
 
+    console.log(`Parsed ${parsedData.length} items in ${parseTime}ms`);
 
     // Save to database if requested
     let insertResults = null;
     if (saveToDatabase && parsedData.length > 0) {
+      console.log(`Saving ${parsedData.length} items to database...`);
       insertResults = await saveToDatabase_func(supabase, type, parsedData, semesterId, prettySemester, filename, baseSemesterId, semesterType);
     }
 
@@ -264,11 +271,13 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
         // Try to extract current semester if prettySemester is empty
         // Look for semester mentions in the calendar data itself
         if (!prettySemester || prettySemester === "Unknown Semester") {
+          console.log("Attempting to extract semester from calendar event data...");
           for (const evt of data.slice(0, 10)) { // Check first 10 events
             const eventText = `${evt.event || ''} ${evt.date || ''}`;
             const match = eventText.match(/(Spring|Summer|Fall)\s*(\d{4})/i);
             if (match) {
               prettySemester = `${match[1].charAt(0).toUpperCase()}${match[1].slice(1).toLowerCase()} ${match[2]}`;
+              console.log(`Extracted semester from calendar data: ${prettySemester}`);
               break;
             }
           }
@@ -291,6 +300,7 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
         };
 
         const expectedNextSemester = getNextSemester(prettySemester || '');
+        console.log(`Current calendar: ${prettySemester}, Expected next semester: ${expectedNextSemester}`);
         // Scan for "University Reopens for {ExpectedNextSemester}"
         let nextSemesterFound = null;
         let switchDate = null;
@@ -314,6 +324,7 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
                 if (!isNaN(dt.getTime())) {
                   nextSemesterFound = expectedNextSemester;
                   switchDate = dt.toISOString();
+                  console.log(`✅ Scheduled Semester Switch: ${expectedNextSemester} on ${dt.toDateString()}`);
                   break;
                 }
               } catch (ex) {
@@ -347,6 +358,7 @@ async function saveToDatabase_func(supabase: any, type: string, data: any[], sem
             updated_at: new Date().toISOString()
           }, { onConflict: 'semester_type' });
 
+          console.log(`✅ active_semester table updated for cycle: ${semesterType} with clean code: ${currentCode}`);
         }
 
         break;

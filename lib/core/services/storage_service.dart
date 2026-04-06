@@ -22,6 +22,7 @@ class StorageService {
           _supabase.storage.from('profile_images').getPublicUrl(fileName);
       return publicUrl;
     } catch (e) {
+      debugPrint("Error uploading image: $e");
       return null;
     }
   }

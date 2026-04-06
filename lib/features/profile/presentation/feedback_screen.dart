@@ -51,6 +51,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         }
       }
     } catch (e) {
+      debugPrint('Check app update error: $e');
     }
   }
 
@@ -71,6 +72,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         });
       }
     } catch (e) {
+      debugPrint('Error fetching feedbacks: ');
     } finally {
       if (mounted) {
         setState(() => _isLoadingFeedbacks = false);

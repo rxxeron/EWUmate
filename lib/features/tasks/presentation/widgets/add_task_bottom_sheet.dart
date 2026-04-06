@@ -84,6 +84,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
+      debugPrint("Error fetching courses: " + e.toString());
       if (mounted) setState(() => _isLoadingCourses = false);
     }
   }
@@ -175,7 +176,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           dueDate: finalDueDate?.toUtc(),
           semesterCode: 'Spring2026',
         );
-        await taskRepo.updateTask(updatedTask);
+        await taskRepo.updateTask(user!.id, updatedTask);
         ref.invalidate(allTasksStreamProvider);
         if (mounted) {
           Navigator.pop(context, true);
@@ -197,7 +198,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           createdAt: DateTime.now().toUtc(),
         );
 
-        await taskRepo.createTask(newTask);
+        await taskRepo.createTask(user!.id, newTask);
         ref.invalidate(allTasksStreamProvider);
 
         if (mounted) {
@@ -208,6 +209,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
+      debugPrint("Error saving task: " + e.toString());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),

@@ -1,6 +1,13 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Upload, FileType, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Upload, FileType, CheckCircle, AlertCircle, Loader2, Trash2, FolderPen } from 'lucide-react';
+
+interface StorageFile {
+  name: string;
+  id: string;
+  metadata: { size: number; mimetype: string };
+  created_at: string;
+}
 
 export function FileParser() {
   const [file, setFile] = useState<File | null>(null);
@@ -12,9 +19,60 @@ export function FileParser() {
   const [activeSemester, setActiveSemester] = useState('');
   const [customFileName, setCustomFileName] = useState('');
 
+  const [uploadedFiles, setUploadedFiles] = useState<{ folder: string, files: StorageFile[] }[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+
   useEffect(() => {
     fetchActiveSemester();
+    fetchAllUploadedFiles();
   }, []);
+
+  const fetchAllUploadedFiles = async () => {
+    setLoadingFiles(true);
+    try {
+      const folders = ['facultylist', 'calendar', 'examschedule', 'advisingschedule'];
+      const results = [];
+      
+      for (const folder of folders) {
+        const { data, error } = await supabase.storage.from('academic_documents').list(folder, {
+          limit: 50,
+          offset: 0,
+          sortBy: { column: 'created_at', order: 'desc' },
+        });
+        
+        if (!error && data) {
+           // filter out the empty placeholder folders that supabase sometimes returns
+           const validFiles = data.filter(f => f.name !== '.emptyFolderPlaceholder' && f.id);
+           if (validFiles.length > 0) {
+             results.push({ folder, files: validFiles });
+           }
+        }
+      }
+      setUploadedFiles(results);
+    } catch (err) {
+      console.error('Failed to fetch files:', err);
+    } finally {
+      setLoadingFiles(false);
+    }
+  };
+
+  const handleDeleteFile = async (folder: string, fileName: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${fileName}?`)) return;
+    
+    try {
+      const { error } = await supabase.storage.from('academic_documents').remove([`${folder}/${fileName}`]);
+      if (error) throw error;
+      
+      // Remove from UI
+      setUploadedFiles(prev => prev.map(group => ({
+        ...group,
+        files: group.files.filter(f => f.name !== fileName)
+      })).filter(group => group.files.length > 0));
+      
+    } catch (err: any) {
+      alert(`Failed to delete: ${err.message}`);
+    }
+  };
 
   const fetchActiveSemester = async () => {
     try {
@@ -81,12 +139,11 @@ export function FileParser() {
       setMessage('Uploading file to storage...');
 
       // Determine the correct folder based on document type
-      let folderName = '';
-      if (parseType === 'exam') folderName = 'examschedule';
-      else if (parseType === 'course') folderName = 'facultylist';
-      else if (parseType === 'calendar') folderName = 'academiccalendar';       
-      else if (parseType === 'advising') folderName = 'advisingschedule';       
-      else folderName = 'misc';
+let folderName = 'misc';
+        if (parseType === 'exam') folderName = 'examschedule';
+        else if (parseType === 'course') folderName = 'facultylist';
+        else if (parseType === 'calendar') folderName = 'calendar';
+        else if (parseType === 'advising') folderName = 'advisingschedule';
 
       // Avoid spaces/weird chars exactly or keep filename mostly untouched? 
       // The user requested to edit it, and the Azure parser depends on naming (e.g. Faculty List Spring 2026.pdf).
@@ -108,8 +165,8 @@ export function FileParser() {
       }
 
       setStatus('success');
-      setMessage(`File uploaded to ${folderName}/ successfully! The backend webhook is now parsing it automatically.`);
-      setResults({ filePath, bucket: 'academic_documents' });
+        setMessage(`File uploaded to ${folderName}/ successfully! The backend webhook is now parsing it automatically. Please check the Parsing Logs tab after 1-2 minutes for the update.`);
+      fetchAllUploadedFiles();
 
     } catch (err: any) {
       setStatus('error');
@@ -229,6 +286,69 @@ export function FileParser() {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
+        <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <FolderPen className="w-5 h-5 text-indigo-500" />
+            Manage Uploaded Documents
+          </h2>
+          <button
+            onClick={fetchAllUploadedFiles}
+            className="text-sm px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 shadow-sm text-gray-700"
+          >
+            <Loader2 className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+        
+        <div className="p-0">
+          {loadingFiles && uploadedFiles.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
+              Loading bucket items...
+            </div>
+          ) : uploadedFiles.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">
+               No files found in the academic_documents bucket yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {uploadedFiles.map((group) => (
+                <div key={group.folder} className="p-6">
+                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    /{group.folder}
+                    <span className="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-semibold">{group.files.length}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {group.files.map(f => (
+                      <div key={f.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-indigo-300 transition-colors group">
+                        <div className="flex items-start gap-3 truncate pr-4">
+                          <FileType className="w-5 h-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                          <div className="truncate">
+                            <p className="text-sm font-medium text-gray-900 truncate" title={f.name}>{f.name}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {f.metadata ? `${(f.metadata.size / 1024).toFixed(1)} KB` : 'Unknown size'} • 
+                              {new Date(f.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteFile(group.folder, f.name)}
+                          className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all flex-shrink-0"
+                          title="Delete from bucket"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

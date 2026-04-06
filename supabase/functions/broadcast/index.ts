@@ -1,4 +1,4 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
@@ -16,7 +16,7 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        const { title, body, link, scheduledAt, targetUserId, targetDepartment } = await req.json();
+        let { title, body, link, scheduledAt, targetUserId, targetDepartment } = await req.json();
 
         if (!title || !body) {
             return new Response(JSON.stringify({ error: 'Title and body are required' }), {
@@ -29,6 +29,7 @@ serve(async (req) => {
         let query = supabase.from('profiles').select('id');
         
         if (targetUserId) {
+            targetUserId = targetUserId.trim();
             query = query.eq('id', targetUserId);
         }
         if (targetDepartment) {

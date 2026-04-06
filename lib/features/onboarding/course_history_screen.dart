@@ -308,13 +308,17 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             final runIdx = _allSemesters.indexOf(_runningSemester);
             final admIdx = _admittedSemester != null
                 ? _allSemesters.indexOf(_admittedSemester!)
-                : 0;
-            if (runIdx > 0 && runIdx > (admIdx != -1 ? admIdx : 0)) {
-              _confirmAdmittedSemester(_allSemesters[runIdx - 1]);
-            } else if (_allSemesters.isNotEmpty) {
-              _confirmAdmittedSemester(
-                _allSemesters[admIdx != -1 ? admIdx : 0],
-              );
+                : -1;
+                
+            final startIdx = admIdx != -1 ? admIdx : (runIdx >= 4 ? runIdx - 4 : 0);
+            final endIdx = runIdx != -1 ? runIdx : _allSemesters.length - 1;
+
+            if (startIdx >= 0 && endIdx >= startIdx && endIdx < _allSemesters.length) {
+              _allSemesters = _allSemesters.sublist(startIdx, endIdx + 1);
+            }
+
+            if (_allSemesters.isNotEmpty) {
+              _confirmAdmittedSemester(_allSemesters.first);
             }
           } else {
             if (_admittedSemester != null &&
@@ -618,7 +622,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
               runSpacing: 8,
               children: currentMap.entries
                   .map(
-                    (e) => Chip(
+                    (e) => InputChip(
                       backgroundColor: Colors.white10,
                       label: Text(
                         "${e.key} (${e.value})",
@@ -627,6 +631,16 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                           fontSize: 12,
                         ),
                       ),
+                      onPressed: _isCurrentSemester ? null : () async {
+                        final String code = e.key.contains('_Sec') ? e.key.split('_Sec').first : e.key;
+                        final newGrade = await _showGradeDialog(code);
+                        if (newGrade != null) {
+                          setState(() {
+                            // Update grade directly
+                            _history[_currentSemester!]![e.key] = newGrade;
+                          });
+                        }
+                      },
                       onDeleted: () => _removeCourse(e.key),
                       deleteIconColor: Colors.white54,
                     ),

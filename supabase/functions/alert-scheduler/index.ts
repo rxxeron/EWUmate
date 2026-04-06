@@ -8,6 +8,7 @@ serve(async (req) => {
     const log = (msg: string) => {
         const timestamp = new Date().toISOString();
         const line = `[${timestamp}] ${msg}`;
+        console.log(line);
         logs.push(line);
     };
 
@@ -29,10 +30,18 @@ serve(async (req) => {
         }
         log(`Active Semester: ${semCode}`);
 
-        const profiles = await sql`SELECT id FROM profiles`;
-        log(`Found ${profiles.length} profiles to process`);
+          // Cleanup old dispatched notifications (older than 30 days) to save storage
+          try {
+              const res = await sql`DELETE FROM notifications WHERE is_dispatched = true AND trigger_at < NOW() - INTERVAL '30 days'`;
+              log(`Cleared old notifications`);
+          } catch(e: any) {
+              log(`Cleanup failed: ${e.message}`);
+          }
 
-        const now = new Date();
+
+        const profiles = await sql`SELECT id FROM profiles`;
+          log(`Found ${profiles.length} profiles to process`);
+          const now = new Date();
         const offsetDay = 1; 
         const dhakaTarget = new Date(now.getTime() + (6 * 60 * 60 * 1000) + (offsetDay * 24 * 60 * 60 * 1000));
         
@@ -66,19 +75,23 @@ serve(async (req) => {
                     const h12 = h % 12 || 12;
                     const mStr = m.toString().padStart(2, '0');
                     const timeStr = `${h12}:${mStr} ${ampm}`;
-
-                    const baseBodyText = `You have ${dispTitle} scheduled for ${task.course_code || 'Unknown Course'} at ${timeStr}`;
                     
+                    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    const dateStrFormat = `${daysOfWeek[dhakaDue.getUTCDay()]}, ${months[dhakaDue.getUTCMonth()]} ${dhakaDue.getUTCDate()}`;
+
+                    const baseBodyText = `You have ${dispTitle} scheduled for ${task.course_code || 'Unknown Course'} at ${timeStr} on ${dateStrFormat}`;
+
                     if (isMajor) {
-                        await scheduleAlert(sql, userId, new Date(dueTimeMs - 3 * 24 * 60 * 60 * 1000), 
-                            `Upcoming: ${task.type || 'Assessment'}${cCodeStr}`, 
-                            `${baseBodyText} in 3 days.`, 
+                        await scheduleAlert(sql, userId, new Date(dueTimeMs - 3 * 24 * 60 * 60 * 1000),
+                            `Upcoming: ${task.type || 'Assessment'}${cCodeStr}`,
+                            `${baseBodyText}. (in 3 days)`,
                             'task_reminder', `t_3d:${task.id}`, log);
                     }
-                    
-                    await scheduleAlert(sql, userId, new Date(dueTimeMs - 24 * 60 * 60 * 1000), 
-                        `Due Tomorrow${cCodeStr}`, 
-                        `${baseBodyText} tomorrow.`, 
+
+                    await scheduleAlert(sql, userId, new Date(dueTimeMs - 24 * 60 * 60 * 1000),
+                        `Due Tomorrow${cCodeStr}`,
+                        `${baseBodyText}. (Tomorrow)`,
                         'task_reminder', `t_1d:${task.id}`, log);
 
                     let dueMorningUTC = new Date(Date.UTC(
@@ -87,18 +100,18 @@ serve(async (req) => {
                         dhakaDue.getUTCDate(),
                         2, 0, 0
                     ));
-                    
+
                     if (dueMorningUTC.getTime() >= dueTimeMs) {
                         dueMorningUTC = new Date(dueTimeMs - 2 * 60 * 60 * 1000);
                     }
 
-                    await scheduleAlert(sql, userId, dueMorningUTC, 
-                        `Due Today${cCodeStr}`, 
-                        `${baseBodyText} today.`, 
+                    await scheduleAlert(sql, userId, dueMorningUTC,
+                        `Due Today${cCodeStr}`,
+                        `${baseBodyText}.`,
                         'task_reminder', `t_0d:${task.id}`, log);
                 }
 
-                const c_tbl = sql('courses_' + semCode);
+                const c_tbl = sql('courses_' + semCode.toLowerCase().replace(/[\s_]/g, ''));
 
                 const enrols = await sql`
                     SELECT e.course_code, c.schedule_data

@@ -40,6 +40,21 @@ export function Dashboard() {
         let semStats: any = {};
         let totalActiveCourses = 0;
 
+        async function fetchAllCourseCodes(tableName: string) {
+          let allCodes: any[] = [];
+          let from = 0;
+          let to = 999;
+          while (true) {
+            const { data, error } = await supabase.from(tableName).select('course_code').range(from, to);
+            if (error || !data || data.length === 0) break;
+            allCodes = [...allCodes, ...data];
+            if (data.length < 1000) break;
+            from += 1000;
+            to += 1000;
+          }
+          return allCodes;
+        }
+
         if (activeSemesters) {
           for (const sem of activeSemesters) {
             semStats[sem.track] = {
@@ -52,7 +67,7 @@ export function Dashboard() {
             };
 
             if (sem.current_semester_code) {
-               const { data: cData } = await supabase.from(`courses_${sem.current_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
+               const cData = await fetchAllCourseCodes(`courses_${sem.current_semester_code.toLowerCase().replace(/_/g, '')}`);       
                if (cData && Array.isArray(cData)) {
                  semStats[sem.track].current_sections = cData.length;
                  const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
@@ -62,11 +77,7 @@ export function Dashboard() {
             }
 
             if (sem.next_semester_code) {
-               const { data: nData } = await supabase.from(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
-               if (nData && Array.isArray(nData)) {
-                 semStats[sem.track].next_sections = nData.length;
-                 semStats[sem.track].next_courses = new Set(nData.map(c => c.course_code)).size;
-               }
+               const nData = await fetchAllCourseCodes(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`);
             }
           }
         }

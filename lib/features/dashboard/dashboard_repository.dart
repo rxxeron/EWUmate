@@ -266,6 +266,7 @@ class DashboardRepository {
         'dateStr': dateStr,
       };
     } catch (e) {
+      debugPrint('[DashboardRepo] Simplified fetch error: $e');
       rethrow;
     }
   }
@@ -746,6 +747,7 @@ class DashboardRepository {
       }
       return finalDays;
     } catch (e) {
+      debugPrint('[DashboardRepo] Two Week error: $e');
       return [];
     }
   }

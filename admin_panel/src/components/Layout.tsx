@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, Activity, CalendarDays } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export function Layout() {
@@ -37,7 +37,15 @@ export function Layout() {
           <div className="pt-4 pb-2 px-4">
             <p className="text-xs font-semibold text-indigo-300/80 uppercase tracking-wider">Database</p>
           </div>
-          <Link to="/academic-data" className={getLinkClass('/academic-data')}><Database className="w-5 h-5 opacity-90" />Global Data</Link><Link to="/users" className={getLinkClass('/users')}>
+          <Link to="/academic-data" className={getLinkClass('/academic-data')}>
+            <Database className="w-5 h-5 opacity-90" />
+             Global Data
+          </Link>
+          <Link to="/calendar-editor" className={getLinkClass('/calendar-editor')}>
+            <CalendarDays className="w-5 h-5 opacity-90" />
+            Calendar Manager
+          </Link>
+          <Link to="/users" className={getLinkClass('/users')}>
             <Users className="w-5 h-5 opacity-90" />
             Users & Profiles
           </Link>
@@ -63,6 +71,10 @@ export function Layout() {
           <Link to="/parser" className={getLinkClass('/parser')}>
             <FileUp className="w-5 h-5 opacity-90" />
             File Parser
+          </Link>
+          <Link to="/parser-logs" className={getLinkClass('/parser-logs')}>
+            <Activity className="w-5 h-5 opacity-90" />
+            Parsing Logs
           </Link>
           <Link to="/settings" className={getLinkClass('/settings')}>
             <Settings className="w-5 h-5 opacity-90" />

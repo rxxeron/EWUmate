@@ -179,6 +179,7 @@ class CourseRepository {
       
       return unique.values.toList();
     } catch (e) {
+      print('Database Error in getSemesterCourses: $e');
       return [];
     }
   }

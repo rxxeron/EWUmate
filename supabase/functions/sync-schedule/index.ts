@@ -17,6 +17,7 @@ serve(async (req) => {
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
         const payload = await req.json();
+        console.log("Sync-Schedule: Payload received:", JSON.stringify(payload));
 
         const track = payload.track || payload.record?.track;
         const userId = payload.user_id || payload.record?.id || payload.record?.user_id;
@@ -97,6 +98,7 @@ async function handleSingleUserSync(supabase: any, userId: string) {
 }
 
 async function handleBulkTrackSync(supabase: any, track: string) {
+    console.log(`Sync-Schedule: Bulk sync started for track: ${track}`);
 
     // 1. Get Active Semester
     const { data: config, error: configError } = await supabase

@@ -22,6 +22,7 @@ serve(async (req) => {
 
         if (!track) {
             // Cron Mode: Sync all tracks
+            console.log("Sync-Semester-Meta: No track provided, syncing all tracks.");
             const { data: tracks, error: trackError } = await supabase.from('active_semester').select('track, current_semester_code');
             if (trackError) throw trackError;
             
@@ -54,6 +55,7 @@ async function syncSemesterDates(supabase: any, track: string, semesterCode: str
     const cleanSem = semesterCode.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
     const calendarTable = track === 'bi_semester' ? `calendar_${cleanSem}_phrm_llb` : `calendar_${cleanSem}`;
 
+    console.log(`Syncing meta for ${track} using ${calendarTable}`);
 
     // 2. Fetch all events from that calendar
     const { data: events, error: fetchError } = await supabase
@@ -113,6 +115,7 @@ async function syncSemesterDates(supabase: any, track: string, semesterCode: str
     let nextSemesterToSet = null;
 
     if (switchDate && today >= switchDate) {
+        console.log("Semester switch threshold reached. Automating transition...");
         
         // Logical Progression based on Track
         const current = semesterCode;
@@ -185,6 +188,7 @@ async function syncSemesterDates(supabase: any, track: string, semesterCode: str
         await supabase.functions.invoke('sync-schedule', {
             body: { track: track }
         });
+        console.log(`Bulk schedule sync triggered for track: ${track}`);
     } catch (e) {
         console.error("Bulk schedule sync trigger failed:", e);
     }

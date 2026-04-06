@@ -12,6 +12,8 @@ import { UserDetails } from './pages/UserDetails';
 import { AcademicData } from './pages/AcademicData';
 import { FileParser } from './pages/FileParser';
 import { Feedbacks } from './pages/Feedbacks';
+import { ParsingLogs } from './pages/ParsingLogs';
+import { CalendarEditor } from './pages/CalendarEditor';
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
             <Route path='/courses' element={<CoursesList />} />
             <Route path='/academic-data' element={<AcademicData />} />
             <Route path='/parser' element={<FileParser />} />
+            <Route path='/parser-logs' element={<ParsingLogs />} />
+            <Route path='/calendar-editor' element={<CalendarEditor />} />
             <Route path='/settings' element={<Settings />} />
             <Route path='/feedbacks' element={<Feedbacks />} />
           </Route>

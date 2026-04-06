@@ -11,6 +11,7 @@ class Enrollment with _$Enrollment {
     @JsonKey(name: 'semester_code') required String semesterCode,
     @JsonKey(name: 'course_code') required String courseCode,
     @JsonKey(name: 'section_id') String? sectionId,
+    String? section,
     @Default('enrolled') String status,
     String? grade,
     @JsonKey(name: 'grade_points') double? gradePoints,

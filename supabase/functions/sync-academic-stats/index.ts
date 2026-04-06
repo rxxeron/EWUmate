@@ -260,6 +260,7 @@ serve(async (req) => {
     
     if (profileError) throw profileError;
 
+    console.log(`Successfully updated profile for ${userId}: CGPA=${finalCgpa}, Credits=${cumulativeCredits}, Courses=${totalCoursesCompleted}`);
 
     return new Response(JSON.stringify({ 
       success: true, 

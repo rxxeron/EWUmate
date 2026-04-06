@@ -14,6 +14,7 @@ serve(async (req: Request) => {
 
         const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const utcTimestamp = new Date().toISOString();
+        console.log(`Alert Dispatcher started at ${utcTimestamp}`);
 
         try {
             // 1. Fetch pending alerts from the new unified notifications table
@@ -29,6 +30,7 @@ serve(async (req: Request) => {
                 return new Response(JSON.stringify({ message: "No pending alerts." }), { status: 200 });
             }
 
+            console.log(`Processing ${pending.length} alerts.`);
 
             // 2. Prepare FCM Auth if secret exists
             let fcmAccessToken = "";
@@ -39,11 +41,14 @@ serve(async (req: Request) => {
                     const serviceAccount = JSON.parse(FCM_SERVICE_ACCOUNT);
                     fcmProjectId = serviceAccount.project_id;
 
+                    console.log("Requesting FCM access token securely natively...");
                     fcmAccessToken = await getFirebaseAccessToken(serviceAccount);
+                    console.log("FCM Access Token acquired!");
                 } catch (authErr: any) {
                     console.error("FCM Native JWT Parse/Auth Error:", authErr.message);
                 }
             } else {
+                console.log("FIREBASE_SERVICE_ACCOUNT secret missing.");
             }
 
             let dispatchedCount = 0;

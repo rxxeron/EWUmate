@@ -220,9 +220,9 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               _buildStatItem('Projected\nCGPA', (predictedCgpa ?? 0.0).toStringAsFixed(2), const Color(0xFF06B6D4), Icons.speed_rounded),
               _buildStatItem('Last\nCGPA', (profile?.cgpa ?? 0.0).toStringAsFixed(2), Colors.white, Icons.history_rounded),
 
-              _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' Cr'),
+              _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
               _buildStatItem('Curr\nEnrolled', (analytics?.takenInThisSem ?? enrolledCreditsFromMarks).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
-              _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(analytics?.requiredCredit ?? policy?.annualCreditsRequired ?? 30.0).toStringAsFixed(0)}'),
+              _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
             ],
           ),
         ],

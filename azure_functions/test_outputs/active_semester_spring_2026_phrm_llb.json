@@ -1,0 +1,17 @@
+{
+  "semester_type": "bi",
+  "is_active": true,
+  "current_semester": "Spring 2026",
+  "current_semester_code": "Spring2026",
+  "current_semester_start_date": "2026-01-11T00:00:00+06:00",
+  "advising_start_date": "2026-05-12T00:00:00+06:00",
+  "advising_end_date": "2026-05-14T00:00:00+06:00",
+  "grade_submission_start": "2026-07-01T00:00:00+06:00",
+  "grade_submission_deadline": "2026-07-01T00:00:00+06:00",
+  "final_exam_start": "2026-06-07T00:00:00+06:00",
+  "final_exam_end": "2026-06-24T00:00:00+06:00",
+  "switch_date": "2026-07-15T00:00:00+06:00",
+  "updated_at": "2026-03-12T03:39:55.555792",
+  "next_semester": "Fall 2026",
+  "upcoming_semester_start_date": "2026-07-19T00:00:00+06:00"
+}

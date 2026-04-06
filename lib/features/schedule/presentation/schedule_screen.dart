@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -25,11 +26,21 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   List<Map<String, String>> _enrolledCourses = [];
   bool _loading = true;
   String? _semesterCode;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) _loadData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   void _loadData() async {
@@ -60,18 +71,31 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 tabs: [Tab(text: "Upcoming"), Tab(text: "Pending Events")],
               ),
             ),
-            body: FutureBuilder(
-              future: _loadDataForSemester(semCode),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting && _loading) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+            body: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(currentSemesterCodeProvider);
+                if (_semesterCode != null) {
+                  await _loadDataForSemester(_semesterCode!);
                 }
-
-                return TabBarView(children: [
-                   _buildUpcomingTab(semCode), 
-                   _buildPendingActionsTab()
-                ]);
               },
+              color: const Color(0xFF00E5FF),
+              backgroundColor: const Color(0xFF1E2836),
+              child: FutureBuilder(
+                future: _loadDataForSemester(semCode),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting && _loading) {
+                    return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
+                  }
+  
+                  return TabBarView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      _buildUpcomingTab(semCode), 
+                      _buildPendingActionsTab()
+                    ],
+                  );
+                },
+              ),
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () => _showAddClassModal(semCode),
@@ -165,6 +189,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         }).toList();
       }
     } catch (e) {
+      debugPrint("Error loading schedule: $e");
     } finally {
       if (mounted) {
         setState(() => _loading = false);

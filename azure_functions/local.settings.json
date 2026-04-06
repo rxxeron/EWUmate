@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "DefaultEndpointsProtocol=https;EndpointSuffix=core.windows.net;AccountName=ewumatestorage1771164445;AccountKey=Y5VznMMHCs9k7mrz2XkU4yWHixuiClbBAxLiG/6BPvgLgEWMGioNvk3VqUcPde43ExWXAo99GfwN+AStkXiWKA==",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "SUPABASE_URL": "https://jwygjihrbwxhehijldiz.supabase.co",
+    "SUPABASE_SERVICE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTEwNDE3NCwiZXhwIjoyMDg2NjgwMTc0fQ.Fv42T-rcWRz2nqiScYFxBBGc_h55yoa_t1rbEm6qhcc",
+    "FUNCTIONS_EXTENSION_VERSION": "~4",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "InstrumentationKey=247a8707-c2a3-4aef-9cdf-18716e04dd84;IngestionEndpoint=https://southeastasia-1.in.applicationinsights.azure.com/;LiveEndpoint=https://southeastasia.livediagnostics.monitor.azure.com/;ApplicationId=6df3d770-df76-4bb5-a887-4ab2b90aa57f"
+  },
+  "ConnectionStrings": {},
+  "Host": {}
+}

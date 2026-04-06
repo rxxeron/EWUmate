@@ -29,6 +29,7 @@ serve(async (req) => {
         const calendarTable = `calendar_${cleanSem}`;
         const calendarPhrmTable = `calendar_${cleanSem}_phrm_llb`;
 
+        console.log(`Creating tables for semester: ${semester_code} (${cleanSem})`);
 
         // SQL to create tables
         const sql = `

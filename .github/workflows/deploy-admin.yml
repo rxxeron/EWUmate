@@ -9,6 +9,7 @@ on:
     paths:
       - 'admin_panel/**'
       - '.github/workflows/deploy-admin.yml'
+  workflow_dispatch: {}
 
 permissions:
   contents: read

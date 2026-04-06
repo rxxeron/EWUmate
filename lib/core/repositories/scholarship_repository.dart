@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models/scholarship_rule_model.dart';
@@ -60,7 +61,7 @@ class ScholarshipRepository {
 
       return fuzzyMatch;
     } catch (e) {
-      print('Error fetching scholarship policy: $e');
+      if (kDebugMode) print('Error fetching scholarship policy: $e');
       return null;
     }
   }
@@ -70,7 +71,7 @@ class ScholarshipRepository {
       final response = await _supabase.from('scholarship_policies').select();
       return (response as List).map((e) => ScholarshipRule.fromMap(e)).toList();
     } catch (e) {
-      print('Error fetching scholarship policies: $e');
+      if (kDebugMode) print('Error fetching scholarship policies: $e');
       return [];
     }
   }

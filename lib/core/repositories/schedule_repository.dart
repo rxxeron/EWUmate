@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/enrollment.dart';
@@ -83,7 +84,7 @@ class ScheduleRepository {
 
       return (response as List).cast<Map<String, dynamic>>();
     } catch (e) {
-      print("DEBUG: Error fetching saved schedules: $e");
+      if (kDebugMode) print("DEBUG: Error fetching saved schedules: $e");
       rethrow;
     }
   }

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/repositories/course_repository.dart';
 import '../../../../core/repositories/auth_repository.dart';
 import '../../../../core/providers/supabase_provider.dart';
 import '../../../../core/providers/academic_providers.dart';
+import '../../../../core/services/cache_service.dart';
 import '../../../../core/models/course_metadata.dart';
 
 final courseSearchQueryProvider = StateProvider<String>((ref) => '');
@@ -76,21 +78,49 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
   if (activeSem.isEmpty) return [];
 
   final supabase = ref.watch(supabaseClientProvider);
+  final cache = ref.watch(cacheServiceProvider);
   
-  final data = await supabase
-      .from('enrollments')
-      .select('course_code')
-      .eq('user_id', user.id)
-      .eq('semester_code', activeSem);
-      
-  return (data as List).map((e) => e['course_code'] as String).toList();
+  try {
+    final data = await supabase
+        .from('enrollments')
+        .select('course_code')
+        .eq('user_id', user.id)
+        .eq('semester_code', activeSem);
+        
+    final res = (data as List).map((e) => e['course_code'] as String).toList();
+    // Cache it
+    cache.setMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem', {'codes': res});
+    return res;
+  } catch (e) {
+    if (kDebugMode) debugPrint('[CourseBrowser] Enrollment fetch failed, using cache: $e');
+    final cached = cache.getMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem');
+    if (cached != null && cached['codes'] != null) {
+      return List<String>.from(cached['codes']);
+    }
+    return [];
+  }
 });
 
 final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((ref) async {
   final activeSem = await ref.watch(currentSemCodeProvider.future);
   if (activeSem.isEmpty) return [];
   
-  return ref.watch(semesterCoursesProvider(activeSem).future);
+  final cache = ref.watch(cacheServiceProvider);
+  
+  try {
+    final res = await ref.watch(semesterCoursesProvider(activeSem).future);
+    // Cache it
+    cache.setMapData('dashboard_box', 'available_courses_$activeSem', 
+      {'data': res.map((e) => e.toJson()).toList()});
+    return res;
+  } catch (e) {
+    if (kDebugMode) debugPrint('[CourseBrowser] Available courses fallback: $e');
+    final cached = cache.getMapData('dashboard_box', 'available_courses_$activeSem');
+    if (cached != null && cached['data'] != null) {
+      return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+    }
+    return [];
+  }
 });
 
 final userEnrollmentDetailsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {

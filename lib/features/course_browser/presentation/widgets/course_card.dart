@@ -32,43 +32,46 @@ class _CourseCardState extends ConsumerState<CourseCard> {
   Future<void> _handleEnrollmentAction({
     required String action, // 'enroll', 'drop', 'switch'
     required String sectionId,
-    String? oldSectionId,
-    required String academicSemCode,
-  }) async {
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
+      required String sectionNumber,
+      String? oldSectionId,
+      required String academicSemCode,
+    }) async {
+      final user = ref.read(currentUserProvider);
+      if (user == null) return;
 
-    final profileRepo = ref.read(profileRepositoryProvider);
-    final profile = await profileRepo.getProfile(user.id);
-    if (profile == null) return;
+      final profileRepo = ref.read(profileRepositoryProvider);
+      final profile = await profileRepo.getProfile(user.id);
+      if (profile == null) return;
 
-    setState(() => _isUpdating = true);
+      setState(() => _isUpdating = true);
 
-    try {
-      if (action == 'enroll') {
-        await profileRepo.enrollCourseSection(
-          userId: user.id,
-          courseCode: widget.course.code,
-          semesterCode: academicSemCode,
-          sectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      } else if (action == 'drop') {
-        await profileRepo.dropCourseSection(
-          userId: user.id,
-          sectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      } else if (action == 'switch' && oldSectionId != null) {
-        await profileRepo.switchCourseSection(
-          userId: user.id,
-          courseCode: widget.course.code,
-          semesterCode: academicSemCode,
-          oldSectionId: oldSectionId,
-          newSectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      }
+      try {
+        if (action == 'enroll') {
+          await profileRepo.enrollCourseSection(
+            userId: user.id,
+            courseCode: widget.course.code,
+            semesterCode: academicSemCode,
+            sectionId: sectionId,
+            sectionNumber: sectionNumber,
+            currentSections: profile.enrolledSections,
+          );
+        } else if (action == 'drop') {
+          await profileRepo.dropCourseSection(
+            userId: user.id,
+            sectionId: sectionId,
+            currentSections: profile.enrolledSections,
+          );
+        } else if (action == 'switch' && oldSectionId != null) {
+          await profileRepo.switchCourseSection(
+            userId: user.id,
+            courseCode: widget.course.code,
+            semesterCode: academicSemCode,
+            oldSectionId: oldSectionId,
+            newSectionId: sectionId,
+            newSectionNumber: sectionNumber,
+            currentSections: profile.enrolledSections,
+          );
+        }
 
       if (mounted) {
         String msg = '';
@@ -205,6 +208,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                             hasAnyInThisCourse: enrolledInAny,
                             enrolledSectionId: targetEnrolled?['section_id'] ?? section.id,
                             thisSectionId: section.id,
+                            thisSectionNumber: section.section,
                             academicSemCode: activeSemCode,
                           ),
                         ],
@@ -240,6 +244,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
     required bool hasAnyInThisCourse,
     required String? enrolledSectionId,
     required String thisSectionId,
+    required String thisSectionNumber,
     required String academicSemCode,
   }) {
     String label = 'Enroll';
@@ -260,6 +265,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
       onPressed: _isUpdating ? null : () => _handleEnrollmentAction(
         action: action,
         sectionId: thisSectionId,
+        sectionNumber: thisSectionNumber,
         oldSectionId: enrolledSectionId,
         academicSemCode: academicSemCode,
       ),

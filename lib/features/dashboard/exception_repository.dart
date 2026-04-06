@@ -17,7 +17,7 @@ class ExceptionRepository {
 
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error refreshing exceptions: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error refreshing exceptions: $e');
       return [];
     }
   }
@@ -34,7 +34,7 @@ class ExceptionRepository {
         'metadata': {'pendingMakeup': pendingMakeup},
       });
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error syncing cancellation: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error syncing cancellation: $e');
     }
   }
 
@@ -63,7 +63,7 @@ class ExceptionRepository {
         'metadata': {},
       });
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error syncing makeup class: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error syncing makeup class: $e');
     }
   }
 
@@ -92,7 +92,7 @@ class ExceptionRepository {
         'metadata': {},
       });
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error syncing manual entry: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error syncing manual entry: $e');
     }
   }
 
@@ -104,7 +104,7 @@ class ExceptionRepository {
           .update({ 'metadata': {'pendingMakeup': false} })
           .eq('id', originalExceptionId);
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error resolving pending makeup: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error resolving pending makeup: $e');
     }
   }
 
@@ -114,7 +114,7 @@ class ExceptionRepository {
     try {
       await _supabase.from('schedule_exceptions').delete().eq('id', id);
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error removing exception: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error removing exception: $e');
     }
   }
 
@@ -133,7 +133,7 @@ class ExceptionRepository {
 
       return data?['id']?.toString();
     } catch (e) {
-      debugPrint('[ExceptionRepo] Error finding exception ID: $e');
+      if (kDebugMode) debugPrint('[ExceptionRepo] Error finding exception ID: $e');
       return null;
     }
   }

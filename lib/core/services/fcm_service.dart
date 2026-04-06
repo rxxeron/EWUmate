@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../router/app_router.dart';
 
 class FCMService {
@@ -24,7 +25,7 @@ class FCMService {
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         final payload = response.payload;
         if (payload != null && payload.isNotEmpty) {
-          debugPrint('[FCM] Foreground Local Notification tapped with payload: $payload');
+          if (kDebugMode) debugPrint('[FCM] Foreground Local Notification tapped with payload: $payload');
           _handleRouteAuth(payload);
         }
       },
@@ -59,7 +60,7 @@ class FCMService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('[FCM] User granted permission');
+      if (kDebugMode) debugPrint('[FCM] User granted permission');
 
       // Registration token handling
       final token = await _messaging.getToken();
@@ -70,7 +71,7 @@ class FCMService {
 
       // Handle foreground notifications manually via Local Notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('[FCM] Foreground message received: ${message.notification?.title}');
+        if (kDebugMode) debugPrint('[FCM] Foreground message received: ${message.notification?.title}');
         
         RemoteNotification? notification = message.notification;
         AndroidNotification? android = message.notification?.android;
@@ -106,7 +107,7 @@ class FCMService {
 
       // Handle clicks when app is in Background
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('[FCM] Background message tapped: ${message.messageId}');
+        if (kDebugMode) debugPrint('[FCM] Background message tapped: ${message.messageId}');
         final routingUrl = message.data['url'] as String?;
         if (routingUrl != null && routingUrl.isNotEmpty) {
           _handleRouteAuth(routingUrl);
@@ -116,7 +117,7 @@ class FCMService {
       // Handle clicks when app is Killed
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
-        debugPrint('[FCM] Killed message tapped: ${initialMessage.messageId}');
+        if (kDebugMode) debugPrint('[FCM] Killed message tapped: ${initialMessage.messageId}');
         final routingUrl = initialMessage.data['url'] as String?;
         if (routingUrl != null && routingUrl.isNotEmpty) {
           // Delay routing slightly to let UI render first
@@ -126,13 +127,20 @@ class FCMService {
         }
       }
     } else {
-      debugPrint('[FCM] User declined permission');
+      if (kDebugMode) debugPrint('[FCM] User declined permission');
     }
   }
 
-  void _handleRouteAuth(String url) {
-    if (rootNavigatorKey.currentContext != null) {
-      if (url.startsWith('/')) {
+  void _handleRouteAuth(String url) async {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      final uri = Uri.tryParse(url);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      } else {
+        if (kDebugMode) debugPrint('[FCM] Cannot launch URL: $url');
+      }
+    } else if (url.startsWith('/')) {
+      if (rootNavigatorKey.currentContext != null) {
          rootNavigatorKey.currentContext!.go(url);
       }
     }
@@ -149,9 +157,9 @@ class FCMService {
         'platform': platform,
         'updated_at': DateTime.now().toIso8601String(),
       });
-      debugPrint('[FCM] Token synchronized to Database.');
+      if (kDebugMode) debugPrint('[FCM] Token synchronized to Database.');
     } catch (e) {
-      debugPrint('[FCM] Failed to sync token: $e');
+      if (kDebugMode) debugPrint('[FCM] Failed to sync token: $e');
     }
   }
 }

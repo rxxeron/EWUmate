@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/cache_service.dart';
 
 // Provides the list of enrollments needing grades
 final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
@@ -11,15 +15,29 @@ final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
   final user = ref.read(currentUserProvider);
   if (user == null) return [];
 
-  // Query enrollments with 'enrolled' status that have no grade
-  final res = await Supabase.instance.client
-      .from('enrollments')
-      .select()
-      .eq('user_id', user.id)
-      .eq('status', 'enrolled')
-      .isFilter('grade', null);
+  final cache = ref.read(cacheServiceProvider);
+  final cacheKey = 'pending_grades_${user.id}';
 
-  return List<Map<String, dynamic>>.from(res);
+  try {
+    // Query enrollments with 'enrolled' status that have no grade
+    final res = await Supabase.instance.client
+        .from('enrollments')
+        .select()
+        .eq('user_id', user.id)
+        .eq('status', 'enrolled')
+        .isFilter('grade', null);
+
+    final data = List<Map<String, dynamic>>.from(res);
+    cache.setMapData('dashboard_box', cacheKey, {'data': data});
+    return data;
+  } catch (e) {
+    if (kDebugMode) debugPrint('[GradeEntry] Pending grades fallback: $e');
+    final cached = cache.getMapData('dashboard_box', cacheKey);
+    if (cached != null && cached['data'] != null) {
+      return List<Map<String, dynamic>>.from(cached['data']);
+    }
+    return [];
+  }
 });
 
 class GradeEntryScreen extends ConsumerStatefulWidget {
@@ -32,6 +50,23 @@ class GradeEntryScreen extends ConsumerStatefulWidget {
 class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
   final Map<String, String> _selectedGrades = {};
   bool _isSaving = false;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) {
+        ref.invalidate(pendingGradesProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   final List<String> _validGrades = [
     'A',
@@ -134,20 +169,37 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
         elevation: 0,
         automaticallyImplyLeading: false, // Force them to stay
       ),
-      body: pendingAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF38BDF8))),        
-        error: (e, st) => Center(
-          child: Text('Error: $e', style: const TextStyle(color: Colors.redAccent)),
-        ),
-        data: (pending) {
-          if (pending.isEmpty) {
-            return const Center(
-              child: Text(
-                'No pending grades!',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(pendingGradesProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        color: const Color(0xFF38BDF8),
+        backgroundColor: const Color(0xFF1E293B),
+        child: pendingAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF38BDF8))),        
+          error: (e, st) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Container(
+              height: 500,
+              alignment: Alignment.center,
+              child: Text('Offline: Showing pending grades if any', style: const TextStyle(color: Colors.white70)),
+            ),
+          ),
+          data: (pending) {
+            if (pending.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  alignment: Alignment.center,
+                  child: const Text(
+                    'No pending grades!',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              );
+            }
 
           return SafeArea(
             child: Padding(
@@ -306,6 +358,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

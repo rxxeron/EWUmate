@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 import '../../../../core/models/task.dart';
 import '../../../../core/repositories/task_repository.dart';
+import '../../../../core/repositories/auth_repository.dart';
+import '../../../../core/services/cache_service.dart';
 import '../../../../core/widgets/ewumate_app_bar.dart';
 import 'widgets/add_task_bottom_sheet.dart';
 
@@ -16,15 +20,67 @@ class TasksScreen extends ConsumerStatefulWidget {
 
 class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _offlineHeartbeat;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    
+    // Heartbeat every 2 minutes
+    _offlineHeartbeat = Timer.periodic(const Duration(minutes: 2), (timer) {
+      if (mounted) {
+        ref.invalidate(allTasksStreamProvider);
+        _pushSyncQueue();
+      }
+    });
+  }
+
+  Future<void> _pushSyncQueue() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    final cacheService = ref.read(cacheServiceProvider);
+    final taskRepo = ref.read(taskRepositoryProvider);
+    
+    final queue = cacheService.getSyncQueue(user.id);
+    if (queue.isEmpty) return;
+
+    if (kDebugMode) debugPrint('[Offline Sync] Processing ${queue.length} items from tasks screen...');
+    bool anySuccess = false;
+    
+    for (final item in queue) {
+      final action = item['action'];
+      try {
+        if (action == 'update_task_status') {
+          await taskRepo.updateTaskStatus(user.id, item['taskId'], item['isCompleted']);
+        } else if (action == 'delete_task') {
+          await taskRepo.deleteTask(user.id, item['taskId']);
+        } else if (action == 'create_task') {
+          await taskRepo.createTask(user.id, Task.fromJson(item['task']));
+        } else if (action == 'update_task') {
+          await taskRepo.updateTask(user.id, Task.fromJson(item['task']));
+        }
+        
+        // Remove from queue after success
+        if (item.containsKey('taskId')) {
+          await cacheService.removeQueueItem(user.id, item['taskId']);
+        } else if (item.containsKey('task')) {
+          await cacheService.removeQueueItem(user.id, item['task']['id']);
+        }
+        anySuccess = true;
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Offline Sync] Still offline for action $action');
+      }
+    }
+    
+    if (anySuccess) {
+      ref.invalidate(allTasksStreamProvider);
+    }
   }
 
   @override
   void dispose() {
+    _offlineHeartbeat?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -132,26 +188,38 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
   }
 
   Widget _buildTaskList(String type, List<Task> tasks) {
-    if (tasks.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.task_alt, size: 60, color: Colors.white.withValues(alpha: 0.2)),
-            const SizedBox(height: 16),
-            Text(
-              "No $type tasks found",
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: tasks.length,
-      itemBuilder: (context, index) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(allTasksStreamProvider);
+        await _pushSyncQueue();
+      },
+      color: Colors.cyanAccent,
+      backgroundColor: const Color(0xFF1E293B),
+      child: tasks.isEmpty
+          ? SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 0.6,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.task_alt, size: 60, color: Colors.white.withValues(alpha: 0.2)),
+                      const SizedBox(height: 16),
+                      Text(
+                        "No $type tasks found",
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          : ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
         final task = tasks[index];
         final isOverdue = type == "Overdue";
         final isCompleted = type == "Completed";
@@ -181,8 +249,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
                 side: BorderSide(color: Colors.white.withOpacity(0.3), width: 2),
                 onChanged: (val) async {
                   if (val != null) {
-                    await ref.read(taskRepositoryProvider).updateTaskStatus(task.id, val);
-                    ref.invalidate(allTasksStreamProvider);
+                    final user = ref.read(currentUserProvider);
+                    if (user != null) {
+                      await ref.read(taskRepositoryProvider).updateTaskStatus(user.id, task.id, val);
+                      ref.invalidate(allTasksStreamProvider);
+                    }
                   }
                 },
               ),
@@ -270,14 +341,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
                 if (value == 'edit') {
                   _openTaskModal(existingTask: task);
                 } else if (value == 'delete') {
-                  await ref.read(taskRepositoryProvider).deleteTask(task.id);
-                  ref.invalidate(allTasksStreamProvider);
+                  final user = ref.read(currentUserProvider);
+                  if (user != null) {
+                    await ref.read(taskRepositoryProvider).deleteTask(user.id, task.id);
+                    ref.invalidate(allTasksStreamProvider);
+                  }
                 }
               },
             ),
           ),
         );
       },
-    );
-  }
+    ),
+  );
+}
 }

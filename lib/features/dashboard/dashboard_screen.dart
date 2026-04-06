@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -28,6 +31,7 @@ import '../../core/utils/time_utils.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
 
+import '../../core/services/cache_service.dart';
 
 import '../../core/widgets/ewumate_app_bar.dart';
 import '../../core/widgets/animations/skeleton_loader.dart';
@@ -69,13 +73,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   
   
 
+  bool _isOffline = false;
+
   @override
   void initState() {
     super.initState();
     _refreshDashboard();
     _showDashboardTutorial();
 
-    final _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    Timer.periodic(const Duration(minutes: 3), (_) {
       if (mounted) _refreshDashboard();
     });
   }
@@ -83,13 +89,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Future<void> _refreshDashboard() async {
     if (user == null) return;
     
-    setState(() => _loadingInit = true);
+    // 0. Hydrate Instantly from Cache
+    final cacheService = ref.read(cacheServiceProvider);
+    final cachedData = cacheService.getCachedDashboardSchedule(user!.id);
+    
+    if (cachedData != null && mounted) {
+      setState(() {
+        _lastValidScheduleData = Map<String, dynamic>.from(cachedData);
+        if (_lastValidScheduleData!['date'] is String) {
+          _lastValidScheduleData!['date'] = DateTime.tryParse(_lastValidScheduleData!['date']);
+        }
+        if (_lastValidScheduleData!['targetDate'] is String) {
+          _lastValidScheduleData!['targetDate'] = DateTime.tryParse(_lastValidScheduleData!['targetDate']);
+        }
+        _tasks = (_lastValidScheduleData!['tasks'] as List? ?? [])
+            .map((t) => t as Map<String, dynamic>)
+            .toList();
+        _loadingInit = false; // Turn off skeleton instantly
+      });
+    } else {
+      if (mounted) setState(() => _loadingInit = true);
+    }
     
     try {
       // 1. Get the current active semester & track
       final academicState = await ref.read(academicStateProvider.future);
       if (academicState == null) {
-        if (mounted) setState(() => _loadingInit = false);
+        if (mounted && cachedData == null) setState(() => _loadingInit = false);
         return;
       }
       
@@ -97,21 +123,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
-      // 2. Fetch the Unified Dashboard Data (NO CACHE)
+      // 2. Fetch the Unified Dashboard Data (LIVE)
       final dashboardData = await ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(code, _effectiveDate, track: track);
       
-      // 3. Fetch Enrolled courses for Map<String, dynamic> Modal Dropdown
+      // 3. Save to cache with serialized dates
+      final dataToCache = Map<String, dynamic>.from(dashboardData);
+      if (dataToCache['date'] is DateTime) {
+        dataToCache['date'] = (dataToCache['date'] as DateTime).toIso8601String();
+      }
+      if (dataToCache['targetDate'] is DateTime) {
+        dataToCache['targetDate'] = (dataToCache['targetDate'] as DateTime).toIso8601String();
+      }
+      cacheService.cacheDashboardSchedule(user!.id, dataToCache);
+
+      // 4. Fetch Enrolled courses
       final enrollments = await _supabase
           .from('enrollments')
           .select('course_code')
           .eq('user_id', user!.id)
           .eq('semester_code', code);
       
-      final loadedCourses = (enrollments as List).map((row) {
-        final cCode = row['course_code'].toString();
-        return {'code': cCode, 'courseName': cCode, 'semester': code, 'sessions': []};
-      }).toList();
-
       if (mounted) {
         setState(() {
           _semesterCode = code;
@@ -121,33 +152,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               .map((t) => t as Map<String, dynamic>)
               .toList();
           _loadingInit = false;
+          _isOffline = false;
         });
       }
       
-      // 4. Check App Update Config
+      // 5. Check App Update Config
       try {
         final updateRes = await _supabase.from('app_config').select('value').eq('key', 'update_info').maybeSingle();
         if (updateRes != null) {
           final val = updateRes['value'] as Map<String, dynamic>?;
           if (val != null && val['update_available'] == true) {
-             final url = val['download_url']?.toString() ?? '';
-             setState(() {
-               _showUpdateBanner = true;
-               
-             });
+             if (mounted) setState(() => _showUpdateBanner = true);
           }
         }
       } catch (e) {
-        debugPrint('Update check error: $e');
+        if (kDebugMode) debugPrint('Update check error: $e');
       }
 
-      // 5. Check Advising Banner for NEXT semester
+      // 6. Check Advising Banner for NEXT semester
       if (nextSemesterCode != null) {
         _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
       }
     } catch (e, stack) {
-      debugPrint("[Dashboard] Refresh error: $e\n$stack");
-      if (mounted) setState(() => _loadingInit = false);
+      if (kDebugMode) debugPrint("[Dashboard] Background Refresh Offline/Error: $e");
+      if (mounted) {
+        setState(() {
+          _loadingInit = false;
+          _isOffline = true;
+        });
+      }
     }
   }
 
@@ -225,7 +258,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Error checking advising banner: $e');
+      if (kDebugMode) debugPrint('Error checking advising banner: $e');
     }
   }
 
@@ -706,7 +739,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       radius: 26,
                       backgroundColor: const Color(0xFF0F172A),
                       backgroundImage: photoUrl != null && photoUrl.toString().isNotEmpty
-                          ? NetworkImage(photoUrl.toString())
+                          ? CachedNetworkImageProvider(photoUrl.toString())
                           : null,
                       child: (photoUrl == null || photoUrl.toString().isEmpty)
                           ? const Icon(
@@ -723,13 +756,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "$greeting,",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withOpacity(0.6),
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "$greeting,",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_isOffline) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orangeAccent.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.orangeAccent.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.cloud_off_rounded, color: Colors.orangeAccent, size: 10),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    "OFFLINE",
+                                    style: TextStyle(
+                                      color: Colors.orangeAccent,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       Text(
                         displayName,

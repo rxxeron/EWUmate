@@ -4,6 +4,7 @@ class Enrollment {
   final String semesterCode;
   final String courseCode;
   final String? sectionId;
+  final String? section;
 
   Enrollment({
     required this.id,
@@ -11,6 +12,7 @@ class Enrollment {
     required this.semesterCode,
     required this.courseCode,
     this.sectionId,
+    this.section,
   });
 
   factory Enrollment.fromSupabase(Map<String, dynamic> map) {
@@ -20,6 +22,7 @@ class Enrollment {
       semesterCode: map['semester_code']?.toString() ?? '',
       courseCode: map['course_code']?.toString() ?? '',
       sectionId: map['section_id']?.toString(),
+      section: map['section']?.toString(),
     );
   }
 
@@ -30,6 +33,7 @@ class Enrollment {
       'semester_code': semesterCode,
       'course_code': courseCode,
       'section_id': sectionId,
+      if (section != null) 'section': section,
     };
   }
 }

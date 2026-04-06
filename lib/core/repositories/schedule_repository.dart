@@ -83,6 +83,7 @@ class ScheduleRepository {
 
       return (response as List).cast<Map<String, dynamic>>();
     } catch (e) {
+      print("DEBUG: Error fetching saved schedules: $e");
       rethrow;
     }
   }

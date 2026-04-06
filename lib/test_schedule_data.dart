@@ -6,5 +6,6 @@ void main() async {
   final key = Platform.environment['SUPABASE_ANON_KEY'] ?? 'ey...';
   final db = SupabaseClient(url, key);
   final data = await db.from('courses_spring2026').select().limit(1);
+  print(data);
 }
 

@@ -1,7 +1,6 @@
 name: Deploy Admin Panel to GitHub Pages
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - production
@@ -42,10 +41,7 @@ jobs:
         run: npm ci
 
       - name: Build the Admin Panel
-        run: |
-          npm run build -- --base=/
-          cp dist/index.html dist/404.html
-          echo "admin.rxxeron.iam.bd" > dist/CNAME
+        run: npm run build -- --base=/${{ github.event.repository.name }}/
         env:
           # If your Vite project needs access to Supabase variables publicly on the web URL,
           # you can optionally inject them here via GitHub Repository Secrets.

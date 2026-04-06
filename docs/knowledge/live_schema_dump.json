@@ -1,0 +1,1820 @@
+{
+    "tables": {
+        "active_semester": [
+            {
+                "column": "track",
+                "type": "USER-DEFINED",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "current_semester_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "next_semester_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "classes_start_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "advising_start_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "advising_end_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "final_exam_start",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "final_exam_end",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "grade_submission_start",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "grade_submission_deadline",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "semester_switch_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "upcoming_classes_start_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "classes_end_date",
+                "type": "date",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "admin_users": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "email",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "NO",
+                "default": "timezone('utc'::text, now())"
+            }
+        ],
+        "app_config": [
+            {
+                "column": "key",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "value",
+                "type": "jsonb",
+                "nullable": "NO",
+                "default": null
+            }
+        ],
+        "calendar_spring2026": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "event_date",
+                "type": "date",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "title",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "type",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "target_track",
+                "type": "USER-DEFINED",
+                "nullable": "YES",
+                "default": "'tri_semester'::academic_track"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "calendar_spring2026_phrm_llb": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "event_date",
+                "type": "date",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "title",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "type",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "target_track",
+                "type": "USER-DEFINED",
+                "nullable": "YES",
+                "default": "'bi_semester'::academic_track"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "completed_courses": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "grade",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "grade_point",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "credits",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "course_metadata": [
+            {
+                "column": "code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "name",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "credit_val",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "equivalent_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "courses_spring2026": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "original_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "section_number",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "faculty_initials",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "capacity",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "schedule_data",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "course_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "credit_val",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "courses_summer2026": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "original_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "section_number",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "faculty_initials",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "capacity",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "schedule_data",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "course_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "credit_val",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "enrollments": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "section_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "status",
+                "type": "USER-DEFINED",
+                "nullable": "YES",
+                "default": "'enrolled'::enrollment_status"
+            },
+            {
+                "column": "grade",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "grade_points",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "fcm_tokens": [
+            {
+                "column": "token",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "platform",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "feedbacks": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "message",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "status",
+                "type": "character varying",
+                "nullable": "YES",
+                "default": "'pending'::character varying"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "grade_scale": [
+            {
+                "column": "grade",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "point",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "min_score",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "description",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "policy",
+                "type": "text",
+                "nullable": "YES",
+                "default": "'modern'::text"
+            }
+        ],
+        "notifications": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "type",
+                "type": "USER-DEFINED",
+                "nullable": "YES",
+                "default": "'system'::notification_type"
+            },
+            {
+                "column": "title",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "body",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "trigger_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "is_dispatched",
+                "type": "boolean",
+                "nullable": "YES",
+                "default": "true"
+            },
+            {
+                "column": "is_read",
+                "type": "boolean",
+                "nullable": "YES",
+                "default": "false"
+            },
+            {
+                "column": "payload",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'{}'::jsonb"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "alert_key",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "profiles": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "student_id",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "full_name",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "nickname",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "program_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "admitted_semester",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "cgpa",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "total_credits_earned",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "photo_url",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "onboarding_status",
+                "type": "text",
+                "nullable": "YES",
+                "default": "'pending'::text"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "semester_type",
+                "type": "text",
+                "nullable": "YES",
+                "default": "'tri'::text"
+            },
+            {
+                "column": "department_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "scholarship_status",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "program_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "track",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "enrolled_sections",
+                "type": "ARRAY",
+                "nullable": "YES",
+                "default": "'{}'::text[]"
+            },
+            {
+                "column": "enrolled_sections_next",
+                "type": "ARRAY",
+                "nullable": "YES",
+                "default": "'{}'::text[]"
+            },
+            {
+                "column": "past_history",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'[]'::jsonb"
+            },
+            {
+                "column": "enrolled_credits",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "enrolled_credits_next",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "total_courses_completed",
+                "type": "integer",
+                "nullable": "YES",
+                "default": "0"
+            }
+        ],
+        "programs": [
+            {
+                "column": "program_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "name",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "track",
+                "type": "USER-DEFINED",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "total_degree_credits",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": "130"
+            },
+            {
+                "column": "department_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "schedule_exceptions": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "type",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "date",
+                "type": "date",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "course_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "start_time",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "end_time",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "room",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "metadata",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'{}'::jsonb"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "faculty",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "schedule_generations": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "user_id",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "semester",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "courses",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "filters",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "combinations",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "status",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "count",
+                "type": "integer",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "scholarship_policies": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "department_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "effective_from_semester",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "effective_until_semester",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "min_yearly_credits",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "merit_cgpa_min",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "deans_cgpa_min",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "medha_cgpa_min",
+                "type": "numeric",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "merit_cgpa_max",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "4.00"
+            },
+            {
+                "column": "deans_cgpa_max",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "medha_cgpa_max",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "semester_analytics": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "timezone('utc'::text, now())"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "timezone('utc'::text, now())"
+            },
+            {
+                "column": "live_sgpa",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "live_cgpa",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "target",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "required_credit",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "completed_credit",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "taken_in_this_sem",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            },
+            {
+                "column": "credits_left",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.00"
+            }
+        ],
+        "semester_course_marks": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "course_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "section",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "quiz_strategy",
+                "type": "text",
+                "nullable": "YES",
+                "default": "'bestN'::text"
+            },
+            {
+                "column": "quiz_n",
+                "type": "integer",
+                "nullable": "YES",
+                "default": "2"
+            },
+            {
+                "column": "short_quiz_n",
+                "type": "integer",
+                "nullable": "YES",
+                "default": "2"
+            },
+            {
+                "column": "dist_mid",
+                "type": "real",
+                "nullable": "YES",
+                "default": "30.0"
+            },
+            {
+                "column": "dist_final",
+                "type": "real",
+                "nullable": "YES",
+                "default": "40.0"
+            },
+            {
+                "column": "dist_quiz",
+                "type": "real",
+                "nullable": "YES",
+                "default": "10.0"
+            },
+            {
+                "column": "dist_short_quiz",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_assignment",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_presentation",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_viva",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_attendance",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_lab",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_mid",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_final",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_assignment",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_presentation",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_viva",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_attendance",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_lab",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_quizzes",
+                "type": "ARRAY",
+                "nullable": "YES",
+                "default": "'{}'::real[]"
+            },
+            {
+                "column": "obt_short_quizzes",
+                "type": "ARRAY",
+                "nullable": "YES",
+                "default": "'{}'::real[]"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "timezone('utc'::text, now())"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "timezone('utc'::text, now())"
+            },
+            {
+                "column": "grade_goal",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_term_paper",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_class_performance",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_term_paper",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_class_performance",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "marks_data",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "dist_project",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "obt_project",
+                "type": "real",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "semester_course_stats": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "marks_obtained",
+                "type": "real",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "total_possible",
+                "type": "real",
+                "nullable": "YES",
+                "default": "100.0"
+            },
+            {
+                "column": "grade_goal",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "last_updated",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "semester_summaries": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "tgpa",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "cgpa",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "credits_earned",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "total_credits_earned",
+                "type": "numeric",
+                "nullable": "YES",
+                "default": "0.0"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "courses",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'[]'::jsonb"
+            }
+        ],
+        "semesters": [
+            {
+                "column": "code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "title",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "is_active",
+                "type": "boolean",
+                "nullable": "YES",
+                "default": "false"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ],
+        "tasks": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "uuid_generate_v4()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "title",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "course_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "course_name",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "assign_date",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "due_date",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "submission_type",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "type",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "is_completed",
+                "type": "boolean",
+                "nullable": "YES",
+                "default": "false"
+            },
+            {
+                "column": "is_missed",
+                "type": "boolean",
+                "nullable": "YES",
+                "default": "false"
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            },
+            {
+                "column": "track",
+                "type": "text",
+                "nullable": "YES",
+                "default": null
+            }
+        ],
+        "user_drafts": [
+            {
+                "column": "id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": "gen_random_uuid()"
+            },
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "combination_data",
+                "type": "jsonb",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "created_at",
+                "type": "timestamp with time zone",
+                "nullable": "NO",
+                "default": "now()"
+            }
+        ],
+        "user_semester_states": [
+            {
+                "column": "user_id",
+                "type": "uuid",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "semester_code",
+                "type": "text",
+                "nullable": "NO",
+                "default": null
+            },
+            {
+                "column": "weekly_grid_cache",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'{}'::jsonb"
+            },
+            {
+                "column": "progress_summary",
+                "type": "jsonb",
+                "nullable": "YES",
+                "default": "'{}'::jsonb"
+            },
+            {
+                "column": "updated_at",
+                "type": "timestamp with time zone",
+                "nullable": "YES",
+                "default": "now()"
+            }
+        ]
+    },
+    "functions": [
+        {
+            "name": "create_advising_table",
+            "args": "p_semester_code text",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_advising_table(p_semester_code text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_table text := 'advising_' || p_semester_code;\n    v_sql text;\nBEGIN\n    v_sql := format('\n        CREATE TABLE IF NOT EXISTS public.%I (\n            id serial primary key,\n            student_id text,\n            advised_courses jsonb,\n            advising_time timestamp\n        );\n        ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;\n        GRANT ALL ON TABLE public.%I TO anon, authenticated, service_role;\n    ', v_table, v_table, v_table);\n    EXECUTE v_sql;\n\n    BEGIN\n        EXECUTE format('CREATE POLICY \"all_access_%s\" ON public.%I FOR ALL USING (true) WITH CHECK (true);', p_semester_code, v_table);\n    EXCEPTION WHEN duplicate_object THEN null; END;\n\n    NOTIFY pgrst, 'reload schema';\nEND;\n$function$\n"
+        },
+        {
+            "name": "create_calendar_table",
+            "args": "p_semester_code text",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_calendar_table(p_semester_code text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_table text := 'calendar_' || p_semester_code;\n    v_sql text;\nBEGIN\n    v_sql := format('\n        CREATE TABLE IF NOT EXISTS public.%I (\n            id serial primary key,\n            event_name text,\n            start_date date,\n            end_date date,\n            event_type text,\n            remarks text\n        );\n        ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;\n        GRANT SELECT ON TABLE public.%I TO anon, authenticated;\n        GRANT ALL ON TABLE public.%I TO service_role;\n    ', v_table, v_table, v_table, v_table);\n    EXECUTE v_sql;\n\n    BEGIN\n        EXECUTE format('CREATE POLICY \"public_read_%s\" ON public.%I FOR SELECT USING (true);', p_semester_code, v_table);\n    EXCEPTION WHEN duplicate_object THEN null; END;\n\n    NOTIFY pgrst, 'reload schema';\nEND;\n$function$\n"
+        },
+        {
+            "name": "create_course_table",
+            "args": "p_semester_code text",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_course_table(p_semester_code text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_table text := 'courses_' || p_semester_code;\n    v_sql text;\nBEGIN\n    v_sql := format('\n        CREATE TABLE IF NOT EXISTS public.%I (\n            id uuid DEFAULT gen_random_uuid() PRIMARY KEY,\n            course_code text,\n            original_code text,\n            section_number text,\n            faculty_initials text,\n            capacity text,\n            schedule_data jsonb,\n            course_name text,\n            credit_val numeric\n        );\n        ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;\n        GRANT SELECT ON TABLE public.%I TO anon, authenticated;\n        GRANT ALL ON TABLE public.%I TO service_role;\n    ', v_table, v_table, v_table, v_table);\n    EXECUTE v_sql;\n    \n    BEGIN\n        EXECUTE format('CREATE POLICY \"public_read_%s\" ON public.%I FOR SELECT USING (true);', p_semester_code, v_table);\n    EXCEPTION WHEN duplicate_object THEN null; END;\n\n    NOTIFY pgrst, 'reload schema';\nEND;\n$function$\n"
+        },
+        {
+            "name": "create_exam_table",
+            "args": "p_semester_code text",
+            "definition": "CREATE OR REPLACE FUNCTION public.create_exam_table(p_semester_code text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    v_table text := 'exams_' || p_semester_code;\n    v_sql text;\nBEGIN\n    v_sql := format('\n        CREATE TABLE IF NOT EXISTS public.%I (\n            id serial primary key,\n            course_code text,\n            exam_date date,\n            start_time time,\n            end_time time,\n            room text\n        );\n        ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;\n        GRANT SELECT ON TABLE public.%I TO anon, authenticated;\n        GRANT ALL ON TABLE public.%I TO service_role;\n    ', v_table, v_table, v_table, v_table);\n    EXECUTE v_sql;\n\n    BEGIN\n        EXECUTE format('CREATE POLICY \"public_read_%s\" ON public.%I FOR SELECT USING (true);', p_semester_code, v_table);\n    EXCEPTION WHEN duplicate_object THEN null; END;\n\n    NOTIFY pgrst, 'reload schema';\nEND;\n$function$\n"
+        },
+        {
+            "name": "enable_rls_on_new_table",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.enable_rls_on_new_table()\n RETURNS event_trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    obj record;\nBEGIN\n    FOR obj IN SELECT * FROM pg_event_trigger_ddl_commands()\n    LOOP\n        IF obj.object_type = 'table' AND obj.schema_name = 'public' THEN\n            EXECUTE format('ALTER TABLE %I.%I ENABLE ROW LEVEL SECURITY', obj.schema_name, obj.object_identity);\n        END IF;\n    END LOOP;\nEND;\n$function$\n"
+        },
+        {
+            "name": "exec_sql",
+            "args": "sql_query text",
+            "definition": "CREATE OR REPLACE FUNCTION public.exec_sql(sql_query text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\n            BEGIN\n                EXECUTE sql_query;\n            END;\n            $function$\n"
+        },
+        {
+            "name": "get_grade_point",
+            "args": "p_semester_code text, p_grade text",
+            "definition": "CREATE OR REPLACE FUNCTION public.get_grade_point(p_semester_code text, p_grade text)\n RETURNS numeric\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    v_year int;\n    v_season text;\n    v_policy text;\n    v_point numeric;\n    v_clean_sem text;\n    v_digit_str text;\nBEGIN\n    v_clean_sem := trim(p_semester_code);\n    \n    -- Extract year and season\n    IF v_clean_sem LIKE '%_%' THEN\n        v_year := COALESCE(NULLIF(split_part(v_clean_sem, '_', 2), ''), '0')::int;\n        v_season := lower(split_part(v_clean_sem, '_', 1));\n    ELSE\n        -- Handle 'Spring2026' or similar\n        -- Use \\D to match non-digits\n        v_digit_str := regexp_replace(v_clean_sem, '\\D', '', 'g');\n        \n        IF v_digit_str IS NULL OR v_digit_str = '' THEN\n            v_year := 0;\n        ELSE\n            v_year := v_digit_str::int;\n        END IF;\n        \n        v_season := lower(regexp_replace(v_clean_sem, '[0-9]', '', 'g'));\n    END IF;\n\n    -- Determine Policy\n    IF v_year = 0 THEN\n        v_policy := 'modern'; \n    ELSIF v_year < 2023 THEN\n        v_policy := 'legacy';\n    ELSIF v_year = 2023 THEN\n        IF v_season IN ('spring', 'summer') THEN\n            v_policy := 'legacy';\n        ELSE\n            v_policy := 'modern';\n        END IF;\n    ELSE\n        v_policy := 'modern';\n    END IF;\n\n    -- Fetch from grade_scale\n    SELECT point INTO v_point FROM grade_scale WHERE grade = p_grade AND policy = v_policy LIMIT 1;\n    \n    RETURN COALESCE(v_point, 0.00);\nEND;\n$function$\n"
+        },
+        {
+            "name": "handle_enrollment_sync",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.handle_enrollment_sync()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  service_key TEXT := 'YOUR_SERVICE_ROLE_KEY'; -- Replace with your Service Role Key\r\n  project_url TEXT := 'https://YOUR_PROJECT_ID.supabase.co'; -- Replace with your Project URL\r\nBEGIN\r\n  PERFORM\r\n    net.http_post(\r\n      url := project_url || '/functions/v1/sync-schedule',\r\n      headers := jsonb_build_object(\r\n        'Content-Type', 'application/json',\r\n        'Authorization', 'Bearer ' || service_key\r\n      ),\r\n      body := jsonb_build_object('user_id', COALESCE(NEW.user_id, OLD.user_id))\r\n    );\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+            "name": "handle_semester_switch_sync",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.handle_semester_switch_sync()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\r\nDECLARE\r\n  service_key TEXT := 'YOUR_SERVICE_ROLE_KEY';\r\n  project_url TEXT := 'https://YOUR_PROJECT_ID.supabase.co';\r\nBEGIN\r\n  -- Only trigger if the current_semester_code actually changed\r\n  IF (OLD.current_semester_code IS DISTINCT FROM NEW.current_semester_code) THEN\r\n    PERFORM\r\n      net.http_post(\r\n        url := project_url || '/functions/v1/sync-semester-summary',\r\n        headers := jsonb_build_object(\r\n          'Content-Type', 'application/json',\r\n          'Authorization', 'Bearer ' || service_key\r\n        ),\r\n        body := jsonb_build_object('track', NEW.track)\r\n      );\r\n  END IF;\r\n  RETURN NEW;\r\nEND;\r\n$function$\n"
+        },
+        {
+            "name": "promote_active_semester",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.promote_active_semester()\n RETURNS void\n LANGUAGE plpgsql\nAS $function$\nBEGIN\n    UPDATE active_semester \n    SET current_semester_code = next_semester_code,\n        updated_at = now()\n    WHERE next_semester_code IS NOT NULL AND next_semester_code <> '';\nEND;\n$function$\n"
+        },
+        {
+            "name": "shift_enrollments_by_track",
+            "args": "p_track text, p_semester_code text, p_new_status text",
+            "definition": "CREATE OR REPLACE FUNCTION public.shift_enrollments_by_track(p_track text, p_semester_code text, p_new_status text)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    UPDATE enrollments e\n    SET status = p_new_status,\n        grade = NULL\n    FROM profiles p\n    WHERE e.user_id = p.id\n    AND p.track = p_track\n    AND e.semester_code = p_semester_code\n    AND e.status = 'upcoming';\nEND;\n$function$\n"
+        },
+        {
+            "name": "sync_bulk_profile_enrollments",
+            "args": "p_track text, p_semester text, p_user_id uuid DEFAULT NULL::uuid",
+            "definition": "CREATE OR REPLACE FUNCTION public.sync_bulk_profile_enrollments(p_track text, p_semester text, p_user_id uuid DEFAULT NULL::uuid)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nBEGIN\n    WITH enrolled_agg AS (\n        SELECT \n            e.user_id,\n            array_agg(DISTINCT p_semester || '_' || e.course_code || '_N/A') as ids\n        FROM enrollments e\n        WHERE e.semester_code = p_semester\n        AND (p_user_id IS NULL OR e.user_id = p_user_id)\n        GROUP BY e.user_id\n    )\n    UPDATE profiles p\n    SET enrolled_sections = COALESCE(ea.ids, '{}')\n    FROM enrolled_agg ea\n    WHERE p.id = ea.user_id\n    AND p.track = p_track\n    AND (p_user_id IS NULL OR p.id = p_user_id);\n    \n    -- Also clear for users with NO enrollments in the active semester\n    IF p_user_id IS NULL THEN\n        UPDATE profiles p\n        SET enrolled_sections = '{}'\n        WHERE p.track = p_track\n        AND NOT EXISTS (\n            SELECT 1 FROM enrollments e \n            WHERE e.user_id = p.id \n            AND e.semester_code = p_semester\n        );\n    ELSE\n        UPDATE profiles p\n        SET enrolled_sections = '{}'\n        WHERE p.id = p_user_id\n        AND NOT EXISTS (\n            SELECT 1 FROM enrollments e \n            WHERE e.user_id = p.id \n            AND e.semester_code = p_semester\n        );\n    END IF;\nEND;\n$function$\n"
+        },
+        {
+            "name": "sync_profile_enrolled_sections",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.sync_profile_enrolled_sections()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n    user_track text;\n    active_sem text;\n    enrolled_ids text[];\nBEGIN\n    -- 1. Get user's track\n    SELECT track INTO user_track FROM profiles WHERE id = COALESCE(NEW.user_id, OLD.user_id);\n    IF user_track IS NULL THEN\n        user_track := 'tri_semester'; -- Fallback\n    END IF;\n\n    -- 2. Get current active semester for that track\n    SELECT initcap(replace(replace(lower(current_semester_code), ' ', ''), '_', ''))\n    INTO active_sem\n    FROM active_semester\n    WHERE track = user_track::\"public\".\"academic_track\"; -- FIXED Type from track_type\n\n    IF active_sem IS NULL THEN\n        RETURN COALESCE(NEW, OLD);\n    END IF;\n\n    -- 3. Aggregate course references for the active semester\n    -- Fix: Joining on course_code instead of code\n    EXECUTE format(\n        'SELECT array_agg(DISTINCT %L || %L || e.course_code || %L || COALESCE(c.section_number, %L)) ' ||\n        'FROM enrollments e ' ||\n        'LEFT JOIN %I c ON e.course_code = c.course_code ' || -- FIXED column name: course_code\n        'WHERE e.user_id = %L AND initcap(replace(replace(lower(e.semester_code), %L, %L), %L, %L)) = %L',\n        active_sem, '_', '_', 'N/A',\n        'courses_' || lower(active_sem),\n        COALESCE(NEW.user_id, OLD.user_id), ' ', '', '_', '', active_sem\n    ) INTO enrolled_ids;\n\n    -- 4. Update profiles\n    UPDATE profiles\n    SET enrolled_sections = COALESCE(enrolled_ids, '{}')\n    WHERE id = COALESCE(NEW.user_id, OLD.user_id);\n\n    RETURN COALESCE(NEW, OLD);\nEND;\n$function$\n"
+        },
+        {
+            "name": "trg_notify_academic_sync",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trg_notify_academic_sync()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\n    BEGIN\n        PERFORM\n          net.http_post(\n            url := 'https://jwygjihrbwxhehijldiz.supabase.co/functions/v1/sync-academic-stats',\n            headers := jsonb_build_object(\n              'Content-Type', 'application/json',\n              'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_KEY'\n            ),\n            body := jsonb_build_object('user_id', COALESCE(NEW.user_id, OLD.user_id))\n          );\n        RETURN NULL;\n    END;\n    $function$\n"
+        },
+        {
+            "name": "trg_notify_schedule_sync",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trg_notify_schedule_sync()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n  payload JSONB;\nBEGIN\n  -- We always notify for the affected user\n  payload := jsonb_build_object(\n    'user_id', COALESCE(NEW.user_id, OLD.user_id)\n  );\n\n  PERFORM\n    net.http_post(\n      url := 'https://jwygjihrbwxhehijldiz.supabase.co/functions/v1/sync-schedule',\n      headers := jsonb_build_object(\n        'Content-Type', 'application/json',\n        'Authorization', 'Bearer REDACTED_SUPABASE_SERVICE_ROLE_KEY'\n      ),\n      body := payload\n    );\n  \n  RETURN NULL;\nEND;\n$function$\n"
+        },
+        {
+            "name": "trg_shift_enrollment",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trg_shift_enrollment()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\nDECLARE\n    v_credits numeric;\n    v_gp numeric;\nBEGIN\n    -- Only shift if grade is updated from NULL to a value (or changed)\n    -- AND NOT an ongoing/future placeholder (though usually they are NULL)\n    IF NEW.grade IS NOT NULL AND (OLD.grade IS NULL OR OLD.grade != NEW.grade) THEN\n        \n        -- 1. Get Credits from course_metadata\n        SELECT credit_val INTO v_credits FROM course_metadata WHERE code = NEW.course_code LIMIT 1;\n        IF v_credits IS NULL THEN v_credits := 3.0; END IF; -- Default\n        \n        -- 2. Get Grade Point\n        v_gp := get_grade_point(NEW.semester_code, NEW.grade);\n        \n        -- 3. Insert into completed_courses\n        INSERT INTO completed_courses (user_id, course_code, semester_code, grade, credits, grade_point)\n        VALUES (NEW.user_id, NEW.course_code, NEW.semester_code, NEW.grade, v_credits, v_gp)\n        ON CONFLICT (user_id, course_code, semester_code) DO UPDATE \n        SET grade = EXCLUDED.grade, credits = EXCLUDED.credits, grade_point = EXCLUDED.grade_point;\n        \n        -- 4. Delete from enrollments\n        DELETE FROM enrollments WHERE id = NEW.id;\n        \n        RETURN NULL; -- Row is deleted, so return NULL to signal completion of action\n    END IF;\n    \n    RETURN NEW;\nEND;\n$function$\n"
+        },
+        {
+            "name": "trigger_sync_schedule",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trigger_sync_schedule()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  host_header text;\n  service_key text;\n  dest_url text;\nBEGIN\n  -- 1. Try to get host from request headers (PostgREST)\n  BEGIN\n    host_header := current_setting('request.headers', true)::json->>'host';\n  EXCEPTION WHEN OTHERS THEN\n    host_header := 'jwygjihrbwxhehijldiz.supabase.co'; -- Fallback to project-specific host\n  END;\n\n  IF host_header IS NULL THEN\n    host_header := 'jwygjihrbwxhehijldiz.supabase.co';\n  END IF;\n\n  dest_url := 'https://' || host_header || '/functions/v1/sync-schedule';\n\n  -- 2. Trigger the Edge Function\n  -- Note: service_role_key is usually available as a secret in vault or env\n  PERFORM\n    net.http_post(\n      url := dest_url,\n      headers := jsonb_build_object(\n        'Content-Type', 'application/json',\n        'Authorization', 'Bearer ' || COALESCE(current_setting('app.settings.service_role_key', true), 'SERVICE_ROLE_KEY_HERE')\n      ),\n      body := jsonb_build_object('user_id', COALESCE(NEW.user_id, OLD.user_id))\n    );\n  RETURN NEW;\nEND;\n$function$\n"
+        },
+        {
+            "name": "trigger_track_sync",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.trigger_track_sync()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\nAS $function$\nDECLARE\n  host_header text;\n  dest_url text;\nBEGIN\n  -- 1. Try to get host from request headers (PostgREST)\n  BEGIN\n    host_header := current_setting('request.headers', true)::json->>'host';\n  EXCEPTION WHEN OTHERS THEN\n    host_header := 'jwygjihrbwxhehijldiz.supabase.co'; -- Fallback\n  END;\n\n  IF host_header IS NULL THEN\n    host_header := 'jwygjihrbwxhehijldiz.supabase.co';\n  END IF;\n\n  -- 1. Trigger sync-schedule\n  PERFORM\n    net.http_post(\n      url := 'https://jwygjihrbwxhehijldiz.supabase.co/functions/v1/sync-schedule',\n      headers := '{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTEwNDE3NCwiZXhwIjoyMDg2NjgwMTc0fQ.REDACTED_KEY\"}'::jsonb,\n      body := jsonb_build_object('track', NEW.track)\n    );\n\n  -- 2. Trigger sync-semester-meta (new)\n  PERFORM\n    net.http_post(\n      url := 'https://jwygjihrbwxhehijldiz.supabase.co/functions/v1/sync-semester-meta',\n      headers := '{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTEwNDE3NCwiZXhwIjoyMDg2NjgwMTc0fQ.REDACTED_KEY\"}'::jsonb,\n      body := jsonb_build_object('record', jsonb_build_object('track', NEW.track, 'current_semester_code', NEW.current_semester_code))\n    );\n\n  -- 3. Trigger sync-profile-cache (new)\n  PERFORM\n    net.http_post(\n      url := 'https://jwygjihrbwxhehijldiz.supabase.co/functions/v1/sync-profile-cache',\n      headers := '{\"Content-Type\": \"application/json\", \"Authorization\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTEwNDE3NCwiZXhwIjoyMDg2NjgwMTc0fQ.REDACTED_KEY\"}'::jsonb,\n      body := jsonb_build_object('track', NEW.track)\n    );\n\n  RETURN NEW;\nEND;\n$function$\n"
+        },
+        {
+            "name": "update_timestamp",
+            "args": "",
+            "definition": "CREATE OR REPLACE FUNCTION public.update_timestamp()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\r\nBEGIN\r\n    NEW.updated_at = NOW();\r\n    RETURN NEW;\r\nEND;\r\n$function$\n"
+        }
+    ],
+    "triggers": [
+        {
+            "name": "completed_courses_sync_trigger",
+            "table": "completed_courses",
+            "definition": "EXECUTE FUNCTION trg_notify_academic_sync()",
+            "timing": "AFTER",
+            "event": "INSERT"
+        },
+        {
+            "name": "completed_courses_sync_trigger",
+            "table": "completed_courses",
+            "definition": "EXECUTE FUNCTION trg_notify_academic_sync()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "completed_courses_sync_trigger",
+            "table": "completed_courses",
+            "definition": "EXECUTE FUNCTION trg_notify_academic_sync()",
+            "timing": "AFTER",
+            "event": "DELETE"
+        },
+        {
+            "name": "enrollments_schedule_sync_trigger",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trg_notify_schedule_sync()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "enrollments_schedule_sync_trigger",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trg_notify_schedule_sync()",
+            "timing": "AFTER",
+            "event": "INSERT"
+        },
+        {
+            "name": "enrollments_schedule_sync_trigger",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trg_notify_schedule_sync()",
+            "timing": "AFTER",
+            "event": "DELETE"
+        },
+        {
+            "name": "enrollments_shift_trigger",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trg_shift_enrollment()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "on_enrollment_change",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trigger_sync_schedule()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "on_enrollment_change",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trigger_sync_schedule()",
+            "timing": "AFTER",
+            "event": "DELETE"
+        },
+        {
+            "name": "on_enrollment_change",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION trigger_sync_schedule()",
+            "timing": "AFTER",
+            "event": "INSERT"
+        },
+        {
+            "name": "on_semester_change",
+            "table": "active_semester",
+            "definition": "EXECUTE FUNCTION trigger_track_sync()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "on_semester_switch",
+            "table": "active_semester",
+            "definition": "EXECUTE FUNCTION handle_semester_switch_sync()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "sync_enrollments_updated",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION update_timestamp()",
+            "timing": "BEFORE",
+            "event": "UPDATE"
+        },
+        {
+            "name": "sync_fcm_tokens_updated",
+            "table": "fcm_tokens",
+            "definition": "EXECUTE FUNCTION update_timestamp()",
+            "timing": "BEFORE",
+            "event": "UPDATE"
+        },
+        {
+            "name": "sync_profiles_updated",
+            "table": "profiles",
+            "definition": "EXECUTE FUNCTION update_timestamp()",
+            "timing": "BEFORE",
+            "event": "UPDATE"
+        },
+        {
+            "name": "sync_scholarship_policies_updated",
+            "table": "scholarship_policies",
+            "definition": "EXECUTE FUNCTION update_timestamp()",
+            "timing": "BEFORE",
+            "event": "UPDATE"
+        },
+        {
+            "name": "trg_sync_profile_enrollments",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION sync_profile_enrolled_sections()",
+            "timing": "AFTER",
+            "event": "DELETE"
+        },
+        {
+            "name": "trg_sync_profile_enrollments",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION sync_profile_enrolled_sections()",
+            "timing": "AFTER",
+            "event": "UPDATE"
+        },
+        {
+            "name": "trg_sync_profile_enrollments",
+            "table": "enrollments",
+            "definition": "EXECUTE FUNCTION sync_profile_enrolled_sections()",
+            "timing": "AFTER",
+            "event": "INSERT"
+        }
+    ]
+}

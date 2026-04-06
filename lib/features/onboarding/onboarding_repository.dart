@@ -172,6 +172,7 @@ _ref.invalidate(profileProvider);
         _client.functions.invoke('sync-schedule', body: {'user_id': user.id}),
       ]);
     } catch (e) {
+      debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
     }
   }
 
@@ -334,6 +335,7 @@ _ref.invalidate(profileProvider);
               onConflict: 'user_id, course_code, semester_code',
             );
       } catch (e) {
+        print("Enrollment Insert Error: $e");
       }
     }
 

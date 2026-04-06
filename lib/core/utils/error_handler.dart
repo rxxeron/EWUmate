@@ -9,6 +9,7 @@ class ErrorHandler {
         ? '[$context] Error: $errorMessage'
         : 'Error: $errorMessage';
 
+    debugPrint(logMessage);
 
     // Return user-friendly message (don't expose internal details)
     if (error is Exception) {

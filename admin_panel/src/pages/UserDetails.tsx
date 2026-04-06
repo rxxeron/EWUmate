@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, RefreshCw, Users, BookOpen, History, CheckCircle2, Clipboard } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Users, CheckCircle2, Clipboard } from 'lucide-react';
 
 export function UserDetails() {
   const { id } = useParams<{ id: string }>();

@@ -1,12 +1,12 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, FileType, CheckCircle, AlertCircle, Loader2, Trash2, FolderPen } from 'lucide-react';
 
 interface StorageFile {
   name: string;
-  id: string;
-  metadata: { size: number; mimetype: string };
-  created_at: string;
+  id: string | null;
+  metadata: any;
+  created_at: string | null;
 }
 
 export function FileParser() {
@@ -14,7 +14,6 @@ export function FileParser() {
   const [parseType, setParseType] = useState<string>('exam');
   const [status, setStatus] = useState<'idle' | 'parsing' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
-  const [results, setResults] = useState<any>(null);
   
   const [activeSemester, setActiveSemester] = useState('');
   const [customFileName, setCustomFileName] = useState('');
@@ -277,12 +276,12 @@ let folderName = 'misc';
                 </h3>
                 <p className="text-sm mt-1">{message}</p>
 
-                {status === 'success' && results && (
+                {status === 'success' && (
                   <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">Server Response:</p>
-                    <pre className="text-xs bg-white/50 p-3 rounded border border-emerald-100 overflow-x-auto">
-                      {JSON.stringify(results, null, 2)}
-                    </pre>
+                    <p className="text-sm font-medium mb-2">Backend Confirmation:</p>
+                    <p className="text-xs bg-white/50 p-3 rounded border border-emerald-100 overflow-x-auto italic">
+                      Document successfully received and queued for processing.
+                    </p>
                   </div>
                 )}
               </div>
@@ -333,7 +332,7 @@ let folderName = 'misc';
                             <p className="text-sm font-medium text-gray-900 truncate" title={f.name}>{f.name}</p>
                             <p className="text-xs text-gray-500 mt-0.5">
                               {f.metadata ? `${(f.metadata.size / 1024).toFixed(1)} KB` : 'Unknown size'} • 
-                              {new Date(f.created_at).toLocaleDateString()}
+                              {f.created_at ? new Date(f.created_at).toLocaleDateString() : 'Unknown Date'}
                             </p>
                           </div>
                         </div>

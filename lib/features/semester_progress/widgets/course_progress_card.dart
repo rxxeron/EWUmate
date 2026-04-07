@@ -73,16 +73,15 @@ class CourseProgressCard extends StatelessWidget {
     String grade = 'F';
     Color gradeColor = const Color(0xFFF43F5E); // Red
     
-    if (totalObtained >= 93) { grade = 'A'; gradeColor = Colors.cyanAccent; }
-    else if (totalObtained >= 90) { grade = 'A-'; gradeColor = Colors.cyanAccent; }
-    else if (totalObtained >= 87) { grade = 'B+'; gradeColor = Colors.cyanAccent; }
-    else if (totalObtained >= 83) { grade = 'B'; gradeColor = Colors.cyanAccent; }
-    else if (totalObtained >= 80) { grade = 'B-'; gradeColor = Colors.cyanAccent; }
-    else if (totalObtained >= 77) { grade = 'C+'; gradeColor = Colors.orangeAccent; }
-    else if (totalObtained >= 73) { grade = 'C'; gradeColor = Colors.orangeAccent; }
-    else if (totalObtained >= 70) { grade = 'C-'; gradeColor = Colors.orangeAccent; }
-    else if (totalObtained >= 67) { grade = 'D+'; gradeColor = Colors.orangeAccent; }
-    else if (totalObtained >= 60) { grade = 'D'; gradeColor = Colors.orangeAccent; }
+    if (totalMark >= 80) { grade = 'A+'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 75) { grade = 'A'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 70) { grade = 'A-'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 65) { grade = 'B+'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 60) { grade = 'B'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 55) { grade = 'B-'; gradeColor = Colors.cyanAccent; }
+    else if (totalMark >= 50) { grade = 'C+'; gradeColor = Colors.orangeAccent; }
+    else if (totalMark >= 45) { grade = 'C'; gradeColor = Colors.orangeAccent; }
+    else if (totalMark >= 40) { grade = 'D'; gradeColor = Colors.orangeAccent; }
     else { grade = 'F'; gradeColor = const Color(0xFFF43F5E); }
 
     return GestureDetector(

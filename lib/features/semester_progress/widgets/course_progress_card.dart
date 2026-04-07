@@ -17,7 +17,33 @@ class CourseProgressCard extends StatelessWidget {
     final code = courseData['course_code'] ?? 'Course';
     final name = courseName ?? 'Course Full Name';
     
-    // Calculate total percentage (assuming out of 100)
+    // Total calculation mirroring detail screen logic
+    double _calculateQuizValue(List<dynamic>? qArr, String strategy, int n, double maxMark) {
+      if (qArr == null || qArr.isEmpty) return 0.0;
+      List<double> marks = qArr.map((q) => (q as num).toDouble()).toList();
+      marks.sort((a, b) => b.compareTo(a));
+
+      double total = 0.0;
+      if (strategy == 'best_one') {
+        total = marks.first;
+      } else if (strategy == 'best_n') {
+        for (int i = 0; i < n && i < marks.length; i++) total += marks[i];
+      } else if (strategy == 'average_n' || strategy == 'n_average') {
+        double sum = 0;
+        int count = 0;
+        for (int i = 0; i < n && i < marks.length; i++) {
+          sum += marks[i];
+          count++;
+        }
+        total = count > 0 ? sum / count : 0;
+      } else if (strategy == 'average_all') {
+        total = marks.reduce((a, b) => a + b) / marks.length;
+      } else if (strategy == 'sum_all') {
+        total = marks.reduce((a, b) => a + b);
+      }
+      return total > maxMark ? maxMark : total;
+    }
+
     double totalObtained = 0.0;
     totalObtained += (courseData['obt_mid'] as num?)?.toDouble() ?? 0.0;
     totalObtained += (courseData['obt_final'] as num?)?.toDouble() ?? 0.0;
@@ -29,23 +55,35 @@ class CourseProgressCard extends StatelessWidget {
     totalObtained += (courseData['obt_term_paper'] as num?)?.toDouble() ?? 0.0;
     totalObtained += (courseData['obt_lab'] as num?)?.toDouble() ?? 0.0;
     totalObtained += (courseData['obt_class_performance'] as num?)?.toDouble() ?? 0.0;
-    
-    final List<dynamic>? qArr = courseData['obt_quizzes'];
-    if (qArr != null) {
-      totalObtained += qArr.fold(0.0, (sum, item) => sum + (item as num).toDouble());
-    }
-    final List<dynamic>? sqArr = courseData['obt_short_quizzes'];
-    if (sqArr != null) {
-      totalObtained += sqArr.fold(0.0, (sum, item) => sum + (item as num).toDouble());
-    }
+
+    final String qStrategy = courseData['quiz_strategy'] ?? 'best_one';
+    final int qN = (courseData['quiz_n'] as num?)?.toInt() ?? 1;
+    final double qMax = (courseData['dist_quiz'] as num?)?.toDouble() ?? 0.0;
+    totalObtained += _calculateQuizValue(courseData['obt_quizzes'], qStrategy, qN, qMax);
+
+    final Map<String, dynamic>? extra = courseData['marks_data'] as Map<String, dynamic>?;
+    final String sqStrategy = extra?['short_quiz_strategy'] ?? 'best_one';
+    final int sqN = (courseData['short_quiz_n'] as num?)?.toInt() ?? 1;
+    final double sqMax = (courseData['dist_short_quiz'] as num?)?.toDouble() ?? 0.0;
+    totalObtained += _calculateQuizValue(courseData['obt_short_quizzes'], sqStrategy, sqN, sqMax);
 
     final String percentageText = totalObtained.toStringAsFixed(1) + '%';
     
     // Logic for grade badge (placeholder logic based on percentage)
     String grade = 'F';
     Color gradeColor = const Color(0xFFF43F5E); // Red
-    if (totalObtained >= 80) { grade = 'A+'; gradeColor = Colors.greenAccent; }
-    else if (totalObtained >= 40) { grade = 'D'; gradeColor = Colors.orangeAccent; }
+    
+    if (totalObtained >= 93) { grade = 'A'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 90) { grade = 'A-'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 87) { grade = 'B+'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 83) { grade = 'B'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 80) { grade = 'B-'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 77) { grade = 'C+'; gradeColor = Colors.orangeAccent; }
+    else if (totalObtained >= 73) { grade = 'C'; gradeColor = Colors.orangeAccent; }
+    else if (totalObtained >= 70) { grade = 'C-'; gradeColor = Colors.orangeAccent; }
+    else if (totalObtained >= 67) { grade = 'D+'; gradeColor = Colors.orangeAccent; }
+    else if (totalObtained >= 60) { grade = 'D'; gradeColor = Colors.orangeAccent; }
+    else { grade = 'F'; gradeColor = const Color(0xFFF43F5E); }
 
     return GestureDetector(
       onTap: onTap,

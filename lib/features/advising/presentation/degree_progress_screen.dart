@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,24 +18,6 @@ class DegreeProgressScreen extends ConsumerStatefulWidget {
 }
 
 class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
-  Timer? _refreshTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
-      if (mounted) {
-        ref.invalidate(profileRepositoryProvider);
-        ref.invalidate(allSemesterSummariesProvider);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
   String _formatSemester(String? semester) {
     if (semester == null || semester.isEmpty) return "Unknown";
     return semester.replaceAll('_', ' ').split(' ').map((word) {
@@ -81,40 +62,23 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.cyan),
-            onPressed: () async {
-              await context.push('/onboarding/course-history', extra: true);
-              ref.invalidate(allSemesterSummariesProvider);
-              ref.invalidate(academicStateProvider);
+            onPressed: () {
+              context.push('/onboarding/course-history', extra: true);
             },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(profileRepositoryProvider);
-          ref.invalidate(allSemesterSummariesProvider);
-          ref.invalidate(academicStateProvider);
-          await Future.delayed(const Duration(milliseconds: 500));
-        },
-        color: Colors.cyan,
-        backgroundColor: const Color(0xFF1E2836),
-        child: StreamBuilder<Profile?>(
-          stream: profileStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator(color: Colors.cyan));
-            }
+      body: StreamBuilder<Profile?>(
+        stream: profileStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.cyan));
+          }
 
-            final profile = snapshot.data;
-            if (profile == null) {
-              return const SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: 500,
-                  child: Center(child: Text('Profile not found.', style: TextStyle(color: Colors.white))),
-                ),
-              );
-            }
+          final profile = snapshot.data;
+          if (profile == null) {
+            return const Center(child: Text('Profile not found.', style: TextStyle(color: Colors.white)));
+          }
 
           final summariesRaw = (semesterSummariesAsync is AsyncData) 
               ? (semesterSummariesAsync as AsyncData<List<SemesterSummary>>).value 
@@ -164,9 +128,8 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
           );
         },
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildProgressCard(Profile profile, double earnedCredits, double requiredCredits, int percent, String programName, String currentTrack) {
     return Container(

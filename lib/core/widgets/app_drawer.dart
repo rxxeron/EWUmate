@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +44,7 @@ class AppDrawer extends ConsumerWidget {
                         radius: 35,
                         backgroundColor: Colors.white.withValues(alpha: 0.2),
                         backgroundImage: (photoURL != null && photoURL.isNotEmpty)
-                            ? CachedNetworkImageProvider(photoURL)
+                            ? NetworkImage(photoURL)
                             : null,
                         child: (photoURL == null || photoURL.isEmpty)
                             ? const Icon(Icons.person,

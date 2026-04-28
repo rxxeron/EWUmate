@@ -266,7 +266,6 @@ class DashboardRepository {
         'dateStr': dateStr,
       };
     } catch (e) {
-      if (kDebugMode) debugPrint('[DashboardRepo] Simplified fetch error: $e');
       rethrow;
     }
   }
@@ -455,38 +454,38 @@ class DashboardRepository {
             .eq('user_id', user.id)
             .eq('semester_code', semesterCode)
             .maybeSingle()
-            .catchError((e) { if (kDebugMode) debugPrint('Error in state fetch: $e'); return null; }),
+            .catchError((e) { debugPrint('Error in state fetch: $e'); return null; }),
         _supabase
             .from('schedule_exceptions')
             .select()
             .eq('user_id', user.id)
             .gte('date', startDateStr)
             .lte('date', endDateStr)
-            .catchError((e) { if (kDebugMode) debugPrint('Error in exceptions fetch: $e'); return []; }),
+            .catchError((e) { debugPrint('Error in exceptions fetch: $e'); return []; }),
         _supabase
             .from(standardTable)
             .select()
             .gte('event_date', startDateStr)
             .lte('event_date', endDateStr)
-            .catchError((e) { if (kDebugMode) debugPrint('Error in standardTable fetch: $e'); return []; }),
+            .catchError((e) { debugPrint('Error in standardTable fetch: $e'); return []; }),
         _supabase
             .from(phrmTable)
             .select()
             .gte('event_date', startDateStr)
             .lte('event_date', endDateStr)
-            .catchError((e) { if (kDebugMode) debugPrint('Error in phrmTable fetch: $e'); return []; }),
+            .catchError((e) { debugPrint('Error in phrmTable fetch: $e'); return []; }),
         _supabase
             .from('active_semester')
             .select('classes_end_date')
             .eq('track', 'tri_semester')
             .maybeSingle()
-            .catchError((e) { if (kDebugMode) debugPrint('Error in tri end_date fetch: $e'); return null; }),
+            .catchError((e) { debugPrint('Error in tri end_date fetch: $e'); return null; }),
         _supabase
             .from('active_semester')
             .select('classes_end_date')
             .eq('track', 'bi_semester')
             .maybeSingle()
-            .catchError((e) { if (kDebugMode) debugPrint('Error in bi end_date fetch: $e'); return null; }),
+            .catchError((e) { debugPrint('Error in bi end_date fetch: $e'); return null; }),
       ]);
 
       var weeklyGrid =
@@ -747,7 +746,6 @@ class DashboardRepository {
       }
       return finalDays;
     } catch (e) {
-      if (kDebugMode) debugPrint('[DashboardRepo] Two Week error: $e');
       return [];
     }
   }

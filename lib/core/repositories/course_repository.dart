@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/course_metadata.dart';
@@ -180,7 +179,7 @@ class CourseRepository {
       
       return unique.values.toList();
     } catch (e) {
-      if (kDebugMode) print('Database Error in getSemesterCourses: $e');
+      print('Database Error in getSemesterCourses: $e');
       return [];
     }
   }

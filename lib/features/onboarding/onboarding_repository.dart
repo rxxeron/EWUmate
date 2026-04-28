@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../auth/auth_providers.dart';
@@ -173,7 +172,7 @@ _ref.invalidate(profileProvider);
         _client.functions.invoke('sync-schedule', body: {'user_id': user.id}),
       ]);
     } catch (e) {
-      if (kDebugMode) debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
+      debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
     }
   }
 
@@ -336,7 +335,7 @@ _ref.invalidate(profileProvider);
               onConflict: 'user_id, course_code, semester_code',
             );
       } catch (e) {
-        if (kDebugMode) print("Enrollment Insert Error: $e");
+        print("Enrollment Insert Error: $e");
       }
     }
 

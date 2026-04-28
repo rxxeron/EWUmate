@@ -6,7 +6,7 @@ import '../../../core/repositories/auth_repository.dart';
 part 'advising_notifier.g.dart';
 
 class AdvisingState {
-  final Map<String, List<String>> selectedCourses;
+  final Set<String> selectedCourses;
   final String? generationId;
   final bool isGenerating;
   final String? error;
@@ -19,7 +19,7 @@ class AdvisingState {
   });
 
   AdvisingState copyWith({
-    Map<String, List<String>>? selectedCourses,
+    Set<String>? selectedCourses,
     String? generationId,
     bool? isGenerating,
     String? error,
@@ -42,30 +42,13 @@ class AdvisingNotifier extends _$AdvisingNotifier {
 
   void toggleCourse(String code) {
     final current = state.selectedCourses;
-    final updated = Map<String, List<String>>.from(current);
-    if (updated.containsKey(code)) {
+    final updated = Set<String>.from(current);
+    if (updated.contains(code)) {
       updated.remove(code);
     } else {
-      updated[code] = [];
+      updated.add(code);
     }
     state = state.copyWith(selectedCourses: updated, error: null);
-  }
-
-  void toggleFaculty(String code, String facultyInitial) {
-    final current = state.selectedCourses;
-    if (!current.containsKey(code)) return;
-    
-    final updated = Map<String, List<String>>.from(current);
-    final faculties = List<String>.from(updated[code]!);
-    
-    if (faculties.contains(facultyInitial)) {
-      faculties.remove(facultyInitial);
-    } else {
-      faculties.add(facultyInitial);
-    }
-    
-    updated[code] = faculties;
-    state = state.copyWith(selectedCourses: updated);
   }
 
   Future<void> startGeneration({
@@ -84,8 +67,7 @@ class AdvisingNotifier extends _$AdvisingNotifier {
       final genId = await apiService.generateSchedules(
         userId: userId,
         semester: semesterClean,
-        courses: state.selectedCourses.keys.toList(),
-        filters: {'selected_faculties': state.selectedCourses},
+        courses: state.selectedCourses.toList(),
       );
 
       state = state.copyWith(

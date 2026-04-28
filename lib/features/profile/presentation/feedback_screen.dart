@@ -1,9 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
@@ -54,7 +51,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('Check app update error: $e');
+      debugPrint('Check app update error: $e');
     }
   }
 
@@ -75,7 +72,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         });
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('Error fetching feedbacks: ');
+      debugPrint('Error fetching feedbacks: ');
     } finally {
       if (mounted) {
         setState(() => _isLoadingFeedbacks = false);

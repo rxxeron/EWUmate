@@ -1,39 +1,14 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 
-class ResultsScreen extends ConsumerStatefulWidget {
+class ResultsScreen extends ConsumerWidget {
   const ResultsScreen({super.key});
 
   @override
-  ConsumerState<ResultsScreen> createState() => _ResultsScreenState();
-}
-
-class _ResultsScreenState extends ConsumerState<ResultsScreen> {
-  Timer? _refreshTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
-      if (mounted) {
-        ref.invalidate(allSemesterSummariesProvider);
-        ref.invalidate(userProfileProvider);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final summariesAsync = ref.watch(allSemesterSummariesProvider);
     final profileStream = user != null
@@ -47,65 +22,46 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(allSemesterSummariesProvider);
-          ref.invalidate(userProfileProvider);
-          await Future.delayed(const Duration(milliseconds: 500));
-        },
-        color: Colors.blueAccent,
-        backgroundColor: const Color(0xFF1E1E2E),
-        child: StreamBuilder(
-          stream: profileStream,
-          builder: (context, profileSnapshot) {
-            final profileData = profileSnapshot.data;
+      body: StreamBuilder(
+        stream: profileStream,
+        builder: (context, profileSnapshot) {
+          final profileData = profileSnapshot.data;
 
-            return summariesAsync.when(
-              data: (summaries) {
-                if (summaries.isEmpty) {
-                  return SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      alignment: Alignment.center,
-                      child: const Text(
-                        "No academic history found.",
-                        style: TextStyle(fontStyle: FontStyle.italic, color: Colors.white54),
-                      ),
-                    ),
-                  );
-                }
-                return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context, profileData),
-                      const Divider(thickness: 1),
-                      const SizedBox(height: 10),
+          return summariesAsync.when(
+            data: (summaries) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(context, profileData),
+                    const Divider(thickness: 1),
+                    const SizedBox(height: 10),
+                    if (summaries.isEmpty)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: Text(
+                            "No academic history found.",
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                        ),
+                      )
+                    else
                       ...summaries.map(
                         (sem) => _buildSemesterBlock(context, sem),
                       ),
-                      const Divider(thickness: 1),
-                      _buildSummary(context, profileData),
-                      const SizedBox(height: 40),
-                    ],
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Container(
-                  height: 500,
-                  alignment: Alignment.center,
-                  child: Text('Offline: Showing cached results', style: const TextStyle(color: Colors.white70)),
+                    const Divider(thickness: 1),
+                    _buildSummary(context, profileData),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error: $e')),
+          );
+        },
       ),
     );
   }

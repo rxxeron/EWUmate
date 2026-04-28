@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -85,7 +84,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
-      if (kDebugMode) debugPrint("Error fetching courses: " + e.toString());
+      debugPrint("Error fetching courses: " + e.toString());
       if (mounted) setState(() => _isLoadingCourses = false);
     }
   }
@@ -177,7 +176,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           dueDate: finalDueDate?.toUtc(),
           semesterCode: 'Spring2026',
         );
-        await taskRepo.updateTask(user!.id, updatedTask);
+        await taskRepo.updateTask(updatedTask);
         ref.invalidate(allTasksStreamProvider);
         if (mounted) {
           Navigator.pop(context, true);
@@ -199,7 +198,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           createdAt: DateTime.now().toUtc(),
         );
 
-        await taskRepo.createTask(user!.id, newTask);
+        await taskRepo.createTask(newTask);
         ref.invalidate(allTasksStreamProvider);
 
         if (mounted) {
@@ -210,7 +209,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint("Error saving task: " + e.toString());
+      debugPrint("Error saving task: " + e.toString());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),

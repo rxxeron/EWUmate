@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,13 +20,13 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    if (kDebugMode) debugPrint('Firebase init error: $e');
+    debugPrint('Firebase init error: $e');
   }
 
   try {
     await SupabaseConfig.initialize();
   } catch (e) {
-    if (kDebugMode) debugPrint('Supabase init error: $e');
+    debugPrint('Supabase init error: $e');
   }
 
   // Set up Firebase Cloud Messaging bindings if user is authenticated natively
@@ -38,12 +37,12 @@ void main() async {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
         FCMService().initialize().catchError((err) {
-          if (kDebugMode) debugPrint('FCM Init Error: $err');
+          debugPrint('FCM Init Error: $err');
         });
       }
     });
   } catch (e) {
-    if (kDebugMode) debugPrint('FCM Auth listener error: $e');
+    debugPrint('FCM Auth listener error: $e');
   }
 
   runApp(

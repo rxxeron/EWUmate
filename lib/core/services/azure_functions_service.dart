@@ -38,13 +38,11 @@ class AzureFunctionsService {
     required String userId,
     required String semester,
     required List<String> courses,
-    Map<String, dynamic>? filters,
   }) async {
     final response = await _postRequest('/api/generate_schedules', {
       'user_id': userId,
       'semester': semester,
       'courses': courses,
-      if (filters != null) 'filters': filters,
     });
     
     // The Python function returns 'generationId' (camelCase)

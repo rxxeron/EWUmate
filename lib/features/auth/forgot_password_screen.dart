@@ -12,85 +12,37 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
-  final _otpController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
-  bool _codeSent = false;
-  bool _passwordVisible = false;
 
-  Future<void> _sendResetCode() async {
+  Future<void> _sendResetLink() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
         _emailController.text.trim(),
+        redirectTo: 'io.supabase.ewumate://reset-password',
       );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Recovery code sent! Check your email."),
+          content: Text("Reset link sent! Check your email."),
           backgroundColor: Colors.cyan,
         ));
-        setState(() => _codeSent = true);
+        context.pop(); // Go back to login
       }
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text("Error: ${e.message}"),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
-          backgroundColor: Colors.red,
-        ));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  Future<void> _verifyAndResetPassword() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _loading = true);
-    try {
-      final response = await Supabase.instance.client.auth.verifyOTP(
-        email: _emailController.text.trim(),
-        token: _otpController.text.trim(),
-        type: OtpType.recovery,
-      );
-
-      if (response.session != null) {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(password: _passwordController.text),
-        );
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text("Password reset successfully!"),
-            backgroundColor: Colors.green,
-          ));
-          context.go('/dashboard'); 
-        }
-      }
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
-          backgroundColor: Colors.red,
-        ));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text("Error: $e"),
           backgroundColor: Colors.red,
         ));
       }
@@ -117,116 +69,51 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                      _codeSent
-                          ? Icons.lock_reset_rounded
-                          : Icons.mark_email_read_rounded,
-                      size: 80,
-                      color: Colors.cyanAccent),
+                  const Icon(Icons.mark_email_read_rounded,
+                      size: 80, color: Colors.cyanAccent),
                   const SizedBox(height: 20),
-                  Text(
-                    _codeSent ? "Reset Password" : "Forgot Password",
-                    style: const TextStyle(
+                  const Text(
+                    "Forgot Password",
+                    style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    _codeSent
-                        ? "Enter the 6-digit code and your new password"
-                        : "We will send a recovery code to your email",
+                  const Text(
+                    "We will send a recovery link to your email",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                   const SizedBox(height: 40),
-                  if (!_codeSent)
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          labelText: "Email Address",
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.email_outlined,
-                              color: Colors.cyanAccent),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                  color: Colors.white.withAlpha(25))),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Colors.cyanAccent)),
-                          filled: true,
-                          fillColor: Colors.white.withAlpha(12)),
-                      validator: (v) => v!.isEmpty || !v.contains('@')
-                          ? "Valid email required"
-                          : null,
-                    ),
-                  if (_codeSent) ...[
-                    TextFormField(
-                      controller: _otpController,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white, letterSpacing: 8, fontSize: 24),
-                      textAlign: TextAlign.center,
-                      decoration: InputDecoration(
-                          labelText: "6-Digit Code",
-                          labelStyle: const TextStyle(color: Colors.white70, letterSpacing: 0, fontSize: 16),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                  color: Colors.white.withAlpha(25))),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Colors.cyanAccent)),
-                          filled: true,
-                          fillColor: Colors.white.withAlpha(12)),
-                      validator: (v) =>
-                          v!.length < 6 ? "Code must be 6 digits" : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: !_passwordVisible,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                          labelText: "New Password",
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: const Icon(Icons.lock_outline,
-                              color: Colors.cyanAccent),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                  color: Colors.white.withAlpha(25))),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide:
-                                  const BorderSide(color: Colors.cyanAccent)),
-                          filled: true,
-                          fillColor: Colors.white.withAlpha(12),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                                _passwordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: Colors.white70),
-                            onPressed: () => setState(
-                                () => _passwordVisible = !_passwordVisible),
-                          )),
-                      validator: (v) =>
-                          v!.length < 6 ? "Min 6 characters required" : null,
-                    ),
-                  ],
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                        labelText: "Email Address",
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        prefixIcon: const Icon(Icons.email_outlined,
+                            color: Colors.cyanAccent),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.1))),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide:
+                                const BorderSide(color: Colors.cyanAccent)),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.05)),
+                    validator: (v) =>
+                        v!.isEmpty || !v.contains('@') ? "Valid email required" : null,
+                  ),
                   const SizedBox(height: 30),
                   SizedBox(
                     width: double.infinity,
                     child: GlassContainer(
-                      onTap: _loading
-                          ? null
-                          : (_codeSent ? _verifyAndResetPassword : _sendResetCode),
-                      color: Colors.cyanAccent.withAlpha(50),
+                      onTap: _loading ? null : _sendResetLink,
+                      color: Colors.cyanAccent.withValues(alpha: 0.2),
                       borderColor: Colors.cyanAccent,
                       borderRadius: 12,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -237,11 +124,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                     color: Colors.cyanAccent, strokeWidth: 2))
-                            : Text(
-                                _codeSent
-                                    ? "Verify & Reset Password"
-                                    : "Send Recovery Code",
-                                style: const TextStyle(
+                            : const Text("Send Reset Link",
+                                style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.cyanAccent)),
@@ -250,16 +134,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {
-                      if (_codeSent) {
-                        setState(() => _codeSent = false);
-                      } else {
-                        context.pop();
-                      }
-                    },
-                    child: Text(
-                        _codeSent ? "Use a different email" : "Back to Login",
-                        style: const TextStyle(color: Colors.white70)),
+                    onPressed: () => context.pop(),
+                    child: const Text("Back to Login",
+                        style: TextStyle(color: Colors.white70)),
                   ),
                 ],
               ),

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,25 +20,16 @@ class CourseBrowserScreen extends ConsumerStatefulWidget {
 
 class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
   late ScrollController _scrollController;
-  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController()..addListener(_onScroll);
-    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
-      if (mounted) {
-        ref.invalidate(userEnrollmentsProvider);
-        ref.invalidate(browserAvailableCoursesProvider);
-        ref.invalidate(paginatedCoursesProvider);
-      }
-    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -133,19 +123,9 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
 
           // 4. Results List
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(browserAvailableCoursesProvider);
-                ref.invalidate(userEnrollmentsProvider);
-                ref.invalidate(courseSearchResultProvider);
-                ref.read(paginatedCoursesProvider.notifier).build();
-              },
-              color: const Color(0xFF00E5FF),
-              backgroundColor: const Color(0xFF1E2836),
-              child: activeTab == 'available' 
-                  ? _buildAvailableList(currentSem) 
-                  : _buildTakenList(),
-            ),
+            child: activeTab == 'available' 
+                ? _buildAvailableList(currentSem) 
+                : _buildTakenList(),
           ),
         ],
       ),

@@ -258,15 +258,16 @@ class _CourseProgressDetailScreenState
   }
 
   String _getExpectedGrade(double totalMark) {
-    if (totalMark >= 80) return 'A+';
-    if (totalMark >= 75) return 'A';
-    if (totalMark >= 70) return 'A-';
-    if (totalMark >= 65) return 'B+';
-    if (totalMark >= 60) return 'B';
-    if (totalMark >= 55) return 'B-';
-    if (totalMark >= 50) return 'C+';
-    if (totalMark >= 45) return 'C';
-    if (totalMark >= 40) return 'D';
+    if (totalMark >= 93) return 'A';
+    if (totalMark >= 90) return 'A-';
+    if (totalMark >= 87) return 'B+';
+    if (totalMark >= 83) return 'B';
+    if (totalMark >= 80) return 'B-';
+    if (totalMark >= 77) return 'C+';
+    if (totalMark >= 73) return 'C';
+    if (totalMark >= 70) return 'C-';
+    if (totalMark >= 67) return 'D+';
+    if (totalMark >= 60) return 'D';
     return 'F';
   }
 

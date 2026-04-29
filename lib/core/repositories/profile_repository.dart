@@ -3,14 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
+import 'package:ewumate/features/dashboard/dashboard_repository.dart';
 
 part 'profile_repository.g.dart';
 
 class ProfileRepository {
   final SupabaseClient _supabase;
   final CacheService _cache;
+  final DashboardRepository _dashboardRepo;
 
-  ProfileRepository(this._supabase, this._cache);
+  ProfileRepository(this._supabase, this._cache, this._dashboardRepo);
 
   Future<Profile?> getProfile(String userId) async {
     // 1. Try cache first
@@ -46,8 +48,17 @@ class ProfileRepository {
 
   Future<void> updateProfile(Profile profile) async {
     try {
-      await _supabase.from('profiles').upsert(profile.toJson());
-      await _cache.cacheProfile(profile.id, profile.toJson());
+      // 1. Sanitize Name (Capitalize each word + trim)
+      final sanitizedName = profile.fullName?.trim().split(' ')
+          .map((word) => word.isNotEmpty 
+              ? word[0].toUpperCase() + word.substring(1).toLowerCase() 
+              : '')
+          .join(' ') ?? '';
+      
+      final sanitizedProfile = profile.copyWith(fullName: sanitizedName);
+
+      await _supabase.from('profiles').upsert(sanitizedProfile.toJson());
+      await _cache.cacheProfile(sanitizedProfile.id, sanitizedProfile.toJson());
     } catch (e) {
       throw Exception('Failed to update profile: $e');
     }
@@ -58,24 +69,44 @@ class ProfileRepository {
     required String courseCode,
     required String semesterCode,
     required String sectionId,
-    required List<String> currentSections,
-  }) async {
-    try {
-      // 1. Update Profile Array
-      final updatedSections = List<String>.from(currentSections)..add(sectionId);
-      
-      await Future.wait([
-        _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
-        _supabase.from('enrollments').insert({
+      required String sectionNumber,
+      required List<String> currentSections,
+    }) async {
+      try {
+        // 1. Update Profile Array
+        final updatedSections = List<String>.from(currentSections)..add(sectionId);
+
+        // 1. Update Profile enrolled_sections sequentially
+        await _supabase
+            .from('profiles')
+            .update({'enrolled_sections': updatedSections})
+            .eq('id', userId);
+
+        // 2. Insert the enrollment record
+        await _supabase.from('enrollments').insert({
           'user_id': userId,
           'course_code': courseCode,
           'semester_code': semesterCode,
           'section_id': sectionId,
+          'section': sectionNumber,
           'status': 'enrolled',
-        }),
-      ]);
-      
-      // Update local cache manually or fetch fresh
+        });
+        
+        // 3. Force Reset Database Weekly Schedule cache (Trigger re-sync)
+        await _supabase
+            .from('user_semester_states')
+            .upsert({
+              'user_id': userId,
+              'semester_code': semesterCode,
+              'weekly_grid_cache': null,
+            }, onConflict: 'user_id,semester_code');
+
+        // 4. Proactive Sync Trigger (Rebuilds dashboard schedule immediately)
+        await _dashboardRepo.syncWeeklySchedule(userId);
+
+        // 4. Clear local Hive enrollment caches
+        _cache.clearEnrollmentCache(userId, semesterCode);
+
       await _fetchAndCache(userId);
     } catch (e) {
       throw Exception('Failed to enroll course: $e');
@@ -85,16 +116,41 @@ class ProfileRepository {
   Future<void> dropCourseSection({
     required String userId,
     required String sectionId,
+    required String semesterCode,
     required List<String> currentSections,
   }) async {
     try {
       final updatedSections = List<String>.from(currentSections)..remove(sectionId);
       
-      await Future.wait([
-        _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
-        _supabase.from('enrollments').delete().eq('user_id', userId).eq('section_id', sectionId),
-      ]);
+      // 1. Update Profile enrolled_sections sequentially
+      await _supabase
+          .from('profiles')
+          .update({'enrolled_sections': updatedSections})
+          .eq('id', userId);
+
+      // 2. Delete the enrollment record
+      await _supabase
+          .from('enrollments')
+          .delete()
+          .eq('user_id', userId)
+          .eq('section_id', sectionId);
       
+      // 3. Force Reset Database Weekly Schedule cache
+      await _supabase
+          .from('user_semester_states')
+          .upsert({
+            'user_id': userId,
+            'semester_code': semesterCode,
+            'weekly_grid_cache': null,
+          }, onConflict: 'user_id,semester_code');
+
+      // 4. Proactive Sync Trigger (Ensures schedule is correct after drop)
+      await _dashboardRepo.syncWeeklySchedule(userId);
+
+      // 4. Clear local Hive caches
+      _cache.clearEnrollmentCache(userId, semesterCode);
+
+      // 4. Force refresh local profile cache
       await _fetchAndCache(userId);
     } catch (e) {
       throw Exception('Failed to drop course: $e');
@@ -107,42 +163,73 @@ class ProfileRepository {
     required String semesterCode,
     required String oldSectionId,
     required String newSectionId,
-    required List<String> currentSections,
-  }) async {
-    try {
-      final updatedSections = List<String>.from(currentSections)
-        ..remove(oldSectionId)
-        ..add(newSectionId);
-      
-      await Future.wait([
-        _supabase.from('profiles').update({'enrolled_sections': updatedSections}).eq('id', userId),
-        _supabase.from('enrollments').delete().eq('user_id', userId).eq('section_id', oldSectionId),
-        _supabase.from('enrollments').insert({
-          'user_id': userId,
-          'course_code': courseCode,
-          'semester_code': semesterCode,
-          'section_id': newSectionId,
-          'status': 'enrolled',
-        }),
-      ]);
-      
+      required String newSectionNumber,
+      required List<String> currentSections,
+    }) async {
+      try {
+        final updatedSections = List<String>.from(currentSections)
+          ..remove(oldSectionId)
+          ..add(newSectionId);
+
+        // 1. Update Profile enrolled_sections
+        await _supabase
+            .from('profiles')
+            .update({'enrolled_sections': updatedSections})
+            .eq('id', userId);
+
+        // 2. Atomic Upsert: Update if exists, otherwise Insert
+        // This is much safer than delete+insert as it handles conflicts natively
+        await _supabase
+            .from('enrollments')
+            .upsert({
+              'user_id': userId,
+              'course_code': courseCode,
+              'semester_code': semesterCode,
+              'section_id': newSectionId,
+              'section': newSectionNumber,
+              'status': 'enrolled', // Ensure it's marked as enrolled
+            }, onConflict: 'user_id,semester_code,course_code');
+
+        // 3. Force Reset Database Weekly Schedule cache
+        await _supabase
+            .from('user_semester_states')
+            .upsert({
+              'user_id': userId,
+              'semester_code': semesterCode,
+              'weekly_grid_cache': null,
+            }, onConflict: 'user_id,semester_code');
+
+        // 4. Proactive Sync Trigger (Ensures new section timing is reflected)
+        await _dashboardRepo.syncWeeklySchedule(userId);
+
+        // 4. Clear local Hive caches
+        _cache.clearEnrollmentCache(userId, semesterCode);
+
       await _fetchAndCache(userId);
     } catch (e) {
       throw Exception('Failed to switch section: $e');
     }
   }
 
-  Stream<Profile?> streamProfile(String userId) {
-    return _supabase
-        .from('profiles')
-        .stream(primaryKey: ['id'])
-        .eq('id', userId)
-        .map((event) {
-          if (event.isEmpty) return null;
+  Stream<Profile?> streamProfile(String userId) async* {
+    final cached = _cache.getCachedProfile(userId);
+    if (cached != null) {
+      yield Profile.fromJson(cached);
+    }
+    try {
+      await for (final event in _supabase
+          .from('profiles')
+          .stream(primaryKey: ['id'])
+          .eq('id', userId)) {
+        if (event.isNotEmpty) {
           final data = event.first;
           _cache.cacheProfile(userId, data);
-          return Profile.fromJson(data);
-        });
+          yield Profile.fromJson(data);
+        }
+      }
+    } catch (e) {
+      // Offline
+    }
   }
 }
 
@@ -150,7 +237,8 @@ class ProfileRepository {
 ProfileRepository profileRepository(ProfileRepositoryRef ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
-  return ProfileRepository(supabase, cache);
+  final dashboardRepo = ref.watch(dashboardRepositoryProvider);
+  return ProfileRepository(supabase, cache, dashboardRepo);
 }
 
 @riverpod

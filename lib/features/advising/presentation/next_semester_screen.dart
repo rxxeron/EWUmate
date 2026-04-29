@@ -24,9 +24,127 @@ class NextSemesterScreen extends ConsumerStatefulWidget {
 class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
   String _searchQuery = "";
   final List<Map<String, String>> _selectedCourses = [];
-  final Map<String, CourseSection> _selectedSections = {}; // section_id -> CourseSection for conflict checking
+  final Map<String, CourseSection> _selectedSections =
+      {}; // section_id -> CourseSection for conflict checking
   bool _isSaving = false;
   bool _isManualMode = false;
+  bool _isLoadingExisting = true;
+  String? _loadedSemCode;
+  int _activeTab = 0; // 0: Available, 1: Selected
+
+  @override
+  void initState() {
+    super.initState();
+    // Load will be triggered by build once we get the active semester
+  }
+
+  Future<void> _loadExistingEnrollments(String nextSemCode) async {
+    if (_loadedSemCode == nextSemCode) return; // already loaded
+    _loadedSemCode = nextSemCode;
+
+    final lowerSemCode = nextSemCode.toLowerCase();
+    try {
+      final user = ref.read(currentUserProvider);
+      if (user == null) {
+        setState(() => _isLoadingExisting = false);
+        return;
+      }
+
+      final response = await Supabase.instance.client
+          .from('enrollments')
+          .select('course_code, section_id, section')
+          .eq('user_id', user.id)
+          .eq('semester_code', nextSemCode)
+          .eq('status', 'upcoming');
+
+      if (!mounted) return;
+
+      if (response != null && response is List && response.isNotEmpty) {
+        final sectionIds = response
+            .map((e) => e['section_id']?.toString() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toList();
+        final courseCodes = response
+            .map((e) => e['course_code']?.toString() ?? '')
+            .where((c) => c.isNotEmpty)
+            .toSet()
+            .toList();
+
+        List<dynamic> sectionsData = [];
+        List<dynamic> metadataData = [];
+
+        if (sectionIds.isNotEmpty) {
+          try {
+            sectionsData = await Supabase.instance.client
+                .from('courses_$lowerSemCode')
+                .select()
+                .inFilter('id', sectionIds);
+          } catch (e) {
+            debugPrint('Failed to fetch section data: $e');
+          }
+        }
+
+        if (courseCodes.isNotEmpty) {
+          try {
+            metadataData = await Supabase.instance.client
+                .from('course_metadata')
+                .select('code, name')
+                .inFilter('code', courseCodes);
+          } catch (e) {
+            debugPrint('Failed to fetch course metadata: $e');
+          }
+        }
+
+        // Create lookup maps
+        final Map<String, dynamic> secDataMap = {
+          for (var s in sectionsData) s['id'].toString(): s,
+        };
+        final Map<String, String> metaDataMap = {
+          for (var m in metadataData)
+            m['code'].toString(): m['name']?.toString() ?? '',
+        };
+
+        setState(() {
+          for (final row in response) {
+            final code = row['course_code']?.toString() ?? '';
+            final secId = row['section_id']?.toString() ?? '';
+            final secNum = row['section']?.toString() ?? '';
+            // Assign name from the metadata map
+            final cName = metaDataMap[code] ?? '';
+
+            _selectedCourses.add({
+              'code': code,
+              'section': secNum,
+              'section_id': secId,
+              'name': cName,
+            });
+
+            if (secId.isNotEmpty && secDataMap.containsKey(secId)) {
+              try {
+                final secData = secDataMap[secId];
+                if (secData != null) {
+                  final sectionObj = CourseSection.fromJson(
+                    secData as Map<String, dynamic>,
+                  );
+                  _selectedSections[secId] = sectionObj;
+                }
+              } catch (e) {
+                debugPrint(
+                  'Failed to parse section data for conflict checking: $e',
+                );
+              }
+            }
+          }
+          _isManualMode =
+              true; // Switch to manual mode if we have existing selections
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading existing enrollments: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingExisting = false);
+    }
+  }
 
   /// Parse "08:00 AM" or "01:30 PM" into minutes since midnight for comparison
   int _parseTime(String t) {
@@ -69,7 +187,9 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
     required CourseMetadata course,
     required CourseSection section,
   }) {
-    final exists = _selectedCourses.indexWhere((c) => c['section_id'] == section.id);
+    final exists = _selectedCourses.indexWhere(
+      (c) => c['section_id'] == section.id,
+    );
     if (exists != -1) {
       // Deselect
       setState(() {
@@ -99,10 +219,13 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
 
       setState(() {
         // Remove any previously selected section of the same course
-        final oldId = _selectedCourses.firstWhere((c) => c['code'] == course.code, orElse: () => {})['section_id'];
+        final oldId = _selectedCourses.firstWhere(
+          (c) => c['code'] == course.code,
+          orElse: () => {},
+        )['section_id'];
         if (oldId != null) _selectedSections.remove(oldId);
         _selectedCourses.removeWhere((c) => c['code'] == course.code);
-        
+
         _selectedCourses.add({
           'code': course.code,
           'section': section.section.toString(),
@@ -117,7 +240,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
   void _importDraft(Map<String, dynamic> draft) {
     final combo = draft['combination_data'] ?? {};
     final sections = combo['sections'] as Map<String, dynamic>? ?? {};
-    
+
     setState(() {
       _selectedCourses.clear();
       for (final sec in sections.values) {
@@ -128,7 +251,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
           'name': (sec['course_name'] ?? sec['name'] ?? '').toString(),
         });
       }
-      _isManualMode = true; 
+      _isManualMode = true;
     });
   }
 
@@ -150,34 +273,45 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
           .eq('status', 'upcoming');
 
       if (_selectedCourses.isNotEmpty) {
-        final payload = _selectedCourses.map((c) => {
-          'user_id': user.id,
-          'course_code': c['code'],
-          'semester_code': nextSemCode,
-          'section': c['section'],
-          'section_id': c['section_id'],
-          'status': 'upcoming',
-        }).toList();
+        final payload = _selectedCourses
+            .map(
+              (c) => {
+                'user_id': user.id,
+                'course_code': c['code'],
+                'semester_code': nextSemCode,
+                'section': c['section'],
+                'section_id': c['section_id'],
+                'status': 'upcoming',
+              },
+            )
+            .toList();
 
         await Supabase.instance.client.from('enrollments').insert(payload);
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Strategy saved successfully!'), backgroundColor: Colors.teal),
+          const SnackBar(
+            content: Text('Strategy saved successfully!'),
+            backgroundColor: Colors.teal,
+          ),
         );
         ref.invalidate(userEnrollmentsProvider);
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
-
 
   Widget _buildLockedView(String title, String message, IconData icon) {
     return Center(
@@ -191,15 +325,45 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
             Text(
               title,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold),
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabChip(String label, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.cyan : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isActive ? null : Border.all(color: Colors.white24, width: 1),
+        ),
+        child: Row(
+          children: [
+            if (isActive) ...[
+              const Icon(Icons.check, size: 16, color: Colors.black),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.black : Colors.white70,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -215,16 +379,31 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF16202A),
       appBar: AppBar(
-        title: const Text('Confirm Schedule', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Confirm Schedule',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: activeSemAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-        error: (e, _) => Center(child: Text('Error loading configuration', style: const TextStyle(color: Colors.redAccent))),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: Colors.cyan)),
+        error: (e, _) => Center(
+          child: Text(
+            'Error loading configuration',
+            style: const TextStyle(color: Colors.redAccent),
+          ),
+        ),
         data: (activeSem) {
-          if (activeSem == null) return const Center(child: Text('Configuration missing.', style: TextStyle(color: Colors.white)));
+          if (activeSem == null)
+            return const Center(
+              child: Text(
+                'Configuration missing.',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
 
           final now = DateTime.now();
           final advEnd = activeSem.advisingEndDate;
@@ -232,27 +411,54 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
 
           bool isLocked = true;
           if (advEnd != null && classStart != null) {
-            // Unlocked from advising end date until upcoming classes start     
+            // Unlocked from advising end date until upcoming classes start
             if (now.isAfter(advEnd) && now.isBefore(classStart)) {
               isLocked = false;
             }
           }
-          
+
           if (isLocked) {
-            final openDateStr = advEnd != null ? DateFormat('MMM dd, yyyy h:mm a').format(advEnd) : 'TBA';
-            final closeDateStr = classStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(classStart) : 'TBA';
+            final openDateStr = advEnd != null
+                ? DateFormat('MMM dd, yyyy h:mm a').format(advEnd)
+                : 'TBA';
+            final closeDateStr = classStart != null
+                ? DateFormat('MMM dd, yyyy h:mm a').format(classStart)
+                : 'TBA';
             return _buildLockedView(
               'Schedule Confirmation Locked',
               'This section opens on $openDateStr and closes on $closeDateStr.',
-              Icons.lock_clock
+              Icons.lock_clock,
             );
           }
 
           final nextSemCode = activeSem.nextSemesterCode;
-          if (nextSemCode == null) return const Center(child: Text('Next semester code not available.', style: TextStyle(color: Colors.white70)));
+          if (nextSemCode == null)
+            return const Center(
+              child: Text(
+                'Next semester code not available.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
 
-          final semesterCoursesAsync = ref.watch(semesterCoursesProvider(nextSemCode));
-          final isAdvisingActive = activeSem.advisingEndDate != null && DateTime.now().isBefore(activeSem.advisingEndDate!);
+          // Trigger loading of existing enrollments once we have the semester code
+          if (_loadedSemCode != nextSemCode) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _loadExistingEnrollments(nextSemCode);
+            });
+          }
+
+          if (_isLoadingExisting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.cyan),
+            );
+          }
+
+          final semesterCoursesAsync = ref.watch(
+            semesterCoursesProvider(nextSemCode),
+          );
+          final isAdvisingActive =
+              activeSem.advisingEndDate != null &&
+              DateTime.now().isBefore(activeSem.advisingEndDate!);
 
           return Column(
             children: [
@@ -270,10 +476,19 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                           padding: const EdgeInsets.all(12),
                           child: Row(
                             children: [
-                              const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.orangeAccent,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text('Advising for $nextSemCode is in progress.', style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)),
+                                child: Text(
+                                  'Advising for $nextSemCode is in progress.',
+                                  style: const TextStyle(
+                                    color: Colors.orangeAccent,
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -284,10 +499,16 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                     if (!_isManualMode && _selectedCourses.isEmpty)
                       draftsAsync.when(
                         data: (drafts) {
-                          final nextSemDrafts = drafts.where((d) => 
-                            (d['semester_code'] ?? '').toString().toLowerCase().contains(nextSemCode.toLowerCase())
-                          ).toList();
-                          if (nextSemDrafts.isEmpty) return const SizedBox.shrink();
+                          final nextSemDrafts = drafts
+                              .where(
+                                (d) => (d['semester_code'] ?? '')
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(nextSemCode.toLowerCase()),
+                              )
+                              .toList();
+                          if (nextSemDrafts.isEmpty)
+                            return const SizedBox.shrink();
 
                           final latestDraft = nextSemDrafts.first;
                           return Padding(
@@ -300,46 +521,110 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                       const Icon(Icons.auto_awesome, color: Colors.cyan, size: 20),
-                                       const SizedBox(width: 10),
-                                       const Text('Draft Found!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                       const Spacer(),
-                                       Text(nextSemCode, style: const TextStyle(color: Colors.cyan, fontSize: 12)),
+                                      const Icon(
+                                        Icons.auto_awesome,
+                                        color: Colors.cyan,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        'Draft Found!',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        nextSemCode,
+                                        style: const TextStyle(
+                                          color: Colors.cyan,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text('We found a saved draft for your upcoming semester.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                  const Text(
+                                    'We found a saved draft for your upcoming semester.',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 13,
+                                    ),
+                                  ),
                                   const SizedBox(height: 20),
                                   Row(
                                     children: [
                                       Expanded(
                                         child: OutlinedButton(
-                                          onPressed: () => setState(() => _isManualMode = true),
-                                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white24)),
-                                          child: const Text('Manual Entry', style: TextStyle(color: Colors.white70)),
+                                          onPressed: () => setState(
+                                            () => _isManualMode = true,
+                                          ),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                              color: Colors.white24,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Manual Entry',
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: OutlinedButton(
                                           onPressed: () async {
-                                             final userId = ref.read(currentUserProvider)?.id;
-                                             if (userId != null) {
-                                                await ref.read(scheduleRepositoryProvider).deleteDraft(userId, nextSemCode);
-                                                ref.invalidate(savedSchedulesProvider);
-                                             }
-                                             setState(() => _isManualMode = true);
+                                            final userId = ref
+                                                .read(currentUserProvider)
+                                                ?.id;
+                                            if (userId != null) {
+                                              await ref
+                                                  .read(
+                                                    scheduleRepositoryProvider,
+                                                  )
+                                                  .deleteDraft(
+                                                    userId,
+                                                    nextSemCode,
+                                                  );
+                                              ref.invalidate(
+                                                savedSchedulesProvider,
+                                              );
+                                            }
+                                            setState(
+                                              () => _isManualMode = true,
+                                            );
                                           },
-                                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.redAccent)),
-                                          child: const Text('Discard', style: TextStyle(color: Colors.redAccent)),
+                                          style: OutlinedButton.styleFrom(
+                                            side: const BorderSide(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Discard',
+                                            style: TextStyle(
+                                              color: Colors.redAccent,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: FilledButton(
-                                          onPressed: () => _importDraft(latestDraft),
-                                          style: FilledButton.styleFrom(backgroundColor: Colors.cyan),
-                                          child: const Text('Use Draft', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                                          onPressed: () =>
+                                              _importDraft(latestDraft),
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor: Colors.cyan,
+                                          ),
+                                          child: const Text(
+                                            'Use Draft',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -357,176 +642,450 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                     Builder(
                       builder: (context) {
                         final drafts = draftsAsync.valueOrNull ?? [];
-                        final hasDrafts = drafts.any((d) => (d['semester_code'] ?? '').toString().toLowerCase().contains(nextSemCode.toLowerCase()));
-                        final showManual = _isManualMode || _selectedCourses.isNotEmpty || (!hasDrafts && draftsAsync.hasValue && !draftsAsync.isLoading);
-                        
+                        final hasDrafts = drafts.any(
+                          (d) => (d['semester_code'] ?? '')
+                              .toString()
+                              .toLowerCase()
+                              .contains(nextSemCode.toLowerCase()),
+                        );
+                        final showManual =
+                            _isManualMode ||
+                            _selectedCourses.isNotEmpty ||
+                            (!hasDrafts &&
+                                draftsAsync.hasValue &&
+                                !draftsAsync.isLoading);
+
                         if (!showManual) return const SizedBox.shrink();
-                        
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Search Next Semester Courses', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      TextField(
-                        onChanged: (val) => setState(() => _searchQuery = val),
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          hintText: 'Enter code or name (e.g. CSE101)',
-                          hintStyle: TextStyle(color: Colors.grey[600]),
-                          prefixIcon: const Icon(Icons.search, color: Colors.cyan),
-                          filled: true,
-                          fillColor: Colors.white.withValues(alpha: 0.05),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      semesterCoursesAsync.when(
-                        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-                        error: (e, _) => const Text('Failed to load courses for search'),
-                        data: (courses) {
-                          final filtered = courses.where((c) =>
-                            c.code.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                            c.name.toLowerCase().contains(_searchQuery.toLowerCase())
-                          ).toList();
-
-                          if (filtered.isEmpty) return const Center(child: Text('No courses found.', style: TextStyle(color: Colors.grey)));
-
-                          return Column(
-                            children: filtered.map((course) {
-                              final bool isAnySelected = _selectedCourses.any((c) => c['code'] == course.code);
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E2836).withOpacity(0.5),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: isAnySelected ? Colors.cyan.withValues(alpha: 0.3) : Colors.white12),
+                            // Beautiful Tabs
+                            Row(
+                              children: [
+                                _buildTabChip(
+                                  'Available',
+                                  _activeTab == 0,
+                                  () => setState(() => _activeTab = 0),
                                 ),
-                                child: ExpansionTile(
-                                  tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  title: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(course.code, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                                      Text(course.name, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                                    ],
+                                const SizedBox(width: 12),
+                                _buildTabChip(
+                                  'Selected (${_selectedCourses.length})',
+                                  _activeTab == 1,
+                                  () => setState(() => _activeTab = 1),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            if (_activeTab == 0) ...[
+                              TextField(
+                                onChanged: (val) =>
+                                    setState(() => _searchQuery = val),
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText: 'Search code or name (e.g. CSE101)',
+                                  hintStyle: TextStyle(color: Colors.grey[600]),
+                                  prefixIcon: const Icon(
+                                    Icons.search,
+                                    color: Colors.cyan,
                                   ),
-                                  trailing: Icon(isAnySelected ? Icons.check_circle : Icons.add_circle_outline, color: isAnySelected ? Colors.cyan : Colors.white24),
-                                  children: [
-                                    const Divider(height: 1, color: Colors.white10),
-                                    Consumer(builder: (context, ref, child) {
-                                      final sectionsAsync = ref.watch(courseSectionsProvider(semesterCode: nextSemCode, courseCode: course.code));
-                                      return sectionsAsync.when(
-                                        loading: () => const LinearProgressIndicator(color: Colors.cyan),
-                                        error: (e, _) => const Padding(padding: EdgeInsets.all(16), child: Text('Failed to load sections')),
-                                        data: (sections) => Column(
-                                          children: sections.map((sec) {
-                                            final isThisSelected = _selectedCourses.any((c) => c['section_id'] == sec.id);
-                                            // Extract faculty name from the first session
-                                            final faculty = sec.sessions.isNotEmpty && sec.sessions.first.faculty.isNotEmpty
-                                                ? sec.sessions.first.faculty
-                                                : null;
-                                            return ListTile(
-                                              title: Row(
-                                                children: [
-                                                  Text('Section ${sec.section}', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                                                  if (faculty != null) ...[
-                                                    const SizedBox(width: 8),
-                                                    Flexible(child: Text('• $faculty', style: TextStyle(color: Colors.cyan.withValues(alpha: 0.7), fontSize: 12), overflow: TextOverflow.ellipsis)),
-                                                  ],
-                                                ],
-                                              ),
-                                              subtitle: Text(sec.sessions.map((s) => '${s.day} ${s.startTime}-${s.endTime}').join(' | '), style: TextStyle(color: Colors.grey[600], fontSize: 11)),
-                                              trailing: Switch(
-                                                value: isThisSelected,
-                                                activeColor: Colors.cyan,
-                                                onChanged: (_) => _toggleSection(course: course, section: sec),
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                      );
-                                    }),
-                                  ],
+                                  filled: true,
+                                  fillColor: Colors.white.withValues(
+                                    alpha: 0.05,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
                                 ),
-                              );
-                            }).toList(),
-                          );
-                        },
-                      ),  // semesterCoursesAsync.when
-                    ],
-                  );  // Column (Builder return)
-                },
-              ),  // Builder
+                              ),
+                              const SizedBox(height: 20),
+                            ],
 
-              ],  // ListView children
-            ),  // ListView
-          ),  // Expanded
+                            semesterCoursesAsync.when(
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.cyan,
+                                ),
+                              ),
+                              error: (e, _) => const Text(
+                                'Failed to load courses for search',
+                              ),
+                              data: (courses) {
+                                List<CourseMetadata> filtered = [];
 
-          // Sticky Confirmation Footer
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E2836).withValues(alpha: 0.95),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 15)],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_selectedCourses.isNotEmpty)
-                    Row(
-                      children: [
-                         Text(' Courses Selected', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                         const Spacer(),
-                         TextButton(
-                           onPressed: () => setState(() => _selectedCourses.clear()),
-                           child: const Text('Clear All', style: TextStyle(color: Colors.redAccent)),
-                         ),
-                      ],
+                                if (_activeTab == 0) {
+                                  // Available tab
+                                  final queryMatch = _searchQuery.toLowerCase().replaceAll(' ', '');
+                                  filtered = courses
+                                      .where(
+                                        (c) {
+                                          final normalizedCode = c.code.toLowerCase().replaceAll(' ', '');
+                                          final normalizedName = c.name.toLowerCase().replaceAll(' ', '');
+                                          return normalizedCode.contains(queryMatch) || normalizedName.contains(queryMatch);
+                                        }
+                                      )
+                                      .toList();
+
+                                  if (filtered.isEmpty)
+                                    return const Center(
+                                      child: Text(
+                                        'No courses found.',
+                                        style: TextStyle(color: Colors.grey),
+                                      ),
+                                    );
+                                } else {
+                                  // Selected tab
+                                  final selectedCodes = _selectedCourses
+                                      .map((e) => e['code'])
+                                      .toSet();
+                                  filtered = courses
+                                      .where(
+                                        (c) => selectedCodes.contains(c.code),
+                                      )
+                                      .toList();
+
+                                  if (filtered.isEmpty)
+                                    return const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.only(top: 20.0),
+                                        child: Text(
+                                          'No courses added yet. Search and add pieces from the Available tab.',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 13,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    );
+                                }
+
+                                return Column(
+                                  children: filtered.map((course) {
+                                    final bool isAnySelected = _selectedCourses
+                                        .any((c) => c['code'] == course.code);
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF1E2836,
+                                        ).withOpacity(0.5),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isAnySelected
+                                              ? Colors.cyan.withValues(
+                                                  alpha: 0.3,
+                                                )
+                                              : Colors.white12,
+                                        ),
+                                      ),
+                                      child: ExpansionTile(
+                                        tilePadding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        title: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              course.code,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            Text(
+                                              course.name,
+                                              style: TextStyle(
+                                                color: Colors.grey[500],
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        trailing: Icon(
+                                          isAnySelected
+                                              ? Icons.check_circle
+                                              : Icons.add_circle_outline,
+                                          color: isAnySelected
+                                              ? Colors.cyan
+                                              : Colors.white24,
+                                        ),
+                                        children: [
+                                          const Divider(
+                                            height: 1,
+                                            color: Colors.white10,
+                                          ),
+                                          Consumer(
+                                            builder: (context, ref, child) {
+                                              final sectionsAsync = ref.watch(
+                                                courseSectionsProvider(
+                                                  semesterCode: nextSemCode,
+                                                  courseCode: course.code,
+                                                ),
+                                              );
+                                              return sectionsAsync.when(
+                                                loading: () =>
+                                                    const LinearProgressIndicator(
+                                                      color: Colors.cyan,
+                                                    ),
+                                                error: (e, _) => const Padding(
+                                                  padding: EdgeInsets.all(16),
+                                                  child: Text(
+                                                    'Failed to load sections',
+                                                  ),
+                                                ),
+                                                data: (sections) => Column(
+                                                  children: sections.map((sec) {
+                                                    final isThisSelected =
+                                                        _selectedCourses.any(
+                                                          (c) =>
+                                                              c['section_id'] ==
+                                                              sec.id,
+                                                        );
+                                                    // Extract faculty name from the first session
+                                                    final faculty =
+                                                        sec
+                                                                .sessions
+                                                                .isNotEmpty &&
+                                                            sec
+                                                                .sessions
+                                                                .first
+                                                                .faculty
+                                                                .isNotEmpty
+                                                        ? sec
+                                                              .sessions
+                                                              .first
+                                                              .faculty
+                                                        : null;
+                                                    return ListTile(
+                                                      title: Row(
+                                                        children: [
+                                                          Text(
+                                                            'Section ${sec.section}',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white70,
+                                                                  fontSize: 14,
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
+                                                          _buildCapacityIndicator(
+                                                            sec.capacity,
+                                                          ),
+                                                          if (faculty !=
+                                                              null) ...[
+                                                            const SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            Flexible(
+                                                              child: Text(
+                                                                '• $faculty',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .cyan
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.7,
+                                                                      ),
+                                                                  fontSize: 12,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ],
+                                                      ),
+                                                      subtitle: Text(
+                                                        sec.sessions
+                                                            .map(
+                                                              (s) =>
+                                                                  '${s.day} ${s.startTime}-${s.endTime}',
+                                                            )
+                                                            .join(' | '),
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                      trailing: Switch(
+                                                        value: isThisSelected,
+                                                        activeColor:
+                                                            Colors.cyan,
+                                                        onChanged: (_) =>
+                                                            _toggleSection(
+                                                              course: course,
+                                                              section: sec,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ), // semesterCoursesAsync.when
+                          ],
+                        ); // Column (Builder return)
+                      },
+                    ), // Builder
+                  ], // ListView children
+                ), // ListView
+              ), // Expanded
+              // Sticky Confirmation Footer
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E2836).withValues(alpha: 0.95),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 15,
                     ),
-                  if (_selectedCourses.isEmpty)
-                    const Text('No courses selected yet.', style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 12),
-                  if (_selectedCourses.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _isSaving ? null : () => _saveExpectedSchedule(activeSem),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.cyan,
-                          padding: const EdgeInsets.symmetric(vertical: 16),    
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedCourses.isNotEmpty)
+                        Row(
+                          children: [
+                            Text(
+                              ' Courses Selected',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () =>
+                                  setState(() => _selectedCourses.clear()),
+                              child: const Text(
+                                'Clear All',
+                                style: TextStyle(color: Colors.redAccent),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: _isSaving 
-                          ? const CircularProgressIndicator(color: Colors.black)
-                          : const Text('Confirm & Save Strategy', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                      if (_selectedCourses.isEmpty)
+                        const Text(
+                          'No courses selected yet.',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      const SizedBox(height: 12),
+                      if (_selectedCourses.isNotEmpty)
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: _isSaving
+                                ? null
+                                : () => _saveExpectedSchedule(activeSem),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.cyan,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: _isSaving
+                                ? const CircularProgressIndicator(
+                                    color: Colors.black,
+                                  )
+                                : const Text(
+                                    'Confirm & Save Strategy',
+                                    style: TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      if (_selectedCourses.isNotEmpty)
+                        const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => context.pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: Colors.white38),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'Skip / Do it Later',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  if (_selectedCourses.isNotEmpty)
-                    const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => context.pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: Colors.white38),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text('Skip / Do it Later', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+            ], // outer Column children
+          ); // Column
+        }, // data callback
+      ), // activeSemAsync.when
+    ); // Scaffold
+  }
+
+  Widget _buildCapacityIndicator(String capacity) {
+    if (capacity.isEmpty || !capacity.contains('/')) {
+      return const SizedBox.shrink();
+    }
+    try {
+      final parts = capacity.split('/');
+      final enrolled = int.parse(parts[0].trim());
+      final total = int.parse(parts[1].trim());
+      final bool isFull =
+          (total > 0 && enrolled >= total) || (total == 0 && enrolled > 0);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: (isFull ? Colors.redAccent : Colors.cyan).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: (isFull ? Colors.redAccent : Colors.cyan).withOpacity(0.3),
+            width: 0.5,
           ),
-          ],  // outer Column children
-        );  // Column
-        },  // data callback
-      ),  // activeSemAsync.when
-    );  // Scaffold
+        ),
+        child: Text(
+          isFull ? 'Full' : '${total - enrolled} Left',
+          style: TextStyle(
+            color: isFull ? Colors.redAccent : Colors.cyan,
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
   }
 }

@@ -1,21 +1,37 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/course_metadata.dart';
 import '../models/course_section.dart';
 import '../providers/supabase_provider.dart';
+import '../services/cache_service.dart';
+import '../../features/dashboard/dashboard_repository.dart';
 
 part 'course_repository.g.dart';
 
 class CourseRepository {
   final SupabaseClient _supabase;
+  final CacheService _cache;
 
-  CourseRepository(this._supabase);
+  CourseRepository(this._supabase, this._cache);
 
   Future<List<CourseMetadata>> getAllCourses({int offset = 0, int limit = 3000}) async {
+    // 1. Try cache first
+    final cached = _cache.getMapData('course_catalog', 'full_list');
+    if (cached != null && cached['data'] != null) {
+      // Trigger background sync
+      _fetchAllAndCache(offset, limit);
+      return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+    }
+
+    return await _fetchAllAndCache(offset, limit);
+  }
+
+  Future<List<CourseMetadata>> _fetchAllAndCache(int offset, int limit) async {
     try {
       List<CourseMetadata> allResults = [];
       int currentOffset = offset;
-      const int pageSize = 1000; // Standard Supabase limit
+      const int pageSize = 1000;
       
       while (allResults.length < limit) {
         final remaining = limit - allResults.length;
@@ -32,14 +48,19 @@ class CourseRepository {
 
         allResults.addAll(list.map((e) => CourseMetadata.fromJson(e)));
         currentOffset += list.length;
-        
-        // If we got fewer than requested, we reached the end
         if (list.length < fetchSize) break;
       }
 
+      // Update Cache
+      _cache.setMapData('course_catalog', 'full_list', {
+        'data': allResults.map((e) => e.toJson()).toList(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
       return allResults;
     } catch (e) {
-      throw Exception('Failed to load courses: $e');
+      if (kDebugMode) print('Failed to load courses from network: $e');
+      return [];
     }
   }
 
@@ -140,6 +161,19 @@ class CourseRepository {
     }
   }
   Future<List<CourseMetadata>> getSemesterCourses(String semesterCode) async {
+    final cacheKey = 'sem_${semesterCode.toLowerCase()}';
+    // 1. Try cache first
+    final cached = _cache.getMapData('course_catalog', cacheKey);
+    if (cached != null && cached['data'] != null) {
+      // Trigger background sync
+      _fetchSemesterAndCache(semesterCode, cacheKey);
+      return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+    }
+
+    return await _fetchSemesterAndCache(semesterCode, cacheKey);
+  }
+
+  Future<List<CourseMetadata>> _fetchSemesterAndCache(String semesterCode, String cacheKey) async {
     final safeSem = semesterCode
         .toLowerCase()
         .replaceAll(' ', '')
@@ -149,13 +183,13 @@ class CourseRepository {
     try {
       int currentOffset = 0;
       const int pageSize = 1000;
-      const int limit = 5000; // Hard max loop threshold to prevent infinite runaway
+      const int limit = 20000;
       final Map<String, CourseMetadata> unique = {};
 
       while (currentOffset < limit) {
         final res = await _supabase
             .from(tableName)
-            .select('course_code, course_name')
+            .select('course_code, course_name, credit_val')
             .order('course_code', ascending: true)
             .range(currentOffset, currentOffset + pageSize - 1);
         
@@ -169,17 +203,25 @@ class CourseRepository {
           unique[code] = CourseMetadata(
             code: code,
             name: (e['course_name'] ?? e['name'] ?? 'Unknown').toString(),
-            creditVal: 3.0,
+            creditVal: (e['credit_val'] as num?)?.toDouble() ?? 3.0,
           );
         }
         
         currentOffset += list.length;
-        if (list.length < pageSize) break; // Reached the end of the data
+        if (list.length < pageSize) break;
       }
       
-      return unique.values.toList();
+      final results = unique.values.toList();
+
+      // Update Cache
+      _cache.setMapData('course_catalog', cacheKey, {
+        'data': results.map((e) => e.toJson()).toList(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      return results;
     } catch (e) {
-      print('Database Error in getSemesterCourses: $e');
+      if (kDebugMode) print('Database Error in getSemesterCourses: $e');
       return [];
     }
   }
@@ -187,7 +229,10 @@ class CourseRepository {
 
 @riverpod
 CourseRepository courseRepository(CourseRepositoryRef ref) {
-  return CourseRepository(ref.watch(supabaseClientProvider));
+  return CourseRepository(
+    ref.watch(supabaseClientProvider),
+    ref.watch(cacheServiceProvider),
+  );
 }
 
 @riverpod

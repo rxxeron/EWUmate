@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/course_metadata.dart';
 import '../../../../core/models/course_section.dart';
@@ -32,49 +33,59 @@ class _CourseCardState extends ConsumerState<CourseCard> {
   Future<void> _handleEnrollmentAction({
     required String action, // 'enroll', 'drop', 'switch'
     required String sectionId,
-    String? oldSectionId,
-    required String academicSemCode,
-  }) async {
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
+      required String sectionNumber,
+      String? oldSectionId,
+      required String academicSemCode,
+    }) async {
+      final user = ref.read(currentUserProvider);
+      if (user == null) return;
 
-    final profileRepo = ref.read(profileRepositoryProvider);
-    final profile = await profileRepo.getProfile(user.id);
-    if (profile == null) return;
+      final profileRepo = ref.read(profileRepositoryProvider);
+      final profile = await profileRepo.getProfile(user.id);
+      if (profile == null) return;
 
-    setState(() => _isUpdating = true);
+      setState(() => _isUpdating = true);
 
-    try {
-      if (action == 'enroll') {
-        await profileRepo.enrollCourseSection(
-          userId: user.id,
-          courseCode: widget.course.code,
-          semesterCode: academicSemCode,
-          sectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      } else if (action == 'drop') {
-        await profileRepo.dropCourseSection(
-          userId: user.id,
-          sectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      } else if (action == 'switch' && oldSectionId != null) {
-        await profileRepo.switchCourseSection(
-          userId: user.id,
-          courseCode: widget.course.code,
-          semesterCode: academicSemCode,
-          oldSectionId: oldSectionId,
-          newSectionId: sectionId,
-          currentSections: profile.enrolledSections,
-        );
-      }
+      try {
+        if (action == 'enroll') {
+          await profileRepo.enrollCourseSection(
+            userId: user.id,
+            courseCode: widget.course.code,
+            semesterCode: academicSemCode,
+            sectionId: sectionId,
+            sectionNumber: sectionNumber,
+            currentSections: profile.enrolledSections,
+          );
+        } else if (action == 'drop') {
+          await profileRepo.dropCourseSection(
+            userId: user.id,
+            sectionId: sectionId,
+            semesterCode: academicSemCode,
+            currentSections: profile.enrolledSections,
+          );
+        } else if (action == 'switch' && oldSectionId != null) {
+          await profileRepo.switchCourseSection(
+            userId: user.id,
+            courseCode: widget.course.code,
+            semesterCode: academicSemCode,
+            oldSectionId: oldSectionId,
+            newSectionId: sectionId,
+            newSectionNumber: sectionNumber,
+            currentSections: profile.enrolledSections,
+          );
+        }
 
       if (mounted) {
+        // Force refresh all enrollment providers
+        ref.invalidate(userEnrollmentsProvider);
+        ref.invalidate(userEnrollmentDetailsProvider);
+        
         String msg = '';
         if (action == 'enroll') msg = 'Enrolled in ${widget.course.code}';
         if (action == 'drop') msg = 'Dropped ${widget.course.code}';
         if (action == 'switch') msg = 'Switched to new section';
+        
+        HapticFeedback.lightImpact();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -199,23 +210,37 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Section ${section.section}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text('Section ${section.section}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                                  const SizedBox(width: 12),
+                                  _buildCapacityIndicator(section.capacity),
+                                ],
+                              ),
+                              if (!isThisEnrolled && !enrolledInAny) _buildConflictWarning(section, details),
+                            ],
+                          ),
                           _buildActionButton(
                             isThisEnrolled: isThisEnrolled,
                             hasAnyInThisCourse: enrolledInAny,
                             enrolledSectionId: targetEnrolled?['section_id'] ?? section.id,
                             thisSectionId: section.id,
+                            thisSectionNumber: section.section,
                             academicSemCode: activeSemCode,
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
                       ...section.sessions.map((session) {
-                        final bool isLab = CourseUtils.isLab(session.startTime, session.endTime, widget.course.code);
+                        final bool isLabFallback = CourseUtils.isLab(session.startTime, session.endTime, widget.course.code);
+                        final displayType = session.type ?? (isLabFallback ? 'Lab' : 'Theory');
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Text(
-                            '${session.day} ${session.startTime}-${session.endTime} (${session.faculty}) • ${isLab ? "Lab" : "Theory"}',
+                              '${session.day} ${session.startTime}-${session.endTime} (${session.faculty}) • $displayType',
                             style: TextStyle(color: Colors.grey[400], fontSize: 13, height: 1.3),
                           ),
                         );
@@ -240,6 +265,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
     required bool hasAnyInThisCourse,
     required String? enrolledSectionId,
     required String thisSectionId,
+    required String thisSectionNumber,
     required String academicSemCode,
   }) {
     String label = 'Enroll';
@@ -260,6 +286,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
       onPressed: _isUpdating ? null : () => _handleEnrollmentAction(
         action: action,
         sectionId: thisSectionId,
+        sectionNumber: thisSectionNumber,
         oldSectionId: enrolledSectionId,
         academicSemCode: academicSemCode,
       ),
@@ -275,5 +302,85 @@ class _CourseCardState extends ConsumerState<CourseCard> {
         ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
         : Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
     );
+  }
+
+  Widget _buildConflictWarning(CourseSection section, List<dynamic> enrolledDetails) {
+    String? conflictCourse;
+    
+    for (final enrolled in enrolledDetails) {
+      if (enrolled == null) continue;
+      final enrolledCode = enrolled['course_code'] ?? '';
+      if (CourseUtils.areEquivalent(enrolledCode, widget.course.code)) continue;
+
+      final enrolledTime = enrolled['time']?.toString() ?? '';
+      if (enrolledTime.isEmpty || enrolledTime == 'TBA') continue;
+
+      // Check each session of the current section against the enrolled time string
+      for (final session in section.sessions) {
+        final sessionTime = '${session.day} ${session.startTime}-${session.endTime}';
+        final conflict = CourseUtils.hasTimeConflict([{'time': enrolledTime}], {'time': sessionTime});
+        if (conflict != null) {
+          conflictCourse = enrolledCode;
+          break;
+        }
+      }
+      if (conflictCourse != null) break;
+    }
+
+    if (conflictCourse == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            'Conflicts with $conflictCourse',
+            style: const TextStyle(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCapacityIndicator(String capacity) {
+    if (capacity.isEmpty || !capacity.contains('/')) {
+      return const SizedBox.shrink();
+    }
+
+    try {
+      final parts = capacity.split('/');
+      final enrolled = int.parse(parts[0].trim());
+      final total = int.parse(parts[1].trim());
+      final bool isFull = (total > 0 && enrolled >= total) || (total == 0 && enrolled > 0);
+      final int available = total - enrolled;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: (isFull ? Colors.redAccent : Colors.tealAccent).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: (isFull ? Colors.redAccent : Colors.tealAccent).withOpacity(0.3),
+            width: 0.5,
+          ),
+        ),
+        child: Text(
+          isFull ? 'Section Full' : '$available Seats Left',
+          style: TextStyle(
+            color: isFull ? Colors.redAccent : Colors.tealAccent,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    } catch (e) {
+      return Text(
+        capacity,
+        style: const TextStyle(color: Colors.grey, fontSize: 10),
+      );
+    }
   }
 }

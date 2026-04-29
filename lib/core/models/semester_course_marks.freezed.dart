@@ -55,6 +55,8 @@ mixin _$SemesterCourseMarks {
   double? get distAttendance => throw _privateConstructorUsedError;
   @JsonKey(name: 'dist_lab')
   double? get distLab => throw _privateConstructorUsedError;
+  @JsonKey(name: 'dist_project')
+  double? get distProject => throw _privateConstructorUsedError;
   @JsonKey(name: 'dist_term_paper')
   double? get distTermPaper => throw _privateConstructorUsedError;
   @JsonKey(name: 'dist_class_performance')
@@ -73,6 +75,8 @@ mixin _$SemesterCourseMarks {
   double? get obtAttendance => throw _privateConstructorUsedError;
   @JsonKey(name: 'obt_lab')
   double? get obtLab => throw _privateConstructorUsedError;
+  @JsonKey(name: 'obt_project')
+  double? get obtProject => throw _privateConstructorUsedError;
   @JsonKey(name: 'obt_term_paper')
   double? get obtTermPaper => throw _privateConstructorUsedError;
   @JsonKey(name: 'obt_class_performance')
@@ -124,6 +128,7 @@ abstract class $SemesterCourseMarksCopyWith<$Res> {
     @JsonKey(name: 'dist_viva') double? distViva,
     @JsonKey(name: 'dist_attendance') double? distAttendance,
     @JsonKey(name: 'dist_lab') double? distLab,
+    @JsonKey(name: 'dist_project') double? distProject,
     @JsonKey(name: 'dist_term_paper') double? distTermPaper,
     @JsonKey(name: 'dist_class_performance') double? distClassPerformance,
     @JsonKey(name: 'obt_mid') double? obtMid,
@@ -133,6 +138,7 @@ abstract class $SemesterCourseMarksCopyWith<$Res> {
     @JsonKey(name: 'obt_viva') double? obtViva,
     @JsonKey(name: 'obt_attendance') double? obtAttendance,
     @JsonKey(name: 'obt_lab') double? obtLab,
+    @JsonKey(name: 'obt_project') double? obtProject,
     @JsonKey(name: 'obt_term_paper') double? obtTermPaper,
     @JsonKey(name: 'obt_class_performance') double? obtClassPerformance,
     @JsonKey(name: 'obt_quizzes') List<double> obtQuizzes,
@@ -176,6 +182,7 @@ class _$SemesterCourseMarksCopyWithImpl<$Res, $Val extends SemesterCourseMarks>
     Object? distViva = freezed,
     Object? distAttendance = freezed,
     Object? distLab = freezed,
+    Object? distProject = freezed,
     Object? distTermPaper = freezed,
     Object? distClassPerformance = freezed,
     Object? obtMid = freezed,
@@ -185,6 +192,7 @@ class _$SemesterCourseMarksCopyWithImpl<$Res, $Val extends SemesterCourseMarks>
     Object? obtViva = freezed,
     Object? obtAttendance = freezed,
     Object? obtLab = freezed,
+    Object? obtProject = freezed,
     Object? obtTermPaper = freezed,
     Object? obtClassPerformance = freezed,
     Object? obtQuizzes = null,
@@ -267,6 +275,10 @@ class _$SemesterCourseMarksCopyWithImpl<$Res, $Val extends SemesterCourseMarks>
                 ? _value.distLab
                 : distLab // ignore: cast_nullable_to_non_nullable
                       as double?,
+            distProject: freezed == distProject
+                ? _value.distProject
+                : distProject // ignore: cast_nullable_to_non_nullable
+                      as double?,
             distTermPaper: freezed == distTermPaper
                 ? _value.distTermPaper
                 : distTermPaper // ignore: cast_nullable_to_non_nullable
@@ -302,6 +314,10 @@ class _$SemesterCourseMarksCopyWithImpl<$Res, $Val extends SemesterCourseMarks>
             obtLab: freezed == obtLab
                 ? _value.obtLab
                 : obtLab // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            obtProject: freezed == obtProject
+                ? _value.obtProject
+                : obtProject // ignore: cast_nullable_to_non_nullable
                       as double?,
             obtTermPaper: freezed == obtTermPaper
                 ? _value.obtTermPaper
@@ -365,6 +381,7 @@ abstract class _$$SemesterCourseMarksImplCopyWith<$Res>
     @JsonKey(name: 'dist_viva') double? distViva,
     @JsonKey(name: 'dist_attendance') double? distAttendance,
     @JsonKey(name: 'dist_lab') double? distLab,
+    @JsonKey(name: 'dist_project') double? distProject,
     @JsonKey(name: 'dist_term_paper') double? distTermPaper,
     @JsonKey(name: 'dist_class_performance') double? distClassPerformance,
     @JsonKey(name: 'obt_mid') double? obtMid,
@@ -374,6 +391,7 @@ abstract class _$$SemesterCourseMarksImplCopyWith<$Res>
     @JsonKey(name: 'obt_viva') double? obtViva,
     @JsonKey(name: 'obt_attendance') double? obtAttendance,
     @JsonKey(name: 'obt_lab') double? obtLab,
+    @JsonKey(name: 'obt_project') double? obtProject,
     @JsonKey(name: 'obt_term_paper') double? obtTermPaper,
     @JsonKey(name: 'obt_class_performance') double? obtClassPerformance,
     @JsonKey(name: 'obt_quizzes') List<double> obtQuizzes,
@@ -416,6 +434,7 @@ class __$$SemesterCourseMarksImplCopyWithImpl<$Res>
     Object? distViva = freezed,
     Object? distAttendance = freezed,
     Object? distLab = freezed,
+    Object? distProject = freezed,
     Object? distTermPaper = freezed,
     Object? distClassPerformance = freezed,
     Object? obtMid = freezed,
@@ -425,6 +444,7 @@ class __$$SemesterCourseMarksImplCopyWithImpl<$Res>
     Object? obtViva = freezed,
     Object? obtAttendance = freezed,
     Object? obtLab = freezed,
+    Object? obtProject = freezed,
     Object? obtTermPaper = freezed,
     Object? obtClassPerformance = freezed,
     Object? obtQuizzes = null,
@@ -507,6 +527,10 @@ class __$$SemesterCourseMarksImplCopyWithImpl<$Res>
             ? _value.distLab
             : distLab // ignore: cast_nullable_to_non_nullable
                   as double?,
+        distProject: freezed == distProject
+            ? _value.distProject
+            : distProject // ignore: cast_nullable_to_non_nullable
+                  as double?,
         distTermPaper: freezed == distTermPaper
             ? _value.distTermPaper
             : distTermPaper // ignore: cast_nullable_to_non_nullable
@@ -543,6 +567,10 @@ class __$$SemesterCourseMarksImplCopyWithImpl<$Res>
             ? _value.obtLab
             : obtLab // ignore: cast_nullable_to_non_nullable
                   as double?,
+        obtProject: freezed == obtProject
+            ? _value.obtProject
+            : obtProject // ignore: cast_nullable_to_non_nullable
+                  as double?,
         obtTermPaper: freezed == obtTermPaper
             ? _value.obtTermPaper
             : obtTermPaper // ignore: cast_nullable_to_non_nullable
@@ -578,7 +606,7 @@ class __$$SemesterCourseMarksImplCopyWithImpl<$Res>
 
 /// @nodoc
 @JsonSerializable()
-class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
+class _$SemesterCourseMarksImpl extends _SemesterCourseMarks {
   const _$SemesterCourseMarksImpl({
     required this.id,
     @JsonKey(name: 'user_id') required this.userId,
@@ -598,6 +626,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
     @JsonKey(name: 'dist_viva') this.distViva,
     @JsonKey(name: 'dist_attendance') this.distAttendance,
     @JsonKey(name: 'dist_lab') this.distLab,
+    @JsonKey(name: 'dist_project') this.distProject,
     @JsonKey(name: 'dist_term_paper') this.distTermPaper,
     @JsonKey(name: 'dist_class_performance') this.distClassPerformance,
     @JsonKey(name: 'obt_mid') this.obtMid,
@@ -607,6 +636,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
     @JsonKey(name: 'obt_viva') this.obtViva,
     @JsonKey(name: 'obt_attendance') this.obtAttendance,
     @JsonKey(name: 'obt_lab') this.obtLab,
+    @JsonKey(name: 'obt_project') this.obtProject,
     @JsonKey(name: 'obt_term_paper') this.obtTermPaper,
     @JsonKey(name: 'obt_class_performance') this.obtClassPerformance,
     @JsonKey(name: 'obt_quizzes') final List<double> obtQuizzes = const [],
@@ -616,7 +646,8 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
     @JsonKey(name: 'created_at') this.createdAt,
     @JsonKey(name: 'updated_at') this.updatedAt,
   }) : _obtQuizzes = obtQuizzes,
-       _obtShortQuizzes = obtShortQuizzes;
+       _obtShortQuizzes = obtShortQuizzes,
+       super._();
 
   factory _$SemesterCourseMarksImpl.fromJson(Map<String, dynamic> json) =>
       _$$SemesterCourseMarksImplFromJson(json);
@@ -674,6 +705,9 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
   @JsonKey(name: 'dist_lab')
   final double? distLab;
   @override
+  @JsonKey(name: 'dist_project')
+  final double? distProject;
+  @override
   @JsonKey(name: 'dist_term_paper')
   final double? distTermPaper;
   @override
@@ -700,6 +734,9 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
   @override
   @JsonKey(name: 'obt_lab')
   final double? obtLab;
+  @override
+  @JsonKey(name: 'obt_project')
+  final double? obtProject;
   @override
   @JsonKey(name: 'obt_term_paper')
   final double? obtTermPaper;
@@ -736,7 +773,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
 
   @override
   String toString() {
-    return 'SemesterCourseMarks(id: $id, userId: $userId, semesterCode: $semesterCode, courseCode: $courseCode, courseName: $courseName, section: $section, quizStrategy: $quizStrategy, quizN: $quizN, shortQuizN: $shortQuizN, distMid: $distMid, distFinal: $distFinal, distQuiz: $distQuiz, distShortQuiz: $distShortQuiz, distAssignment: $distAssignment, distPresentation: $distPresentation, distViva: $distViva, distAttendance: $distAttendance, distLab: $distLab, distTermPaper: $distTermPaper, distClassPerformance: $distClassPerformance, obtMid: $obtMid, obtFinal: $obtFinal, obtAssignment: $obtAssignment, obtPresentation: $obtPresentation, obtViva: $obtViva, obtAttendance: $obtAttendance, obtLab: $obtLab, obtTermPaper: $obtTermPaper, obtClassPerformance: $obtClassPerformance, obtQuizzes: $obtQuizzes, obtShortQuizzes: $obtShortQuizzes, gradeGoal: $gradeGoal, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'SemesterCourseMarks(id: $id, userId: $userId, semesterCode: $semesterCode, courseCode: $courseCode, courseName: $courseName, section: $section, quizStrategy: $quizStrategy, quizN: $quizN, shortQuizN: $shortQuizN, distMid: $distMid, distFinal: $distFinal, distQuiz: $distQuiz, distShortQuiz: $distShortQuiz, distAssignment: $distAssignment, distPresentation: $distPresentation, distViva: $distViva, distAttendance: $distAttendance, distLab: $distLab, distProject: $distProject, distTermPaper: $distTermPaper, distClassPerformance: $distClassPerformance, obtMid: $obtMid, obtFinal: $obtFinal, obtAssignment: $obtAssignment, obtPresentation: $obtPresentation, obtViva: $obtViva, obtAttendance: $obtAttendance, obtLab: $obtLab, obtProject: $obtProject, obtTermPaper: $obtTermPaper, obtClassPerformance: $obtClassPerformance, obtQuizzes: $obtQuizzes, obtShortQuizzes: $obtShortQuizzes, gradeGoal: $gradeGoal, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 
   @override
@@ -774,6 +811,8 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
             (identical(other.distAttendance, distAttendance) ||
                 other.distAttendance == distAttendance) &&
             (identical(other.distLab, distLab) || other.distLab == distLab) &&
+            (identical(other.distProject, distProject) ||
+                other.distProject == distProject) &&
             (identical(other.distTermPaper, distTermPaper) ||
                 other.distTermPaper == distTermPaper) &&
             (identical(other.distClassPerformance, distClassPerformance) ||
@@ -789,6 +828,8 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
             (identical(other.obtAttendance, obtAttendance) ||
                 other.obtAttendance == obtAttendance) &&
             (identical(other.obtLab, obtLab) || other.obtLab == obtLab) &&
+            (identical(other.obtProject, obtProject) ||
+                other.obtProject == obtProject) &&
             (identical(other.obtTermPaper, obtTermPaper) ||
                 other.obtTermPaper == obtTermPaper) &&
             (identical(other.obtClassPerformance, obtClassPerformance) ||
@@ -831,6 +872,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
     distViva,
     distAttendance,
     distLab,
+    distProject,
     distTermPaper,
     distClassPerformance,
     obtMid,
@@ -840,6 +882,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
     obtViva,
     obtAttendance,
     obtLab,
+    obtProject,
     obtTermPaper,
     obtClassPerformance,
     const DeepCollectionEquality().hash(_obtQuizzes),
@@ -866,7 +909,7 @@ class _$SemesterCourseMarksImpl implements _SemesterCourseMarks {
   }
 }
 
-abstract class _SemesterCourseMarks implements SemesterCourseMarks {
+abstract class _SemesterCourseMarks extends SemesterCourseMarks {
   const factory _SemesterCourseMarks({
     required final String id,
     @JsonKey(name: 'user_id') required final String userId,
@@ -886,6 +929,7 @@ abstract class _SemesterCourseMarks implements SemesterCourseMarks {
     @JsonKey(name: 'dist_viva') final double? distViva,
     @JsonKey(name: 'dist_attendance') final double? distAttendance,
     @JsonKey(name: 'dist_lab') final double? distLab,
+    @JsonKey(name: 'dist_project') final double? distProject,
     @JsonKey(name: 'dist_term_paper') final double? distTermPaper,
     @JsonKey(name: 'dist_class_performance') final double? distClassPerformance,
     @JsonKey(name: 'obt_mid') final double? obtMid,
@@ -895,6 +939,7 @@ abstract class _SemesterCourseMarks implements SemesterCourseMarks {
     @JsonKey(name: 'obt_viva') final double? obtViva,
     @JsonKey(name: 'obt_attendance') final double? obtAttendance,
     @JsonKey(name: 'obt_lab') final double? obtLab,
+    @JsonKey(name: 'obt_project') final double? obtProject,
     @JsonKey(name: 'obt_term_paper') final double? obtTermPaper,
     @JsonKey(name: 'obt_class_performance') final double? obtClassPerformance,
     @JsonKey(name: 'obt_quizzes') final List<double> obtQuizzes,
@@ -903,6 +948,7 @@ abstract class _SemesterCourseMarks implements SemesterCourseMarks {
     @JsonKey(name: 'created_at') final DateTime? createdAt,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
   }) = _$SemesterCourseMarksImpl;
+  const _SemesterCourseMarks._() : super._();
 
   factory _SemesterCourseMarks.fromJson(Map<String, dynamic> json) =
       _$SemesterCourseMarksImpl.fromJson;
@@ -960,6 +1006,9 @@ abstract class _SemesterCourseMarks implements SemesterCourseMarks {
   @JsonKey(name: 'dist_lab')
   double? get distLab;
   @override
+  @JsonKey(name: 'dist_project')
+  double? get distProject;
+  @override
   @JsonKey(name: 'dist_term_paper')
   double? get distTermPaper;
   @override
@@ -986,6 +1035,9 @@ abstract class _SemesterCourseMarks implements SemesterCourseMarks {
   @override
   @JsonKey(name: 'obt_lab')
   double? get obtLab;
+  @override
+  @JsonKey(name: 'obt_project')
+  double? get obtProject;
   @override
   @JsonKey(name: 'obt_term_paper')
   double? get obtTermPaper;

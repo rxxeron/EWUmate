@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
+import '../../../core/services/cache_service.dart';
 import '../../../core/models/profile.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -17,7 +20,26 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _isDarkMode = true;
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) {
+        final userId = Supabase.instance.client.auth.currentUser?.id;
+        if (userId != null) {
+          ref.invalidate(profileRepositoryProvider);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
@@ -39,6 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     if (confirmed == true && mounted) {
+      await ref.read(cacheServiceProvider).clearAll();
       await ref.read(authRepositoryProvider).signOut();
       if (mounted) {
         context.go('/login');
@@ -397,33 +420,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check, color: Colors.cyan),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: StreamBuilder<Profile?>(
-        stream: profileStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.cyan),
-            );
-          }
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(userProfileProvider);
+          // Wait a bit for the stream to emit
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        color: Colors.cyan,
+        backgroundColor: const Color(0xFF1E2836),
+        child: StreamBuilder<Profile?>(
+          stream: profileStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.cyan),
+              );
+            }
 
-          final profile = snapshot.data;
-          if (profile == null) {
-            return const Center(
-              child: Text(
-                'Profile not found.',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
+            final profile = snapshot.data;
+            if (profile == null) {
+              return const SingleChildScrollView(
+                physics: AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: 500,
+                  child: Center(
+                    child: Text(
+                      'Profile not found.',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              );
+            }
 
-          return SingleChildScrollView(
+            return SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 24.0,
@@ -478,18 +510,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(height: 32),
                 _buildSectionTitle('App Settings'),
                 const SizedBox(height: 16),
-                _buildSettingsCard(
-                  Icons.dark_mode,
-                  'Dark Mode',
-                  trailing: Switch(
-                    value: _isDarkMode,
-                    onChanged: (val) {
-                      setState(() => _isDarkMode = val);
-                    },
-                    activeColor: Colors.cyan,
-                  ),
-                ),
-                const SizedBox(height: 12),
+
                 _buildSettingsCard(
                   Icons.lock_outline,
                   'Change Password',
@@ -508,6 +529,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
         },
       ),
+    ),
     );
   }
 
@@ -532,7 +554,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 radius: 50,
                 backgroundColor: const Color(0xFF2A364B),
                 backgroundImage: profile.photoUrl != null
-                    ? NetworkImage(profile.photoUrl!)
+                    ? CachedNetworkImageProvider(profile.photoUrl!)
                     : null,
                 child: profile.photoUrl == null
                     ? const Icon(Icons.person, size: 50, color: Colors.grey)

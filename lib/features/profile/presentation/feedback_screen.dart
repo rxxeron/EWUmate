@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import '../../../core/utils/version_utils.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
@@ -35,15 +38,19 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
 
   Future<void> _checkAppUpdate() async {
     try {
+      final versionInfo = await PackageInfo.fromPlatform();
+      final currentVersion = versionInfo.version;
+
       final updateRes = await Supabase.instance.client
           .from('app_config')
-          .select('value')
+          .select('value, latest_version')
           .eq('key', 'update_info')
           .maybeSingle();
 
       if (updateRes != null && mounted) {
         final val = updateRes['value'] as Map<String, dynamic>?;
-        if (val != null && val['update_available'] == true) {
+        final latestVersion = updateRes['latest_version']?.toString() ?? "";
+        if (val != null && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
           setState(() {
             _isUpdateAvailable = true;
             _updateUrl = val['download_url']?.toString() ?? '';
@@ -51,7 +58,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         }
       }
     } catch (e) {
-      debugPrint('Check app update error: $e');
+      if (kDebugMode) debugPrint('Check app update error: $e');
     }
   }
 
@@ -72,7 +79,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         });
       }
     } catch (e) {
-      debugPrint('Error fetching feedbacks: ');
+      if (kDebugMode) debugPrint('Error fetching feedbacks: ');
     } finally {
       if (mounted) {
         setState(() => _isLoadingFeedbacks = false);

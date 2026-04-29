@@ -1,7 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+import 'package:flutter/services.dart';
 import '../../core/repositories/auth_repository.dart';
-import '../semester_progress/semester_summary_providers.dart';
+import '../../core/services/cache_service.dart';
+import '../../core/widgets/glass_kit.dart';
+import '../auth/auth_providers.dart';
 import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
@@ -17,6 +22,55 @@ class SemesterProgressScreen extends ConsumerStatefulWidget {
 }
 
 class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen> {
+  Timer? _offlineHeartbeat;
+  Future<List<Map<String, dynamic>>>? _progressFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _offlineHeartbeat = Timer.periodic(const Duration(minutes: 2), (timer) {
+      if (mounted) {
+        _pushSyncQueue();
+      }
+    });
+  }
+
+  Future<void> _pushSyncQueue() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    
+    final cacheService = ref.read(cacheServiceProvider);
+    final repo = ref.read(semesterProgressRepositoryProvider);
+    final queue = cacheService.getSyncQueue(user.id);
+    
+    if (queue.isEmpty) return;
+
+    bool anySuccess = false;
+    for (final item in queue) {
+      if (item['action'] == 'save_course_marks') {
+        try {
+          await repo.saveCourseMarks(user.id, item['semesterCode'], Map<String, dynamic>.from(item['data']));
+          await cacheService.removeQueueItem(user.id, item['data']['course_code']); 
+          anySuccess = true;
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Offline Sync] Still offline for semester marks');
+        }
+      }
+    }
+
+    if (anySuccess && mounted) {
+      setState(() {
+        _progressFuture = null; // Mark for refresh
+      }); 
+    }
+  }
+
+  @override
+  void dispose() {
+    _offlineHeartbeat?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final allMeta = ref.watch(allCoursesProvider).valueOrNull ?? [];
@@ -31,11 +85,16 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
           );
         }
         
+        final user = ref.read(currentUserProvider);
+        if (user == null) return const SizedBox.shrink();
+
+        _progressFuture ??= ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
+          user.id, 
+          semCode
+        );
+
         return FutureBuilder<List<Map<String, dynamic>>>(
-          future: ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
-            ref.read(currentUserProvider)!.id, 
-            semCode
-          ),
+          future: _progressFuture,
           builder: (context, snapshot) {
             final courses = snapshot.data ?? [];
             final isLoading = snapshot.connectionState == ConnectionState.waiting;
@@ -68,40 +127,75 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                   onPressed: () => ref.read(scaffoldKeyProvider).currentState?.openDrawer(),
                 ),
               ),
-              body: isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
-                : courses.isEmpty
-                  ? const Center(child: Text('No courses enrolled this semester.', style: TextStyle(color: Colors.white54)))
-                  : GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        childAspectRatio: 0.75,
+              body: RefreshIndicator(
+                onRefresh: () async {
+                  await _pushSyncQueue();
+                  if (mounted) {
+                    setState(() {
+                      _progressFuture = null;
+                    });
+                  }
+                },
+                color: Colors.cyanAccent,
+                backgroundColor: const Color(0xFF1E293B),
+                child: isLoading 
+                  ? const SingleChildScrollView(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: 500,
+                        child: Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
                       ),
-                      itemCount: courses.length,
-                      itemBuilder: (context, index) {
-                        final course = courses[index];
-                        final code = course['course_code'] ?? 'Course';
-                        final meta = allMeta.where((m) => m.code == code).firstOrNull;
+                    )
+                  : courses.isEmpty
+                    ? SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: const Center(child: Text('No courses enrolled this semester.', style: TextStyle(color: Colors.white54))),
+                        ),
+                      )
+                    : CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: const SizedBox(height: 16),
+                            ),
+                            SliverPadding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                              sliver: SliverGrid(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 0.75,
+                                ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final course = courses[index];
+                                    final code = course['course_code'] ?? 'Course';
+                                    final meta = allMeta.where((m) => m.code == code).firstOrNull;
 
-                        return CourseProgressCard(
-                          courseData: course,
-                          courseName: meta?.name ?? 'Loading Subject...',
-                          onTap: () async {
-                            await Navigator.push(context, MaterialPageRoute(
-                              builder: (context) => CourseProgressDetailScreen(
-                                courseData: course,
-                                semesterCode: semCode,
+                                    return CourseProgressCard(
+                                      courseData: course,
+                                      courseName: meta?.name ?? 'Loading Subject...',
+                                      onTap: () async {
+                                        await Navigator.push(context, MaterialPageRoute(
+                                          builder: (context) => CourseProgressDetailScreen(
+                                            courseData: course,
+                                            semesterCode: semCode,
+                                          ),
+                                        ));
+                                        if (mounted) setState(() {});
+                                      },
+                                    );
+                                  },
+                                  childCount: courses.length,
+                                ),
                               ),
-                            ));
-                            // Refresh if needed
-                            setState(() {});
-                          },
-                        );
-                      },
-                    ),
+                            ),
+                          ],
+                        ),
+              ),
             );
           },
         );
@@ -110,4 +204,5 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
       error: (e, _) => Scaffold(backgroundColor: Color(0xFF0F172A), body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red)))),
     );
   }
+
 }

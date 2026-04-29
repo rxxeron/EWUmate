@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,17 +23,26 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  final Set<String> _hiddenFaculties = {};
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
+    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) {
+        ref.invalidate(activeSemesterProvider);
+        ref.invalidate(availableAdvisingCoursesProvider);
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _searchController.dispose();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -52,40 +62,63 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: activeSemAsync.when(
-        data: (activeSem) {
-          if (activeSem != null) {
-            final now = DateTime.now();
-            final advStart = activeSem.advisingStartDate;
-            final classStart = activeSem.upcomingClassesStartDate;
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(activeSemesterProvider);
+          ref.invalidate(availableAdvisingCoursesProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        color: Colors.cyan,
+        backgroundColor: const Color(0xFF1E2836),
+        child: activeSemAsync.when(
+          data: (activeSem) {
+            if (activeSem != null) {
+              final now = DateTime.now();
+              final advStart = activeSem.advisingStartDate;
+              final classStart = activeSem.upcomingClassesStartDate;
 
-            bool isLocked = true;
-            if (advStart != null && classStart != null) {
-              final unlockDate = advStart.subtract(const Duration(days: 16));
-              if (now.isAfter(unlockDate) && now.isBefore(classStart)) {
-                isLocked = false;
+              bool isLocked = true;
+              if (advStart != null && classStart != null) {
+                final unlockDate = advStart.subtract(const Duration(days: 16));
+                if (now.isAfter(unlockDate) && now.isBefore(classStart)) {
+                  isLocked = false;
+                }
+              }
+
+              if (isLocked) {
+                final openDateStr = advStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(advStart.subtract(const Duration(days: 16))) : 'TBA';
+                final closeDateStr = classStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(classStart) : 'TBA';
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.7,
+                    alignment: Alignment.center,
+                    child: _buildLockedView(
+                      'Pre-Advising Locked',
+                      'The pre-advising section opens on $openDateStr and closes on $closeDateStr.',
+                      Icons.lock_clock
+                    ),
+                  ),
+                );
               }
             }
 
-            if (isLocked) {
-              final openDateStr = advStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(advStart.subtract(const Duration(days: 16))) : 'TBA';
-              final closeDateStr = classStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(classStart) : 'TBA';
-              return _buildLockedView(
-                'Pre-Advising Locked',
-                'The pre-advising section opens on $openDateStr and closes on $closeDateStr.',
-                Icons.lock_clock
-              );
+            // If a generation is active, show the tracking view
+            if (advisingState.generationId != null) {
+              return _buildGenerationOverview(advisingState.generationId!, activeSem);
             }
-          }
-
-          // If a generation is active, show the tracking view
-          if (advisingState.generationId != null) {
-            return _buildGenerationOverview(advisingState.generationId!);
-          }
-          return _buildMainPlanningView(activeSem);
-        },
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-        error: (err, stack) => Center(child: Text('Error loading configuration', style: const TextStyle(color: Colors.red))),
+            return _buildMainPlanningView(activeSem);
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
+          error: (err, stack) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Container(
+              height: 500,
+              alignment: Alignment.center,
+              child: Text('Offline: Showing cached advising data', style: const TextStyle(color: Colors.white70)),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -130,6 +163,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
           tabs: const [
             Tab(text: 'Pick Courses'),
             Tab(text: 'My Drafts'),
+            Tab(text: 'Generations'),
           ],
         ),
         Expanded(
@@ -138,6 +172,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
             children: [
               _buildSelectionTab(activeSem),
               _buildSavedSchedulesTab(),
+              _buildGenerationHistoryTab(),
             ],
           ),
         ),
@@ -157,6 +192,13 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (activeSem?.nextSemesterCode != null) ...[
+                Text(
+                  'Doing Advising for ${activeSem!.nextSemesterCode}',
+                  style: const TextStyle(color: Colors.cyan, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+              ],
               TextField(
                 controller: _searchController,
                 onChanged: (val) => setState(() => _searchQuery = val),
@@ -176,25 +218,62 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               if (advisingState.selectedCourses.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 const Text(
-                  'Selected Courses',
+                  'Selected Courses & Faculties',
                   style: TextStyle(color: Colors.cyan, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 40,
+                  height: 80,
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children: advisingState.selectedCourses.map((code) => Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Chip(
-                        label: Text(code, style: const TextStyle(fontSize: 12)),
-                        onDeleted: () => ref.read(advisingNotifierProvider.notifier).toggleCourse(code),
-                        backgroundColor: Colors.cyan.withValues(alpha: 0.1),
-                        side: const BorderSide(color: Colors.cyan),
-                        labelStyle: const TextStyle(color: Colors.cyan),
-                        deleteIconColor: Colors.cyan,
-                      ),
-                    )).toList(),
+                    children: advisingState.selectedCourses.entries.map((entry) {
+                      final code = entry.key;
+                      final faculties = entry.value;
+                      final facultyText = faculties.isEmpty ? 'All' : faculties.join(', ');
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Chip(
+                              label: Text(code, style: const TextStyle(fontSize: 12)),
+                              onDeleted: () => ref.read(advisingNotifierProvider.notifier).toggleCourse(code),
+                              backgroundColor: Colors.cyan.withValues(alpha: 0.1),
+                              side: const BorderSide(color: Colors.cyan),
+                              labelStyle: const TextStyle(color: Colors.cyan),
+                              deleteIconColor: Colors.cyan,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(height: 4),
+                            InkWell(
+                              onTap: () => _showFacultySelectionDialog(context, code),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.person_outline, size: 12, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      facultyText, 
+                                      style: const TextStyle(fontSize: 10, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_drop_down, size: 14, color: Colors.grey),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
@@ -206,10 +285,12 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         Expanded(
           child: availableCoursesAsync.when(
             data: (courses) {
-              final filtered = courses.where((c) =>
-                c.code.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                c.name.toLowerCase().contains(_searchQuery.toLowerCase())
-              ).toList();
+              final queryMatch = _searchQuery.toLowerCase().replaceAll(' ', '');
+              final filtered = courses.where((c) {
+                final normalizedCode = c.code.toLowerCase().replaceAll(' ', '');
+                final normalizedName = c.name.toLowerCase().replaceAll(' ', '');
+                return normalizedCode.contains(queryMatch) || normalizedName.contains(queryMatch);
+              }).toList();
 
               if (filtered.isEmpty) {
                 return Center(
@@ -229,7 +310,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
                   final course = filtered[index];
-                  final isSelected = advisingState.selectedCourses.contains(course.code);
+                  final isSelected = advisingState.selectedCourses.containsKey(course.code);
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -254,6 +335,32 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
             error: (e, _) => Center(child: Text('Error loading courses', style: const TextStyle(color: Colors.red))),
           ),
         ),
+
+        // Error Display
+        if (advisingState.error != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.redAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      advisingState.error!,
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
         // Action Button
         if (advisingState.selectedCourses.isNotEmpty)
@@ -287,8 +394,9 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
     );
   }
 
-  Widget _buildGenerationOverview(String genId) {
+  Widget _buildGenerationOverview(String genId, ActiveSemester? activeSem) {
     final trackerAsync = ref.watch(generationTrackerProvider(genId));
+    final semesterName = activeSem?.nextSemesterCode ?? 'Next Semester';
 
     return trackerAsync.when(
       data: (data) {
@@ -300,7 +408,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
 
         // If we have some combinations, show them even if still processing
         if (combinations.isNotEmpty) {
-           return _buildResultsList(combinations, status, count);
+           return _buildResultsList(combinations, status, count, semesterName);
         }
 
         if (status == 'processing') {
@@ -309,6 +417,10 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const CircularProgressIndicator(color: Colors.cyan),
+                  Text(
+                  'Doing advising for $semesterName',
+                  style: TextStyle(color: Colors.cyan[200], fontSize: 14),
+                ),
                 const SizedBox(height: 32),
                 const Text(
                   'Optimizing Schedules...',
@@ -358,14 +470,37 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         }
 
         // Completed View
-        return _buildResultsList(combinations, status, count);
+        return _buildResultsList(combinations, status, count, semesterName);
       },
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
       error: (e, _) => Center(child: Text('Tracking Error', style: const TextStyle(color: Colors.red))),
     );
   }
 
-  Widget _buildResultsList(List combinations, String status, int count) {
+  Widget _buildResultsList(List allCombinations, String status, int count, String semesterName) {
+    final Set<String> allFaculties = {};
+    for (var combo in allCombinations) {
+      final sections = combo['sections'] as Map<String, dynamic>? ?? {};
+      for (var sec in sections.values) {
+        final faculty = (sec['faculty_initials'] ?? sec['faculty'] ?? '').toString();
+        if (faculty.isNotEmpty && faculty != 'TBA') {
+          allFaculties.add(faculty);
+        }
+      }
+    }
+
+    final filteredCombinations = allCombinations.where((combo) {
+      if (_hiddenFaculties.isEmpty) return true;
+      final sections = combo['sections'] as Map<String, dynamic>? ?? {};
+      for (var sec in sections.values) {
+        final faculty = (sec['faculty_initials'] ?? sec['faculty'] ?? '').toString();
+        if (_hiddenFaculties.contains(faculty)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
     return Column(
       children: [
         Padding(
@@ -376,8 +511,13 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    Text(
-                    status == 'processing' ? 'Searching...' : '$count Schedules Found',
+                    status == 'processing' ? 'Searching...' : '${filteredCombinations.length} Schedules Found',
                     style: const TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Doing advising for $semesterName',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
                   ),
                   if (status == 'processing')
                     Text(
@@ -393,8 +533,16 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.cyan),
                 ),
+              if (allFaculties.isNotEmpty)
+                IconButton(
+                  onPressed: () => _showLocalFacultyFilterSheet(context, allFaculties),
+                  icon: const Icon(Icons.filter_list, color: Colors.cyan),
+                ),
               IconButton(
-                onPressed: () => ref.read(advisingNotifierProvider.notifier).reset(),
+                onPressed: () {
+                  setState(() => _hiddenFaculties.clear());
+                  ref.read(advisingNotifierProvider.notifier).reset();
+                },
                 icon: const Icon(Icons.close, color: Colors.white54),
               ),
             ],
@@ -403,9 +551,9 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: combinations.length,
+            itemCount: filteredCombinations.length,
             itemBuilder: (context, index) {
-              final combo = combinations[index];
+              final combo = filteredCombinations[index];
               final sections = combo['sections'] as Map<String, dynamic>? ?? {};
 
               return Padding(
@@ -471,8 +619,13 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
 
                         return ListTile(
                           dense: true,
-                          title: Text('$code - ${sec['section']}',
-                              style: const TextStyle(color: Colors.white70)),
+                          title: Row(
+                            children: [
+                              Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
+                              const SizedBox(width: 8),
+                              _buildCapacityIndicator(sec['capacity']?.toString() ?? ''),
+                            ],
+                          ),
                           subtitle: Text(_formatSessions(sec['sessions']),
                               style: TextStyle(
                                   color: Colors.grey[600], fontSize: 11)),
@@ -604,5 +757,232 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
       ),
     );
   }
+
+  Widget _buildGenerationHistoryTab() {
+    return ref.watch(pastGenerationsProvider).when(
+      data: (gens) {
+        if (gens.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.history, size: 64, color: Colors.grey[800]),
+                const SizedBox(height: 16),
+                Text('No generations found.', style: TextStyle(color: Colors.grey[600])),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(20),
+          itemCount: gens.length,
+          itemBuilder: (context, index) {
+            final gen = gens[index];
+            final id = gen['id']?.toString() ?? '';
+            final status = gen['status']?.toString() ?? 'unknown';
+            final count = gen['count'] ?? 0;
+            final courses = gen['courses'] as List? ?? [];
+            final date = gen['created_at'] != null ? (gen['created_at'] as String).split('T').first : '';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GlassContainer(
+                opacity: 0.08,
+                borderRadius: 16,
+                child: ListTile(
+                  title: Text(courses.join(', '), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  subtitle: Text('$date • Status: $status • Found: $count', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                  trailing: const Icon(Icons.chevron_right, color: Colors.cyan),
+                  onTap: () {
+                    // Start overview mode using existing functionality
+                    ref.read(advisingNotifierProvider.notifier).resumeGeneration(id);
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
+      error: (e, _) => const Center(child: Text('Failed to load history', style: TextStyle(color: Colors.red))),
+    );
+  }
+
+  void _showLocalFacultyFilterSheet(BuildContext context, Set<String> allFaculties) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF16202A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Filter by Faculty', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Deselect faculties to hide their combinations from the results:', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 16),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: allFaculties.map((faculty) {
+                          final isSelected = !_hiddenFaculties.contains(faculty);
+                          return FilterChip(
+                            selected: isSelected,
+                            label: Text(faculty),
+                            onSelected: (bool selected) {
+                              setSheetState(() {
+                                if (selected) {
+                                  _hiddenFaculties.remove(faculty);
+                                } else {
+                                  _hiddenFaculties.add(faculty);
+                                }
+                              });
+                              setState(() {});
+                            },
+                            selectedColor: Colors.cyan.withValues(alpha: 0.2),
+                            checkmarkColor: Colors.cyan,
+                            labelStyle: TextStyle(color: isSelected ? Colors.cyan : Colors.white70),
+                            backgroundColor: Colors.white.withValues(alpha: 0.05),
+                            side: BorderSide(
+                              color: isSelected ? Colors.cyan : Colors.grey.withValues(alpha: 0.3),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  void _showFacultySelectionDialog(BuildContext context, String courseCode) {
+    FocusScope.of(context).unfocus();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF16202A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return _FacultySelectionSheet(courseCode: courseCode);
+      },
+    );
+  }
+
+  Widget _buildCapacityIndicator(String capacity) {
+    if (capacity.isEmpty || !capacity.contains('/')) {
+      return const SizedBox.shrink();
+    }
+    try {
+      final parts = capacity.split('/');
+      final enrolled = int.parse(parts[0].trim());
+      final total = int.parse(parts[1].trim());
+      final bool isFull = (total > 0 && enrolled >= total) || (total == 0 && enrolled > 0);
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0.5),
+        decoration: BoxDecoration(
+          color: (isFull ? Colors.redAccent : Colors.cyan).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: (isFull ? Colors.redAccent : Colors.cyan).withOpacity(0.3), width: 0.5),
+        ),
+        child: Text(
+          isFull ? 'Full' : '${total - enrolled} Left',
+          style: TextStyle(color: isFull ? Colors.redAccent : Colors.cyan, fontSize: 8, fontWeight: FontWeight.bold),
+        ),
+      );
+    } catch (e) {
+      return const SizedBox.shrink();
+    }
+  }
 }
+
+class _FacultySelectionSheet extends ConsumerWidget {
+  final String courseCode;
+  
+  const _FacultySelectionSheet({required this.courseCode});
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final facultiesAsync = ref.watch(courseFacultiesProvider(courseCode));
+    final advisingState = ref.watch(advisingNotifierProvider);
+    final selectedFaculties = advisingState.selectedCourses[courseCode] ?? [];
+
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Select Faculty for $courseCode',
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
+            ],
+          ),
+          const SizedBox(height: 16),
+          facultiesAsync.when(
+            data: (faculties) {
+               if (faculties.isEmpty) {
+                 return const Center(child: Text('No faculty options available.', style: TextStyle(color: Colors.grey)));
+               }
+               return Flexible(
+                 child: SingleChildScrollView(
+                   child: Wrap(
+                     spacing: 8.0,
+                     runSpacing: 8.0,
+                     children: faculties.map((faculty) {
+                       final isSelected = selectedFaculties.contains(faculty);
+                       return FilterChip(
+                         selected: isSelected,
+                         label: Text(faculty),
+                         onSelected: (bool selected) {
+                           ref.read(advisingNotifierProvider.notifier).toggleFaculty(courseCode, faculty);
+                         },
+                         selectedColor: Colors.cyan.withValues(alpha: 0.2),
+                         checkmarkColor: Colors.cyan,
+                         labelStyle: TextStyle(color: isSelected ? Colors.cyan : Colors.white70),
+                         backgroundColor: Colors.white.withValues(alpha: 0.05),
+                         side: BorderSide(
+                           color: isSelected ? Colors.cyan : Colors.grey.withValues(alpha: 0.3),
+                         ),
+                       );
+                     }).toList(),
+                   ),
+                 ),
+               );
+            },
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
+            error: (e, st) => Center(child: Text('Error loading faculties', style: const TextStyle(color: Colors.red))),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+}
+
 

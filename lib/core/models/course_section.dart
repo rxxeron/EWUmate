@@ -24,6 +24,7 @@ class CourseSection with _$CourseSection {
     required String id,
     @Default('') String code,
     @JsonKey(name: 'course_name') @Default('') String courseName,
+    @JsonKey(name: 'faculty_initials') @Default('') String facultyInitials,
     @Default('') String section,
     @Default('') String capacity,
     @Default('3.0') String credits,

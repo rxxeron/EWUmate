@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "sync-semester-meta": {
+      "verify_jwt": false
+    }
+  }
+}

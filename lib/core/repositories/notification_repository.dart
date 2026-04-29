@@ -1,27 +1,59 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification.dart' as model;
 import '../providers/supabase_provider.dart';
+import '../services/cache_service.dart';
 import 'auth_repository.dart';
 
 part 'notification_repository.g.dart';
 
 class NotificationRepository {
   final SupabaseClient _supabase;
+  final CacheService _cache;
 
-  NotificationRepository(this._supabase);
+  NotificationRepository(this._supabase, this._cache);
 
-  Stream<List<model.Notification>> streamNotifications(String userId) {
-    return _supabase
-        .from('notifications')
-        .stream(primaryKey: ['id'])
-        .eq('user_id', userId)
-        .order('created_at', ascending: false)
-        .limit(50)
-        .map(
-          (data) =>
-              data.map((json) => model.Notification.fromJson(json)).toList(),
-        );
+  Stream<List<model.Notification>> streamNotifications(String userId) async* {
+    final cachedData = _cache.getMapData('dashboard_box', 'notifications_$userId');
+    if (cachedData != null && cachedData['list'] != null) {
+      final list = (cachedData['list'] as List)
+          .map((json) => model.Notification.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+      yield list;
+    }
+
+    try {
+      await for (final data in _supabase
+          .from('notifications')
+          .stream(primaryKey: ['id'])
+          .order('created_at', ascending: false)
+          .limit(50)) {
+        
+        final notifications = data.where((json) {
+          return json['user_id'] == userId && json['is_dispatched'] == true;
+        }).map((json) {
+          final modifiableJson = Map<String, dynamic>.from(json);
+          if (modifiableJson['payload'] is String) {
+            try {
+              modifiableJson['payload'] = jsonDecode(modifiableJson['payload']);
+            } catch (_) {
+              modifiableJson['payload'] = null;
+            }
+          }
+          return model.Notification.fromJson(modifiableJson);
+        }).toList();
+
+        _cache.setMapData('dashboard_box', 'notifications_$userId', {
+          'list': notifications.map((n) => n.toJson()).toList(),
+        });
+
+        yield notifications;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Notifications] Offline mode fallback: $e');
+    }
   }
 
   Future<void> markAsRead(String notificationId) async {
@@ -59,7 +91,8 @@ class NotificationRepository {
 @riverpod
 NotificationRepository notificationRepository(NotificationRepositoryRef ref) {
   final supabase = ref.watch(supabaseClientProvider);
-  return NotificationRepository(supabase);
+  final cache = ref.watch(cacheServiceProvider);
+  return NotificationRepository(supabase, cache);
 }
 
 @riverpod

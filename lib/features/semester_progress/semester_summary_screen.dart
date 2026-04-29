@@ -2,14 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ewumate_v2/core/models/profile.dart';
-import 'package:ewumate_v2/core/models/semester_summary.dart';
-import 'package:ewumate_v2/core/repositories/profile_repository.dart';
-import 'package:ewumate_v2/core/repositories/progress_repository.dart';
-import 'package:ewumate_v2/core/utils/grade_helper.dart';
-import 'package:ewumate_v2/core/repositories/course_repository.dart';
-import 'package:ewumate_v2/core/repositories/dashboard_repository.dart';
-import 'package:ewumate_v2/core/models/semester_analytics.dart';
+import 'package:ewumate/core/models/profile.dart';
+import 'package:ewumate/core/models/semester_summary.dart';
+import 'package:ewumate/core/repositories/profile_repository.dart';
+import 'package:ewumate/core/repositories/progress_repository.dart';
+import 'package:ewumate/core/utils/grade_helper.dart';
+import 'package:ewumate/core/repositories/course_repository.dart';
+import 'package:ewumate/core/repositories/dashboard_repository.dart';
+import 'package:ewumate/core/models/semester_analytics.dart';
 import 'semester_summary_providers.dart';
 
 class SemesterSummaryScreen extends ConsumerStatefulWidget {
@@ -46,8 +46,20 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
         error: (e, st) => Center(child: Text('Error loading profile: $e', style: const TextStyle(color: Colors.red))),
         data: (profile) {
           
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
+          return RefreshIndicator(
+            color: Colors.cyan,
+            backgroundColor: const Color(0xFF1E293B),
+            onRefresh: () async {
+              ref.invalidate(currentAnalyticsProvider);
+              ref.invalidate(currentProfileFutureProvider);
+              ref.invalidate(currentSemesterMarksProvider);
+              ref.invalidate(academicYearsFutureProvider);
+              ref.invalidate(awardedScholarshipProvider);
+              ref.invalidate(userScholarshipPolicyProvider);
+              await Future.delayed(const Duration(milliseconds: 300));
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,7 +87,8 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
                 const SizedBox(height: 40),
               ],
             ),
-          );
+          ),
+        );
         }
       ),
     );
@@ -220,9 +233,9 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               _buildStatItem('Projected\nCGPA', (predictedCgpa ?? 0.0).toStringAsFixed(2), const Color(0xFF06B6D4), Icons.speed_rounded),
               _buildStatItem('Last\nCGPA', (profile?.cgpa ?? 0.0).toStringAsFixed(2), Colors.white, Icons.history_rounded),
 
-              _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' Cr'),
+              _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
               _buildStatItem('Curr\nEnrolled', (analytics?.takenInThisSem ?? enrolledCreditsFromMarks).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
-              _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(analytics?.requiredCredit ?? policy?.annualCreditsRequired ?? 30.0).toStringAsFixed(0)}'),
+              _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
             ],
           ),
         ],
@@ -320,6 +333,7 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
         if (marks.isEmpty) {
           return const Text('No active courses found for dynamic goals.', style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
         }
+        
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -334,27 +348,13 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
             final course = marks[index];
             final goals = ref.watch(goalGradesProvider);
             final currentGoal = goals[course.courseCode] ?? 'A';
-            final gradeScaleMap = ref.watch(gradeScaleMapProvider).valueOrNull ?? {};
+            final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
+            final gradeScaleMap = ref.watch(gradeScaleMapProvider(policy)).valueOrNull ?? {};
 
-            double evaluatedMarks = 0.0;
-            double obtained = 0.0;
+            double evaluatedMarks = course.totalEvaluated;
+            double obtained = course.totalObtained;
 
-            if (course.obtMid != null) { evaluatedMarks += course.distMid; obtained += course.obtMid!; }
-            if (course.obtFinal != null) { evaluatedMarks += course.distFinal; obtained += course.obtFinal!; }
-            if (course.obtAssignment != null) { evaluatedMarks += (course.distAssignment ?? 0); obtained += course.obtAssignment!; }
-            if (course.obtPresentation != null) { evaluatedMarks += (course.distPresentation ?? 0); obtained += course.obtPresentation!; }
-            if (course.obtAttendance != null) { evaluatedMarks += (course.distAttendance ?? 0); obtained += course.obtAttendance!; }
-            if (course.obtClassPerformance != null) { evaluatedMarks += (course.distClassPerformance ?? 0); obtained += course.obtClassPerformance!; }
-            if (course.obtQuizzes.isNotEmpty) {
-              evaluatedMarks += course.distQuiz;
-              obtained += course.obtQuizzes.fold(0.0, (a, b) => a + b);
-            }
-            if (course.obtShortQuizzes.isNotEmpty) {
-              evaluatedMarks += (course.distShortQuiz ?? 0.0);
-              obtained += course.obtShortQuizzes.fold(0.0, (a, b) => a + b);
-            }
-
-            double reqMarks = gradeScaleMap[currentGoal] ?? _getRequiredMarksFallback(currentGoal);
+            double reqMarks = gradeScaleMap[currentGoal] ?? _getDynamicRequiredMarksFallback(currentGoal, policy);
             
             double lostMarks = evaluatedMarks - obtained;
             double maxPossibleFinalScore = 100.0 - lostMarks;
@@ -440,19 +440,34 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
                       border: Border.all(color: Colors.white12),
                     ),
                     child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        dropdownColor: const Color(0xFF0F172A),
-                        value: currentGoal,
-                        isExpanded: true,
-                        style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.w900, fontSize: 16),
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.cyanAccent),
-                        items: ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D'].map((g) {
-                          return DropdownMenuItem(value: g, child: Text("Goal: $g"));
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            ref.read(goalGradesProvider.notifier).updateGoal(course.courseCode, val);
+                      child: ref.watch(policyGradesProvider(policy)).when(
+                        loading: () => const SizedBox(),
+                        error: (e, _) => Text('Error: $e', style: const TextStyle(color: Colors.red, fontSize: 10)),
+                        data: (gradeOptions) {
+                          // FALLBACK LOGIC: Ensure exactly one item with value exists
+                          // If currentGoal is not in the list, we fallback to the highest grade (index 0)
+                          // Or 'A' if list is empty.
+                          String safeGoal = currentGoal;
+                          if (!gradeOptions.contains(currentGoal)) {
+                            // Automatically select the first available grade or fallback to 'A'
+                            safeGoal = gradeOptions.isNotEmpty ? gradeOptions.first : 'A';
                           }
+
+                          return DropdownButton<String>(
+                            dropdownColor: const Color(0xFF0F172A),
+                            value: safeGoal,
+                            isExpanded: true,
+                            style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.w900, fontSize: 16),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.cyanAccent),
+                            items: gradeOptions.map((g) {
+                              return DropdownMenuItem(value: g, child: Text("Goal: $g"));
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                ref.read(goalGradesProvider.notifier).updateGoal(course.courseCode, val);
+                              }
+                            },
+                          );
                         },
                       ),
                     ),
@@ -482,18 +497,36 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
     );
   }
 
-  double _getRequiredMarksFallback(String grade) {
-    switch (grade) {
-      case 'A+': return 90;
-      case 'A': return 80;
-      case 'A-': return 75;
-      case 'B+': return 70;
-      case 'B': return 65;
-      case 'B-': return 60;
-      case 'C+': return 55;
-      case 'C': return 50;
-      case 'D': return 45;
-      default: return 0;
+  double _getDynamicRequiredMarksFallback(String grade, String policy) {
+    // We already have the default scales in GradeHelper, but there they are points.
+    // For marks, we stick to a reasonable default if DB is missing data.
+    if (policy == 'legacy') {
+      switch (grade) {
+        case 'A+': return 80;
+        case 'A': return 75;
+        case 'A-': return 70;
+        case 'B+': return 65;
+        case 'B': return 60;
+        case 'B-': return 55;
+        case 'C+': return 50;
+        case 'C': return 45;
+        case 'D': return 40;
+        default: return 0;
+      }
+    } else {
+      switch (grade) {
+        case 'A': return 90;
+        case 'A-': return 85;
+        case 'B+': return 80;
+        case 'B': return 75;
+        case 'B-': return 70;
+        case 'C+': return 65;
+        case 'C': return 60;
+        case 'C-': return 55;
+        case 'D+': return 50;
+        case 'D': return 45;
+        default: return 0;
+      }
     }
   }
 

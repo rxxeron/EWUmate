@@ -89,6 +89,50 @@ final savedSchedulesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) 
   return ref.watch(scheduleRepositoryProvider).getSavedSchedules(user.id);
 });
 
+final pastGenerationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+  
+  final supabase = ref.watch(supabaseClientProvider);
+  try {
+    final res = await supabase
+        .from('schedule_generations')
+        .select('id, created_at, status, count, courses')
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(20);
+    return List<Map<String, dynamic>>.from(res);
+  } catch (e) {
+    return [];
+  }
+});
+
+final courseFacultiesProvider = FutureProvider.autoDispose.family<List<String>, String>((ref, String courseCode) async {
+  final activeSem = await ref.watch(activeSemesterProvider.future);
+  final semCode = activeSem?.nextSemesterCode;
+  if (semCode == null) return [];
+  
+  final safeSem = semCode.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+  final tableName = 'courses_$safeSem';
+  
+  final supabase = ref.watch(supabaseClientProvider);
+  try {
+    final cleanCode = courseCode.replaceAll(' ', '').toUpperCase();
+    final res = await supabase.from(tableName).select('faculty_initials').eq('course_code', cleanCode);
+    final Set<String> initials = {};
+    for (final r in res as List) {
+       final f = r['faculty_initials']?.toString().toUpperCase().trim();
+       if (f != null && f.isNotEmpty && f != 'TBA') {
+          initials.add(f);
+       }
+    }
+    final list = initials.toList()..sort();
+    return list;
+  } catch(e) {
+     return [];
+  }
+});
+
 final generationTrackerProvider = StreamProvider.family<Map<String, dynamic>?, String>((ref, genId) async* {
   final supabase = ref.watch(supabaseClientProvider);
   

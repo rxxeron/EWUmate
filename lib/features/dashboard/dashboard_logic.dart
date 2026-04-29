@@ -172,12 +172,13 @@ class DashboardLogic {
       final startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? '';
       final endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? '';
         final isLab = CourseUtils.isLab(startTime, endTime, code);
+          final backendType = cls['type']?.toString();
 
-      list.add(ScheduleItem(
-        id: "base_${code}_${dayName}_$startTime".replaceAll(' ', ''),
-        courseCode: code,
-        courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
-        sessionType: isLab ? 'Lab' : 'Theory',
+        list.add(ScheduleItem(
+          id: "base_${code}_${dayName}_$startTime".replaceAll(' ', ''),
+          courseCode: code,
+          courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
+          sessionType: backendType ?? (isLab ? 'Lab' : 'Theory'),
         day: dayName,
         startTime: startTime,
         endTime: endTime,
@@ -213,14 +214,15 @@ class DashboardLogic {
         final startTime = (ex['start_time'] ?? ex['startTime'] ?? 'TBA').toString();
         final endTime = (ex['end_time'] ?? ex['endTime'] ?? 'TBA').toString();
           final String overrideCode = (ex['course_code'] ?? ex['courseCode'] ?? 'Extra').toString();
-          final isLab = CourseUtils.isLab(startTime, endTime, overrideCode);
+          final isLabFallback = CourseUtils.isLab(startTime, endTime, overrideCode);
+          final backendType = ex['session_type']?.toString() ?? ex['sessionType']?.toString();
           final isManual = type == 'manual';
 
           schedule.add(ScheduleItem(
             id: ex['id']?.toString() ?? "${type}_${overrideCode}_$dateStr",
             courseCode: overrideCode,
           courseName: (ex['course_name'] ?? ex['courseName'] ?? (type == 'makeup' ? 'Makeup Class' : 'Manual Entry')).toString(),
-          sessionType: type == 'makeup' ? 'Makeup' : (isLab ? 'Lab' : 'Theory'),
+          sessionType: type == 'makeup' ? 'Makeup' : (backendType ?? (isLabFallback ? 'Lab' : 'Theory')),
           day: dayName,
           startTime: startTime,
           endTime: endTime,
@@ -262,13 +264,14 @@ class DashboardLogic {
         } else {
           final startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? 'TBA';
           final endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? 'TBA';
-          final isLab = CourseUtils.isLab(startTime, endTime, code);
+          final isLabFallback = CourseUtils.isLab(startTime, endTime, code);
+          final backendType = cls['type']?.toString();
 
           schedule.add(ScheduleItem(
             id: "template_${code}_$startTime".replaceAll(' ', ''),
             courseCode: code,
             courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
-            sessionType: isLab ? 'Lab' : 'Theory',
+            sessionType: backendType ?? (isLabFallback ? 'Lab' : 'Theory'),
             day: dayName,
             startTime: startTime,
             endTime: endTime,

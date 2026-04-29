@@ -1,42 +1,58 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/models/notification.dart' as model;
 
-class NotificationsScreen extends ConsumerWidget {
+class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
+  @override
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) {
+        ref.invalidate(userNotificationsProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _handleNotificationTap(
-      BuildContext context, WidgetRef ref, model.Notification notification) async {
+      BuildContext context, model.Notification notification) async {
     // 1. Always mark it as read
     if (!notification.isRead) {
       ref.read(notificationRepositoryProvider).markAsRead(notification.id);
     }
 
-    // 2. Check for a payload action (like opening an update link)
-    if (notification.payload != null) {
-      final url = notification.payload?['url'];
-      if (url != null && url.toString().isNotEmpty) {
-        final uri = Uri.parse(url.toString());
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return; // Stop here if we launched a URL
-        } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open the update link.')),
-            );
-          }
-        }
-      }
+    // 2. Show the detail popup (Front and Center)
+    if (context.mounted) {
+      ref.read(fcmServiceProvider).showNotificationPopup(
+        notification.title, 
+        notification.body, 
+        notification.payload != null ? notification.payload!['url']?.toString() : null
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(userNotificationsProvider);
 
     return Scaffold(
@@ -63,28 +79,43 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: notificationsAsync.when(
-        data: (notifications) {
-          if (notifications.isEmpty) {
-            return const Center(
-              child: Text('No new notifications.',
-                  style: TextStyle(color: Colors.white54, fontSize: 16)),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            itemCount: notifications.length,
-            separatorBuilder: (context, index) => const Divider(color: Colors.white10),
-            itemBuilder: (context, index) {
-              final notif = notifications[index];
-              return _buildNotificationTile(context, ref, notif);
-            },
-          );
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(userNotificationsProvider);
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-        error: (err, stack) => Center(
-          child: Text('Failed to load notifications: $err', style: const TextStyle(color: Colors.redAccent)),
+        color: Colors.cyanAccent,
+        backgroundColor: const Color(0xFF1A1A2E),
+        child: notificationsAsync.when(
+          data: (notifications) {
+            if (notifications.isEmpty) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: const Center(
+                    child: Text('No new notifications.',
+                        style: TextStyle(color: Colors.white54, fontSize: 16)),
+                  ),
+                ),
+              );
+            }
+
+            return ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              itemCount: notifications.length,
+              separatorBuilder: (context, index) => const Divider(color: Colors.white10),
+              itemBuilder: (context, index) {
+                final notif = notifications[index];
+                return _buildNotificationTile(context, ref, notif);
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
+          error: (err, stack) => Center(
+            child: Text('Failed to load notifications: $err',
+                style: const TextStyle(color: Colors.redAccent)),
+          ),
         ),
       ),
     );
@@ -122,7 +153,7 @@ class NotificationsScreen extends ConsumerWidget {
         ref.read(notificationRepositoryProvider).deleteNotification(notif.id);
       },
       child: ListTile(
-        onTap: () => _handleNotificationTap(context, ref, notif),
+        onTap: () => _handleNotificationTap(context, notif),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         tileColor: isUnread ? Colors.white.withOpacity(0.05) : Colors.transparent,
         leading: Stack(

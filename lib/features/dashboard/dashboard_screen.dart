@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/version_utils.dart';
 
 
 
@@ -27,6 +31,8 @@ import '../../core/utils/date_utils.dart' as date_util;
 import '../../core/utils/time_utils.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
+import 'package:home_widget/home_widget.dart';
+import 'schedule_widget_render.dart';
 
 
 import '../../core/widgets/ewumate_app_bar.dart';
@@ -62,6 +68,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _semConfig;
   bool _showAdvisingBanner = false;
   bool _showUpdateBanner = false;
+  String _downloadUrl = "";
+  
+  // Track tasks currently showing the "Reschedule?" prompt after being marked missed
+  final Set<String> _reschedulePromptIds = {};
   
   Map<String, dynamic>? _lastValidScheduleData;
   
@@ -122,30 +132,93 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               .toList();
           _loadingInit = false;
         });
+        
+        _updateHomeWidget(dashboardData);
       }
       
-      // 4. Check App Update Config
+      // 4. Check App Update Config (Automated)
       try {
-        final updateRes = await _supabase.from('app_config').select('value').eq('key', 'update_info').maybeSingle();
+        final versionInfo = await PackageInfo.fromPlatform();
+        final currentVersion = versionInfo.version;
+        
+        final updateRes = await _supabase
+            .from('app_config')
+            .select('value, latest_version')
+            .eq('key', 'update_info')
+            .maybeSingle();
+
         if (updateRes != null) {
           final val = updateRes['value'] as Map<String, dynamic>?;
-          if (val != null && val['update_available'] == true) {
+          final latestVersion = updateRes['latest_version']?.toString() ?? "";
+          
+          if (val != null && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
              final url = val['download_url']?.toString() ?? '';
              setState(() {
                _showUpdateBanner = true;
-               
+               _downloadUrl = url;
              });
+          } else {
+             setState(() => _showUpdateBanner = false);
           }
         }
       } catch (e) {
+        debugPrint('[Dashboard] Update Check Error: $e');
       }
 
       // 5. Check Advising Banner for NEXT semester
       if (nextSemesterCode != null) {
         _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
       }
-    } catch (e, stack) {
+    } on PostgrestException catch (e) {
+      if (e.code == '401' || e.message.contains('JWT expired')) {
+        // Handle session expiration - gracefully sign out or prompt re-login
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Session expired. Please log in again.')),
+          );
+          _supabase.auth.signOut();
+          context.go('/login');
+        }
+      }
       if (mounted) setState(() => _loadingInit = false);
+    } catch (e, stack) {
+      debugPrint('[Dashboard] Refresh Error: $e\n$stack');
+      if (mounted) setState(() => _loadingInit = false);
+    }
+  }
+
+  Future<void> _updateHomeWidget(Map<String, dynamic> rawData) async {
+    try {
+      final processedData = DashboardLogic.processDashboardData(rawData);
+      
+      final Map<String, dynamic> encodableData = {
+        'status': processedData['status'],
+        'reason': processedData['reason'],
+        'displayDate': processedData['displayDate'],
+        'schedule': (processedData['schedule'] as List).map((item) {
+          if (item is ScheduleItem) {
+            return {
+              'courseCode': item.courseCode,
+              'courseName': item.courseName,
+              'sessionType': item.sessionType,
+              'startTime': item.startTime,
+              'endTime': item.endTime,
+              'room': item.room,
+              'faculty': item.faculty,
+              'isCancelled': item.isCancelled,
+              'isMakeup': item.isMakeup,
+            };
+          }
+          return item;
+        }).toList(),
+      };
+
+      await HomeWidget.saveWidgetData('schedule_json', jsonEncode(encodableData));
+      await HomeWidget.updateWidget(
+        androidName: 'ScheduleWidgetProvider',
+      );
+    } catch (e, stack) {
+      debugPrint('[Dashboard] HomeWidget Update Error: $e\n$stack');
     }
   }
 
@@ -299,7 +372,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               color: Colors.cyanAccent,
               backgroundColor: const Color(0xFF1A1A2E),
               child: _lastValidScheduleData == null 
-                ? const Center(child: SkeletonLoader(width: double.infinity, height: 200))
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    children: const [
+                      SizedBox(height: 100),
+                      Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Text(
+                            "Unable to connect to EWUmate.\nNo offline data found. Pull to refresh.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.white54, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                 : SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -310,12 +398,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           FadeInSlide(delay: const Duration(milliseconds: 150), child: _buildTransitionBanner()),
                         FadeInSlide(delay: const Duration(milliseconds: 200), child: _buildAdvisingBanner()),
                         FadeInSlide(delay: const Duration(milliseconds: 300), child: _buildExamTimeline()),
+                        FadeInSlide(delay: const Duration(milliseconds: 400), child: _buildOverdueDecisionSection()),
                         FadeInSlide(
                           delay: const Duration(milliseconds: 600), 
                                                     child: _buildScheduleSection(
-                            DashboardLogic.processDashboardData(
-                              _lastValidScheduleData!,
-                            ),
+                            DashboardLogic.processDashboardData(_lastValidScheduleData!),
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -331,10 +418,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-
-
-  // Removed manual _buildAppBar as it's replaced by EWUmateAppBar
-
   Widget _buildExamTimeline() {
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
@@ -343,7 +426,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final upcomingExams = _tasks.where((t) {
       if ((t['is_completed'] ?? false) || (t['is_missed'] ?? false)) return false;
       final type = t['type'] ?? '';
-      if (type != 'midTerm' && type != 'finalExam') return false;
+      if (type != 'Mid Exam' && type != 'Final Exam') return false;
       
       final dueDate = DateTime.tryParse(t['due_date']?.toString() ?? '');
       if (dueDate == null) return false;
@@ -399,7 +482,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       countdown = "Today";
     }
 
-    final isFinal = exam['type'] == 'finalExam';
+    final isFinal = exam['type'] == 'Final Exam';
     final color = isFinal ? Colors.pinkAccent : Colors.orangeAccent;
     final label = isFinal ? "FINAL EXAM" : "MIDTERM";
 
@@ -757,7 +840,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final reason = data['reason'] ?? "";
     final schedule = (data['schedule'] as List?)?.cast<ScheduleItem>() ?? [];
     final targetDate = data['targetDate'] as DateTime?;
- 
+
     final isToday = targetDate != null && date_util.DateUtils.isToday(targetDate);
     final isTomorrow = targetDate != null && date_util.DateUtils.isTomorrow(targetDate);
     
@@ -766,7 +849,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (isTomorrow) title = "Tomorrow's Schedule";
     
     final displayDate = targetDate != null ? DateFormat('EEEE, MMM d').format(targetDate) : "";
- 
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -818,6 +901,183 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ...schedule.map((item) => ScheduleCard(item: item)),
       ],
     );
+  }
+
+  Widget _buildOverdueDecisionSection() {
+    final now = DateTime.now();
+    final overdueTasks = _tasks.where((t) {
+      if ((t['is_completed'] ?? false) || (t['is_missed'] ?? false)) return false;
+      final dueDate = DateTime.tryParse(t['due_date']?.toString() ?? '');
+      return dueDate != null && dueDate.isBefore(now);
+    }).toList();
+
+    if (overdueTasks.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Icon(Icons.history_toggle_off_rounded, color: Colors.orangeAccent),
+              SizedBox(width: 12),
+              Text(
+                "Task Checkpoint",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+        ...overdueTasks.map((task) => _buildDecisionCard(task)),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildDecisionCard(Map<String, dynamic> task) {
+    final taskId = task['id']?.toString() ?? '';
+    final isPromptingReschedule = _reschedulePromptIds.contains(taskId);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B).withOpacity(0.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isPromptingReschedule 
+              ? Colors.orangeAccent.withOpacity(0.3) 
+              : Colors.white.withOpacity(0.08),
+        ),
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: isPromptingReschedule
+            ? Column(
+                key: ValueKey('prompt_$taskId'),
+                children: [
+                  const Text(
+                    "Want to reschedule this task for another time?",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () => _handleFinalMissed(taskId),
+                        child: Text(
+                          "No, hide it",
+                          style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orangeAccent,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => _showTaskEditor(task),
+                        child: const Text("Yes, Reschedule", style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Column(
+                key: ValueKey('decision_$taskId'),
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.priority_high_rounded, color: Colors.orangeAccent, size: 20),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              task['title']?.toString() ?? 'Untitled Task',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              "Deadline has passed. What happened?",
+                              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () {
+                            setState(() => _reschedulePromptIds.add(taskId));
+                          },
+                          child: const Text("Missed", style: TextStyle(color: Colors.redAccent)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.greenAccent,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () => _markTaskCompleted(taskId),
+                          child: const Text("Completed", style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  void _markTaskCompleted(String taskId) async {
+    if (user == null) return;
+    try {
+      await ref.read(taskRepositoryProvider).updateTaskStatus(user!.id, taskId, true);
+      _refreshDashboard();
+    } catch (e) {
+      debugPrint("Error marking task completed: $e");
+    }
+  }
+
+  void _handleFinalMissed(String taskId) async {
+    if (user == null) return;
+    try {
+      await ref.read(taskRepositoryProvider).updateTaskMissedStatus(user!.id, taskId, true);
+      setState(() => _reschedulePromptIds.remove(taskId));
+      _refreshDashboard();
+    } catch (e) {
+      debugPrint("Error marking task missed: $e");
+    }
   }
 
   Widget _buildTasksSection() {
@@ -926,3 +1186,5 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     });
   }
 }
+
+

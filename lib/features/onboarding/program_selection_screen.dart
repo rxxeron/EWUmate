@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'onboarding_repository.dart';
+import '../auth/auth_providers.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
 
@@ -115,13 +116,26 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                   const Icon(Icons.school_rounded,
                       size: 80, color: Colors.cyanAccent),
                   const SizedBox(height: 24),
-                  Text(
-                    "${Supabase.instance.client.auth.currentUser?.email?.split('@').first ?? 'Student'}, welcome to EWUmate!",
-                    style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                    textAlign: TextAlign.center,
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final profile = ref.watch(profileProvider).value;
+                      final user = Supabase.instance.client.auth.currentUser;
+                      final metadata = user?.userMetadata;
+                      final name = profile?.nickname ?? 
+                                   profile?.fullName ?? 
+                                   metadata?['displayName'] ?? 
+                                   metadata?['fullName'] ?? 
+                                   user?.email?.split('@').first ?? 
+                                   'Student';
+                      return Text(
+                        "$name, welcome to EWUmate!",
+                        style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                        textAlign: TextAlign.center,
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   const Text(

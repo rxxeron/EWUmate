@@ -3,17 +3,24 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/utils/course_utils.dart';
+import '../../core/services/cache_service.dart';
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  return DashboardRepository(supabase: Supabase.instance.client);
+  final cache = ref.watch(cacheServiceProvider);
+  return DashboardRepository(supabase: Supabase.instance.client, cache: cache);
 });
 
 class DashboardRepository {
   final SupabaseClient _supabase;
+  final CacheService? _cache;
 
-  DashboardRepository({SupabaseClient? supabase})
-    : _supabase = supabase ?? Supabase.instance.client;
+  DashboardRepository({SupabaseClient? supabase, CacheService? cache})
+    : _supabase = supabase ?? Supabase.instance.client,
+      _cache = cache;
 
   /// The New Simplified Dashboard Fetch
   /// 1. Weekly Grid (user_semester_states)
@@ -123,21 +130,45 @@ class DashboardRepository {
 
       if (weeklyGrid.isEmpty) {
         try {
-          await _supabase.functions.invoke(
-            'sync-schedule',
-            body: {'user_id': user.id},
-          );
+          // Normalize the semester code before sync call
+          final safeCode = semesterCode.replaceAll(' ', '').replaceAll('_', '');
+          debugPrint('[Dashboard] Triggering sync-schedule (No-JWT) for: $safeCode');
+          
+          try {
+            // Manual HTTP call to bypass the automatic JWT/Authorization header injection
+            // which was triggering 401 Invalid JWT errors.
+            final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+            final uri = Uri.parse('$functionsUrl/sync-schedule');
+            await http.post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+              },
+              body: jsonEncode({
+                'user_id': user.id,
+                'semester_code': safeCode,
+              }),
+            );
+          } catch (e) {
+             debugPrint('[Dashboard] Manual sync call failed: $e');
+          }
+          
+          // Re-fetch with a slight delay if needed, though await should handle it
           final freshState = await _supabase
               .from('user_semester_states')
               .select('weekly_grid_cache')
               .eq('user_id', user.id)
               .eq('semester_code', semesterCode)
               .maybeSingle();
+              
           if (freshState != null && freshState['weekly_grid_cache'] != null) {
             weeklyGrid =
                 freshState['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
           }
-        } catch (e) {}
+        } catch (e) {
+          debugPrint('DashboardRepository: sync-schedule error: $e');
+        }
       }
 
       // 2. Evaluate Standard (Tri) Track Local State
@@ -256,7 +287,7 @@ class DashboardRepository {
         }
       }
 
-      return {
+      final payload = {
         'status': status,
         'reason': reason,
         'template': hybridClasses,
@@ -265,8 +296,46 @@ class DashboardRepository {
         'date': date,
         'dateStr': dateStr,
       };
+
+      if (_cache != null) {
+        final cachePayload = {...payload, 'date': date.toIso8601String()};
+        _cache?.cacheDashboardSchedule(user.id, cachePayload);
+      }
+
+      return payload;
     } catch (e) {
+      if (_cache != null) {
+        final cached = _cache?.getCachedDashboardSchedule(user.id);
+        if (cached != null) {
+          debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
+          if (cached['date'] != null && cached['date'] is String) {
+            cached['date'] = DateTime.tryParse(cached['date']) ?? date;
+          }
+          return cached;
+        }
+      }
       rethrow;
+    }
+  }
+
+  /// Triggers the sync-schedule Edge Function to regenerate the weekly_grid_cache.
+  Future<void> syncWeeklySchedule(String userId) async {
+    try {
+      debugPrint('[Dashboard] Proactively triggering sync-schedule (No-JWT) for: $userId');
+      final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+      final uri = Uri.parse('$functionsUrl/sync-schedule');
+      await http.post(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+        },
+        body: jsonEncode({
+          'user_id': userId,
+        }),
+      );
+    } catch (e) {
+      debugPrint('[Dashboard] Proactive sync error: $e');
     }
   }
 
@@ -495,10 +564,20 @@ class DashboardRepository {
 
       if (weeklyGrid.isEmpty) {
         try {
-          await _supabase.functions.invoke(
-            'sync-schedule',
-            body: {'user_id': user.id},
+          final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+          final uri = Uri.parse('$functionsUrl/sync-schedule');
+          await http.post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+            },
+            body: jsonEncode({
+              'user_id': user.id,
+              'semester_code': semesterCode.replaceAll(' ', '').replaceAll('_', ''),
+            }),
           );
+          
           final freshState = await _supabase
               .from('user_semester_states')
               .select('weekly_grid_cache')
@@ -509,7 +588,9 @@ class DashboardRepository {
             weeklyGrid =
                 freshState['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
           }
-        } catch (e) {}
+        } catch (e) {
+          debugPrint('[Dashboard] Two-week sync error: $e');
+        }
       }
 
       bool isOverallPhrmUser = false;

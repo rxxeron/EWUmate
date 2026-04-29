@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ewumate/core/models/semester_course_marks.dart';
 
 class CourseProgressCard extends StatelessWidget {
   final Map<String, dynamic> courseData;
@@ -17,35 +18,33 @@ class CourseProgressCard extends StatelessWidget {
     final code = courseData['course_code'] ?? 'Course';
     final name = courseName ?? 'Course Full Name';
     
-    // Calculate total percentage (assuming out of 100)
-    double totalObtained = 0.0;
-    totalObtained += (courseData['obt_mid'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_final'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_attendance'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_project'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_presentation'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_viva'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_assignment'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_term_paper'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_lab'] as num?)?.toDouble() ?? 0.0;
-    totalObtained += (courseData['obt_class_performance'] as num?)?.toDouble() ?? 0.0;
+    // Parse into the model to use our single-source-of-truth totalObtained calculator
+    // Inject required fields just in case legacy/broken cache data lacks them
+    final safeData = Map<String, dynamic>.from(courseData);
+    safeData['id'] ??= 'fallback_id_$code';
+    safeData['user_id'] ??= 'fallback_user';
+    safeData['semester_code'] ??= 'unknown_sem';
+    safeData['course_code'] ??= code;
     
-    final List<dynamic>? qArr = courseData['obt_quizzes'];
-    if (qArr != null) {
-      totalObtained += qArr.fold(0.0, (sum, item) => sum + (item as num).toDouble());
-    }
-    final List<dynamic>? sqArr = courseData['obt_short_quizzes'];
-    if (sqArr != null) {
-      totalObtained += sqArr.fold(0.0, (sum, item) => sum + (item as num).toDouble());
-    }
+    final courseModel = SemesterCourseMarks.fromJson(safeData);
+    final double totalObtained = courseModel.totalObtained;
 
     final String percentageText = totalObtained.toStringAsFixed(1) + '%';
     
     // Logic for grade badge (placeholder logic based on percentage)
     String grade = 'F';
     Color gradeColor = const Color(0xFFF43F5E); // Red
-    if (totalObtained >= 80) { grade = 'A+'; gradeColor = Colors.greenAccent; }
+    
+    if (totalObtained >= 80) { grade = 'A+'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 75) { grade = 'A'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 70) { grade = 'A-'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 65) { grade = 'B+'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 60) { grade = 'B'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 55) { grade = 'B-'; gradeColor = Colors.cyanAccent; }
+    else if (totalObtained >= 50) { grade = 'C+'; gradeColor = Colors.orangeAccent; }
+    else if (totalObtained >= 45) { grade = 'C'; gradeColor = Colors.orangeAccent; }
     else if (totalObtained >= 40) { grade = 'D'; gradeColor = Colors.orangeAccent; }
+    else { grade = 'F'; gradeColor = const Color(0xFFF43F5E); }
 
     return GestureDetector(
       onTap: onTap,

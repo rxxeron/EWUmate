@@ -89,6 +89,24 @@ final savedSchedulesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) 
   return ref.watch(scheduleRepositoryProvider).getSavedSchedules(user.id);
 });
 
+final pastGenerationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+  
+  final supabase = ref.watch(supabaseClientProvider);
+  try {
+    final res = await supabase
+        .from('schedule_generations')
+        .select('id, created_at, status, count, courses')
+        .eq('user_id', user.id)
+        .order('created_at', ascending: false)
+        .limit(20);
+    return List<Map<String, dynamic>>.from(res);
+  } catch (e) {
+    return [];
+  }
+});
+
 final courseFacultiesProvider = FutureProvider.autoDispose.family<List<String>, String>((ref, String courseCode) async {
   final activeSem = await ref.watch(activeSemesterProvider.future);
   final semCode = activeSem?.nextSemesterCode;

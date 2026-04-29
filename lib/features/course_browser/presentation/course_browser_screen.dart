@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ewumate_v2/core/models/course_metadata.dart';
-import 'package:ewumate_v2/core/providers/academic_providers.dart';
-import 'package:ewumate_v2/core/utils/course_utils.dart';
+import 'package:ewumate/core/models/course_metadata.dart';
+import 'package:ewumate/core/providers/academic_providers.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 import '../../../core/repositories/course_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
@@ -76,21 +76,38 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
           // 1. Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              onChanged: (val) => ref.read(courseSearchQueryProvider.notifier).state = val,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Search by course code or name...',
-                hintStyle: TextStyle(color: Colors.grey[500]),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                filled: true,
-                fillColor: const Color(0xFF1E2836).withOpacity(0.5),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    onChanged: (val) => ref.read(courseSearchQueryProvider.notifier).state = val,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search course code...',
+                      hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
+                      filled: true,
+                      fillColor: const Color(0xFF1E2836).withOpacity(0.5),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    ),
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-              ),
+                const SizedBox(width: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E2836).withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.tune_rounded, color: Color(0xFF00E5FF)),
+                    onPressed: () => _showFilterSheet(context),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),
@@ -205,10 +222,10 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
       );
     }
 
-    final availableCourses = ref.watch(browserAvailableCoursesProvider);
+    final availableCourses = ref.watch(filteredAvailableCoursesProvider);
     return availableCourses.when(
       data: (courses) {
-        if (courses.isEmpty) return const Center(child: Text('No courses offered in this track for the upcoming semester.', style: TextStyle(color: Colors.grey)));
+        if (courses.isEmpty) return const Center(child: Text('No courses match your filters.', style: TextStyle(color: Colors.grey)));
         
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -273,7 +290,6 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
     final List<CourseMetadata> metas = [];
     for (var code in codes) {
       final results = await repo.searchCourses(code);
-      // Use CourseUtils for absolute precision in matching 3-digit vs 4-digit codes
       final match = results.firstWhere(
         (c) => CourseUtils.areEquivalent(c.code, code), 
         orElse: () => results.isNotEmpty ? results.first : null as dynamic
@@ -281,5 +297,80 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
       if (match != null) metas.add(match);
     }
     return metas;
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E2836),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => const _FilterSheet(),
+    );
+  }
+}
+
+class _FilterSheet extends ConsumerWidget {
+  const _FilterSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(courseBrowserFilterProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Advanced Filters', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              TextButton(
+                onPressed: () {
+                  ref.read(courseBrowserFilterProvider.notifier).state = CourseBrowserFilter();
+                  Navigator.pop(context);
+                },
+                child: const Text('Reset', style: TextStyle(color: Color(0xFF00E5FF))),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text('By Credits', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            children: ['1.0', '1.5', '3.0', '4.0'].map((c) {
+              final isSelected = filter.credits == c;
+              return ChoiceChip(
+                label: Text(c),
+                selected: isSelected,
+                onSelected: (val) {
+                  ref.read(courseBrowserFilterProvider.notifier).update((s) => s.copyWith(credits: val ? c : null, clearCredits: !val));
+                },
+                selectedColor: const Color(0xFF00E5FF),
+                labelStyle: TextStyle(color: isSelected ? Colors.black : Colors.white),
+                backgroundColor: const Color(0xFF16202A),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 30),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00E5FF),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
+    );
   }
 }

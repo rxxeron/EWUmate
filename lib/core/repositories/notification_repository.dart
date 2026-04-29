@@ -28,11 +28,12 @@ class NotificationRepository {
       await for (final data in _supabase
           .from('notifications')
           .stream(primaryKey: ['id'])
-          .eq('user_id', userId)
           .order('created_at', ascending: false)
           .limit(50)) {
         
-        final notifications = data.map((json) {
+        final notifications = data.where((json) {
+          return json['user_id'] == userId && json['is_dispatched'] == true;
+        }).map((json) {
           final modifiableJson = Map<String, dynamic>.from(json);
           if (modifiableJson['payload'] is String) {
             try {
@@ -51,7 +52,7 @@ class NotificationRepository {
         yield notifications;
       }
     } catch (e) {
-      debugPrint('[Notifications] Offline mode fallback: $e');
+      if (kDebugMode) debugPrint('[Notifications] Offline mode fallback: $e');
     }
   }
 

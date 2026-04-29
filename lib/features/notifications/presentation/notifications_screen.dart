@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/fcm_service.dart';
 import '../../../core/models/notification.dart' as model;
 
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -40,22 +41,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ref.read(notificationRepositoryProvider).markAsRead(notification.id);
     }
 
-    // 2. Check for a payload action (like opening an update link)
-    if (notification.payload != null) {
-      final url = notification.payload?['url'];
-      if (url != null && url.toString().isNotEmpty) {
-        final uri = Uri.parse(url.toString());
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return; // Stop here if we launched a URL
-        } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open the update link.')),
-            );
-          }
-        }
-      }
+    // 2. Show the detail popup (Front and Center)
+    if (context.mounted) {
+      ref.read(fcmServiceProvider).showNotificationPopup(
+        notification.title, 
+        notification.body, 
+        notification.payload != null ? notification.payload!['url']?.toString() : null
+      );
     }
   }
 

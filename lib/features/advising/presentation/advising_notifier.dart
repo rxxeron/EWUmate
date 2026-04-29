@@ -51,6 +51,10 @@ class AdvisingNotifier extends _$AdvisingNotifier {
     state = state.copyWith(selectedCourses: updated, error: null);
   }
 
+  void resumeGeneration(String id) {
+    state = state.copyWith(generationId: id, isGenerating: false, error: null);
+  }
+
   void toggleFaculty(String code, String facultyInitial) {
     final current = state.selectedCourses;
     if (!current.containsKey(code)) return;

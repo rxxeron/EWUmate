@@ -7,7 +7,7 @@ part of 'progress_repository.dart';
 // **************************************************************************
 
 String _$progressRepositoryHash() =>
-    r'87b7236bfce2a012428ca06ddbf96fb1935d9274';
+    r'bfa8254dc3b034fb03119a5592a8f7b8e3df1e7b';
 
 /// See also [progressRepository].
 @ProviderFor(progressRepository)

@@ -58,7 +58,7 @@ class _ProfileCheckWrapper extends ConsumerWidget {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.go('/onboarding/program');
           });
-          return const CircularProgressBinding(text: 'Initializing Profile...');
+          return const CircularProgressBinding(text: 'Initializing experience...');
         } else if (profile.onboardingStatus == 'course_history') {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             context.go('/onboarding/course-history');

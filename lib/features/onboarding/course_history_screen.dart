@@ -6,6 +6,8 @@ import 'onboarding_repository.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/utils/course_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/grade_helper.dart';
+import '../semester_progress/semester_summary_providers.dart';
 
 class CourseHistoryScreen extends ConsumerStatefulWidget {
   final bool isEditMode;
@@ -28,6 +30,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   List<Map<String, dynamic>> _catalog = [];
   final Map<String, Map<String, String>> _history = {};
   final Map<String, List<String>> _selectedSectionIds = {};
+  final Map<String, Map<String, dynamic>> _selectedCoursesMetadata = {}; // Persistent metadata
   List<String> _allSemesters = [];
   String _runningSemester = "Loading...";
 
@@ -132,24 +135,18 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     final details = <Map<String, dynamic>>[];
 
     for (final selection in currentSemMap.keys) {
-      final match =
-          _catalog.where((c) {
-            final key = _isCurrentSemester
-                ? "${c['code']}_Sec${c['section']}"
-                : c['code'].toString();
-            return key == selection;
-          }).firstOrNull ??
-          {};
-
-      if (match.isNotEmpty) {
+      final meta = _selectedCoursesMetadata[selection];
+      
+      if (meta != null) {
         details.add({
-          'id': match['id'],
-          'code': (match['code'] ?? selection).toString(),
-          'name': (match['name'] ?? match['code'] ?? selection).toString(),
-          'section': (match['section'] ?? '').toString(),
-          'time': (match['time'] ?? '').toString(),
+          'id': meta['id'],
+          'code': (meta['code'] ?? meta['course_code'] ?? selection).toString(),
+          'name': (meta['name'] ?? meta['course_name'] ?? selection).toString(),
+          'section': (meta['section'] ?? meta['section_number'] ?? '').toString(),
+          'time': (meta['time'] ?? meta['schedule_data'] ?? '').toString(),
         });
       } else {
+        // Fallback for very old data or edge cases
         final code = selection.contains('_Sec')
             ? selection.split('_Sec').first
             : selection;
@@ -244,11 +241,13 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             .getAllSemesters(semesterType: semesterType),
         ref.read(onboardingRepositoryProvider).fetchUserProfile(),
         ref.read(onboardingRepositoryProvider).fetchCompletedCourses(),
+        ref.read(onboardingRepositoryProvider).fetchActiveEnrollments(),
       ]);
 
       final allSems = results[0] as List<String>;
       final profileData = results[1] as Map<String, dynamic>;
       final completedCourses = results[2] as List<Map<String, dynamic>>;
+      final activeEnrollments = results[3] as List<Map<String, dynamic>>;
 
       if (mounted) {
         setState(() {
@@ -259,6 +258,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             _allSemesters.add(_runningSemester);
 
           _history.clear();
+          _selectedSectionIds.clear();
+
+          // Load History
           for (var row in completedCourses) {
             final semRaw = row['semester_code'] as String;
             String sem = semRaw.replaceAll('_', '');
@@ -275,6 +277,43 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
             if (!_history.containsKey(sem)) _history[sem] = {};
             _history[sem]![code] = grade;
+          }
+
+          // Load Active Enrollments (The "Missing Link")
+          for (var row in activeEnrollments) {
+            final code = row['course_code'] as String;
+            final sectionNum = row['section']?.toString() ?? '';
+            final sectionId = row['section_id']?.toString() ?? '';
+            final semRaw = (row['semester_code'] ?? _runningSemester).toString();
+            
+            // Format to match the "Prettified" version used in UI history
+            String sem = semRaw.replaceAll('_', '');
+            final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
+            if (reg.hasMatch(sem)) {
+              final m = reg.firstMatch(sem)!;
+              final name = m.group(1)!;
+              sem = "${name[0].toUpperCase()}${name.substring(1).toLowerCase()}${m.group(2)}";
+            }
+
+            if (!_history.containsKey(sem)) _history[sem] = {};
+            
+            // Use the SecN format if it's the running semester
+            if (sem.toLowerCase() == _runningSemester.toLowerCase()) {
+              final selectionKey = sectionNum.isNotEmpty ? "${code}_Sec$sectionNum" : code;
+              _history[sem]![selectionKey] = "Ongoing";
+              if (sectionId.isNotEmpty) {
+                _selectedSectionIds[selectionKey] = [sectionId];
+              }
+              // Initialize persistent metadata from existing enrollments
+              _selectedCoursesMetadata[selectionKey] = {
+                'id': sectionId,
+                'code': code,
+                'section': sectionNum,
+              };
+            } else {
+              // Backward compatibility for mis-categorized enrollments
+              _history[sem]![code] = "Ongoing";
+            }
           }
 
           _admittedSemester = (profileData['admitted_semester'] ?? "")
@@ -498,6 +537,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         ids.add(course['id']);
       }
       _selectedSectionIds[selectionKey] = ids;
+      _selectedCoursesMetadata[selectionKey] = Map<String, dynamic>.from(course);
     });
   }
 
@@ -505,25 +545,55 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     setState(() {
       _history[_currentSemester!]?.remove(key);
       _selectedSectionIds.remove(key);
+      _selectedCoursesMetadata.remove(key);
     });
   }
 
   Future<String?> _showGradeDialog(String code) {
-    final grades = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"];
+    final policy = GradeHelper.getPolicyForSemester(_currentSemester ?? '');
+    final scale = ref.read(gradeScaleListProvider).valueOrNull ?? [];
+    
+    // Fetch grades for the specific policy from the DB-loaded scale
+    final List<String> grades = scale
+        .where((s) => s.policy == policy)
+        .map((s) => s.grade)
+        .toSet() // Ensure unique
+        .toList();
+    
+    // Sort by point descending if points available
+    if (grades.isNotEmpty) {
+      grades.sort((a, b) {
+        final pa = scale.firstWhere((s) => s.grade == a && s.policy == policy).point;
+        final pb = scale.firstWhere((s) => s.grade == b && s.policy == policy).point;
+        return pb.compareTo(pa);
+      });
+    } else {
+       // Fallback only if DB is empty/not loaded
+       grades.addAll(policy == 'legacy' 
+        ? ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"]
+        : ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"]);
+    }
+
     return showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: Text("Grade for $code"),
+        title: Text("Grade for $code", style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF1E293B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         children: grades
             .map(
               (g) => SimpleDialogOption(
                 onPressed: () => Navigator.pop(ctx, g),
-                child: Center(
-                  child: Text(
-                    g,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Center(
+                    child: Text(
+                      g,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.cyanAccent,
+                      ),
                     ),
                   ),
                 ),

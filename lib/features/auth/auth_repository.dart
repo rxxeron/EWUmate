@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/profile.dart';
@@ -29,7 +30,12 @@ class AuthRepository {
   }
 
   Future<void> signOut() async {
-    await _client.auth.signOut();
+    try {
+      // Clear local Hive cache before signing out from Supabase
+      await _client.auth.signOut();
+    } catch (e) {
+      if (kDebugMode) print("AuthRepository: Sign out error: $e");
+    }
   }
 
   Future<Profile?> getProfile(String userId) async {
@@ -44,7 +50,7 @@ class AuthRepository {
       if (response.isEmpty) return null;
       return Profile.fromJson(response.first);
     } catch (e) {
-      print("AuthRepository: Profile fetch failed/timed out: $e");
+      if (kDebugMode) print("AuthRepository: Profile fetch failed/timed out: $e");
       // Throwing instead of returning null so FutureProvider enters 'error' state
       throw Exception("Connection timed out. Please check your internet.");
     }

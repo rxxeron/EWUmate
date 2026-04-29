@@ -1,6 +1,6 @@
 {
-    "name": "ewumate_v2",
-    "short_name": "ewumate_v2",
+    "name": "EWUmate",
+    "short_name": "EWUmate",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

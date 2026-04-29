@@ -8,6 +8,7 @@ import '../../features/auth/register_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/onboarding/program_selection_screen.dart';
 import '../../features/onboarding/course_history_screen.dart';
+import '../../features/onboarding/presentation/profile_setup_screen.dart';
 
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -38,6 +39,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
 
+      GoRoute(path: '/onboarding/profile-setup', builder: (context, state) => const ProfileSetupScreen()),
       GoRoute(path: '/onboarding/program', builder: (context, state) => const ProgramSelectionScreen()),
       GoRoute(path: '/onboarding/course-history', builder: (context, state) {
         final isEdit = state.extra as bool? ?? false;

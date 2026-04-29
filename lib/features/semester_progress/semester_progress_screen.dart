@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../../core/services/cache_service.dart';
-import '../semester_progress/semester_summary_providers.dart';
+import '../../core/widgets/glass_kit.dart';
+import '../auth/auth_providers.dart';
 import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
@@ -20,6 +23,7 @@ class SemesterProgressScreen extends ConsumerStatefulWidget {
 
 class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen> {
   Timer? _offlineHeartbeat;
+  Future<List<Map<String, dynamic>>>? _progressFuture;
 
   @override
   void initState() {
@@ -46,16 +50,18 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
       if (item['action'] == 'save_course_marks') {
         try {
           await repo.saveCourseMarks(user.id, item['semesterCode'], Map<String, dynamic>.from(item['data']));
-          await cacheService.removeQueueItem(user.id, item['data']['course_code']); // Assuming you can drop by course code
+          await cacheService.removeQueueItem(user.id, item['data']['course_code']); 
           anySuccess = true;
         } catch (e) {
-          debugPrint('[Offline Sync] Still offline for semester marks');
+          if (kDebugMode) debugPrint('[Offline Sync] Still offline for semester marks');
         }
       }
     }
 
     if (anySuccess && mounted) {
-      setState(() {}); // Re-trigger FutureBuilder
+      setState(() {
+        _progressFuture = null; // Mark for refresh
+      }); 
     }
   }
 
@@ -79,11 +85,16 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
           );
         }
         
+        final user = ref.read(currentUserProvider);
+        if (user == null) return const SizedBox.shrink();
+
+        _progressFuture ??= ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
+          user.id, 
+          semCode
+        );
+
         return FutureBuilder<List<Map<String, dynamic>>>(
-          future: ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
-            ref.read(currentUserProvider)!.id, 
-            semCode
-          ),
+          future: _progressFuture,
           builder: (context, snapshot) {
             final courses = snapshot.data ?? [];
             final isLoading = snapshot.connectionState == ConnectionState.waiting;
@@ -119,7 +130,11 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
               body: RefreshIndicator(
                 onRefresh: () async {
                   await _pushSyncQueue();
-                  if (mounted) setState(() {});
+                  if (mounted) {
+                    setState(() {
+                      _progressFuture = null;
+                    });
+                  }
                 },
                 color: Colors.cyanAccent,
                 backgroundColor: const Color(0xFF1E293B),
@@ -139,37 +154,47 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                           child: const Center(child: Text('No courses enrolled this semester.', style: TextStyle(color: Colors.white54))),
                         ),
                       )
-                    : GridView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
-                          childAspectRatio: 0.75,
-                        ),
-                        itemCount: courses.length,
-                        itemBuilder: (context, index) {
-                          final course = courses[index];
-                          final code = course['course_code'] ?? 'Course';
-                          final meta = allMeta.where((m) => m.code == code).firstOrNull;
-
-                          return CourseProgressCard(
-                            courseData: course,
-                            courseName: meta?.name ?? 'Loading Subject...',
-                            onTap: () async {
-                              await Navigator.push(context, MaterialPageRoute(
-                                builder: (context) => CourseProgressDetailScreen(
-                                  courseData: course,
-                                  semesterCode: semCode,
+                    : CustomScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          slivers: [
+                            SliverToBoxAdapter(
+                              child: const SizedBox(height: 16),
+                            ),
+                            SliverPadding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                              sliver: SliverGrid(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 0.75,
                                 ),
-                              ));
-                              // Refresh if needed
-                              if (mounted) setState(() {});
-                            },
-                          );
-                        },
-                      ),
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final course = courses[index];
+                                    final code = course['course_code'] ?? 'Course';
+                                    final meta = allMeta.where((m) => m.code == code).firstOrNull;
+
+                                    return CourseProgressCard(
+                                      courseData: course,
+                                      courseName: meta?.name ?? 'Loading Subject...',
+                                      onTap: () async {
+                                        await Navigator.push(context, MaterialPageRoute(
+                                          builder: (context) => CourseProgressDetailScreen(
+                                            courseData: course,
+                                            semesterCode: semCode,
+                                          ),
+                                        ));
+                                        if (mounted) setState(() {});
+                                      },
+                                    );
+                                  },
+                                  childCount: courses.length,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
               ),
             );
           },
@@ -179,4 +204,5 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
       error: (e, _) => Scaffold(backgroundColor: Color(0xFF0F172A), body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red)))),
     );
   }
+
 }

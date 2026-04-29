@@ -26,6 +26,20 @@ class SemesterProgressRepository {
   }
 
   Future<List<Map<String, dynamic>>> getSemesterProgressData(String userId, String semesterCode) async {
+    final cacheKey = 'progress_${userId}_$semesterCode';
+    
+    // 1. Try cache first
+    final cached = _cache.getMapData('dashboard_box', cacheKey);
+    if (cached != null && cached['data'] != null) {
+      // Trigger background sync
+      _fetchProgressAndCache(userId, semesterCode, cacheKey);
+      return List<Map<String, dynamic>>.from(cached['data']);
+    }
+
+    return await _fetchProgressAndCache(userId, semesterCode, cacheKey);
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchProgressAndCache(String userId, String semesterCode, String cacheKey) async {
     try {
       final enrollments = await _supabase
           .from('enrollments')
@@ -50,7 +64,10 @@ class SemesterProgressRepository {
       for (var code in enrolledCourseCodes) {
         final existingMark = marksData.firstWhere(
           (m) => m['course_code'] == code, 
-          orElse: () => {
+          orElse: () => <String, dynamic>{
+            'id': 'new_$code', 
+            'user_id': userId,
+            'semester_code': semesterCode,
             'course_code': code,
             'is_new': true,
           }
@@ -58,15 +75,12 @@ class SemesterProgressRepository {
         progressData.add(existingMark);
       }
       
-      _cache.setMapData('dashboard_box', 'progress_${userId}_$semesterCode', {'data': progressData});
-      return progressData;
+      // Update Cache
+      _cache.setMapData('dashboard_box', cacheKey, {'data': progressData});
       
+      return progressData;
     } catch (e) {
-      debugPrint('[SemesterProgress] Offline read fallback');
-      final cached = _cache.getMapData('dashboard_box', 'progress_${userId}_$semesterCode');
-      if (cached != null && cached['data'] != null) {
-        return List<Map<String, dynamic>>.from(cached['data']);
-      }
+      if (kDebugMode) debugPrint('[SemesterProgress] Network fetch failed: $e');
       return [];
     }
   }
@@ -91,7 +105,7 @@ class SemesterProgressRepository {
       }
       _updateProgressCache(userId, semesterCode, data);
     } catch (e) {
-      debugPrint('[SemesterProgress] Offline write queued');
+      if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued');
       _updateProgressCache(userId, semesterCode, data);
       
       data['is_new'] = isNew; // restore for queue

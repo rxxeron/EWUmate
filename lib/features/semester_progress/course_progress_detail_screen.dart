@@ -28,14 +28,16 @@ class _CourseProgressDetailScreenState
   late TextEditingController distMidCtrl, distFinalCtrl, distAttendanceCtrl;
   late TextEditingController distQuizCtrl, distShortQuizCtrl, distProjectCtrl;
   late TextEditingController distAssignmentCtrl, distTermPaperCtrl, distLabCtrl;
-  late TextEditingController distPresentationCtrl, distVivaCtrl;
+  late TextEditingController distPresentationCtrl, distVivaCtrl, distClassPerfCtrl;
+  late TextEditingController distOpt1Ctrl, distOpt2Ctrl, distOpt3Ctrl;
 
   late TextEditingController obtMidCtrl, obtFinalCtrl, obtAttendanceCtrl;
   late TextEditingController obtProjectCtrl,
       obtAssignmentCtrl,
       obtTermPaperCtrl,
       obtLabCtrl;
-  late TextEditingController obtPresentationCtrl, obtVivaCtrl;
+  late TextEditingController obtPresentationCtrl, obtVivaCtrl, obtClassPerfCtrl;
+  late TextEditingController obtOpt1Ctrl, obtOpt2Ctrl, obtOpt2Ctrl_Legacy, obtOpt3Ctrl;
 
   List<TextEditingController> obtQuizzesCtrls = [];
   List<TextEditingController> obtShortQuizzesCtrls = [];
@@ -53,16 +55,14 @@ class _CourseProgressDetailScreenState
     _tabController = TabController(length: 2, vsync: this);
 
     _quizStrategy = _data['quiz_strategy'] ?? 'best_one';
-    if (_quizStrategy == 'best_n')
-      _quizStrategy = 'sum_all'; // Handle legacy data
+    // Removed legacy sum_all overwrite to support Best N correctly
     _quizNCtrl = TextEditingController(
       text: _data['quiz_n']?.toString() ?? '1',
     );
 
     Map<String, dynamic> extra = _data['marks_data'] ?? {};
     _shortQuizStrategy = extra['short_quiz_strategy'] ?? 'best_one';
-    if (_shortQuizStrategy == 'best_n')
-      _shortQuizStrategy = 'sum_all'; // Handle legacy data
+    // Removed legacy sum_all overwrite to support Best N correctly
     _shortQuizNCtrl = TextEditingController(
       text: _data['short_quiz_n']?.toString() ?? '1',
     );
@@ -100,6 +100,18 @@ class _CourseProgressDetailScreenState
     distVivaCtrl = TextEditingController(
       text: _data['dist_viva']?.toString() ?? '',
     );
+    distClassPerfCtrl = TextEditingController(
+      text: _data['dist_class_performance']?.toString() ?? '',
+    );
+    distOpt1Ctrl = TextEditingController(
+      text: _data['dist_optional_1']?.toString() ?? '',
+    );
+    distOpt2Ctrl = TextEditingController(
+      text: _data['dist_optional_2']?.toString() ?? '',
+    );
+    distOpt3Ctrl = TextEditingController(
+      text: _data['dist_optional_3']?.toString() ?? '',
+    );
 
     obtMidCtrl = TextEditingController(
       text: _data['obt_mid']?.toString() ?? '',
@@ -128,6 +140,18 @@ class _CourseProgressDetailScreenState
     obtVivaCtrl = TextEditingController(
       text: _data['obt_viva']?.toString() ?? '',
     );
+    obtClassPerfCtrl = TextEditingController(
+      text: _data['obt_class_performance']?.toString() ?? '',
+    );
+    obtOpt1Ctrl = TextEditingController(
+      text: _data['obt_optional_1']?.toString() ?? '',
+    );
+    obtOpt2Ctrl = TextEditingController(
+      text: _data['obt_optional_2']?.toString() ?? '',
+    );
+    obtOpt3Ctrl = TextEditingController(
+      text: _data['obt_optional_3']?.toString() ?? '',
+    );
 
     final List<dynamic>? qArr = _data['obt_quizzes'];
     if (qArr != null && qArr.isNotEmpty) {
@@ -154,6 +178,10 @@ class _CourseProgressDetailScreenState
       distLabCtrl,
       distPresentationCtrl,
       distVivaCtrl,
+      distClassPerfCtrl,
+      distOpt1Ctrl,
+      distOpt2Ctrl,
+      distOpt3Ctrl,
     ]) {
       c.addListener(() => setState(() {}));
     }
@@ -166,6 +194,41 @@ class _CourseProgressDetailScreenState
   @override
   void dispose() {
     _tabController.dispose();
+    distMidCtrl.dispose();
+    distFinalCtrl.dispose();
+    distQuizCtrl.dispose();
+    distShortQuizCtrl.dispose();
+    distAttendanceCtrl.dispose();
+    distProjectCtrl.dispose();
+    distAssignmentCtrl.dispose();
+    distTermPaperCtrl.dispose();
+    distLabCtrl.dispose();
+    distPresentationCtrl.dispose();
+    distVivaCtrl.dispose();
+    distClassPerfCtrl.dispose();
+    distOpt1Ctrl.dispose();
+    distOpt2Ctrl.dispose();
+    distOpt3Ctrl.dispose();
+
+    obtMidCtrl.dispose();
+    obtFinalCtrl.dispose();
+    obtAttendanceCtrl.dispose();
+    obtProjectCtrl.dispose();
+    obtAssignmentCtrl.dispose();
+    obtTermPaperCtrl.dispose();
+    obtLabCtrl.dispose();
+    obtPresentationCtrl.dispose();
+    obtVivaCtrl.dispose();
+    obtClassPerfCtrl.dispose();
+    obtOpt1Ctrl.dispose();
+    obtOpt2Ctrl.dispose();
+    obtOpt3Ctrl.dispose();
+
+    _quizNCtrl.dispose();
+    _shortQuizNCtrl.dispose();
+    for (var c in obtQuizzesCtrls) c.dispose();
+    for (var c in obtShortQuizzesCtrls) c.dispose();
+
     super.dispose();
   }
 
@@ -183,6 +246,10 @@ class _CourseProgressDetailScreenState
       distLabCtrl,
       distPresentationCtrl,
       distVivaCtrl,
+      distClassPerfCtrl,
+      distOpt1Ctrl,
+      distOpt2Ctrl,
+      distOpt3Ctrl,
     ]) {
       total += double.tryParse(c.text) ?? 0;
     }
@@ -236,6 +303,10 @@ class _CourseProgressDetailScreenState
       obtLabCtrl,
       obtPresentationCtrl,
       obtVivaCtrl,
+      obtClassPerfCtrl,
+      obtOpt1Ctrl,
+      obtOpt2Ctrl,
+      obtOpt3Ctrl,
     ]) {
       total += double.tryParse(c.text) ?? 0;
     }
@@ -258,16 +329,15 @@ class _CourseProgressDetailScreenState
   }
 
   String _getExpectedGrade(double totalMark) {
-    if (totalMark >= 93) return 'A';
-    if (totalMark >= 90) return 'A-';
-    if (totalMark >= 87) return 'B+';
-    if (totalMark >= 83) return 'B';
-    if (totalMark >= 80) return 'B-';
-    if (totalMark >= 77) return 'C+';
-    if (totalMark >= 73) return 'C';
-    if (totalMark >= 70) return 'C-';
-    if (totalMark >= 67) return 'D+';
-    if (totalMark >= 60) return 'D';
+    if (totalMark >= 80) return 'A+';
+    if (totalMark >= 75) return 'A';
+    if (totalMark >= 70) return 'A-';
+    if (totalMark >= 65) return 'B+';
+    if (totalMark >= 60) return 'B';
+    if (totalMark >= 55) return 'B-';
+    if (totalMark >= 50) return 'C+';
+    if (totalMark >= 45) return 'C';
+    if (totalMark >= 40) return 'D';
     return 'F';
   }
 
@@ -311,6 +381,10 @@ class _CourseProgressDetailScreenState
     _data['dist_lab'] = double.tryParse(distLabCtrl.text);
     _data['dist_presentation'] = double.tryParse(distPresentationCtrl.text);
     _data['dist_viva'] = double.tryParse(distVivaCtrl.text);
+    _data['dist_class_performance'] = double.tryParse(distClassPerfCtrl.text);
+    _data['dist_optional_1'] = double.tryParse(distOpt1Ctrl.text);
+    _data['dist_optional_2'] = double.tryParse(distOpt2Ctrl.text);
+    _data['dist_optional_3'] = double.tryParse(distOpt3Ctrl.text);
 
     _data['obt_mid'] = double.tryParse(obtMidCtrl.text);
     _data['obt_final'] = double.tryParse(obtFinalCtrl.text);
@@ -321,6 +395,10 @@ class _CourseProgressDetailScreenState
     _data['obt_lab'] = double.tryParse(obtLabCtrl.text);
     _data['obt_presentation'] = double.tryParse(obtPresentationCtrl.text);
     _data['obt_viva'] = double.tryParse(obtVivaCtrl.text);
+    _data['obt_class_performance'] = double.tryParse(obtClassPerfCtrl.text);
+    _data['obt_optional_1'] = double.tryParse(obtOpt1Ctrl.text);
+    _data['obt_optional_2'] = double.tryParse(obtOpt2Ctrl.text);
+    _data['obt_optional_3'] = double.tryParse(obtOpt3Ctrl.text);
 
     _data['quiz_strategy'] = _quizStrategy;
     _data['quiz_n'] = int.tryParse(_quizNCtrl.text) ?? 1;
@@ -510,10 +588,19 @@ class _CourseProgressDetailScreenState
         _buildPremiumField('Mid Term', distMidCtrl),
         _buildPremiumField('Final Term', distFinalCtrl),
         _buildPremiumField('Assignment', distAssignmentCtrl),
+        _buildPremiumField('Project', distProjectCtrl),
         _buildPremiumField('Presentation', distPresentationCtrl),
         _buildPremiumField('Viva', distVivaCtrl),
         _buildPremiumField('Lab', distLabCtrl),
         _buildPremiumField('Attendance', distAttendanceCtrl),
+        _buildPremiumField('Term Paper', distTermPaperCtrl),
+        _buildPremiumField('Class Performance', distClassPerfCtrl),
+
+        const Divider(color: Colors.white10, height: 40),
+        _buildSectionHeader('Other Options'),
+        _buildPremiumField('Optional 1', distOpt1Ctrl),
+        _buildPremiumField('Optional 2', distOpt2Ctrl),
+        _buildPremiumField('Optional 3', distOpt3Ctrl),
 
         const Divider(color: Colors.white10, height: 40),
         _buildSectionHeader('Quiz Strategy'),
@@ -564,6 +651,10 @@ class _CourseProgressDetailScreenState
         _buildMarkInputRow('Project', obtProjectCtrl, distProjectCtrl),
         _buildMarkInputRow('Viva', obtVivaCtrl, distVivaCtrl),
         _buildMarkInputRow('Term Paper', obtTermPaperCtrl, distTermPaperCtrl),
+        _buildMarkInputRow('Class Performance', obtClassPerfCtrl, distClassPerfCtrl),
+        _buildMarkInputRow('Optional 1', obtOpt1Ctrl, distOpt1Ctrl),
+        _buildMarkInputRow('Optional 2', obtOpt2Ctrl, distOpt2Ctrl),
+        _buildMarkInputRow('Optional 3', obtOpt3Ctrl, distOpt3Ctrl),
 
         const Divider(color: Colors.white10, height: 40),
         _buildQuizSection('Quizzes', obtQuizzesCtrls, distQuizCtrl),
@@ -832,58 +923,6 @@ class _CourseProgressDetailScreenState
     );
   }
 
-  Widget _buildMultiEntry(String title, List<TextEditingController> ctrls) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title.toUpperCase(),
-              style: const TextStyle(
-                color: Colors.white60,
-                fontSize: 11,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0.5,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(
-                Icons.add_circle_rounded,
-                color: Color(0xFF22D3EE),
-                size: 24,
-              ),
-              onPressed: () =>
-                  setState(() => ctrls.add(TextEditingController())),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ...List.generate(ctrls.length, (index) {
-          return Row(
-            children: [
-              Expanded(
-                child: _buildPremiumField(
-                  '${title.substring(0, title.length - 2)} ${index + 1}',
-                  ctrls[index],
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(
-                  Icons.remove_circle_rounded,
-                  color: Color(0xFFF43F5E),
-                  size: 24,
-                ),
-                onPressed: () => setState(() => ctrls.removeAt(index)),
-              ),
-            ],
-          );
-        }),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

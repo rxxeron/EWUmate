@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,6 +8,7 @@ import 'core/services/cache_service.dart';
 import 'core/services/fcm_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
+import 'core/providers/session_guardian.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,13 +22,13 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    debugPrint('Firebase init error: $e');
+    if (kDebugMode) debugPrint('Firebase init error: $e');
   }
 
   try {
     await SupabaseConfig.initialize();
   } catch (e) {
-    debugPrint('Supabase init error: $e');
+    if (kDebugMode) debugPrint('Supabase init error: $e');
   }
 
   // Set up Firebase Cloud Messaging bindings if user is authenticated natively
@@ -37,12 +39,12 @@ void main() async {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
         FCMService().initialize().catchError((err) {
-          debugPrint('FCM Init Error: $err');
+          if (kDebugMode) debugPrint('FCM Init Error: $err');
         });
       }
     });
   } catch (e) {
-    debugPrint('FCM Auth listener error: $e');
+    if (kDebugMode) debugPrint('FCM Auth listener error: $e');
   }
 
   runApp(
@@ -61,6 +63,9 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize Session Guardian
+    ref.read(sessionGuardianProvider);
+    
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(

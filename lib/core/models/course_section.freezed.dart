@@ -300,6 +300,8 @@ mixin _$CourseSection {
   String get code => throw _privateConstructorUsedError;
   @JsonKey(name: 'course_name')
   String get courseName => throw _privateConstructorUsedError;
+  @JsonKey(name: 'faculty_initials')
+  String get facultyInitials => throw _privateConstructorUsedError;
   String get section => throw _privateConstructorUsedError;
   String get capacity => throw _privateConstructorUsedError;
   String get credits => throw _privateConstructorUsedError;
@@ -329,6 +331,7 @@ abstract class $CourseSectionCopyWith<$Res> {
     String id,
     String code,
     @JsonKey(name: 'course_name') String courseName,
+    @JsonKey(name: 'faculty_initials') String facultyInitials,
     String section,
     String capacity,
     String credits,
@@ -356,6 +359,7 @@ class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
     Object? id = null,
     Object? code = null,
     Object? courseName = null,
+    Object? facultyInitials = null,
     Object? section = null,
     Object? capacity = null,
     Object? credits = null,
@@ -376,6 +380,10 @@ class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
             courseName: null == courseName
                 ? _value.courseName
                 : courseName // ignore: cast_nullable_to_non_nullable
+                      as String,
+            facultyInitials: null == facultyInitials
+                ? _value.facultyInitials
+                : facultyInitials // ignore: cast_nullable_to_non_nullable
                       as String,
             section: null == section
                 ? _value.section
@@ -420,6 +428,7 @@ abstract class _$$CourseSectionImplCopyWith<$Res>
     String id,
     String code,
     @JsonKey(name: 'course_name') String courseName,
+    @JsonKey(name: 'faculty_initials') String facultyInitials,
     String section,
     String capacity,
     String credits,
@@ -446,6 +455,7 @@ class __$$CourseSectionImplCopyWithImpl<$Res>
     Object? id = null,
     Object? code = null,
     Object? courseName = null,
+    Object? facultyInitials = null,
     Object? section = null,
     Object? capacity = null,
     Object? credits = null,
@@ -466,6 +476,10 @@ class __$$CourseSectionImplCopyWithImpl<$Res>
         courseName: null == courseName
             ? _value.courseName
             : courseName // ignore: cast_nullable_to_non_nullable
+                  as String,
+        facultyInitials: null == facultyInitials
+            ? _value.facultyInitials
+            : facultyInitials // ignore: cast_nullable_to_non_nullable
                   as String,
         section: null == section
             ? _value.section
@@ -503,6 +517,7 @@ class _$CourseSectionImpl implements _CourseSection {
     required this.id,
     this.code = '',
     @JsonKey(name: 'course_name') this.courseName = '',
+    @JsonKey(name: 'faculty_initials') this.facultyInitials = '',
     this.section = '',
     this.capacity = '',
     this.credits = '3.0',
@@ -522,6 +537,9 @@ class _$CourseSectionImpl implements _CourseSection {
   @override
   @JsonKey(name: 'course_name')
   final String courseName;
+  @override
+  @JsonKey(name: 'faculty_initials')
+  final String facultyInitials;
   @override
   @JsonKey()
   final String section;
@@ -549,7 +567,7 @@ class _$CourseSectionImpl implements _CourseSection {
 
   @override
   String toString() {
-    return 'CourseSection(id: $id, code: $code, courseName: $courseName, section: $section, capacity: $capacity, credits: $credits, semester: $semester, sessions: $sessions, docId: $docId)';
+    return 'CourseSection(id: $id, code: $code, courseName: $courseName, facultyInitials: $facultyInitials, section: $section, capacity: $capacity, credits: $credits, semester: $semester, sessions: $sessions, docId: $docId)';
   }
 
   @override
@@ -561,6 +579,8 @@ class _$CourseSectionImpl implements _CourseSection {
             (identical(other.code, code) || other.code == code) &&
             (identical(other.courseName, courseName) ||
                 other.courseName == courseName) &&
+            (identical(other.facultyInitials, facultyInitials) ||
+                other.facultyInitials == facultyInitials) &&
             (identical(other.section, section) || other.section == section) &&
             (identical(other.capacity, capacity) ||
                 other.capacity == capacity) &&
@@ -578,6 +598,7 @@ class _$CourseSectionImpl implements _CourseSection {
     id,
     code,
     courseName,
+    facultyInitials,
     section,
     capacity,
     credits,
@@ -605,6 +626,7 @@ abstract class _CourseSection implements CourseSection {
     required final String id,
     final String code,
     @JsonKey(name: 'course_name') final String courseName,
+    @JsonKey(name: 'faculty_initials') final String facultyInitials,
     final String section,
     final String capacity,
     final String credits,
@@ -623,6 +645,9 @@ abstract class _CourseSection implements CourseSection {
   @override
   @JsonKey(name: 'course_name')
   String get courseName;
+  @override
+  @JsonKey(name: 'faculty_initials')
+  String get facultyInitials;
   @override
   String get section;
   @override

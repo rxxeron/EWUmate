@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
+import '../../../core/services/cache_service.dart';
 import '../../../core/models/profile.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -60,6 +61,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
 
     if (confirmed == true && mounted) {
+      await ref.read(cacheServiceProvider).clearAll();
       await ref.read(authRepositoryProvider).signOut();
       if (mounted) {
         context.go('/login');
@@ -418,12 +420,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check, color: Colors.cyan),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {

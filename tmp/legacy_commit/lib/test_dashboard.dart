@@ -10,8 +10,8 @@ void main() async {
   // Get users
   final users = await db.from('profiles').select().order('created_at', ascending: false).limit(1);
   final user = users.first['id'];
-  print('User: $user');
+  print('User: \');
   final row = await db.from('user_semester_states').select().eq('user_id', user).eq('semester_code', 'Spring2026').maybeSingle();
-  print('Grid cache: $row');
+  print('Grid cache: \');
 }
 

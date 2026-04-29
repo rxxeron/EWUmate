@@ -1,0 +1,244 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock } from 'lucide-react';
+
+export function Dashboard() {
+  const navigate = useNavigate();
+    const [stats, setStats] = useState({
+    users: 0,
+    activeUsers24h: 0,
+    programs: 0,
+    courses: 0,
+    notifications: 0,
+  });
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [semesterStats, setSemesterStats] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        setLoading(true);
+
+        const yesterday = new Date();
+        yesterday.setHours(yesterday.getHours() - 24);
+        const yesterdayIso = yesterday.toISOString();
+
+        const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+        const { count: activeUsersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', yesterdayIso);
+        const { count: programsCount } = await supabase.from('programs').select('*', { count: 'exact', head: true });
+        const { count: noticesCount } = await supabase.from('notifications').select('*', { count: 'exact', head: true });
+
+        const { data: recent } = await supabase
+          .from('profiles')
+          .select('id, full_name, student_id, program_code, department_name, created_at')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        const { data: activeSemesters } = await supabase.from('active_semester').select('*');
+        let semStats: any = {};
+        let totalActiveCourses = 0;
+
+        if (activeSemesters) {
+          for (const sem of activeSemesters) {
+            semStats[sem.track] = {
+              current: sem.current_semester_code,
+              next: sem.next_semester_code,
+              current_courses: 0,
+              current_sections: 0,
+              next_courses: 0,
+              next_sections: 0
+            };
+
+            if (sem.current_semester_code) {
+               const { data: cData } = await supabase.from(`courses_${sem.current_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
+               if (cData && Array.isArray(cData)) {
+                 semStats[sem.track].current_sections = cData.length;
+                 const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
+                 semStats[sem.track].current_courses = uniqueCourses;
+                 totalActiveCourses += uniqueCourses;
+               }
+            }
+
+            if (sem.next_semester_code) {
+               const { data: nData } = await supabase.from(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`).select('course_code');
+               if (nData && Array.isArray(nData)) {
+                 semStats[sem.track].next_sections = nData.length;
+                 semStats[sem.track].next_courses = new Set(nData.map(c => c.course_code)).size;
+               }
+            }
+          }
+        }
+
+        setStats({
+          users: usersCount || 0,
+          activeUsers24h: activeUsersCount || 0,
+          programs: programsCount || 0,
+          courses: totalActiveCourses,
+          notifications: noticesCount || 0,
+        });
+        
+        setSemesterStats(semStats);
+        setRecentUsers(recent || []);
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) return <div>Loading statistics...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between flex-wrap gap-4 items-center mb-8">
+        <div>
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h2>
+          <p className="text-gray-500 mt-1 text-sm">Welcome back to the EWUmate command center.</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">    
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
+          <div className="p-4 rounded-xl bg-blue-50 text-blue-600 mr-5 shadow-inner">
+            <Users className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Users</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.users.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl shadow-md border-transparent p-6 flex items-center hover:shadow-lg transition-shadow text-white">
+          <div className="p-4 rounded-xl bg-white/20 mr-5 shadow-inner backdrop-blur-sm">
+            <Clock className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-indigo-100 uppercase tracking-wide">Active (24h)</p>
+            <p className="text-3xl font-bold text-white mt-1">{stats.activeUsers24h.toLocaleString()}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
+          <div className="p-4 rounded-xl bg-emerald-50 text-emerald-600 mr-5 shadow-inner">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Programs</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.programs}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
+          <div className="p-4 rounded-xl bg-amber-50 text-amber-600 mr-5 shadow-inner">
+            <GraduationCap className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Courses</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.courses.toLocaleString()}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+        {Object.entries(semesterStats).map(([track, data]: [string, any]) => (
+          <div key={track} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/80">
+              <CalendarClock className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-lg font-bold text-gray-800 capitalize tracking-tight">{track.replace('_', ' ')}</h3>
+            </div>
+            <div className="flex divide-x divide-gray-100">
+               <div className="flex-1 p-6 flex flex-col justify-center text-center">
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Current Semester</p>
+                 <p className="text-xl font-extrabold text-indigo-700 mb-3">{data.current || 'N/A'}</p>
+                 <div className="flex justify-center gap-4 text-sm">
+                   <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                     <span className="font-bold text-gray-700">{data.current_courses}</span> <span className="text-gray-500">Courses</span>
+                   </div>
+                   <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                     <span className="font-bold text-gray-700">{data.current_sections}</span> <span className="text-gray-500">Sections</span>
+                   </div>
+                 </div>
+               </div>
+               
+               <div className="flex-1 p-6 flex flex-col justify-center text-center bg-gray-50/30">
+                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Upcoming Semester</p>
+                 <p className="text-xl font-extrabold text-emerald-600 mb-3">{data.next || 'N/A'}</p>
+                 <div className="flex justify-center gap-4 text-sm">
+                   <div className="bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                     <span className="font-bold text-gray-700">{data.next_courses}</span> <span className="text-gray-500">Courses</span>
+                   </div>
+                   <div className="bg-white px-3 py-1.5 rounded-lg border border-gray-100">
+                     <span className="font-bold text-gray-700">{data.next_sections}</span> <span className="text-gray-500">Sections</span>
+                   </div>
+                 </div>
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <h3 className="text-lg font-semibold text-gray-900">Recently Registered Students</h3>
+          </div>
+          <div className="p-0">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Program</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {recentUsers.map((user) => (
+                      <tr 
+                        key={user.id} 
+                        className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/users/${user.id}`)}
+                      >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{user.full_name || 'Unknown User'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">{user.student_id ? `${user.student_id}` : '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">{user.program_code || user.department_name || '-'}</td>
+                    </tr>
+                  ))}
+                  {recentUsers.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">No recent users found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-xl shadow-lg border-t-4 border-indigo-400 flex flex-col text-white transform hover:scale-[1.02] transition-transform">
+          <div className="px-6 py-5 border-b border-indigo-500/30 flex items-center gap-3">
+            <Activity className="w-6 h-6 text-indigo-200" />
+            <h3 className="text-lg font-bold text-white tracking-wide">System Health</h3>
+          </div>
+          <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
+             <div className="w-16 h-16 rounded-full bg-indigo-500/30 flex items-center justify-center mb-4">
+               <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
+             </div>
+             <h4 className="text-2xl font-bold mb-2">All Systems Go</h4>
+             <p className="text-indigo-100/80 mb-6 font-medium leading-relaxed">
+              Database connection stream is healthy. Real-time syncing is actively listening.
+             </p>
+             <p className="text-xs text-indigo-300 mt-auto bg-indigo-900/40 px-4 py-2 rounded-full">
+               Last Ping: {new Date().toLocaleTimeString()}
+             </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

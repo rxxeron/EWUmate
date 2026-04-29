@@ -58,7 +58,7 @@ class TaskRepository {
         yield newTasks;
       }
     } catch (e) {
-      debugPrint('[TaskRepository] Offline mode active: $e');
+      if (kDebugMode) debugPrint('[TaskRepository] Offline mode active: $e');
     }
   }
 
@@ -112,6 +112,35 @@ class TaskRepository {
         'action': 'update_task_status',
         'taskId': taskId,
         'isCompleted': isCompleted,
+      });
+    }
+  }
+
+  Future<void> updateTaskMissedStatus(String userId, String taskId, bool isMissed) async {
+    try {
+      await _supabase
+          .from('tasks')
+          .update({'is_missed': isMissed})
+          .eq('id', taskId);
+    } catch (e) {
+       // Manual optimistic update for missed status
+       final cached = _cache.getCachedDashboardSchedule(userId);
+       if (cached != null && cached['tasks'] != null) {
+         final tasksList = List<dynamic>.from(cached['tasks']);
+         final index = tasksList.indexWhere((e) => (e as Map)['id'] == taskId);
+         if (index != -1) {
+           final tMap = Map<String, dynamic>.from(tasksList[index]);
+           tMap['is_missed'] = isMissed;
+           tasksList[index] = tMap;
+           cached['tasks'] = tasksList;
+           _cache.cacheDashboardSchedule(userId, cached);
+         }
+       }
+       
+      await _cache.enqueueMutation(userId, {
+        'action': 'update_task_missed',
+        'taskId': taskId,
+        'isMissed': isMissed,
       });
     }
   }

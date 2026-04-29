@@ -78,11 +78,6 @@ export function Dashboard() {
 
             if (sem.next_semester_code) {
                const nData = await fetchAllCourseCodes(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`);
-               if (nData && Array.isArray(nData)) {
-                 semStats[sem.track].next_sections = nData.length;
-                 const uniqueNextCourses = new Set(nData.map(c => c.course_code)).size;
-                 semStats[sem.track].next_courses = uniqueNextCourses;
-               }
             }
           }
         }

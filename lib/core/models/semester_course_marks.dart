@@ -24,6 +24,7 @@ class SemesterCourseMarks with _$SemesterCourseMarks {
     @JsonKey(name: 'dist_viva') double? distViva,
     @JsonKey(name: 'dist_attendance') double? distAttendance,
     @JsonKey(name: 'dist_lab') double? distLab,
+    @JsonKey(name: 'dist_project') double? distProject,
     @JsonKey(name: 'dist_term_paper') double? distTermPaper,
     @JsonKey(name: 'dist_class_performance') double? distClassPerformance,
     @JsonKey(name: 'obt_mid') double? obtMid,
@@ -33,6 +34,7 @@ class SemesterCourseMarks with _$SemesterCourseMarks {
     @JsonKey(name: 'obt_viva') double? obtViva,
     @JsonKey(name: 'obt_attendance') double? obtAttendance,
     @JsonKey(name: 'obt_lab') double? obtLab,
+    @JsonKey(name: 'obt_project') double? obtProject,
     @JsonKey(name: 'obt_term_paper') double? obtTermPaper,
     @JsonKey(name: 'obt_class_performance') double? obtClassPerformance,
     @JsonKey(name: 'obt_quizzes') @Default([]) List<double> obtQuizzes,
@@ -44,6 +46,75 @@ class SemesterCourseMarks with _$SemesterCourseMarks {
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
   }) = _SemesterCourseMarks;
 
+  const SemesterCourseMarks._();
+
   factory SemesterCourseMarks.fromJson(Map<String, dynamic> json) =>
       _$SemesterCourseMarksFromJson(json);
+
+  double _calculateQuizValue(List<double> marks, String strategy, int n, double maxMark) {
+    if (marks.isEmpty) return 0.0;
+    List<double> sortedMarks = List.from(marks);
+    sortedMarks.sort((a, b) => b.compareTo(a));
+
+    double total = 0.0;
+    if (strategy == 'best_one') {
+      total = sortedMarks.first;
+    } else if (strategy == 'best_n' || strategy == 'bestN') {
+      for (int i = 0; i < n && i < sortedMarks.length; i++) total += sortedMarks[i];
+    } else if (strategy == 'average_n' || strategy == 'n_average') {
+      double sum = 0;
+      int count = 0;
+      for (int i = 0; i < n && i < sortedMarks.length; i++) {
+        sum += sortedMarks[i];
+        count++;
+      }
+      total = count > 0 ? sum / count : 0;
+    } else if (strategy == 'average_all') {
+      total = sortedMarks.reduce((a, b) => a + b) / sortedMarks.length;
+    } else if (strategy == 'sum_all') {
+      total = sortedMarks.reduce((a, b) => a + b);
+    }
+    return total > maxMark ? maxMark : total;
+  }
+
+  double get totalObtained {
+    double total = 0.0;
+    total += obtMid ?? 0.0;
+    total += obtFinal ?? 0.0;
+    total += obtAssignment ?? 0.0;
+    total += obtPresentation ?? 0.0;
+    total += obtViva ?? 0.0;
+    total += obtAttendance ?? 0.0;
+    total += obtLab ?? 0.0;
+    total += obtProject ?? 0.0;
+    total += obtTermPaper ?? 0.0;
+    total += obtClassPerformance ?? 0.0;
+
+    if (obtQuizzes.isNotEmpty) {
+      total += _calculateQuizValue(obtQuizzes, quizStrategy, quizN, distQuiz);
+    }
+    if (obtShortQuizzes.isNotEmpty) {
+      total += _calculateQuizValue(obtShortQuizzes, 'best_one', shortQuizN, distShortQuiz ?? 0.0);
+    }
+    return total;
+  }
+
+  double get totalEvaluated {
+    double total = 0.0;
+    if (obtMid != null) total += distMid;
+    if (obtFinal != null) total += distFinal;
+    if (obtAssignment != null) total += (distAssignment ?? 0.0);
+    if (obtPresentation != null) total += (distPresentation ?? 0.0);
+    if (obtViva != null) total += (distViva ?? 0.0);
+    if (obtAttendance != null) total += (distAttendance ?? 0.0);
+    if (obtLab != null) total += (distLab ?? 0.0);
+    if (obtProject != null) total += (distProject ?? 0.0);
+    if (obtTermPaper != null) total += (distTermPaper ?? 0.0);
+    if (obtClassPerformance != null) total += (distClassPerformance ?? 0.0);
+
+    if (obtQuizzes.isNotEmpty) total += distQuiz;
+    if (obtShortQuizzes.isNotEmpty) total += (distShortQuiz ?? 0.0);
+    
+    return total;
+  }
 }

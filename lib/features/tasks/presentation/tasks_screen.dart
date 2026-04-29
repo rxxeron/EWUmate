@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -44,7 +45,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     final queue = cacheService.getSyncQueue(user.id);
     if (queue.isEmpty) return;
 
-    debugPrint('[Offline Sync] Processing ${queue.length} items from tasks screen...');
+    if (kDebugMode) debugPrint('[Offline Sync] Processing ${queue.length} items from tasks screen...');
     bool anySuccess = false;
     
     for (final item in queue) {
@@ -68,7 +69,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
         }
         anySuccess = true;
       } catch (e) {
-        debugPrint('[Offline Sync] Still offline for action $action');
+        if (kDebugMode) debugPrint('[Offline Sync] Still offline for action $action');
       }
     }
     

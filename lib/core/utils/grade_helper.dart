@@ -1,25 +1,59 @@
 class GradeHelper {
-  static const Map<String, double> gradeScale = {
-    'A+': 4.00,
-    'A': 3.75,
-    'A-': 3.50,
-    'B+': 3.25,
-    'B': 3.00,
-    'B-': 2.75,
-    'C+': 2.50,
-    'C': 2.25,
-    'D': 2.00,
-    'F': 0.00,
-    // Non-GPA grades
+  /// Default fallback scale (Modern EWU Policy post-2023)
+  static const Map<String, double> defaultModernScale = {
+    'A': 4.00, 'A-': 3.70, 'B+': 3.30, 'B': 3.00, 'B-': 2.70,
+    'C+': 2.30, 'C': 2.00, 'C-': 1.70, 'D+': 1.30, 'D': 1.00, 'F': 0.00,
     'S': 0, 'U': 0, 'W': 0, 'P': 0, 'I': 0, 'R': 0
   };
 
-  static double getGradePoint(String grade) {
-    return gradeScale[grade] ?? 0.00;
+  /// Default fallback scale (Legacy EWU Policy pre-2023)
+  static const Map<String, double> defaultLegacyScale = {
+    'A+': 4.00, 'A': 3.75, 'A-': 3.50, 'B+': 3.25, 'B': 3.00, 'B-': 2.75,
+    'C+': 2.50, 'C': 2.25, 'D': 2.00, 'F': 0.00,
+    'S': 0, 'U': 0, 'W': 0, 'P': 0, 'I': 0, 'R': 0
+  };
+
+  /// Determines which grading policy to use ('modern' or 'legacy') based on the semester code.
+  static String getPolicyForSemester(String semesterCode) {
+    if (semesterCode.isEmpty) return 'modern';
+    
+    // Extract year using digits
+    final digitStr = semesterCode.replaceAll(RegExp(r'\D'), '');
+    final year = int.tryParse(digitStr) ?? 0;
+    
+    if (year == 0) return 'modern';
+    if (year < 2023) return 'legacy';
+    
+    if (year == 2023) {
+      final season = semesterCode.toLowerCase();
+      if (season.contains('spring') || season.contains('summer')) {
+        return 'legacy';
+      }
+    }
+    
+    return 'modern';
   }
 
-  static bool isGPAGrade(String grade) {
-    return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'].contains(grade);
+  /// Gets the grade point for a specific grade. If dynamicScale is provided, it uses that.
+  static double getGradePoint(String grade, {String? semesterCode, Map<String, double>? dynamicScale}) {
+    if (dynamicScale != null) {
+      return dynamicScale[grade] ?? 0.00;
+    }
+    
+    final policy = getPolicyForSemester(semesterCode ?? '');
+    final scale = policy == 'legacy' ? defaultLegacyScale : defaultModernScale;
+    return scale[grade] ?? 0.00;
+  }
+
+  static bool isGPAGrade(String grade, {String? semesterCode, List<String>? validGpaGrades}) {
+    if (validGpaGrades != null) {
+      return validGpaGrades.contains(grade);
+    }
+    final policy = getPolicyForSemester(semesterCode ?? '');
+    if (policy == 'legacy') {
+      return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'].contains(grade);
+    }
+    return ['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F'].contains(grade);
   }
 
   /// Converts a semester ID like "Spring2026" into a comparable integer.

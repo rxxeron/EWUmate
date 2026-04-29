@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/models/task.dart';
+import '../../../core/repositories/task_repository.dart';
 import '../../dashboard/dashboard_logic.dart';
 import '../../dashboard/dashboard_repository.dart';
 import '../../dashboard/exception_repository.dart';
@@ -11,6 +14,10 @@ import '../../../core/widgets/glass_kit.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/providers/academic_providers.dart';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -44,14 +51,15 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   void _loadData() async {
-    // This is a bridge for child-driven refreshes
     final sem = _semesterCode;
     if (sem != null) _loadDataForSemester(sem);
   }
 
+
   @override
   Widget build(BuildContext context) {
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
+    final userTasks = ref.watch(allTasksStreamProvider).valueOrNull ?? [];
 
     return currentSemAsync.when(
       data: (semCode) {
@@ -90,7 +98,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                   return TabBarView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      _buildUpcomingTab(semCode), 
+                      _buildUpcomingTab(semCode, userTasks), 
                       _buildPendingActionsTab()
                     ],
                   );
@@ -175,21 +183,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         
         _twoWeekSchedule = weeksRaw.map((dayData) {
            final date = dayData['date'] as DateTime;
-           final processed = DashboardLogic.processDashboardData(dayData);
-           final upcomingClasses = List<ScheduleItem>.from(processed['schedule'] ?? []).where((c) => !c.isCancelled).toList();
-
+             final processed = DashboardLogic.processDashboardData(dayData);
            return {
               'date': date,
               'dateStr': dayData['dateStr'],
               'isHoliday': dayData['isHoliday'] ?? false,
               'holidayReason': dayData['holidayReason'] ?? '',
               'events': dayData['events'] ?? [],
-              'classes': upcomingClasses,
+              'classes': processed['schedule'] ?? [],
            };
         }).toList();
       }
     } catch (e) {
-      debugPrint("Error loading schedule: $e");
+      if (kDebugMode) debugPrint("Error loading schedule: $e");
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -267,8 +273,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  String _computeEndTime(TimeOfDay start, bool isLab) {
-    final durationMinutes = isLab ? 180 : 90;
+  String _computeEndTime(TimeOfDay start, String sessionType) {
+    final durationMinutes = (sessionType == 'Lab' || sessionType == 'Theory (MBA)') ? 180 : 90;
     final totalMinutes = start.hour * 60 + start.minute + durationMinutes;
     final endHour = (totalMinutes ~/ 60) % 24;
     final endMin = totalMinutes % 60;
@@ -281,6 +287,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     final m = t.minute.toString().padLeft(2, '0');
     final p = t.period == DayPeriod.am ? 'AM' : 'PM';
     return '$h:$m $p';
+  }
+
+  Widget _buildSessionTypeBtn({required String label, required bool isSelected, required Color activeColor, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withOpacity(0.15) : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isSelected ? activeColor : Colors.white24),
+        ),
+        child: Center(child: Text(label, style: TextStyle(
+          color: isSelected ? activeColor : Colors.white54,
+          fontWeight: FontWeight.bold, fontSize: 13,
+        ))),
+      ),
+    );
   }
 
   void _showAddClassModal(String semesterCode, {
@@ -315,7 +339,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     TimeOfDay? selectedStartTime;
     String computedStartStr = '';
     String computedEndStr = '';
-    bool isLab = sessionType == 'Lab';
+    String currentSessionType = sessionType ?? 'Theory';
 
     showModalBottomSheet(
       context: context,
@@ -377,58 +401,47 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
                   const Text('Session Type', style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildSessionTypeBtn(
+                          label: 'Theory (90 min)',
+                          isSelected: currentSessionType == 'Theory',
+                          activeColor: Colors.cyanAccent,
                           onTap: () {
                             setModalState(() {
-                              isLab = false;
-                              if (selectedStartTime != null) {
-                                computedEndStr = _computeEndTime(selectedStartTime!, false);
-                              }
+                              currentSessionType = 'Theory';
+                              if (selectedStartTime != null) computedEndStr = _computeEndTime(selectedStartTime!, currentSessionType);
                             });
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: !isLab ? Colors.cyanAccent.withOpacity(0.15) : Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: !isLab ? Colors.cyanAccent : Colors.white24),
-                            ),
-                            child: Center(child: Text('Theory (90 min)', style: TextStyle(
-                              color: !isLab ? Colors.cyanAccent : Colors.white54,
-                              fontWeight: FontWeight.bold, fontSize: 13,
-                            ))),
-                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
+                        const SizedBox(width: 10),
+                        _buildSessionTypeBtn(
+                          label: 'Lab (3 hrs)',
+                          isSelected: currentSessionType == 'Lab',
+                          activeColor: Colors.orangeAccent,
                           onTap: () {
                             setModalState(() {
-                              isLab = true;
-                              if (selectedStartTime != null) {
-                                computedEndStr = _computeEndTime(selectedStartTime!, true);
-                              }
+                              currentSessionType = 'Lab';
+                              if (selectedStartTime != null) computedEndStr = _computeEndTime(selectedStartTime!, currentSessionType);
                             });
                           },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: isLab ? Colors.orangeAccent.withOpacity(0.15) : Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: isLab ? Colors.orangeAccent : Colors.white24),
-                            ),
-                            child: Center(child: Text('Lab (3 hrs)', style: TextStyle(
-                              color: isLab ? Colors.orangeAccent : Colors.white54,
-                              fontWeight: FontWeight.bold, fontSize: 13,
-                            ))),
-                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 10),
+                        _buildSessionTypeBtn(
+                          label: 'Theory (MBA) - 3 hr',
+                          isSelected: currentSessionType == 'Theory (MBA)',
+                          activeColor: Colors.purpleAccent,
+                          onTap: () {
+                            setModalState(() {
+                              currentSessionType = 'Theory (MBA)';
+                              if (selectedStartTime != null) computedEndStr = _computeEndTime(selectedStartTime!, currentSessionType);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -469,7 +482,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         setModalState(() {
                           selectedStartTime = picked;
                           computedStartStr = _formatTimeOfDay(picked);
-                          computedEndStr = _computeEndTime(picked, isLab);
+                          computedEndStr = _computeEndTime(picked, currentSessionType);
                         });
                       }
                     },
@@ -500,17 +513,17 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(
-                        color: (isLab ? Colors.orangeAccent : Colors.cyanAccent).withOpacity(0.08),
+                        color: (currentSessionType == 'Lab' ? Colors.orangeAccent : (currentSessionType == 'Theory (MBA)' ? Colors.purpleAccent : Colors.cyanAccent)).withOpacity(0.08),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: (isLab ? Colors.orangeAccent : Colors.cyanAccent).withOpacity(0.3)),
+                        border: Border.all(color: (currentSessionType == 'Lab' ? Colors.orangeAccent : (currentSessionType == 'Theory (MBA)' ? Colors.purpleAccent : Colors.cyanAccent)).withOpacity(0.3)),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.timer_outlined, color: isLab ? Colors.orangeAccent : Colors.cyanAccent, size: 20),
+                          Icon(Icons.timer_outlined, color: currentSessionType == 'Lab' ? Colors.orangeAccent : (currentSessionType == 'Theory (MBA)' ? Colors.purpleAccent : Colors.cyanAccent), size: 20),
                           const SizedBox(width: 10),
-                          Text('End: $computedEndStr', style: TextStyle(color: isLab ? Colors.orangeAccent : Colors.cyanAccent, fontSize: 15, fontWeight: FontWeight.w600)),
+                          Text('End: $computedEndStr', style: TextStyle(color: currentSessionType == 'Lab' ? Colors.orangeAccent : (currentSessionType == 'Theory (MBA)' ? Colors.purpleAccent : Colors.cyanAccent), fontSize: 15, fontWeight: FontWeight.w600)),
                           const Spacer(),
-                          Text(isLab ? '3 hrs' : '90 min', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                          Text((currentSessionType == 'Lab' || currentSessionType == 'Theory (MBA)') ? '3 hrs' : '90 min', style: TextStyle(color: Colors.white54, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -578,7 +591,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Widget _buildUpcomingTab(String semCode) {
+  Widget _buildUpcomingTab(String semCode, List<Task> allTasks) {
     if (_twoWeekSchedule.isEmpty) {
       return Center(
           child: Column(
@@ -594,96 +607,163 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _twoWeekSchedule.length,
-      itemBuilder: (ctx, idx) {
-        final day = _twoWeekSchedule[idx];
-        final isHoliday = day['isHoliday'] == true;
-        final holidayReason = day['holidayReason']?.toString() ?? '';
-        final events = List<Map<String, dynamic>>.from(day['events'] ?? []);
-        final classes = day['classes'] as List<ScheduleItem>? ?? [];
-        final dateStr = day['dateStr'] as String;
-        final headerStr = DateFormat('EEEE - MMMM d').format(day['date'] as DateTime);
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _twoWeekSchedule.length,
+        itemBuilder: (ctx, idx) {
+          final day = _twoWeekSchedule[idx];
+          final isHoliday = day['isHoliday'] == true;
+          final holidayReason = day['holidayReason']?.toString() ?? '';
+          final events = List<Map<String, dynamic>>.from(day['events'] ?? []);
+          final classes = day['classes'] as List<ScheduleItem>? ?? [];
+          final dateStr = day['dateStr'] as String;
+          final headerStr = DateFormat('EEEE - MMMM d').format(day['date'] as DateTime);
 
-        List<Widget> children = [
-          Padding(
-            padding: const EdgeInsets.only(top: 24, bottom: 8),
-            child: Text(headerStr, style: const TextStyle(color: Color(0xFF00E5FF), fontWeight: FontWeight.bold, fontSize: 16)),
-          )
-        ];
+          List<Widget> children = [
+            Padding(
+              padding: const EdgeInsets.only(top: 24, bottom: 8),
+              child: Text(headerStr, style: const TextStyle(color: Color(0xFF00E5FF), fontWeight: FontWeight.bold, fontSize: 16)),
+            )
+          ];
 
-        if (isHoliday) {
-          children.add(
-            GlassContainer(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              borderColor: Colors.purpleAccent.withOpacity(0.3),
-              child: Row(
+          if (isHoliday) {
+            children.add(
+              GlassContainer(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                borderColor: Colors.purpleAccent.withOpacity(0.3),
+                child: Row(
+                  children: [
+                    const Icon(Icons.celebration, color: Colors.purpleAccent, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(holidayReason, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                  ],
+                ),
+              )
+            );
+          }
+
+          for (var ev in events) {
+            final title = (ev['title'] ?? ev['name'] ?? '').toString();
+            if (title.toLowerCase() == holidayReason.toLowerCase()) continue;
+            children.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(title, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
+                  ],
+                ),
+              )
+            );
+          }
+
+          final dTime = day['date'] as DateTime;
+          final currentDayTasks = allTasks.where((t) {
+            if (t.dueDate == null) return false;
+            final isSameDay = t.dueDate!.year == dTime.year &&
+                t.dueDate!.month == dTime.month &&
+                t.dueDate!.day == dTime.day;
+            return isSameDay && !t.isCompleted;
+          }).toList();
+
+          for (final task in currentDayTasks) {
+            children.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.orangeAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.orangeAccent.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.assignment_outlined, color: Colors.orangeAccent, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        task.courseCode != null ? "${task.courseCode}: ${task.title}" : task.title, 
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)
+                      )
+                    ),
+                  ],
+                ),
+              )
+            );
+          }
+
+          for (int i = 0; i < classes.length; i++) {
+            final c = classes[i];
+            bool hasConflict = false;
+            
+            for (int j = 0; j < classes.length; j++) {
+              if (i == j) continue;
+              final other = classes[j];
+              final startA = CourseUtils.parseTimeToDouble(c.startTime);
+              final endA = CourseUtils.parseTimeToDouble(c.endTime);
+              final startB = CourseUtils.parseTimeToDouble(other.startTime);
+              final endB = CourseUtils.parseTimeToDouble(other.endTime);
+              
+              if (startA < endB && startB < endA) {
+                hasConflict = true;
+                break;
+              }
+            }
+
+            children.add(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.celebration, color: Colors.purpleAccent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(holidayReason, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                  if (hasConflict)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8, bottom: 4),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 14),
+                          SizedBox(width: 4),
+                          Text('Time Conflict Detected', style: TextStyle(color: Colors.orangeAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ScheduleCard(
+                    item: c,
+                    compact: true,
+                    trailing: c.isCancelled
+                        ? null
+                        : (c.isManual || c.isMakeup)
+                            ? TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () => _showDeleteDialog(c, dateStr),
+                                child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                              )
+                            : TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () => _showCancelDialog(c, dateStr),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                  ),
                 ],
-              ),
-            )
-          );
-        }
-
-        for (var ev in events) {
-          final title = (ev['title'] ?? ev['name'] ?? '').toString();
-          if (title.toLowerCase() == holidayReason.toLowerCase()) continue;
-          children.add(
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(title, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
-                ],
-              ),
-            )
-          );
-        }
-
-        for (var c in classes) {
-          children.add(
-            ScheduleCard(
-              item: c,
-              compact: true,
-              trailing: c.isCancelled
-                  ? null
-                  : (c.isManual || c.isMakeup)
-                      ? TextButton(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () => _showDeleteDialog(c, dateStr),
-                          child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-                        )
-                      : TextButton(
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          onPressed: () => _showCancelDialog(c, dateStr),
-                          child: const Text('Cancel', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-                        ),
-            )
-          );
-        }
-
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
-      },
+              )
+            );
+          }
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+        },
     );
   }
 
@@ -758,3 +838,4 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 }
+

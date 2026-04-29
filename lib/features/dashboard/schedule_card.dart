@@ -212,7 +212,7 @@ class ScheduleCard extends StatelessWidget {
                   item.courseName.isNotEmpty ? item.courseName : 'Session',
                   style: TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     decoration: item.isCancelled ? TextDecoration.lineThrough : null,
                   ),
                   maxLines: 1, overflow: TextOverflow.ellipsis,

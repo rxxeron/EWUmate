@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -84,7 +85,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching courses: " + e.toString());
+      if (kDebugMode) debugPrint("Error fetching courses: " + e.toString());
       if (mounted) setState(() => _isLoadingCourses = false);
     }
   }
@@ -209,7 +210,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
-      debugPrint("Error saving task: " + e.toString());
+      if (kDebugMode) debugPrint("Error saving task: " + e.toString());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),

@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../auth/auth_providers.dart';
 
 final onboardingRepositoryProvider = Provider<OnboardingRepository>((ref) {
@@ -42,11 +45,38 @@ class OnboardingRepository {
   Future<List<String>> fetchSemesters() async {
     final data = await _client
         .from('semesters')
-        .select('code')
-        .order('created_at', ascending: false);
-    var list = data.map((e) => e['code'] as String).toList();
-    // Filter out duplicates that contain underscores
-    return list.where((s) => !s.contains('_')).toList();
+        .select('code');
+    
+    var list = data.map((e) => e['code'] as String).where((s) => !s.contains('_')).toList();
+
+    // Sort chronologically: Year first, then Spring (1) -> Summer (2) -> Fall (3)
+    list.sort((a, b) {
+      final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
+      final matchA = reg.firstMatch(a);
+      final matchB = reg.firstMatch(b);
+
+      if (matchA != null && matchB != null) {
+        final yearA = int.parse(matchA.group(2)!);
+        final yearB = int.parse(matchB.group(2)!);
+
+        if (yearA != yearB) return yearA.compareTo(yearB);
+
+        int getSeasonWeight(String s) {
+          final season = s.toLowerCase();
+          if (season.contains('spring')) return 1;
+          if (season.contains('summer')) return 2;
+          if (season.contains('fall')) return 3;
+          return 4;
+        }
+
+        return getSeasonWeight(matchA.group(1)!).compareTo(
+          getSeasonWeight(matchB.group(1)!),
+        );
+      }
+      return a.compareTo(b);
+    });
+
+    return list.reversed.toList(); // Newest first
   }
 
   Future<void> saveProgram(
@@ -66,6 +96,7 @@ class OnboardingRepository {
           'admitted_semester': admittedSemester,
           'semester_type': semType,
           'track': semType,
+          'onboarding_status': 'course_history',
         })
         .eq('id', user.id);
 
@@ -150,6 +181,23 @@ _ref.invalidate(profileProvider);
     return list;
   }
 
+  Future<void> saveProfileDetails({
+    required String fullName,
+    required String nickname,
+    required String studentId,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception("User not authenticated");
+
+    await _client.from('profiles').update({
+      'full_name': fullName,
+      'nickname': nickname,
+      'student_id': studentId,
+    }).eq('id', user.id);
+
+    _ref.invalidate(profileProvider);
+  }
+
   Future<Map<String, dynamic>> fetchUserProfile() async {
     final user = _client.auth.currentUser;
     final data = await _client
@@ -169,10 +217,17 @@ _ref.invalidate(profileProvider);
           'sync-academic-stats',
           body: {'user_id': user.id},
         ),
-        _client.functions.invoke('sync-schedule', body: {'user_id': user.id}),
+        http.post(
+          Uri.parse('${dotenv.env['SUPABASE_URL']!}/functions/v1/sync-schedule'),
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+          },
+          body: jsonEncode({'user_id': user.id}),
+        ),
       ]);
     } catch (e) {
-      debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
+      if (kDebugMode) debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
     }
   }
 
@@ -183,6 +238,18 @@ _ref.invalidate(profileProvider);
     final response = await _client
         .from('completed_courses')
         .select('course_code, semester_code, grade')
+        .eq('user_id', user.id);
+
+    return (response as List).cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchActiveEnrollments() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return [];
+
+    final response = await _client
+        .from('enrollments')
+        .select('course_code, section_id, section, semester_code')
         .eq('user_id', user.id);
 
     return (response as List).cast<Map<String, dynamic>>();
@@ -322,6 +389,7 @@ _ref.invalidate(profileProvider);
           'user_id': user.id,
           'course_code': detail['code'],
           'section_id': detail['id'],
+          'section': detail['section'],
           'semester_code': runningSemester,
           'status': 'enrolled',
         });
@@ -335,7 +403,7 @@ _ref.invalidate(profileProvider);
               onConflict: 'user_id, course_code, semester_code',
             );
       } catch (e) {
-        print("Enrollment Insert Error: $e");
+        if (kDebugMode) print("Enrollment Insert Error: $e");
       }
     }
 

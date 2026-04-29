@@ -11,17 +11,20 @@ class CacheService {
   static const String _dashboardBox = 'dashboard_box';
   static const String _scheduleBox = 'schedule_box';
   static const String _syncQueueBox = 'sync_queue_box';
+  static const String _semesterProgressBox = 'semester_progress_box';
 
   Future<void> init() async {
     try {
       await Hive.initFlutter();
+      await Hive.openBox('course_catalog');
       await Hive.openBox(_profileBox);
       await Hive.openBox(_dashboardBox);
       await Hive.openBox(_scheduleBox);
       await Hive.openBox(_syncQueueBox);
-      debugPrint('[CacheService] Successfully initialized Hive boxes.');
+      await Hive.openBox(_semesterProgressBox);
+      if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
     } catch (e) {
-      debugPrint('[CacheService] Failed to initialize Hive: $e');
+      if (kDebugMode) debugPrint('[CacheService] Failed to initialize Hive: $e');
     }
   }
 
@@ -35,7 +38,7 @@ class CacheService {
       final box = Hive.box(boxName);
       await box.put(key, jsonEncode(data));
     } catch (e) {
-      debugPrint('[CacheService] Write error in $boxName: $e');
+      if (kDebugMode) debugPrint('[CacheService] Write error in $boxName: $e');
     }
   }
 
@@ -48,7 +51,7 @@ class CacheService {
         return jsonDecode(dataStr) as Map<String, dynamic>;
       }
     } catch (e) {
-      debugPrint('[CacheService] Read error in $boxName: $e');
+      if (kDebugMode) debugPrint('[CacheService] Read error in $boxName: $e');
     }
     return null;
   }
@@ -78,6 +81,7 @@ class CacheService {
     await Hive.box(_dashboardBox).clear();
     await Hive.box(_scheduleBox).clear();
     await Hive.box(_syncQueueBox).clear();
+    await Hive.box(_semesterProgressBox).clear();
   }
 
   // --- Offline Sync Queue ---
@@ -93,7 +97,7 @@ class CacheService {
     
     queue.add(mutation);
     await box.put(key, jsonEncode(queue));
-    debugPrint('[CacheService] Enqueued mutation: ${mutation['action']}');
+    if (kDebugMode) debugPrint('[CacheService] Enqueued mutation: ${mutation['action']}');
   }
 
   List<Map<String, dynamic>> getSyncQueue(String userId) {
@@ -132,6 +136,11 @@ class CacheService {
   Future<void> clearSyncQueue(String userId) async {
     final box = Hive.box(_syncQueueBox);
     await box.delete('${userId}_queue');
+  }
+
+  void clearEnrollmentCache(String userId, String semesterCode) {
+    Hive.box(_dashboardBox).delete('enrollment_codes_${userId}_$semesterCode');
+    Hive.box(_dashboardBox).delete('available_courses_$semesterCode');
   }
 }
 

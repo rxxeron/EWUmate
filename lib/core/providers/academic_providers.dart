@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ewumate_v2/core/repositories/progress_repository.dart';
-import 'package:ewumate_v2/core/repositories/auth_repository.dart';
-import 'package:ewumate_v2/core/repositories/profile_repository.dart';
-import 'package:ewumate_v2/core/repositories/active_semester_repository.dart';
-import 'package:ewumate_v2/core/services/cache_service.dart';
-import 'package:ewumate_v2/core/models/academic_state.dart';
+import 'package:ewumate/core/repositories/progress_repository.dart';
+import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/repositories/profile_repository.dart';
+import 'package:ewumate/core/repositories/active_semester_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/models/academic_state.dart';
 
 final programDetailsProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, programCode) async {
   final repo = ref.watch(progressRepositoryProvider);

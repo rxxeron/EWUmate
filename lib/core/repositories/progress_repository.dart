@@ -1,3 +1,4 @@
+
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -34,7 +35,7 @@ class ProgressRepository {
           {'data': marks.map((m) => m.toJson()).toList()});
       return marks;
     } catch (e) {
-      debugPrint('[ProgressRepo] getCourseMarks fallback: $e');
+      if (kDebugMode) debugPrint('[ProgressRepo] getCourseMarks fallback: $e');
       final cached = _cache.getMapData('semester_progress_box', 'marks_${userId}_$semesterCode');
       if (cached != null && cached['data'] != null) {
         return (cached['data'] as List)
@@ -65,7 +66,7 @@ class ProgressRepository {
           {'data': summaries.map((s) => s.toJson()).toList()});
       return summaries;
     } catch (e) {
-      debugPrint('[ProgressRepo] getSemesterSummaries fallback: $e');
+      if (kDebugMode) debugPrint('[ProgressRepo] getSemesterSummaries fallback: $e');
       final cached = _cache.getMapData('dashboard_box', 'summaries_$userId');
       if (cached != null && cached['data'] != null) {
         return (cached['data'] as List)

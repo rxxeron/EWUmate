@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { BookOpen, Search, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import type { CourseSection, Semester } from '../types';
 
 export function CoursesList() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [semesters, setSemesters] = useState<any[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [courses, setCourses] = useState<CourseSection[]>([]);
+  const [semesters, setSemesters] = useState<Semester[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [page, setPage] = useState(0);
+  const searchTerm = searchParams.get('q') || '';
+  const page = parseInt(searchParams.get('page') || '0');
   const pageSize = 20;
+
+  const setPage = (p: number | ((prev: number) => number)) => {
+    const newPage = typeof p === 'function' ? p(page) : p;
+    setSearchParams(prev => { prev.set('page', String(newPage)); return prev; });
+  };
+
+  const setSearchTerm = (val: string) => {
+    setSearchParams(prev => {
+      if (val) prev.set('q', val); else prev.delete('q');
+      prev.set('page', '0');
+      return prev;
+    });
+  };
 
   useEffect(() => {
     fetchSemesters();

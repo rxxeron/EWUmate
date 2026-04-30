@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock } from 'lucide-react';
+import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock, Mail } from 'lucide-react';
+import type { Profile, DashboardStats, SemesterTrackStats } from '../types';
 
 export function Dashboard() {
   const navigate = useNavigate();
-    const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     users: 0,
     activeUsers24h: 0,
     programs: 0,
     courses: 0,
     notifications: 0,
+    pendingFeedbacks: 0,
   });
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [semesterStats, setSemesterStats] = useState<any>({});
+  const [recentUsers, setRecentUsers] = useState<Profile[]>([]);
+  const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
+  const [semesterStats, setSemesterStats] = useState<Record<string, SemesterTrackStats>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,22 +29,30 @@ export function Dashboard() {
         const yesterdayIso = yesterday.toISOString();
 
         const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-        const { count: activeUsersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', yesterdayIso);
+        // Use last_active_at for better accuracy of 'active users'
+        const { count: activeUsersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso);
         const { count: programsCount } = await supabase.from('programs').select('*', { count: 'exact', head: true });
         const { count: noticesCount } = await supabase.from('notifications').select('*', { count: 'exact', head: true });
+        const { count: pendingFeedbackCount } = await supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending');
 
         const { data: recent } = await supabase
           .from('profiles')
-          .select('id, full_name, student_id, program_code, department_name, created_at')
+          .select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count')
           .order('created_at', { ascending: false })
           .limit(5);
 
+        const { data: activeNow } = await supabase
+          .from('profiles')
+          .select('id, full_name, student_id, last_active_at, app_open_count')
+          .order('last_active_at', { ascending: false })
+          .limit(5);
+
         const { data: activeSemesters } = await supabase.from('active_semester').select('*');
-        let semStats: any = {};
+        const semStats: Record<string, SemesterTrackStats> = {};
         let totalActiveCourses = 0;
 
         async function fetchAllCourseCodes(tableName: string) {
-          let allCodes: any[] = [];
+          let allCodes: { course_code: string }[] = [];
           let from = 0;
           let to = 999;
           while (true) {
@@ -66,8 +77,10 @@ export function Dashboard() {
               next_sections: 0
             };
 
+            // 1. Fetch Current Semester Counts
             if (sem.current_semester_code) {
-               const cData = await fetchAllCourseCodes(`courses_${sem.current_semester_code.toLowerCase().replace(/_/g, '')}`);       
+               const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+               const cData = await fetchAllCourseCodes(`courses_${tableBase}`);       
                if (cData && Array.isArray(cData)) {
                  semStats[sem.track].current_sections = cData.length;
                  const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
@@ -76,8 +89,15 @@ export function Dashboard() {
                }
             }
 
+            // 2. Fetch Next Semester Counts
             if (sem.next_semester_code) {
-               const nData = await fetchAllCourseCodes(`courses_${sem.next_semester_code.toLowerCase().replace(/_/g, '')}`);
+               const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+               const nData = await fetchAllCourseCodes(`courses_${tableBase}`);
+               if (nData && Array.isArray(nData)) {
+                 semStats[sem.track].next_sections = nData.length;
+                 const uniqueNextCourses = new Set(nData.map(c => c.course_code)).size;
+                 semStats[sem.track].next_courses = uniqueNextCourses;
+               }
             }
           }
         }
@@ -88,10 +108,12 @@ export function Dashboard() {
           programs: programsCount || 0,
           courses: totalActiveCourses,
           notifications: noticesCount || 0,
+          pendingFeedbacks: pendingFeedbackCount || 0,
         });
         
         setSemesterStats(semStats);
-        setRecentUsers(recent || []);
+        setRecentUsers((recent as Profile[]) || []);
+        setActiveUsers((activeNow as Profile[]) || []);
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
       } finally {
@@ -153,10 +175,23 @@ export function Dashboard() {
             <p className="text-3xl font-bold text-gray-900 mt-1">{stats.courses.toLocaleString()}</p>
           </div>
         </div>
+
+        <div 
+          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => navigate('/feedbacks')}
+        >
+          <div className="p-4 rounded-xl bg-red-50 text-red-600 mr-5 shadow-inner">
+            <Mail className="w-8 h-8" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Pending Issues</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingFeedbacks}</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-        {Object.entries(semesterStats).map(([track, data]: [string, any]) => (
+        {Object.entries(semesterStats).map(([track, data]) => (
           <div key={track} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/80">
               <CalendarClock className="w-5 h-5 text-indigo-600" />
@@ -193,60 +228,74 @@ export function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        {/* Recent Registrations */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-            <h3 className="text-lg font-semibold text-gray-900">Recently Registered Students</h3>
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-indigo-600" />
+              New Students
+            </h3>
           </div>
-          <div className="p-0">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-100">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Student ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Program</th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {recentUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/users/${user.id}`)}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-gray-900">{user.full_name || 'Unknown'}</div>
+                      <div className="text-xs text-indigo-600">{user.student_id || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 bg-white">
-                  {recentUsers.map((user) => (
-                      <tr 
-                        key={user.id} 
-                        className="hover:bg-indigo-50/50 transition-colors cursor-pointer"
-                        onClick={() => navigate(`/users/${user.id}`)}
-                      >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{user.full_name || 'Unknown User'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-indigo-600">{user.student_id ? `${user.student_id}` : '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">{user.program_code || user.department_name || '-'}</td>
-                    </tr>
-                  ))}
-                  {recentUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={3} className="px-6 py-8 text-center text-sm text-gray-500">No recent users found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-xl shadow-lg border-t-4 border-indigo-400 flex flex-col text-white transform hover:scale-[1.02] transition-transform">
-          <div className="px-6 py-5 border-b border-indigo-500/30 flex items-center gap-3">
-            <Activity className="w-6 h-6 text-indigo-200" />
-            <h3 className="text-lg font-bold text-white tracking-wide">System Health</h3>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-emerald-600" />
+              Recent Activity
+            </h3>
           </div>
-          <div className="p-8 flex-1 flex flex-col justify-center items-center text-center">
-             <div className="w-16 h-16 rounded-full bg-indigo-500/30 flex items-center justify-center mb-4">
-               <div className="w-4 h-4 bg-green-400 rounded-full animate-pulse"></div>
-             </div>
-             <h4 className="text-2xl font-bold mb-2">All Systems Go</h4>
-             <p className="text-indigo-100/80 mb-6 font-medium leading-relaxed">
-              Database connection stream is healthy. Real-time syncing is actively listening.
-             </p>
-             <p className="text-xs text-indigo-300 mt-auto bg-indigo-900/40 px-4 py-2 rounded-full">
-               Last Ping: {new Date().toLocaleTimeString()}
-             </p>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase text-center">App Opens</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Last Active</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {activeUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/users/${user.id}`)}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-bold text-gray-900">{user.full_name || 'Unknown'}</div>
+                      <div className="text-xs text-indigo-600">{user.student_id || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
+                      <span className="bg-gray-100 px-2 py-1 rounded-md">{user.app_open_count || 0}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

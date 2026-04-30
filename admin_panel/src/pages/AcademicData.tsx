@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { BookOpen, GraduationCap, Award, Plus, Edit2, Trash2, X, Check, Search, CalendarClock } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 type Tab = 'course_metadata' | 'scholarship_policies' | 'grade_scale' | 'active_semester';
 
@@ -60,7 +61,7 @@ export function AcademicData() {
     if (!error) {
       fetchData(activeTab);
     } else {
-      alert(`Error saving: ${error.message}`);
+      toast.error(`Error saving: ${error.message}`);
     }
   };
 
@@ -77,7 +78,7 @@ export function AcademicData() {
     if (!error) {
       fetchData(activeTab);
     } else {
-      alert(`Error deleting: ${error.message}`);
+      toast.error(`Error deleting: ${error.message}`);
     }
   };
 

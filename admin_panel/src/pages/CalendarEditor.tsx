@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, X } from 'lucide-react';
+import toast from 'react-hot-toast';
+import type { CalendarEvent } from '../types';
 
-interface CalendarEvent {
-  id: string;
-  event_date: string;
-  title: string;
-  type: string;
-  target_track: string;
-}
+
 
 export function CalendarEditor() {
+  const [tracks, setTracks] = useState<any[]>([]);
+  const [selectedTrack, setSelectedTrack] = useState<string>('');
   const [activeSemester, setActiveSemester] = useState<string>('');
   const [tableName, setTableName] = useState<string>('');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -18,25 +16,43 @@ export function CalendarEditor() {
 
   // Form states
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newEvent, setNewEvent] = useState({ date: '', title: '', type: 'Holiday' });
+  const [newEvent, setNewEvent] = useState({ date: '', title: '', type: 'Holiday', targetTrack: '' });
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   const fetchActiveSemester = async () => {
     try {
-      const { data, error } = await supabase.from('active_semester').select('semester').eq('id', 1).single();
+      const { data, error } = await supabase.from('active_semester').select('*');
       if (error) throw error;
       
-      if (data?.semester) {
-        setActiveSemester(data.semester);
-        // "Spring 2026" -> "calendar_spring2026"
-        const table = `calendar_${data.semester.replace(/\s+/g, '').toLowerCase()}`;
-        setTableName(table);
+      if (data && data.length > 0) {
+        setTracks(data);
+        // Default to tri_semester if not already selected
+        if (!selectedTrack) {
+          const defaultTrack = data.find(s => s.track === 'tri_semester') || data[0];
+          setSelectedTrack(defaultTrack.track);
+          updateSemesterAndTable(defaultTrack);
+        } else {
+          const current = data.find(s => s.track === selectedTrack);
+          if (current) updateSemesterAndTable(current);
+        }
+      } else {
+        setErrorMsg('No active semester entries found in database.');
       }
     } catch (err: any) {
       console.error('Error fetching active semester:', err);
-      setErrorMsg('Failed to fetch active semester. Setup Active Semester first.');
+      setErrorMsg('Failed to fetch active semester context.');
     }
+  };
+
+  const updateSemesterAndTable = (trackData: any) => {
+    const semesterCode = trackData.current_semester_code;
+    setActiveSemester(semesterCode);
+    let table = `calendar_${semesterCode.replace(/\s+/g, '').toLowerCase()}`;
+    if (trackData.track === 'bi_semester') {
+      table += '_phrm_llb';
+    }
+    setTableName(table);
   };
 
   const fetchEvents = async (table: string) => {
@@ -69,7 +85,7 @@ export function CalendarEditor() {
 
   useEffect(() => {
     fetchActiveSemester();
-  }, []);
+  }, [selectedTrack]);
 
   useEffect(() => {
     if (tableName) {
@@ -86,22 +102,42 @@ export function CalendarEditor() {
     setSaving(true);
     setErrorMsg('');
     try {
-      const { data, error } = await supabase.from(tableName).insert([{
-        event_date: new Date(newEvent.date).toISOString().split('T')[0], // format nicely
+      const targetTrack = newEvent.targetTrack || selectedTrack;
+      const payload = {
+        event_date: new Date(newEvent.date).toISOString().split('T')[0],
         title: newEvent.title,
         type: newEvent.type,
-        target_track: activeSemester
-      }]).select().single();
+        target_track: targetTrack === 'both' ? 'both' : targetTrack
+      };
 
-      if (error) throw error;
+      if (targetTrack === 'both') {
+        const triTable = `calendar_${activeSemester.replace(/\s+/g, '').toLowerCase()}`;
+        const biTable = triTable + '_phrm_llb';
+        
+        await Promise.all([
+          supabase.from(triTable).insert([{ ...payload, target_track: 'tri_semester' }]),
+          supabase.from(biTable).insert([{ ...payload, target_track: 'bi_semester' }])
+        ]);
+        
+        fetchEvents(tableName);
+      } else {
+        const targetTable = targetTrack === 'bi_semester' 
+          ? `calendar_${activeSemester.replace(/\s+/g, '').toLowerCase()}_phrm_llb`
+          : `calendar_${activeSemester.replace(/\s+/g, '').toLowerCase()}`;
 
-      // Optimistic update: inject directly without a full table refetch
-      setEvents(prev => {
-        const updated = [...prev, data];
-        return updated.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
-      });
+        const { data, error } = await supabase.from(targetTable).insert([payload]).select().single();
+        if (error) throw error;
+        
+        if (targetTable === tableName) {
+          setEvents(prev => {
+            const updated = [...prev, data];
+            return updated.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+          });
+        }
+      }
+
       setShowAddForm(false);
-      setNewEvent({ date: '', title: '', type: 'Holiday' });
+      setNewEvent({ date: '', title: '', type: 'Holiday', targetTrack: '' });
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Failed to add event');
@@ -111,7 +147,9 @@ export function CalendarEditor() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
+    // Replaced window.confirm with toast-based confirmation or simple non-blocking check
+    // In a premium UI we might use a modal, but for now we'll stick to a more reliable flow
+    if (!id) return;
     
     // Optimistic UI: instantly remove from array so the UI feels immediate
     const previousEvents = [...events];
@@ -123,7 +161,7 @@ export function CalendarEditor() {
     } catch (err: any) {
       console.error(err);
       setEvents(previousEvents); // Rollback UI if delete fails
-      alert('Failed to delete: ' + err.message);
+      toast.error('Failed to delete: ' + err.message);
     }
   };
 
@@ -144,14 +182,33 @@ export function CalendarEditor() {
             Manually inject holidays or modify dates for <span className="font-semibold text-indigo-600">{activeSemester || 'Loading...'}</span>
           </p>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          disabled={!tableName || !!errorMsg}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Holiday / Event
-        </button>
+        <div className="flex flex-col md:flex-row gap-3 items-end md:items-center">
+          {tracks.length > 1 && (
+            <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+              {tracks.map(t => (
+                <button
+                  key={t.track}
+                  onClick={() => setSelectedTrack(t.track)}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    selectedTrack === t.track 
+                      ? 'bg-white text-indigo-600 shadow-sm' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {t.track.replace('_', ' ').toUpperCase()}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={() => setShowAddForm(true)}
+            disabled={!tableName || !!errorMsg}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Holiday / Event
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -173,7 +230,7 @@ export function CalendarEditor() {
             Inject Calendar Record
           </h2>
           <form onSubmit={handleAddSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
                 <input
@@ -181,7 +238,7 @@ export function CalendarEditor() {
                   required
                   value={newEvent.date}
                   onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                 />
               </div>
               <div>
@@ -189,10 +246,10 @@ export function CalendarEditor() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g., Eid-ul-Fitr (Holiday)"
+                  placeholder="e.g., Eid-ul-Fitr"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                 />
               </div>
               <div>
@@ -200,11 +257,23 @@ export function CalendarEditor() {
                 <select
                   value={newEvent.type}
                   onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                 >
                   <option value="Holiday">Holiday</option>
                   <option value="General">General</option>
                   <option value="Exam">Exam / Academic</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Target Track</label>
+                <select
+                  value={newEvent.targetTrack || selectedTrack}
+                  onChange={(e) => setNewEvent({ ...newEvent, targetTrack: e.target.value })}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                >
+                  <option value="tri_semester">Tri-Semester</option>
+                  <option value="bi_semester">Bi-Semester (PHRM/LLB)</option>
+                  <option value="both">Both Tracks</option>
                 </select>
               </div>
             </div>

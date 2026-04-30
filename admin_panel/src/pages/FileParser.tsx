@@ -1,29 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Upload, FileType, CheckCircle, AlertCircle, Loader2, Trash2, FolderPen } from 'lucide-react';
+import toast from 'react-hot-toast';
+import type { StorageFile } from '../types';
 
-interface StorageFile {
-  name: string;
-  id: string;
-  metadata: { size: number; mimetype: string };
-  created_at: string;
-}
+
 
 export function FileParser() {
   const [file, setFile] = useState<File | null>(null);
   const [parseType, setParseType] = useState<string>('exam');
   const [status, setStatus] = useState<'idle' | 'parsing' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
-  const [results, setResults] = useState<any>(null);
+  const [results, _setResults] = useState<Record<string, unknown> | null>(null);
   
-  const [activeSemester, setActiveSemester] = useState('');
+  const [activeSemesters, setActiveSemesters] = useState<any[]>([]);
+  const [selectedTrack, setSelectedTrack] = useState('tri_semester');
+  const [semesterContext, setSemesterContext] = useState<'current' | 'next'>('current');
   const [customFileName, setCustomFileName] = useState('');
 
   const [uploadedFiles, setUploadedFiles] = useState<{ folder: string, files: StorageFile[] }[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
 
   useEffect(() => {
-    fetchActiveSemester();
+    fetchActiveSemesters();
     fetchAllUploadedFiles();
   }, []);
 
@@ -70,25 +69,16 @@ export function FileParser() {
       })).filter(group => group.files.length > 0));
       
     } catch (err: any) {
-      alert(`Failed to delete: ${err.message}`);
+      toast.error(`Failed to delete: ${err.message}`);
     }
   };
 
-  const fetchActiveSemester = async () => {
+  const fetchActiveSemesters = async () => {
     try {
-      const { data } = await supabase
-        .from('active_semester')
-        .select('current_semester_code')
-        .eq('track', 'tri_semester')
-        .single();
-        
-      if (data && data.current_semester_code) {
-        // e.g. "Spring2026" -> "Spring 2026"
-        const formatted = data.current_semester_code.replace(/([a-zA-Z]+)(\d+)/, '$1 $2');
-        setActiveSemester(formatted);
-      }
+      const { data } = await supabase.from('active_semester').select('*');
+      if (data) setActiveSemesters(data);
     } catch (err) {
-      console.error('Failed to fetch active semester', err);
+      console.error('Failed to fetch active semesters', err);
     }
   };
 
@@ -103,15 +93,22 @@ export function FileParser() {
   };
 
   useEffect(() => {
+    const active = activeSemesters.find(s => s.track === selectedTrack);
+    const code = active ? (semesterContext === 'current' ? active.current_semester_code : active.next_semester_code) : '';
+    const semName = code ? code.replace(/([a-zA-Z]+)(\d+)/, '$1 $2') : '';
     const ext = parseType === 'advising' ? '.eml' : '.pdf';
-    if (activeSemester) {
-      const prefix = getPrefixForType(parseType);
-      setCustomFileName(`${prefix} ${activeSemester}${ext}`);
+    const prefix = getPrefixForType(parseType);
+    
+    // Handshake with Azure Function: Bi-semester files MUST contain PHRM, LAW, or LLB.
+    // We'll use 'PHRM LLB' as a standard suffix to ensure correct routing for all Bi-track documents.
+    const trackSuffix = selectedTrack === 'bi_semester' ? ' PHRM LLB' : '';
+    
+    if (semName) {
+      setCustomFileName(`${prefix} ${semName}${trackSuffix}${ext}`);
     } else {
-      const prefix = getPrefixForType(parseType);
-      setCustomFileName(`${prefix}${ext}`);
+      setCustomFileName(`${prefix}${trackSuffix}${ext}`);
     }
-  }, [parseType, activeSemester]);
+  }, [parseType, activeSemesters, selectedTrack, semesterContext]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {        
     if (e.target.files && e.target.files.length > 0) {
@@ -186,6 +183,37 @@ let folderName = 'misc';
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Academic Track (Tri/Bi)
+                </label>
+                <select
+                  value={selectedTrack}
+                  onChange={(e) => setSelectedTrack(e.target.value)}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="tri_semester">Tri-Semester (Standard)</option>
+                  <option value="bi_semester">Bi-Semester (Pharmacy/Law)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Semester
+                </label>
+                <select
+                  value={semesterContext}
+                  onChange={(e) => setSemesterContext(e.target.value as any)}
+                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="current">Current Semester</option>
+                  <option value="next">Upcoming / Next Semester</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Switch to "Upcoming" if you are uploading data for the next term.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Document Type
                 </label>
                 <select
@@ -198,9 +226,6 @@ let folderName = 'misc';
                   <option value="calendar">Academic Calendar</option>
                   <option value="advising">Faculty Advising Routine</option>
                 </select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Select the document type to auto-generate the filename prefix.
-                </p>
               </div>
 
               <div>
@@ -333,7 +358,7 @@ let folderName = 'misc';
                             <p className="text-sm font-medium text-gray-900 truncate" title={f.name}>{f.name}</p>
                             <p className="text-xs text-gray-500 mt-0.5">
                               {f.metadata ? `${(f.metadata.size / 1024).toFixed(1)} KB` : 'Unknown size'} • 
-                              {new Date(f.created_at).toLocaleDateString()}
+                              {new Date(f.created_at || Date.now()).toLocaleDateString()}
                             </p>
                           </div>
                         </div>

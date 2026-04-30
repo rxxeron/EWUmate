@@ -21,3 +21,11 @@ CREATE POLICY "Anyone can view active semester" ON public.active_semester
 
 CREATE POLICY "Only admins can update active semester" ON public.active_semester
     FOR ALL USING (auth.uid() IN (SELECT user_id FROM public.admin_users));
+@
+
+-- Create automated cleanup job for schedule_generations older than 3 days
+SELECT cron.schedule(
+  'cleanup-schedule-generations',
+  '0 0 * * *', 
+  'DELETE FROM public.schedule_generations WHERE created_at < NOW() - INTERVAL ''3 days'' '
+);

@@ -26,10 +26,10 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
     }
     return profile;
   } catch (e) {
-    if (kDebugMode) print("DEBUG: Profile network fetch failed, attempting cache: $e");
+    if (kDebugMode) (){}();
     final cacheMap = ref.read(cacheServiceProvider).getCachedProfile(user.id);
     if (cacheMap != null) {
-      if (kDebugMode) print("DEBUG: Loaded profile from local cache.");
+      if (kDebugMode) (){}();
       return Profile.fromJson(cacheMap);
     }
     throw Exception("You are offline. Please connect to the internet to load your profile initially.");
@@ -87,7 +87,7 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
     // Removed debug print
     return unsubmittedGradesRes.isNotEmpty;
   } catch (e) {
-    if (kDebugMode) print("DEBUG: Grade entry check failed: $e");
+    if (kDebugMode) (){}();
     return false;
   }
 });

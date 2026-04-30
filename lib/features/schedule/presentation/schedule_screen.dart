@@ -195,7 +195,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         }).toList();
       }
     } catch (e) {
-      if (kDebugMode) debugPrint("Error loading schedule: $e");
+      if (kDebugMode) (){}();
     } finally {
       if (mounted) {
         setState(() => _loading = false);

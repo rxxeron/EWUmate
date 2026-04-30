@@ -85,7 +85,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
-      if (kDebugMode) debugPrint("Error fetching courses: " + e.toString());
+      if (kDebugMode) (){}();
       if (mounted) setState(() => _isLoadingCourses = false);
     }
   }
@@ -210,7 +210,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint("Error saving task: " + e.toString());
+      if (kDebugMode) (){}();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),

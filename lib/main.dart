@@ -22,13 +22,13 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    if (kDebugMode) debugPrint('Firebase init error: $e');
+    if (kDebugMode) (){}();
   }
 
   try {
     await SupabaseConfig.initialize();
   } catch (e) {
-    if (kDebugMode) debugPrint('Supabase init error: $e');
+    if (kDebugMode) (){}();
   }
 
   // Set up Firebase Cloud Messaging bindings if user is authenticated natively
@@ -39,12 +39,12 @@ void main() async {
       final AuthChangeEvent event = data.event;
       if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
         FCMService().initialize().catchError((err) {
-          if (kDebugMode) debugPrint('FCM Init Error: $err');
+          if (kDebugMode) (){}();
         });
       }
     });
   } catch (e) {
-    if (kDebugMode) debugPrint('FCM Auth listener error: $e');
+    if (kDebugMode) (){}();
   }
 
   runApp(

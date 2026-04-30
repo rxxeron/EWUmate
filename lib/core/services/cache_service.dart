@@ -22,9 +22,9 @@ class CacheService {
       await Hive.openBox(_scheduleBox);
       await Hive.openBox(_syncQueueBox);
       await Hive.openBox(_semesterProgressBox);
-      if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
+      if (kDebugMode) (){}();
     } catch (e) {
-      if (kDebugMode) debugPrint('[CacheService] Failed to initialize Hive: $e');
+      if (kDebugMode) (){}();
     }
   }
 
@@ -38,7 +38,7 @@ class CacheService {
       final box = Hive.box(boxName);
       await box.put(key, jsonEncode(data));
     } catch (e) {
-      if (kDebugMode) debugPrint('[CacheService] Write error in $boxName: $e');
+      if (kDebugMode) (){}();
     }
   }
 
@@ -51,7 +51,7 @@ class CacheService {
         return jsonDecode(dataStr) as Map<String, dynamic>;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[CacheService] Read error in $boxName: $e');
+      if (kDebugMode) (){}();
     }
     return null;
   }
@@ -97,7 +97,7 @@ class CacheService {
     
     queue.add(mutation);
     await box.put(key, jsonEncode(queue));
-    if (kDebugMode) debugPrint('[CacheService] Enqueued mutation: ${mutation['action']}');
+    if (kDebugMode) (){}();
   }
 
   List<Map<String, dynamic>> getSyncQueue(String userId) {

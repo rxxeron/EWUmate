@@ -32,7 +32,7 @@ class FCMService {
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         final payload = response.payload;
         if (payload != null && payload.isNotEmpty) {
-          if (kDebugMode) debugPrint('[FCM] Foreground Local Notification tapped with payload: $payload');
+          if (kDebugMode) (){}();
           _handleRouteAuth(payload);
         }
       },
@@ -73,7 +73,7 @@ class FCMService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (kDebugMode) debugPrint('[FCM] User granted permission');
+      if (kDebugMode) (){}();
 
       // Registration token handling
       final token = await _messaging.getToken();
@@ -84,7 +84,7 @@ class FCMService {
 
       // Handle foreground notifications manually via Local Notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        if (kDebugMode) debugPrint('[FCM] Foreground message received: ${message.notification?.title}');
+        if (kDebugMode) (){}();
         
         RemoteNotification? notification = message.notification;
         AndroidNotification? android = message.notification?.android;
@@ -125,7 +125,7 @@ class FCMService {
 
       // Handle clicks when app is Background
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        if (kDebugMode) debugPrint('[FCM] Background message tapped: ${message.messageId}');
+        if (kDebugMode) (){}();
         _handleIncomingAction(
           message.notification?.title, 
           message.notification?.body, 
@@ -136,7 +136,7 @@ class FCMService {
       // Handle clicks when app is Killed
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
-        if (kDebugMode) debugPrint('[FCM] Killed message tapped: ${initialMessage.messageId}');
+        if (kDebugMode) (){}();
         // Delay routing slightly to let UI render first
         Future.delayed(const Duration(milliseconds: 800), () {
           _handleIncomingAction(
@@ -147,7 +147,7 @@ class FCMService {
         });
       }
     } else {
-      if (kDebugMode) debugPrint('[FCM] User declined permission');
+      if (kDebugMode) (){}();
     }
   }
 
@@ -242,7 +242,7 @@ class FCMService {
       if (uri != null && await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
       } else {
-        if (kDebugMode) debugPrint('[FCM] Cannot launch URL: $url');
+        if (kDebugMode) (){}();
       }
     } else if (url.startsWith('/')) {
       if (rootNavigatorKey.currentContext != null) {
@@ -262,9 +262,9 @@ class FCMService {
         'platform': platform,
         'updated_at': DateTime.now().toIso8601String(),
       });
-      if (kDebugMode) debugPrint('[FCM] Token synchronized to Database.');
+      if (kDebugMode) (){}();
     } catch (e) {
-      if (kDebugMode) debugPrint('[FCM] Failed to sync token: $e');
+      if (kDebugMode) (){}();
     }
   }
 }

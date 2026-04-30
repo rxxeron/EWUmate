@@ -34,7 +34,7 @@ class AuthRepository {
       // Clear local Hive cache before signing out from Supabase
       await _client.auth.signOut();
     } catch (e) {
-      if (kDebugMode) print("AuthRepository: Sign out error: $e");
+      if (kDebugMode) (){}();
     }
   }
 
@@ -50,7 +50,7 @@ class AuthRepository {
       if (response.isEmpty) return null;
       return Profile.fromJson(response.first);
     } catch (e) {
-      if (kDebugMode) print("AuthRepository: Profile fetch failed/timed out: $e");
+      if (kDebugMode) (){}();
       // Throwing instead of returning null so FutureProvider enters 'error' state
       throw Exception("Connection timed out. Please check your internet.");
     }

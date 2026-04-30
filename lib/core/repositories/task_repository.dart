@@ -58,7 +58,7 @@ class TaskRepository {
         yield newTasks;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[TaskRepository] Offline mode active: $e');
+      if (kDebugMode) (){}();
     }
   }
 

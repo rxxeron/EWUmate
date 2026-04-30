@@ -35,6 +35,9 @@ class Profile with _$Profile {
     @Default([])
     List<dynamic> pastHistory,
     @JsonKey(name: 'total_courses_completed') @Default(0) int totalCoursesCompleted,
+    @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+    @JsonKey(name: 'app_open_count') @Default(0) int appOpenCount,
+    @JsonKey(name: 'app_version') String? appVersion,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   }) = _Profile;

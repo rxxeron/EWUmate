@@ -52,7 +52,7 @@ class NotificationRepository {
         yield notifications;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[Notifications] Offline mode fallback: $e');
+      if (kDebugMode) (){}();
     }
   }
 

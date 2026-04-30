@@ -11,7 +11,7 @@ class SyncService {
   void listenToConnectivity() {
     Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
       if (results.any((r) => r == ConnectivityResult.wifi || r == ConnectivityResult.mobile)) {
-        if (kDebugMode) debugPrint('[SyncService] Online. Attempting to flush offline queue...');
+        if (kDebugMode) (){}();
         flushQueue();
       }
     });
@@ -71,7 +71,7 @@ class SyncService {
             successfulIndexes.add(i);
           }
         } catch (e) {
-          if (kDebugMode) debugPrint('[SyncService] Failed to sync mutation: $mutation. Error: $e');
+          if (kDebugMode) (){}();
         }
       }
 

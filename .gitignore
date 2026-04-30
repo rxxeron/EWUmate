@@ -87,6 +87,7 @@ replay_pid*.log
 
 # Production Build Folder
 ewumate_production_build/
+tmp/
 *.csv
 *.jks
 .env

@@ -227,7 +227,7 @@ _ref.invalidate(profileProvider);
         ),
       ]);
     } catch (e) {
-      if (kDebugMode) debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
+      if (kDebugMode) (){}();
     }
   }
 
@@ -315,6 +315,18 @@ _ref.invalidate(profileProvider);
     final user = _client.auth.currentUser;
     if (user == null) return;
 
+    // 0. Clean up existing data to reflect removals accurately
+    await _client
+        .from('completed_courses')
+        .delete()
+        .eq('user_id', user.id);
+    
+    await _client
+        .from('enrollments')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('semester_code', runningSemester);
+
     // 1. Prepare data for completed_courses
     final List<Map<String, dynamic>> completedRows = [];
 
@@ -354,10 +366,9 @@ _ref.invalidate(profileProvider);
       for (var m in (metadata as List))
         (m['code'] as String): (m['credit_val'] as num).toDouble(),
     };
-
+    
     history.forEach((semester, courses) {
-      if (semester == runningSemester)
-        return; // Prevent saving ongoing active courses into completed histories
+      if (semester == runningSemester) return;
       courses.forEach((code, grade) {
         completedRows.add({
           'user_id': user.id,
@@ -365,20 +376,14 @@ _ref.invalidate(profileProvider);
           'semester_code': semester,
           'grade': grade,
           'grade_point': _simpleGradePoint(grade),
-          'credits':
-              creditsMap[code] ?? 3.0, // Default to 3.0 if metadata is missing
+          'credits': creditsMap[code] ?? 3.0,
         });
       });
     });
 
-    // 2. Perform bulk upsert on completed_courses
+    // 2. Perform bulk insert on completed_courses
     if (completedRows.isNotEmpty) {
-      await _client
-          .from('completed_courses')
-          .upsert(
-            completedRows,
-            onConflict: 'user_id, course_code, semester_code',
-          );
+      await _client.from('completed_courses').insert(completedRows);
     }
 
     // 2.5 Insert ongoing active explicitly into enrollments
@@ -394,26 +399,14 @@ _ref.invalidate(profileProvider);
           'status': 'enrolled',
         });
       }
-      // Insert new enrollments safely ignoring duplicates
-      try {
-        await _client
-            .from('enrollments')
-            .upsert(
-              enrollmentRows,
-              onConflict: 'user_id, course_code, semester_code',
-            );
-      } catch (e) {
-        if (kDebugMode) print("Enrollment Insert Error: $e");
-      }
+      await _client.from('enrollments').insert(enrollmentRows);
     }
 
-    // 3. Update enrolled sections in profiles for the current semester
-    if (enrolledIds.isNotEmpty) {
-      await _client
-          .from('profiles')
-          .update({'enrolled_sections': enrolledIds})
-          .eq('id', user.id);
-    }
+    // 3. Update enrolled sections in profiles (Ensures Admin Panel is synced)
+    await _client
+        .from('profiles')
+        .update({'enrolled_sections': enrolledIds})
+        .eq('id', user.id);
 
     // 4. Trigger recalculation via Edge Function
     await recalculateStats();

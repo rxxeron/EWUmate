@@ -84,7 +84,7 @@ class ScheduleRepository {
 
       return (response as List).cast<Map<String, dynamic>>();
     } catch (e) {
-      if (kDebugMode) print("DEBUG: Error fetching saved schedules: $e");
+      if (kDebugMode) (){}();
       rethrow;
     }
   }

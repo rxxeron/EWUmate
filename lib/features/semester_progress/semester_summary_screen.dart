@@ -7,6 +7,7 @@ import 'package:ewumate/core/models/semester_summary.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/utils/grade_helper.dart';
+import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/repositories/course_repository.dart';
 import 'package:ewumate/core/repositories/dashboard_repository.dart';
 import 'package:ewumate/core/models/semester_analytics.dart';
@@ -121,8 +122,20 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
 
   Widget _buildRigorousSummaryBox(Profile? profile, AsyncValue policyAsync, SemesterAnalytics? analytics, AsyncValue currentMarksAsync, AsyncValue<List<ScholarshipAward>> awardsAsync) {
     final policy = policyAsync.valueOrNull;
+    
+    // Fetch real history for accurate baseline
+    final summariesRaw = ref.watch(allSemesterSummariesProvider).valueOrNull ?? [];
+    final academicState = ref.watch(academicStateProvider).valueOrNull;
+    final String? runningCode = academicState?.currentSemesterCode;
+    final String? nextCode = academicState?.nextSemesterCode;
+    
+    final completedSummaries = summariesRaw.where((s) => s.semesterCode != runningCode && s.semesterCode != nextCode).toList();
+    
+    final double historyCgpa = completedSummaries.isNotEmpty ? (completedSummaries.last.cgpa ?? 0.0) : (profile?.cgpa ?? 0.0);
+    final double historyEarned = completedSummaries.fold(0.0, (acc, s) => acc + (s.creditsEarned ?? 0.0));
+
     final predictedSgpa = analytics?.liveSgpa ?? ref.watch(projectedSGPAProvider);
-    final predictedCgpa = analytics?.liveCgpa ?? ref.watch(projectedCGPAProvider).valueOrNull ?? profile?.cgpa ?? 0.0;
+    final predictedCgpa = ref.watch(projectedCGPAProvider).valueOrNull ?? profile?.cgpa ?? 0.0;
     final currentYearEarned = analytics?.completedCredit ?? ref.watch(currentYearEarnedCreditsProvider).valueOrNull ?? 0.0;
     
     // Calculate fallback enrolled credits from currently loaded marks
@@ -235,7 +248,10 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
 
               _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
               _buildStatItem('Curr\nEnrolled', (analytics?.takenInThisSem ?? enrolledCreditsFromMarks).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
-              _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
+              if ((profile?.enrolledCreditsNext ?? 0) > 0)
+                _buildStatItem('Upcoming', (profile?.enrolledCreditsNext ?? 0.0).toStringAsFixed(1), Colors.cyanAccent, Icons.upcoming_rounded, suffix: ' Cr')
+              else
+                _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
             ],
           ),
         ],

@@ -35,9 +35,9 @@ serve(async (req) => {
       }
 
       let policy = 'modern';
-      if (year < 2023) {
+      if (year < 2022) {
         policy = 'legacy';
-      } else if (year === 2023) {
+      } else if (year === 2022) {
         if (['spring', 'summer'].includes(season)) {
           policy = 'legacy';
         }
@@ -125,8 +125,8 @@ serve(async (req) => {
       });
 
       // CGPA Calculation Rules: 
-      // Exclude W, I, P, S, U, R from points and credits denominator
-      const isExcluded = ['W', 'I', 'P', 'S', 'U', 'R'].includes(course.grade);
+      // Exclude non-GPA grades and ongoing courses from points and credits denominator
+      const isExcluded = ['W', 'I', 'P', 'S', 'U', 'R', 'Ongoing', 'Planned', 'ONGOING', 'PLANNED'].includes(course.grade);
       
       if (!isExcluded) {
         cumulativePoints += (point * credits);
@@ -142,14 +142,17 @@ serve(async (req) => {
     for (const sem of semestersList) {
       let semPoints = 0;
       let semCredits = 0;
+      let completedInSem = 0;
       for (const c of sem.courses) {
-        const isExcl = ['W', 'I', 'P', 'S', 'U', 'R'].includes(c.grade);
+        const isExcl = ['W', 'I', 'P', 'S', 'U', 'R', 'Ongoing', 'Planned', 'ONGOING', 'PLANNED'].includes(c.grade);
         if (!isExcl) {
           semPoints += (c.point * c.credits);
           semCredits += c.credits;
+          completedInSem++;
         }
       }
       sem.tgpa = semCredits > 0 ? Number((semPoints / semCredits).toFixed(2)) : 0;
+      sem.completed_count = completedInSem;
     }
 
     // 4. Sync semester_summaries table
@@ -241,7 +244,7 @@ serve(async (req) => {
       ? Number((cumulativePoints / cumulativeCredits).toFixed(2)) 
       : 0;
 
-    const totalCoursesCompleted = semestersList.reduce((sum, s) => sum + (s.courses?.length || 0), 0);
+    const totalCoursesCompleted = semestersList.reduce((sum, s) => sum + (s.completed_count || 0), 0);
 
     const { error: profileError } = await supabase
       .from('profiles')

@@ -80,7 +80,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                 .select()
                 .inFilter('id', sectionIds);
           } catch (e) {
-            debugPrint('Failed to fetch section data: $e');
+            (){}();
           }
         }
 
@@ -91,7 +91,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                 .select('code, name')
                 .inFilter('code', courseCodes);
           } catch (e) {
-            debugPrint('Failed to fetch course metadata: $e');
+            (){}();
           }
         }
 
@@ -129,9 +129,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                   _selectedSections[secId] = sectionObj;
                 }
               } catch (e) {
-                debugPrint(
-                  'Failed to parse section data for conflict checking: $e',
-                );
+                (){}();
               }
             }
           }
@@ -140,7 +138,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading existing enrollments: $e');
+      (){}();
     } finally {
       if (mounted) setState(() => _isLoadingExisting = false);
     }

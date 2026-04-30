@@ -113,10 +113,23 @@ def parse_course_pdf(pdf_file, semester_id, course_titles=None):
                         code = tokens[0].upper()
                         current_idx = 1
                         
-                        # Fix for Split Codes (e.g., "CSE 101" -> "CSE101")
-                        if len(tokens) > 1 and code.isalpha() and tokens[1][0].isdigit():
-                             code = code + tokens[1]
-                             current_idx = 2
+                        # Fix for Split Codes and Hyphens (e.g., "CSE 101" -> "CSE101", "EMBA - 501" -> "EMBA501")
+                        while current_idx < len(tokens):
+                            next_tok = tokens[current_idx].upper()
+                            # If we don't have digits yet, keep absorbing parts that are hyphens or digits
+                            if not any(c.isdigit() for c in code):
+                                if next_tok == "-" or next_tok.replace("-", "").isdigit() or (code.isalpha() and next_tok[0].isdigit()):
+                                    code += next_tok
+                                    current_idx += 1
+                                else:
+                                    break
+                            elif code.endswith("-"):
+                                code += next_tok
+                                current_idx += 1
+                            else:
+                                break
+                                
+                        code = code.replace("-", "")
 
                         if len(tokens) > current_idx:
                             section = tokens[current_idx]
@@ -162,7 +175,22 @@ def parse_course_pdf(pdf_file, semester_id, course_titles=None):
                             tokens = line.split()
                             if len(tokens) >= 2:
                                 code = tokens[0].upper()
-                                section = tokens[1]
+                                current_idx = 1
+                                while current_idx < len(tokens):
+                                    next_tok = tokens[current_idx].upper()
+                                    if not any(c.isdigit() for c in code):
+                                        if next_tok == "-" or next_tok.replace("-", "").isdigit() or (code.isalpha() and next_tok[0].isdigit()):
+                                            code += next_tok
+                                            current_idx += 1
+                                        else:
+                                            break
+                                    elif code.endswith("-"):
+                                        code += next_tok
+                                        current_idx += 1
+                                    else:
+                                        break
+                                code = code.replace("-", "")
+                                section = tokens[current_idx] if len(tokens) > current_idx else ""
                                 room = "Online"
                                 day_str = "TBA"
                         else:

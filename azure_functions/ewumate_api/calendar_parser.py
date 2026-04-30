@@ -112,238 +112,204 @@ def parse_calendar_pdf(pdf_file, filename=None, debug=False):
                   footer_top = min(footer_top, w['top'])
         
         body_words = [w for w in all_words if w['bottom'] > header_bottom and w['top'] < footer_top]
-        raw_lines = cluster_words_into_lines(body_words, y_tolerance=6) # Slightly looser tolerance
         
-        curr_date = ""
-        curr_day = ""
-        curr_event_parts = []
+        # 1. Identify Date Anchors using only col1 words
+        col1_words = [w for w in body_words if (w['x0'] + w['x1']) / 2 < 150]
+        col1_lines = cluster_words_into_lines(col1_words, y_tolerance=6)
         
-    def expand_date_range(d_str, y):
-        """
-        Handles "May 12-14" -> ["May 12", "May 13", "May 14"]
-        Handles "June 30-July 02" -> ["June 30", "July 01", "July 02"]
-        """
-        d_str = d_str.replace('.', '').replace(',', '').strip()
-        # Now group(1) = month, group(2) = start_day, group(3) = optional end_month, group(4) = end_day
-        match = re.match(rf"^({months})\s+(\d{{1,2}})(?:[-–]| to )({months}\s+)?(\d{{1,2}})$", d_str, re.IGNORECASE)
+        date_anchors = []
+        for line in col1_lines:
+            line.sort(key=lambda w: w['x0'])
+            d_str = " ".join(w['text'] for w in line).strip()
+            if d_str and date_start_pattern.match(d_str):
+                y_top_mean = sum(w['top'] for w in line) / len(line)
+                date_anchors.append({
+                    "y_top": y_top_mean,
+                    "date_str": d_str
+                })
         
-        if not match:
-            return [d_str]
+        date_anchors.sort(key=lambda x: x['y_top'])
         
-        start_month = match.group(1)
-        start_day = int(match.group(2))
-        end_month = match.group(3).strip() if match.group(3) else start_month
-        end_day = int(match.group(4))
+        # 2. Get Y-boundaries for each distinct date row
+        boundaries = [0]
+        for i in range(len(date_anchors) - 1):
+             midpoint = (date_anchors[i]['y_top'] + date_anchors[i+1]['y_top']) / 2.0
+             boundaries.append(midpoint)
+        boundaries.append(float('inf'))
         
-        try:
-            from datetime import timedelta
-            start_dt = try_parse_date(f"{start_month} {start_day}", y)
-            end_dt = try_parse_date(f"{end_month} {end_day}", y)
+        # 3. Assign all body_words to the corresponding date row
+        row_events = []
+        for i in range(len(date_anchors)):
+            row_events.append({
+                 "date_str": date_anchors[i]["date_str"],
+                 "row_words": []
+            })
             
-            if not start_dt or not end_dt:
+        for w in body_words:
+            y = w['top']
+            for i in range(len(date_anchors)):
+                 if boundaries[i] <= y < boundaries[i+1]:
+                      row_events[i]["row_words"].append(w)
+                      break
+                      
+        def expand_date_range(d_str, y):
+            d_str = d_str.replace('.', '').replace(',', '').strip()
+            match = re.match(rf"^({months})\s+(\d{{1,2}})(?:[-–]| to )({months}\s+)?(\d{{1,2}})$", d_str, re.IGNORECASE)
+            if not match: return [d_str]
+            start_month = match.group(1)
+            start_day = int(match.group(2))
+            end_month = match.group(3).strip() if match.group(3) else start_month
+            end_day = int(match.group(4))
+            try:
+                from datetime import timedelta
+                start_dt = try_parse_date(f"{start_month} {start_day}", y)
+                end_dt = try_parse_date(f"{end_month} {end_day}", y)
+                if not start_dt or not end_dt: return [d_str]
+                date_list = []
+                curr = start_dt
+                while curr <= end_dt:
+                    date_list.append(curr.strftime("%B %d"))
+                    curr += timedelta(days=1)
+                return date_list
+            except:
                 return [d_str]
+
+        def finalize(date, day, text_parts):
+            if not date or not text_parts: return
             
-            # Simple iteration to get all days in between
-            date_list = []
-            curr = start_dt
-            while curr <= end_dt:
-                date_list.append(curr.strftime("%B %d"))
-                curr += timedelta(days=1)
-            return date_list
-        except:
-            return [d_str]
-
-    def finalize(date, day, text_parts):
-        if not date or not text_parts: return
-        
-        full_event = " ".join(text_parts).strip()
-        full_event = re.sub(r'\s+', ' ', full_event)
-        full_lower = full_event.lower()
-        
-        # Metadata Checks
-        
-        # 1. University Reopens (Global Switch Date)
-        if "university reopens" in full_lower:
-             if not metadata.get("nextSemester"):
-                 metadata["nextSemester"] = metadata.get("currentSemester")
-             
-             try:
-                 d_first = re.split(r'[-–]| to ', date)[0].strip()
-                 dt = try_parse_date(d_first, current_year)
-                 if dt:
-                     metadata["switchDate"] = dt.strftime("%Y-%m-%d")
-             except: pass
-        
-        # 2. Grade Submission
-        if "grade submission" in full_lower or "submission of final grade" in full_lower:
-            try:
-                d_range = re.split(r'[-–]| to ', date)
-                if len(d_range) > 0 and current_year:
-                    dt_start = try_parse_date(d_range[0].strip(), current_year)
-                    if dt_start:
-                        metadata["gradeSubmissionStart"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
-                        if len(d_range) > 1:
-                            end_part = d_range[1].strip()
-                            # Handle relative day like "May 12-14" (14 is end_part)
-                            if re.match(r'^\d+$', end_part):
-                                month_part = d_range[0].strip().split(' ')[0]
-                                end_part = f"{month_part} {end_part}"
-                            dt_end = try_parse_date(end_part, current_year)
-                            metadata["gradeSubmissionDeadline"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00" if dt_end else metadata["gradeSubmissionStart"]
-                        else:
-                            metadata["gradeSubmissionDeadline"] = metadata["gradeSubmissionStart"]
-            except: pass
-
-        # 3. First Day of Classes
-        if "first day of classes" in full_lower or "classes begin" in full_lower:
-            d_first = re.split(r'[-–]| to ', date)[0].strip()
-            dt = try_parse_date(d_first, current_year)
-            if dt:
-                bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
-                sem_match = semester_pattern.search(full_event)
-                if sem_match:
-                    metadata["upcomingSemesterStartDate"] = bdt_date
-                else:
-                    metadata["currentSemesterStartDate"] = bdt_date
-
-        # 4. Advising
-        if any(k in full_lower for k in ["online advising", "advising of courses", "advising for"]):
-            try:
-                d_range = re.split(r'[-–]| to ', date)
-                if len(d_range) > 0 and current_year:
-                    dt_start = try_parse_date(d_range[0].strip(), current_year)
-                    if dt_start:
-                        metadata["advisingStartDate"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
-                        if len(d_range) > 1:
-                            end_part = d_range[1].strip()
-                            if re.match(r'^\d+$', end_part):
-                                month_part = d_range[0].strip().split(' ')[0]
-                                end_part = f"{month_part} {end_part}"
-                            dt_end = try_parse_date(end_part, current_year)
-                            if dt_end:
-                                metadata["advisingEndDate"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00"
+            full_event = " ".join(text_parts).strip()
+            full_event = re.sub(r'\s+', ' ', full_event)
+            full_lower = full_event.lower()
+            
+            if "university reopens" in full_lower:
+                 if not metadata.get("nextSemester"):
+                     metadata["nextSemester"] = metadata.get("currentSemester")
+                 try:
+                     d_first = re.split(r'[-–]| to ', date)[0].strip()
+                     dt = try_parse_date(d_first, current_year)
+                     if dt: metadata["switchDate"] = dt.strftime("%Y-%m-%d")
+                 except: pass
+            
+            if "grade submission" in full_lower or "submission of final grade" in full_lower:
+                try:
+                    d_range = re.split(r'[-–]| to ', date)
+                    if len(d_range) > 0 and current_year:
+                        dt_start = try_parse_date(d_range[0].strip(), current_year)
+                        if dt_start:
+                            metadata["gradeSubmissionStart"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                            if len(d_range) > 1:
+                                end_part = d_range[1].strip()
+                                if re.match(r'^\d+$', end_part):
+                                    month_part = d_range[0].strip().split(' ')[0]
+                                    end_part = f"{month_part} {end_part}"
+                                dt_end = try_parse_date(end_part, current_year)
+                                metadata["gradeSubmissionDeadline"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00" if dt_end else metadata["gradeSubmissionStart"]
+                            else:
+                                metadata["gradeSubmissionDeadline"] = metadata["gradeSubmissionStart"]
+                except: pass
+            
+            if "first day of classes" in full_lower or "classes begin" in full_lower:
+                d_first = re.split(r'[-–]| to ', date)[0].strip()
+                dt = try_parse_date(d_first, current_year)
+                if dt:
+                    bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                    sem_match = semester_pattern.search(full_event)
+                    if sem_match: metadata["upcomingSemesterStartDate"] = bdt_date
+                    else: metadata["currentSemesterStartDate"] = bdt_date
+            
+            if any(k in full_lower for k in ["online advising", "advising of courses", "advising for"]):
+                try:
+                    d_range = re.split(r'[-–]| to ', date)
+                    if len(d_range) > 0 and current_year:
+                        dt_start = try_parse_date(d_range[0].strip(), current_year)
+                        if dt_start:
+                            metadata["advisingStartDate"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                            if len(d_range) > 1:
+                                end_part = d_range[1].strip()
+                                if re.match(r'^\d+$', end_part):
+                                    month_part = d_range[0].strip().split(' ')[0]
+                                    end_part = f"{month_part} {end_part}"
+                                dt_end = try_parse_date(end_part, current_year)
+                                if dt_end: metadata["advisingEndDate"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                                else: metadata["advisingEndDate"] = metadata["advisingStartDate"]
                             else:
                                 metadata["advisingEndDate"] = metadata["advisingStartDate"]
-                        else:
-                            metadata["advisingEndDate"] = metadata["advisingStartDate"]
                             
-                        sem_match = semester_pattern.search(full_event)
-                        if sem_match:
-                            metadata["nextSemester"] = f"{sem_match.group(1).capitalize()} {sem_match.group(2)}"
-            except: pass
-
-        # 5. University Reopens
-        if "university reopens" in full_lower:
-            d_first = re.split(r'[-–]| to ', date)[0].strip()
-            dt = try_parse_date(d_first, current_year)
-            if dt:
-                bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
-                reopen_match = re.search(r"University Reopens for\s+(Spring|Summer|Fall)\s+(\d{4})", full_event, re.IGNORECASE)
-                if reopen_match:
-                    metadata["nextSemester"] = f"{reopen_match.group(1).capitalize()} {reopen_match.group(2)}"
-                    metadata["switchDate"] = bdt_date
-                    metadata["upcomingSemesterStartDate"] = bdt_date
-                elif not metadata.get("switchDate"):
-                    metadata["switchDate"] = bdt_date
-
-        # 6. Final Examination
-        if "final examination" in full_lower or "final exam" in full_lower:
-            try:
-                d_range = re.split(r'[-–]| to ', date)
-                if len(d_range) > 0 and current_year:
-                    dt_start = try_parse_date(d_range[0].strip(), current_year)
-                    if dt_start:
-                        metadata["finalExamStart"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
-                        if len(d_range) > 1:
-                            end_part = d_range[1].strip()
-                            if re.match(r'^\d+$', end_part):
-                                month_part = d_range[0].strip().split(' ')[0]
-                                end_part = f"{month_part} {end_part}"
-                            dt_end = try_parse_date(end_part, current_year)
-                            metadata["finalExamEnd"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00" if dt_end else metadata["finalExamStart"]
-                        else:
-                            metadata["finalExamEnd"] = metadata["finalExamStart"]
-            except: pass
-
-        # 7. Admission Test
-        if "admission test" in full_lower and not metadata.get("nextSemester"):
-             match = admission_test_pattern.search(full_event)
-             if match:
-                  metadata["nextSemester"] = f"{match.group(1).capitalize()} {match.group(2)}"
+                            sem_match = semester_pattern.search(full_event)
+                            if sem_match: metadata["nextSemester"] = f"{sem_match.group(1).capitalize()} {sem_match.group(2)}"
+                except: pass
+            
+            if "university reopens" in full_lower:
+                d_first = re.split(r'[-–]| to ', date)[0].strip()
+                dt = try_parse_date(d_first, current_year)
+                if dt:
+                    bdt_date = f"{dt.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                    reopen_match = re.search(r"University Reopens for\s+(Spring|Summer|Fall)\s+(\d{4})", full_event, re.IGNORECASE)
+                    if reopen_match:
+                        metadata["nextSemester"] = f"{reopen_match.group(1).capitalize()} {reopen_match.group(2)}"
+                        metadata["switchDate"] = bdt_date
+                        metadata["upcomingSemesterStartDate"] = bdt_date
+                    elif not metadata.get("switchDate"):
+                        metadata["switchDate"] = bdt_date
+            
+            if "final examination" in full_lower or "final exam" in full_lower:
+                try:
+                    d_range = re.split(r'[-–]| to ', date)
+                    if len(d_range) > 0 and current_year:
+                        dt_start = try_parse_date(d_range[0].strip(), current_year)
+                        if dt_start:
+                            metadata["finalExamStart"] = f"{dt_start.strftime('%Y-%m-%d')}T00:00:00+06:00"
+                            if len(d_range) > 1:
+                                end_part = d_range[1].strip()
+                                if re.match(r'^\d+$', end_part):
+                                    month_part = d_range[0].strip().split(' ')[0]
+                                    end_part = f"{month_part} {end_part}"
+                                dt_end = try_parse_date(end_part, current_year)
+                                metadata["finalExamEnd"] = f"{dt_end.strftime('%Y-%m-%d')}T00:00:00+06:00" if dt_end else metadata["finalExamStart"]
+                            else: metadata["finalExamEnd"] = metadata["finalExamStart"]
+                except: pass
+            
+            if "admission test" in full_lower and not metadata.get("nextSemester"):
+                 match = admission_test_pattern.search(full_event)
+                 if match: metadata["nextSemester"] = f"{match.group(1).capitalize()} {match.group(2)}"
+            
+            is_holiday = "holiday" in full_lower or "semester break" in full_lower or "break" in full_lower
+            etype = "Holiday" if is_holiday else "Academic"
+            expanded_dates = expand_date_range(date, current_year)
+            
+            for d_item in expanded_dates:
+                std_date = d_item
+                dt = try_parse_date(d_item, current_year)
+                if dt: std_date = dt.strftime("%Y-%m-%d")
+                events.append({
+                    "date": std_date,
+                    "name": full_event,
+                    "semester": metadata.get("currentSemester"),
+                    "type": etype,
+                })
         
-        # EXPAND DATE RANGE FOR INDIVIDUAL EVENTS
-        is_holiday = "holiday" in full_lower or "semester break" in full_lower or "break" in full_lower
-        etype = "Holiday" if is_holiday else "Academic"
-        expanded_dates = expand_date_range(date, current_year)
-        
-        for d_item in expanded_dates:
-            std_date = d_item
-            dt = try_parse_date(d_item, current_year)
-            if dt:
-                std_date = dt.strftime("%Y-%m-%d")
-
-            events.append({
-                "date": std_date,
-                "name": full_event,
-                "semester": metadata.get("currentSemester"),
-                "type": etype,
-            })
-
-
-    for line_words in raw_lines:
-        # Sort words by X
-        line_words.sort(key=lambda w: w['x0'])
-        
-        date_tokens = []
-        day_tokens = []
-        evt_tokens = []
-        
-        # Columns
-        col1_end = 150
-        col2_end = 260
-        
-        for w in line_words:
-            cx = (w['x0'] + w['x1']) / 2
-            if cx < col1_end:
-                date_tokens.append(w['text'])
-            elif cx < col2_end:
-                day_tokens.append(w['text'])
-            else:
-                evt_tokens.append(w['text'])
-        
-        d_str = " ".join(date_tokens).strip()
-        day_str = " ".join(day_tokens).strip()
-        evt_str = " ".join(evt_tokens).strip()
-        
-        # Check if d_str is actually a date
-        is_date_line = False
-        if d_str:
-            if date_start_pattern.match(d_str):
-                is_date_line = True
-
-        if is_date_line:
-            # New Event
+        # 4. Extract and Finalize text for each Row
+        for row in row_events:
+            r_lines = cluster_words_into_lines(row["row_words"], y_tolerance=6)
+            day_tokens = []
+            evt_tokens = []
+            
+            for line in r_lines:
+                line.sort(key=lambda w: w['x0'])
+                for w in line:
+                    cx = (w['x0'] + w['x1']) / 2
+                    if cx < 150:
+                        pass # already in date_str
+                    elif cx < 260:
+                        day_tokens.append(w['text'])
+                    else:
+                        evt_tokens.append(w['text'])
+            
+            curr_date = row["date_str"]
+            curr_day = " ".join(day_tokens).strip()
+            curr_event_parts = [" ".join(evt_tokens).strip()] if evt_tokens else []
+            
             if curr_event_parts:
-                finalize(curr_date, curr_day, curr_event_parts)
-                curr_event_parts = []
-            
-            curr_date = d_str
-            curr_day = day_str
-                
-            curr_event_parts = [evt_str] if evt_str else []
-        else:
-            # Continuation or Non-Date line text
-            # Append all parts to current event
-            text_to_append = []
-            if d_str: text_to_append.append(d_str)
-            if day_str: text_to_append.append(day_str)
-            if evt_str: text_to_append.append(evt_str)
-            
-            if text_to_append:
-                 curr_event_parts.extend(text_to_append)
-
-    # Finalize
-    if curr_event_parts:
-         finalize(curr_date, curr_day, curr_event_parts)
+                 finalize(curr_date, curr_day, curr_event_parts)
 
     return {"events": events, "metadata": metadata}

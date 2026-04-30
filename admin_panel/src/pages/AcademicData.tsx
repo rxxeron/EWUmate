@@ -229,7 +229,9 @@ export function AcademicData() {
                           ) : (
                             col.key.includes('cgpa_min') 
                               ? `${row[col.key]} - ${row[col.label.split(' ')[0].toLowerCase() + '_cgpa_max']}`
-                              : row[col.key]
+                              : (col.type === 'date' && row[col.key] 
+                                  ? new Date(row[col.key]).toLocaleString() 
+                                  : row[col.key])
                           )}
                         </td>
                       ))}

@@ -358,7 +358,7 @@ let folderName = 'misc';
                             <p className="text-sm font-medium text-gray-900 truncate" title={f.name}>{f.name}</p>
                             <p className="text-xs text-gray-500 mt-0.5">
                               {f.metadata ? `${(f.metadata.size / 1024).toFixed(1)} KB` : 'Unknown size'} • 
-                              {new Date(f.created_at || Date.now()).toLocaleDateString()}
+                              {new Date(f.created_at || Date.now()).toLocaleString()}
                             </p>
                           </div>
                         </div>

@@ -132,7 +132,7 @@ class DashboardRepository {
         try {
           // Normalize the semester code before sync call
           final safeCode = semesterCode.replaceAll(' ', '').replaceAll('_', '');
-          debugPrint('[Dashboard] Triggering sync-schedule (No-JWT) for: $safeCode');
+          (){}();
           
           try {
             // Manual HTTP call to bypass the automatic JWT/Authorization header injection
@@ -151,7 +151,7 @@ class DashboardRepository {
               }),
             );
           } catch (e) {
-             debugPrint('[Dashboard] Manual sync call failed: $e');
+             (){}();
           }
           
           // Re-fetch with a slight delay if needed, though await should handle it
@@ -167,7 +167,7 @@ class DashboardRepository {
                 freshState['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
           }
         } catch (e) {
-          debugPrint('DashboardRepository: sync-schedule error: $e');
+          (){}();
         }
       }
 
@@ -307,7 +307,7 @@ class DashboardRepository {
       if (_cache != null) {
         final cached = _cache?.getCachedDashboardSchedule(user.id);
         if (cached != null) {
-          debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
+          (){}();
           if (cached['date'] != null && cached['date'] is String) {
             cached['date'] = DateTime.tryParse(cached['date']) ?? date;
           }
@@ -321,7 +321,7 @@ class DashboardRepository {
   /// Triggers the sync-schedule Edge Function to regenerate the weekly_grid_cache.
   Future<void> syncWeeklySchedule(String userId) async {
     try {
-      debugPrint('[Dashboard] Proactively triggering sync-schedule (No-JWT) for: $userId');
+      (){}();
       final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
       final uri = Uri.parse('$functionsUrl/sync-schedule');
       await http.post(
@@ -335,7 +335,7 @@ class DashboardRepository {
         }),
       );
     } catch (e) {
-      debugPrint('[Dashboard] Proactive sync error: $e');
+      (){}();
     }
   }
 
@@ -523,38 +523,38 @@ class DashboardRepository {
             .eq('user_id', user.id)
             .eq('semester_code', semesterCode)
             .maybeSingle()
-            .catchError((e) { debugPrint('Error in state fetch: $e'); return null; }),
+            .catchError((e) { (){}(); return null; }),
         _supabase
             .from('schedule_exceptions')
             .select()
             .eq('user_id', user.id)
             .gte('date', startDateStr)
             .lte('date', endDateStr)
-            .catchError((e) { debugPrint('Error in exceptions fetch: $e'); return []; }),
+            .catchError((e) { (){}(); return []; }),
         _supabase
             .from(standardTable)
             .select()
             .gte('event_date', startDateStr)
             .lte('event_date', endDateStr)
-            .catchError((e) { debugPrint('Error in standardTable fetch: $e'); return []; }),
+            .catchError((e) { (){}(); return []; }),
         _supabase
             .from(phrmTable)
             .select()
             .gte('event_date', startDateStr)
             .lte('event_date', endDateStr)
-            .catchError((e) { debugPrint('Error in phrmTable fetch: $e'); return []; }),
+            .catchError((e) { (){}(); return []; }),
         _supabase
             .from('active_semester')
             .select('classes_end_date')
             .eq('track', 'tri_semester')
             .maybeSingle()
-            .catchError((e) { debugPrint('Error in tri end_date fetch: $e'); return null; }),
+            .catchError((e) { (){}(); return null; }),
         _supabase
             .from('active_semester')
             .select('classes_end_date')
             .eq('track', 'bi_semester')
             .maybeSingle()
-            .catchError((e) { debugPrint('Error in bi end_date fetch: $e'); return null; }),
+            .catchError((e) { (){}(); return null; }),
       ]);
 
       var weeklyGrid =
@@ -589,7 +589,7 @@ class DashboardRepository {
                 freshState['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
           }
         } catch (e) {
-          debugPrint('[Dashboard] Two-week sync error: $e');
+          (){}();
         }
       }
 

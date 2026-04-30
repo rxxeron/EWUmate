@@ -7,6 +7,7 @@ import '../../core/widgets/glass_kit.dart';
 import '../../core/utils/course_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/grade_helper.dart';
+import '../../core/models/grade_scale.dart';
 import '../semester_progress/semester_summary_providers.dart';
 
 class CourseHistoryScreen extends ConsumerStatefulWidget {
@@ -316,8 +317,36 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             }
           }
 
-          _admittedSemester = (profileData['admitted_semester'] ?? "")
-              .toString();
+          _admittedSemester = (profileData['admitted_semester'] ?? "").toString();
+          
+          // Check if user is a new student (no history to edit)
+          if (widget.isEditMode && _admittedSemester == _runningSemester) {
+            _profileLoading = false;
+            Future.delayed(Duration.zero, () {
+               if (mounted) {
+                 showDialog(
+                   context: context,
+                   builder: (ctx) => AlertDialog(
+                     backgroundColor: const Color(0xFF1E293B),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                     title: const Text("Notice", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                     content: const Text("You have no academic history to edit yet!", style: TextStyle(color: Colors.white70)),
+                     actions: [
+                       TextButton(
+                         onPressed: () {
+                           Navigator.pop(ctx);
+                           Navigator.pop(context);
+                         },
+                         child: const Text("OK", style: TextStyle(color: Colors.cyanAccent)),
+                       )
+                     ],
+                   ),
+                 );
+               }
+            });
+            return;
+          }
+
           final programName =
               (profileData['department_name'] ??
                       profileData['program_code'] ??
@@ -325,6 +354,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                   .toString()
                   .toLowerCase();
 
+          // Pharmacy specific fallback for Fall admissions
           if (!widget.isEditMode &&
               programName.contains("pharmacy") &&
               _admittedSemester != null &&
@@ -343,22 +373,28 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             _admittedSemester = forcedSummer;
           }
 
+          // Dynamic Semester Filtering: From Admitted up to the semester BEFORE Running
+          // Use fuzzy matching (strip spaces/underscores and ignore case) to find indices
+          String clean(String s) => s.replaceAll(' ', '').replaceAll('_', '').toLowerCase();
+          
+          final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
+          final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
+          
+          if (admIdx != -1 && runIdx != -1 && runIdx > admIdx) {
+            // Stop at runIdx (exclusive of the running semester itself)
+            _allSemesters = _allSemesters.sublist(admIdx, runIdx);
+          } else if (admIdx != -1 && runIdx == admIdx) {
+            // If admitted semester IS the running semester, history list is empty
+            _allSemesters = [];
+          } else if (runIdx != -1) {
+            // Fallback: show up to before running
+            _allSemesters = _allSemesters.sublist(0, runIdx);
+          }
+
           if (widget.isEditMode) {
-            final runIdx = _allSemesters.indexOf(_runningSemester);
-            final admIdx = _admittedSemester != null
-                ? _allSemesters.indexOf(_admittedSemester!)
-                : -1;
-                
-            final startIdx = admIdx != -1 ? admIdx : (runIdx >= 4 ? runIdx - 4 : 0);
-            final endIdx = runIdx != -1 ? runIdx : _allSemesters.length - 1;
-
-            if (startIdx >= 0 && endIdx >= startIdx && endIdx < _allSemesters.length) {
-              _allSemesters = _allSemesters.sublist(startIdx, endIdx + 1);
-            }
-
-            if (_allSemesters.isNotEmpty) {
-              _confirmAdmittedSemester(_allSemesters.first);
-            }
+             if (_allSemesters.isNotEmpty) {
+               _confirmAdmittedSemester(_allSemesters.first);
+             }
           } else {
             if (_admittedSemester != null &&
                 _admittedSemester!.isNotEmpty &&
@@ -551,27 +587,30 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
   Future<String?> _showGradeDialog(String code) {
     final policy = GradeHelper.getPolicyForSemester(_currentSemester ?? '');
-    final scale = ref.read(gradeScaleListProvider).valueOrNull ?? [];
+    final scaleAsync = ref.read(gradeScaleListProvider);
+    final scale = scaleAsync.valueOrNull ?? [];
     
     // Fetch grades for the specific policy from the DB-loaded scale
-    final List<String> grades = scale
+    List<String> grades = scale
         .where((s) => s.policy == policy)
         .map((s) => s.grade)
-        .toSet() // Ensure unique
+        .toSet()
         .toList();
     
-    // Sort by point descending if points available
-    if (grades.isNotEmpty) {
+    // Fallback if DB is genuinely empty or failed to load
+    if (grades.isEmpty) {
+       grades = (policy == 'legacy')
+        ? ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"]
+        : ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
+    }
+
+    // Sort by point descending using the scale data if available
+    if (scale.isNotEmpty) {
       grades.sort((a, b) {
-        final pa = scale.firstWhere((s) => s.grade == a && s.policy == policy).point;
-        final pb = scale.firstWhere((s) => s.grade == b && s.policy == policy).point;
+        final pa = scale.firstWhere((s) => s.grade == a && s.policy == policy, orElse: () => GradeScale(grade: a, point: 0, policy: policy)).point;
+        final pb = scale.firstWhere((s) => s.grade == b && s.policy == policy, orElse: () => GradeScale(grade: b, point: 0, policy: policy)).point;
         return pb.compareTo(pa);
       });
-    } else {
-       // Fallback only if DB is empty/not loaded
-       grades.addAll(policy == 'legacy' 
-        ? ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"]
-        : ["A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"]);
     }
 
     return showDialog<String>(

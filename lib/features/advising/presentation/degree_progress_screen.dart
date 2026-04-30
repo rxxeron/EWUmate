@@ -131,19 +131,27 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
           final double requiredCredits = (programDetailsAsync.value?['total_degree_credits'] as num?)?.toDouble() ?? 140.0;
           final String programName = programDetailsAsync.value?['name'] ?? profile.programCode ?? 'Unknown Program';
           
-          final double progressPercent = (earnedCredits / requiredCredits).clamp(0.0, 1.0);
-          final int displayPercent = (progressPercent * 100).toInt();
+          final academicState = ref.watch(academicStateProvider).value;
+          final String currentTrack = academicState?.track == 'bi_semester' ? 'Bi-Semester Track' : 'Tri-Semester Track';
+          final String? runningSemesterCode = academicState?.currentSemesterCode;
+          final String? upcomingSemesterCode = academicState?.nextSemesterCode;
 
-          // Simple chronological sort for display
-          final summaries = List<SemesterSummary>.from(summariesRaw)..sort((a, b) {
+          // Simple chronological sort for display, filtering out both running and upcoming semesters
+          final summaries = summariesRaw
+              .where((s) => s.semesterCode != runningSemesterCode && s.semesterCode != upcomingSemesterCode)
+              .toList();
+              
+          summaries.sort((a, b) {
             final yearA = _getYear(a.semesterCode);
             final yearB = _getYear(b.semesterCode);
             if (yearA != yearB) return yearA.compareTo(yearB);
             return _getSemesterWeight(a.semesterCode).compareTo(_getSemesterWeight(b.semesterCode));
           });
 
-          final academicState = ref.watch(academicStateProvider).value;
-          final String currentTrack = academicState?.track == 'bi_semester' ? 'Bi-Semester Track' : 'Tri-Semester Track';
+          final double progressPercent = (earnedCredits / requiredCredits).clamp(0.0, 1.0);
+          final int displayPercent = (progressPercent * 100).toInt();
+
+          final double actualCgpa = profile.cgpa ?? 0.0;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
@@ -154,7 +162,7 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                 const SizedBox(height: 16),
                 _buildStatsGrid(semestersCount, earnedCredits, coursesDone, profile),
                 const SizedBox(height: 16),
-                _buildCgpaCard(profile.cgpa ?? 0.0),
+                _buildCgpaCard(actualCgpa),
                 const SizedBox(height: 16),
                 _buildSemesterSummaryCard(context),
                 const SizedBox(height: 32),

@@ -34,7 +34,7 @@ final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
     cache.setMapData('dashboard_box', cacheKey, {'data': data});
     return data;
   } catch (e) {
-    if (kDebugMode) debugPrint('[GradeEntry] Pending grades fallback: $e');
+    if (kDebugMode) (){}();
     final cached = cache.getMapData('dashboard_box', cacheKey);
     if (cached != null && cached['data'] != null) {
       return List<Map<String, dynamic>>.from(cached['data']);

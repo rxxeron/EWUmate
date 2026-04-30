@@ -1,0 +1,1188 @@
+[
+    {
+        "course_code": "ACT521",
+        "course_name": "Accounting Information Systems",
+        "credits": 3.0,
+        "equivalent_code": "ACT9521"
+    },
+    {
+        "course_code": "ACT522",
+        "course_name": "Advanced Financial Accounting",
+        "credits": 3.0,
+        "equivalent_code": "ACT9522"
+    },
+    {
+        "course_code": "ACT523",
+        "course_name": "Corporate Tax Planning",
+        "credits": 3.0,
+        "equivalent_code": "ACT9523"
+    },
+    {
+        "course_code": "ACT524",
+        "course_name": "Corporate Financial Reporting",
+        "credits": 3.0,
+        "equivalent_code": "ACT9524"
+    },
+    {
+        "course_code": "ACT525",
+        "course_name": "Audit and Assurance",
+        "credits": 3.0,
+        "equivalent_code": "ACT9525"
+    },
+    {
+        "course_code": "ACT526",
+        "course_name": "Strategic Cost and Management Accounting",
+        "credits": 3.0,
+        "equivalent_code": "ACT9526"
+    },
+    {
+        "course_code": "ACT527",
+        "course_name": "Accounting for Management Control",
+        "credits": 3.0,
+        "equivalent_code": "ACT9527"
+    },
+    {
+        "course_code": "ACT528",
+        "course_name": "Forensic Accounting",
+        "credits": 3.0,
+        "equivalent_code": "ACT9528"
+    },
+    {
+        "course_code": "AIML501",
+        "course_name": "Entrepreneurship and Project Management",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML502",
+        "course_name": "Legal and Ethical Issues in AI and ML",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML503",
+        "course_name": "Python Programming for AI and ML",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML504",
+        "course_name": "Multivariate Calculus and Linear Algebra",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML505",
+        "course_name": "Statistics for AI and ML",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML506",
+        "course_name": "Data Engineering and Analysis",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML507",
+        "course_name": "Artificial Intelligence",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML508",
+        "course_name": "Machine Learning",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML509",
+        "course_name": "Cloud Computing",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML510",
+        "course_name": "Internet of Things (IoT)",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML511",
+        "course_name": "Software Development for AI and ML",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML512",
+        "course_name": "Deep Learning",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML513",
+        "course_name": "Robotics",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML514",
+        "course_name": "Big Data Analysis and Visualization",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML515",
+        "course_name": "Business Intelligence",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML517",
+        "course_name": "Digital Image Processing / Natural Language Processing (NLP)",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML518",
+        "course_name": "Game Development",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML519",
+        "course_name": "AI for Industrial Automation",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML520",
+        "course_name": "Computer Vision",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML521",
+        "course_name": "AI in Transportation",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML522",
+        "course_name": "AI in Healthcare",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML523",
+        "course_name": "AI in Agriculture",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML524",
+        "course_name": "Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML525",
+        "course_name": "Computational Intelligence",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML526",
+        "course_name": "Data Mining",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML527",
+        "course_name": "Expert Systems",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML528",
+        "course_name": "Data and Knowledge Engineering",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML529",
+        "course_name": "Autonomous Systems",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML530",
+        "course_name": "Digital Signal Processing",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML531",
+        "course_name": "Pattern Recognition",
+        "credits": 3.0
+    },
+    {
+        "course_code": "AIML597",
+        "course_name": "Master Project",
+        "credits": 4.0
+    },
+    {
+        "course_code": "AIML599",
+        "course_name": "Master Thesis",
+        "credits": 10.0
+    },
+    {
+        "course_code": "BMG521",
+        "course_name": "Banking Theory and Practice",
+        "credits": 3.0,
+        "equivalent_code": "BMG9521"
+    },
+    {
+        "course_code": "BMG522",
+        "course_name": "Management of Commercial Banks",
+        "credits": 3.0,
+        "equivalent_code": "BMG9522"
+    },
+    {
+        "course_code": "BMG523",
+        "course_name": "Credit Management in Banks",
+        "credits": 3.0,
+        "equivalent_code": "BMG9523"
+    },
+    {
+        "course_code": "BMG524",
+        "course_name": "Central Banking",
+        "credits": 3.0,
+        "equivalent_code": "BMG9524"
+    },
+    {
+        "course_code": "BMG525",
+        "course_name": "International Finance and Banking",
+        "credits": 3.0,
+        "equivalent_code": "BMG9525"
+    },
+    {
+        "course_code": "CSE503",
+        "course_name": "Data Structures",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE504",
+        "course_name": "Algorithms",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE505",
+        "course_name": "Database Systems",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE506",
+        "course_name": "Artificial Intelligence",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE507",
+        "course_name": "Information System Analysis and Design",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE508",
+        "course_name": "Computer Networks",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE509",
+        "course_name": "Digital Logic Design",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE520",
+        "course_name": "Statistics for Data Science",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE521",
+        "course_name": "Machine Learning",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE522",
+        "course_name": "Data Mining",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE523",
+        "course_name": "Digital Image Processing",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE524",
+        "course_name": "Computer Vision",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE525",
+        "course_name": "Pattern Recognition",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE526",
+        "course_name": "Bioinformatics Algorithms",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE527",
+        "course_name": "Big Data Analytics",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE550",
+        "course_name": "Software Engineering",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE551",
+        "course_name": "Software Testing and Quality Assurance",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE552",
+        "course_name": "Simulation and Modeling",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE553",
+        "course_name": "Software Architecture",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE554",
+        "course_name": "Human Computer Interactions",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE555",
+        "course_name": "Advanced Database System",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE556",
+        "course_name": "Web Programming",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE557",
+        "course_name": "Internet of Things",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE560",
+        "course_name": "Distributed Systems and Algorithms",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE561",
+        "course_name": "Advanced Network Services and Management",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE562",
+        "course_name": "Wireless Networks",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE563",
+        "course_name": "Cellular Networks",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE564",
+        "course_name": "Network Security and Systems",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE565",
+        "course_name": "Mobile Programming",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE571",
+        "course_name": "Microprocessors and Microcontrollers",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE572",
+        "course_name": "ASIC Design Using FPGA",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE573",
+        "course_name": "VLSI Design",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE574",
+        "course_name": "Robotics",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE575",
+        "course_name": "Embedded Systems",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE596",
+        "course_name": "IT Project Management and Entrepreneurship",
+        "credits": 3
+    },
+    {
+        "course_code": "CSE597",
+        "course_name": "Master Project",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CSE599",
+        "course_name": "Master Thesis",
+        "credits": 9.0
+    },
+    {
+        "course_code": "CyS501",
+        "course_name": "Entrepreneurship and Project Management",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS502",
+        "course_name": "Cyber Security Standards, Governance and Management",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS503",
+        "course_name": "Python Programming for Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS504",
+        "course_name": "Principles of Network Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS505",
+        "course_name": "Database Management and Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS506",
+        "course_name": "Digital Forensic and Ethical Hacking",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS507",
+        "course_name": "Blockchain in Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS508",
+        "course_name": "Machine Learning for Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS509",
+        "course_name": "Web Service Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS510",
+        "course_name": "Cryptography",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS511",
+        "course_name": "Cloud Security and Virtualization",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS512",
+        "course_name": "Data Privacy and Laws",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS513",
+        "course_name": "Cybersecurity Analytics",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS514",
+        "course_name": "Secure Network Architecture",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS515",
+        "course_name": "Block Chain and Crypto Currency",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS516",
+        "course_name": "Secure Software Development and Testing",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS517",
+        "course_name": "Internet of Things Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS518",
+        "course_name": "Intelligent Systems for Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS519",
+        "course_name": "Cyber Crimes and Terrorism",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS520",
+        "course_name": "Legal and Ethical Issues in Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS521",
+        "course_name": "Network Security Monitoring",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS522",
+        "course_name": "Cybersecurity Audit and Assessment Strategies",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS523",
+        "course_name": "Network Defense and Countermeasures",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS524",
+        "course_name": "Business and Finance Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS525",
+        "course_name": "Decentralized Finance and Blockchain",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS526",
+        "course_name": "Advanced Smart Contracts and DApp Development",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS527",
+        "course_name": "Supply Chain Cyber Security",
+        "credits": 3.0
+    },
+    {
+        "course_code": "CyS597",
+        "course_name": "Master Project",
+        "credits": 4.0
+    },
+    {
+        "course_code": "CyS599",
+        "course_name": "Master Thesis",
+        "credits": 10.0
+    },
+    {
+        "course_code": "EMBA501",
+        "course_name": "Accounting for Managers",
+        "credits": 3.0,
+        "equivalent_code": "EMBA9501"
+    },
+    {
+        "course_code": "EMBA502",
+        "course_name": "Quantitative Techniques",
+        "credits": 3.0,
+        "equivalent_code": "EMBA9502"
+    },
+    {
+        "course_code": "EMBA503",
+        "course_name": "Organization and Management",
+        "credits": 3.0,
+        "equivalent_code": "EMBA9503"
+    },
+    {
+        "course_code": "EMBA504",
+        "course_name": "Managerial Economics",
+        "credits": 3.0,
+        "equivalent_code": "EMBA9504"
+    },
+    {
+        "course_code": "EMBA506",
+        "course_name": "Legal Environment of Business",
+        "credits": 3.0,
+        "equivalent_code": "EMBA9506"
+    },
+    {
+        "course_code": "ENT521",
+        "course_name": "New Venture Planning",
+        "credits": 3.0,
+        "equivalent_code": "ENT9521"
+    },
+    {
+        "course_code": "ENT522",
+        "course_name": "New Venture Formation",
+        "credits": 3.0,
+        "equivalent_code": "ENT9522"
+    },
+    {
+        "course_code": "ENT523",
+        "course_name": "Social Entrepreneurship",
+        "credits": 3.0,
+        "equivalent_code": "ENT9523"
+    },
+    {
+        "course_code": "ENT524",
+        "course_name": "Small Business Management",
+        "credits": 3.0,
+        "equivalent_code": "ENT9524"
+    },
+    {
+        "course_code": "ENT525",
+        "course_name": "Business Planning",
+        "credits": 3.0,
+        "equivalent_code": "ENT9525"
+    },
+    {
+        "course_code": "FIN501",
+        "course_name": "Financial Management",
+        "credits": 3.0,
+        "equivalent_code": "FIN9501"
+    },
+    {
+        "course_code": "FIN521",
+        "course_name": "Advanced Financial Management",
+        "credits": 3.0,
+        "equivalent_code": "FIN9521"
+    },
+    {
+        "course_code": "FIN522",
+        "course_name": "Corporate Finance",
+        "credits": 3.0,
+        "equivalent_code": "FIN9522"
+    },
+    {
+        "course_code": "FIN523",
+        "course_name": "Financial Institutions and Markets",
+        "credits": 3.0,
+        "equivalent_code": "FIN9523"
+    },
+    {
+        "course_code": "FIN524",
+        "course_name": "International Financial Management",
+        "credits": 3.0,
+        "equivalent_code": "FIN9524"
+    },
+    {
+        "course_code": "FIN525",
+        "course_name": "Investment Banking",
+        "credits": 3.0,
+        "equivalent_code": "FIN9525"
+    },
+    {
+        "course_code": "FIN526",
+        "course_name": "Financial Derivatives",
+        "credits": 3.0,
+        "equivalent_code": "FIN9526"
+    },
+    {
+        "course_code": "HRM501",
+        "course_name": "Human Resource Management",
+        "credits": 3.0,
+        "equivalent_code": "HRM9501"
+    },
+    {
+        "course_code": "HRM521",
+        "course_name": "Human Resource Planning",
+        "credits": 3.0,
+        "equivalent_code": "HRM9521"
+    },
+    {
+        "course_code": "HRM522",
+        "course_name": "Performance Management",
+        "credits": 3.0,
+        "equivalent_code": "HRM9522"
+    },
+    {
+        "course_code": "HRM523",
+        "course_name": "Training and Development",
+        "credits": 3.0,
+        "equivalent_code": "HRM9523"
+    },
+    {
+        "course_code": "HRM524",
+        "course_name": "Industrial Relations",
+        "credits": 3.0,
+        "equivalent_code": "HRM9524"
+    },
+    {
+        "course_code": "HRM527",
+        "course_name": "Conflict Management",
+        "credits": 3.0,
+        "equivalent_code": "HRM9527"
+    },
+    {
+        "course_code": "INS521",
+        "course_name": "Risk Management & Insurance",
+        "credits": 3.0,
+        "equivalent_code": "INS9521"
+    },
+    {
+        "course_code": "INS522",
+        "course_name": "Non-Life Insurance",
+        "credits": 3.0,
+        "equivalent_code": "INS9522"
+    },
+    {
+        "course_code": "INS523",
+        "course_name": "Reinsurance and Application",
+        "credits": 3.0,
+        "equivalent_code": "INS9523"
+    },
+    {
+        "course_code": "INS524",
+        "course_name": "Underwriting Management",
+        "credits": 3.0,
+        "equivalent_code": "INS9524"
+    },
+    {
+        "course_code": "INS525",
+        "course_name": "Claims Management",
+        "credits": 3.0,
+        "equivalent_code": "INS9525"
+    },
+    {
+        "course_code": "INS526",
+        "course_name": "Life Assurance",
+        "credits": 3.0,
+        "equivalent_code": "INS9526"
+    },
+    {
+        "course_code": "MBA501",
+        "course_name": "Financial Accounting",
+        "credits": 3.0,
+        "equivalent_code": "MBA9501"
+    },
+    {
+        "course_code": "MBA502",
+        "course_name": "Business Mathematics",
+        "credits": 3.0,
+        "equivalent_code": "MBA9502"
+    },
+    {
+        "course_code": "MBA503",
+        "course_name": "Organization & Management",
+        "credits": 3.0,
+        "equivalent_code": "MBA9503"
+    },
+    {
+        "course_code": "MBA504",
+        "course_name": "Business Statistics",
+        "credits": 3.0,
+        "equivalent_code": "MBA9504"
+    },
+    {
+        "course_code": "MBA506",
+        "course_name": "Business Communication",
+        "credits": 3.0,
+        "equivalent_code": "MBA9506"
+    },
+    {
+        "course_code": "MBA508",
+        "course_name": "Management Accounting",
+        "credits": 3.0,
+        "equivalent_code": "MBA9508"
+    },
+    {
+        "course_code": "MBA511",
+        "course_name": "Business Research",
+        "credits": 3.0,
+        "equivalent_code": "MBA9511"
+    },
+    {
+        "course_code": "MBA512",
+        "course_name": "Managerial Economics",
+        "credits": 3.0,
+        "equivalent_code": "MBA9512"
+    },
+    {
+        "course_code": "MBA513",
+        "course_name": "Entrepreneurship",
+        "credits": 3.0,
+        "equivalent_code": "MBA9513"
+    },
+    {
+        "course_code": "MBA514",
+        "course_name": "Legal Environment of Business",
+        "credits": 3.0,
+        "equivalent_code": "MBA9514"
+    },
+    {
+        "course_code": "MGT521",
+        "course_name": "Organization Design",
+        "credits": 3.0,
+        "equivalent_code": "MGT9521"
+    },
+    {
+        "course_code": "MGT522",
+        "course_name": "Management of Innovation and Change",
+        "credits": 3.0,
+        "equivalent_code": "MGT9522"
+    },
+    {
+        "course_code": "MGT523",
+        "course_name": "Leadership Theory and Practice",
+        "credits": 3.0,
+        "equivalent_code": "MGT9523"
+    },
+    {
+        "course_code": "MGT524",
+        "course_name": "Comparative Management",
+        "credits": 3.0,
+        "equivalent_code": "MGT9524"
+    },
+    {
+        "course_code": "MGT600",
+        "course_name": "Strategic Management",
+        "credits": 3.0,
+        "equivalent_code": "MGT9600"
+    },
+    {
+        "course_code": "MIS501",
+        "course_name": "Management Information System",
+        "credits": 3.0,
+        "equivalent_code": "MIS9501"
+    },
+    {
+        "course_code": "MIS521",
+        "course_name": "Structural Programming",
+        "credits": 3.0,
+        "equivalent_code": "MIS9521"
+    },
+    {
+        "course_code": "MIS522",
+        "course_name": "Electronic Commerce",
+        "credits": 3.0,
+        "equivalent_code": "MIS9522"
+    },
+    {
+        "course_code": "MIS523",
+        "course_name": "Computer Networking",
+        "credits": 3.0,
+        "equivalent_code": "MIS9523"
+    },
+    {
+        "course_code": "MIS524",
+        "course_name": "Networking and Operating System",
+        "credits": 3.0,
+        "equivalent_code": "MIS9524"
+    },
+    {
+        "course_code": "MIS525",
+        "course_name": "Systems Analysis and Design",
+        "credits": 3.0,
+        "equivalent_code": "MIS9525"
+    },
+    {
+        "course_code": "MIS526",
+        "course_name": "Relational Database Systems",
+        "credits": 3.0,
+        "equivalent_code": "MIS9526"
+    },
+    {
+        "course_code": "MIS527",
+        "course_name": "Decision Support System",
+        "credits": 3.0,
+        "equivalent_code": "MIS9527"
+    },
+    {
+        "course_code": "MKT501",
+        "course_name": "Marketing Management",
+        "credits": 3.0,
+        "equivalent_code": "MKT9501"
+    },
+    {
+        "course_code": "MKT521",
+        "course_name": "Consumer Behavior",
+        "credits": 3.0,
+        "equivalent_code": "MKT9521"
+    },
+    {
+        "course_code": "MKT523",
+        "course_name": "Brand Management",
+        "credits": 3.0,
+        "equivalent_code": "MKT9523"
+    },
+    {
+        "course_code": "MKT524",
+        "course_name": "Services Marketing",
+        "credits": 3.0,
+        "equivalent_code": "MKT9524"
+    },
+    {
+        "course_code": "MKT525",
+        "course_name": "Integrated Marketing Communication",
+        "credits": 3.0,
+        "equivalent_code": "MKT9525"
+    },
+    {
+        "course_code": "MKT527",
+        "course_name": "International Marketing",
+        "credits": 3.0,
+        "equivalent_code": "MKT9527"
+    },
+    {
+        "course_code": "MKT529",
+        "course_name": "Retail Marketing",
+        "credits": 3.0,
+        "equivalent_code": "MKT9529"
+    },
+    {
+        "course_code": "MKT530",
+        "course_name": "Digital Marketing",
+        "credits": 3.0,
+        "equivalent_code": "MKT9530"
+    },
+    {
+        "course_code": "OPM501",
+        "course_name": "Operations Management",
+        "credits": 3.0,
+        "equivalent_code": "OPM9501"
+    },
+    {
+        "course_code": "OPM521",
+        "course_name": "Management Science",
+        "credits": 3.0,
+        "equivalent_code": "OPM9521"
+    },
+    {
+        "course_code": "OPM522",
+        "course_name": "Supply Chain and Logistics Management",
+        "credits": 3.0,
+        "equivalent_code": "OPM9522"
+    },
+    {
+        "course_code": "OPM523",
+        "course_name": "Total Quality Management",
+        "credits": 3.0,
+        "equivalent_code": "OPM9523"
+    },
+    {
+        "course_code": "OPM524",
+        "course_name": "Project Management",
+        "credits": 3.0,
+        "equivalent_code": "OPM9524"
+    },
+    {
+        "course_code": "OPM525",
+        "course_name": "Management of Technology and Innovation",
+        "credits": 3.0,
+        "equivalent_code": "OPM9525"
+    },
+    {
+        "course_code": "OPM526",
+        "course_name": "Inventory Management",
+        "credits": 3.0,
+        "equivalent_code": "OPM9526"
+    },
+    {
+        "course_code": "SCM521",
+        "course_name": "Strategic Supply Chain Management",
+        "credits": 3.0,
+        "equivalent_code": "SCM9521"
+    },
+    {
+        "course_code": "SCM522",
+        "course_name": "Transportation and Logistics Management",
+        "credits": 3.0,
+        "equivalent_code": "SCM9522"
+    },
+    {
+        "course_code": "SCM523",
+        "course_name": "Procurement and Supply Management / Strategic Sourcing & Procurement",
+        "credits": 3.0,
+        "equivalent_code": "SCM9523"
+    },
+    {
+        "course_code": "SCM524",
+        "course_name": "Supply Chain Analytics",
+        "credits": 3.0,
+        "equivalent_code": "SCM9524"
+    },
+    {
+        "course_code": "SCM525",
+        "course_name": "Warehousing and Distribution Management",
+        "credits": 3.0,
+        "equivalent_code": "SCM9525"
+    },
+    {
+        "course_code": "SCM526",
+        "course_name": "Advanced project Management",
+        "credits": 3.0,
+        "equivalent_code": "SCM9526"
+    },
+    {
+        "course_code": "SCM527",
+        "course_name": "Risk Management in Global Supply Chains",
+        "credits": 3.0,
+        "equivalent_code": "SCM9527"
+    },
+    {
+        "course_code": "TGM521",
+        "course_name": "Global RMG Business",
+        "credits": 3.0,
+        "equivalent_code": "TGM9521"
+    },
+    {
+        "course_code": "TGM522",
+        "course_name": "Apparel Merchandising",
+        "credits": 3.0,
+        "equivalent_code": "TGM9522"
+    },
+    {
+        "course_code": "TGM523",
+        "course_name": "Pattern Process and CAD/CAM",
+        "credits": 3.0,
+        "equivalent_code": "TGM9523"
+    },
+    {
+        "course_code": "TGM524",
+        "course_name": "Quality Control and Compliance",
+        "credits": 3.0,
+        "equivalent_code": "TGM9524"
+    },
+    {
+        "course_code": "TGM525",
+        "course_name": "Sourcing and Negotiation Techniques",
+        "credits": 3.0,
+        "equivalent_code": "TGM9525"
+    },
+    {
+        "course_code": "ENG501",
+        "course_name": "Professional Communications",
+        "credits": 3.0,
+        "equivalent_code": "ENG9501"
+    },
+    {
+        "course_code": "ENG502",
+        "course_name": "Modernism to Postmodernism",
+        "credits": 3.0,
+        "equivalent_code": "ENG9502"
+    },
+    {
+        "course_code": "ENG503",
+        "course_name": "Masterpieces of World Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9503"
+    },
+    {
+        "course_code": "ENG504",
+        "course_name": "Translation: Theory and Practice",
+        "credits": 3.0,
+        "equivalent_code": "ENG9504"
+    },
+    {
+        "course_code": "ENG505",
+        "course_name": "War and Trauma in Literary Studies",
+        "credits": 3.0,
+        "equivalent_code": "ENG9505"
+    },
+    {
+        "course_code": "ENG506",
+        "course_name": "Contemporary British Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9506"
+    },
+    {
+        "course_code": "ENG507",
+        "course_name": "Research Methods in English Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9507"
+    },
+    {
+        "course_code": "ENG508",
+        "course_name": "South Asian Literature in English",
+        "credits": 3.0,
+        "equivalent_code": "ENG9508"
+    },
+    {
+        "course_code": "ENG509",
+        "course_name": "Contemporary American Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9509"
+    },
+    {
+        "course_code": "ENG510",
+        "course_name": "Advanced Literary Theory",
+        "credits": 3.0,
+        "equivalent_code": "ENG9510"
+    },
+    {
+        "course_code": "ENG511",
+        "course_name": "Partition Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9511"
+    },
+    {
+        "course_code": "ENG512",
+        "course_name": "Literature and Spirituality",
+        "credits": 3.0,
+        "equivalent_code": "ENG9512"
+    },
+    {
+        "course_code": "ENG513",
+        "course_name": "Advanced Cultural Studies",
+        "credits": 3.0,
+        "equivalent_code": "ENG9513"
+    },
+    {
+        "course_code": "ENG514",
+        "course_name": "Gender and Feminism",
+        "credits": 3.0,
+        "equivalent_code": "ENG9514"
+    },
+    {
+        "course_code": "ENG515",
+        "course_name": "Ecocriticism: Theory and Practice",
+        "credits": 3.0,
+        "equivalent_code": "ENG9515"
+    },
+    {
+        "course_code": "ENG516",
+        "course_name": "Digital Humanities",
+        "credits": 3.0,
+        "equivalent_code": "ENG9516"
+    },
+    {
+        "course_code": "ENG517",
+        "course_name": "Children\u2019s Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9517"
+    },
+    {
+        "course_code": "ENG518",
+        "course_name": "Film, Literature and Adaptation",
+        "credits": 3.0,
+        "equivalent_code": "ENG9518"
+    },
+    {
+        "course_code": "ENG519",
+        "course_name": "Sci-fi and Fantasy Literature",
+        "credits": 3.0,
+        "equivalent_code": "ENG9519"
+    },
+    {
+        "course_code": "ENG520",
+        "course_name": "Graphic Novels",
+        "credits": 3.0,
+        "equivalent_code": "ENG9520"
+    },
+    {
+        "course_code": "ENG521",
+        "course_name": "From Media to New Media",
+        "credits": 3.0,
+        "equivalent_code": "ENG9521"
+    },
+    {
+        "course_code": "ENG545",
+        "course_name": "Practicum",
+        "credits": 3.0,
+        "equivalent_code": "ENG9545"
+    },
+    {
+        "course_code": "ENG582",
+        "course_name": "Curriculum and Materials Design",
+        "credits": 3.0,
+        "equivalent_code": "ENG9582"
+    },
+    {
+        "course_code": "ENG599",
+        "course_name": "Dissertation",
+        "credits": 3.0,
+        "equivalent_code": "ENG9599"
+    }
+]

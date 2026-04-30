@@ -22,9 +22,9 @@ class GradeHelper {
     final year = int.tryParse(digitStr) ?? 0;
     
     if (year == 0) return 'modern';
-    if (year < 2023) return 'legacy';
+    if (year < 2022) return 'legacy';
     
-    if (year == 2023) {
+    if (year == 2022) {
       final season = semesterCode.toLowerCase();
       if (season.contains('spring') || season.contains('summer')) {
         return 'legacy';

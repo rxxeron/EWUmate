@@ -257,9 +257,9 @@ def handle_generate_schedules(body: dict) -> dict:
     if not user_id or not semester or not course_codes:
         raise ValueError("user_id, semester, and courses are required")
 
-    # Enforce 3-10 course limit
-    if len(course_codes) < 3 or len(course_codes) > 10:
-        raise ValueError(f"Schedule generation requires 3-10 courses. Received: {len(course_codes)}")
+    # Enforce 2-10 course limit
+    if len(course_codes) < 2 or len(course_codes) > 10:
+        raise ValueError(f"Schedule generation requires 2-10 courses. Received: {len(course_codes)}")
 
     sb = _get_supabase()
 
@@ -506,8 +506,20 @@ def _do_parse_faculty(file_path: str) -> dict:
         for retry in range(6):
             try:
                 time.sleep(1.5) # Wait for schema cache to refresh
-                existing_res = sb.table(table_name).select("id, course_code, section_number").execute()
-                existing_courses = existing_res.data or []
+                
+                # Supabase has a 1000 row limit by default. We must paginate.
+                all_existing = []
+                offset = 0
+                while True:
+                    chunk_res = sb.table(table_name).select("id, course_code, section_number").range(offset, offset + 999).execute()
+                    chunk_data = chunk_res.data or []
+                    all_existing.extend(chunk_data)
+                    if len(chunk_data) < 1000:
+                        break
+                    offset += 1000
+                    
+                existing_courses = all_existing
+                
                 break # Success!
             except Exception as wait_e:
                 if retry == 5:
@@ -519,14 +531,14 @@ def _do_parse_faculty(file_path: str) -> dict:
             cc = ec.get("course_code")
             sec = ec.get("section_number")
             if cc and sec:
-                existing_map[(str(cc).upper(), str(sec).upper())] = ec.get("id")
+                existing_map[(str(cc).upper().replace(" ", ""), str(sec).upper().replace(" ", ""))] = ec.get("id")
 
         seen_ids = set()
         for mc in mapped_courses:
             cc = mc.get("course_code")
             sec = mc.get("section_number")
             if cc and sec:
-                key = (str(cc).upper(), str(sec).upper())
+                key = (str(cc).upper().replace(" ", ""), str(sec).upper().replace(" ", ""))
                 if key in existing_map:
                     rec_id = existing_map[key]
                     mc["id"] = rec_id

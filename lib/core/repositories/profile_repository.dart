@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile.dart';
@@ -14,16 +16,15 @@ class ProfileRepository {
 
   ProfileRepository(this._supabase, this._cache, this._dashboardRepo);
 
-  Future<Profile?> getProfile(String userId) async {
-    // 1. Try cache first
-    final cached = _cache.getCachedProfile(userId);
-    if (cached != null) {
-      // Don't wait, immediately fetch offline then refresh background
-      _fetchAndCache(userId);
-      return Profile.fromJson(cached);
+  Future<Profile?> getProfile(String userId, {bool forceRefresh = true}) async {
+    if (!forceRefresh) {
+      final cached = _cache.getCachedProfile(userId);
+      if (cached != null) {
+        _fetchAndCache(userId);
+        return Profile.fromJson(cached);
+      }
     }
 
-    // 2. Fallback to network
     return await _fetchAndCache(userId);
   }
 
@@ -216,6 +217,15 @@ class ProfileRepository {
     if (cached != null) {
       yield Profile.fromJson(cached);
     }
+    
+    // Background refresh immediately to break any stale caches
+    _fetchAndCache(userId).then((fresh) {
+      if (fresh != null && !kIsWeb) {
+        // This will naturally trigger the stream below if realtime is active,
+        // but we yield it anyway just in case.
+      }
+    });
+
     try {
       await for (final event in _supabase
           .from('profiles')
@@ -228,7 +238,29 @@ class ProfileRepository {
         }
       }
     } catch (e) {
-      // Offline
+      // Offline fallback already handled by initial yield
+    }
+  }
+
+  Future<void> recordActivity(String userId) async {
+    try {
+      // 1. Get current app version
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+
+      // 2. Increment app_open_count and update last_active_at + app_version
+      await _supabase.rpc('increment_app_open_count', params: {
+        'p_user_id': userId,
+      });
+      
+      // Update app_version separately or via RPC if supported
+      await _supabase.from('profiles').update({
+        'app_version': currentVersion,
+        'last_active_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+      
+    } catch (e) {
+      if (kDebugMode) (){}();
     }
   }
 }

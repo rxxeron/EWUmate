@@ -162,7 +162,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           }
         }
       } catch (e) {
-        debugPrint('[Dashboard] Update Check Error: $e');
+        (){}();
       }
 
       // 5. Check Advising Banner for NEXT semester
@@ -182,7 +182,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
       if (mounted) setState(() => _loadingInit = false);
     } catch (e, stack) {
-      debugPrint('[Dashboard] Refresh Error: $e\n$stack');
+      (){}();
       if (mounted) setState(() => _loadingInit = false);
     }
   }
@@ -218,7 +218,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         androidName: 'ScheduleWidgetProvider',
       );
     } catch (e, stack) {
-      debugPrint('[Dashboard] HomeWidget Update Error: $e\n$stack');
+      (){}();
     }
   }
 
@@ -1065,7 +1065,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       await ref.read(taskRepositoryProvider).updateTaskStatus(user!.id, taskId, true);
       _refreshDashboard();
     } catch (e) {
-      debugPrint("Error marking task completed: $e");
+      (){}();
     }
   }
 
@@ -1076,7 +1076,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       setState(() => _reschedulePromptIds.remove(taskId));
       _refreshDashboard();
     } catch (e) {
-      debugPrint("Error marking task missed: $e");
+      (){}();
     }
   }
 

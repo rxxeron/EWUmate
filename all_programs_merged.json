@@ -1,0 +1,261 @@
+[
+    {
+        "program_code": "CSE",
+        "name": "B.Sc. in Computer Science & Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 140,
+        "department_name": "Department of Computer Science & Engineering"
+    },
+    {
+        "program_code": "ICE",
+        "name": "B.Sc. in Information & Communications Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 140,
+        "department_name": "Department of Computer Science & Engineering"
+    },
+    {
+        "program_code": "EEE",
+        "name": "B.Sc. in Electrical & Electronic Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 140,
+        "department_name": "Department of Electrical and Electronic Engineering"
+    },
+    {
+        "program_code": "ETE",
+        "name": "B.Sc. in Electronic & Telecommunication Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 140,
+        "department_name": "Department of Electrical and Electronic Engineering"
+    },
+    {
+        "program_code": "PHRM",
+        "name": "Bachelor of Pharmacy (B.Pharm)",
+        "track": "bi_semester",
+        "total_degree_credits": 158,
+        "department_name": "Department of Pharmacy"
+    },
+    {
+        "program_code": "MAT",
+        "name": "B.Sc. in Mathematics",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Mathematical & Physical Sciences"
+    },
+    {
+        "program_code": "GEB",
+        "name": "B.Sc. in Genetic Engineering & Biotechnology",
+        "track": "tri_semester",
+        "total_degree_credits": 140,
+        "department_name": "Department of Genetic Engineering & Biotechnology"
+    },
+    {
+        "program_code": "CE",
+        "name": "B.Sc. in Civil Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 145,
+        "department_name": "Department of Civil Engineering"
+    },
+    {
+        "program_code": "ENG",
+        "name": "BA in English",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of English"
+    },
+    {
+        "program_code": "LAW",
+        "name": "LL.B",
+        "track": "bi_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Law"
+    },
+    {
+        "program_code": "ECO",
+        "name": "BSS in Economics",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Economics"
+    },
+    {
+        "program_code": "SOC",
+        "name": "BSS in Sociology",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Sociology"
+    },
+    {
+        "program_code": "BBA",
+        "name": "Bachelor of Business Administration",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Business Administration"
+    },
+    {
+        "program_code": "ISLM",
+        "name": "Information Studies",
+        "track": "tri_semester",
+        "total_degree_credits": 123,
+        "department_name": "Department of Information Studies"
+    },
+    {
+        "program_code": "PPHS",
+        "name": "Population and Public Health Sciences",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Social Relations"
+    },
+    {
+        "program_code": "DSA",
+        "name": "B.Sc. in Data Science and Analytics",
+        "track": "tri_semester",
+        "total_degree_credits": 130,
+        "department_name": "Department of Mathematical & Physical Sciences"
+    },
+    {
+        "program_code": "MSCCSE",
+        "name": "Master of Science in Computer Science and Engineering",
+        "track": "tri_semester",
+        "total_degree_credits": 40,
+        "department_name": "Department of Computer Science & Engineering"
+    },
+    {
+        "program_code": "AIML",
+        "name": " M.Sc. in Artificial Intelligence and Machine Learning",
+        "track": "tri_semester",
+        "total_degree_credits": 40,
+        "department_name": "Department of Computer Science & Engineering"
+    },
+    {
+        "program_code": "CS",
+        "name": "M.Sc. in Cyber Security",
+        "track": "tri_semester",
+        "total_degree_credits": 40,
+        "department_name": "Department of Computer Science & Engineering"
+    },
+    {
+        "program_code": "MBA",
+        "name": "MBA",
+        "department_name": "Department of Business Administration",
+        "total_degree_credits": 60.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "EMBA",
+        "name": "EMBA",
+        "department_name": "Department of Business Administration",
+        "total_degree_credits": 42.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MDS",
+        "name": "MDS",
+        "department_name": "Department of Economics",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MSS_ECO",
+        "name": "MSS in Economics",
+        "department_name": "Department of Economics",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MA_ENG_40",
+        "name": "MA in English",
+        "department_name": "Department of English",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MA_ENG_45",
+        "name": "MA in English",
+        "department_name": "Department of English",
+        "total_degree_credits": 45.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MA_TESOL_40",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "department_name": "Department of English",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MA_TESOL_42",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "department_name": "Department of English",
+        "total_degree_credits": 42.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MA_TESOL_48",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "department_name": "Department of English",
+        "total_degree_credits": 48.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "LLM",
+        "name": "LL.M",
+        "department_name": "Department of Law",
+        "total_degree_credits": 40.0,
+        "track": "bi_semester"
+    },
+    {
+        "program_code": "MPRHGD",
+        "name": "MPRHGD",
+        "department_name": "Department of Sociology",
+        "total_degree_credits": 48.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "PPDM",
+        "name": "PPDM",
+        "department_name": "Department of Sociology",
+        "total_degree_credits": 21.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MS_DSA",
+        "name": "M. S. in Data Science and Analytics",
+        "department_name": "Department of Computer Science and Engineering",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MS_CSE",
+        "name": "MS in CSE",
+        "department_name": "Department of Computer Science and Engineering",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "M_PHARM",
+        "name": "M. Pharm.",
+        "department_name": "Department of Pharmacy",
+        "total_degree_credits": 40.0,
+        "track": "bi_semester"
+    },
+    {
+        "program_code": "PGDED",
+        "name": "PGDED",
+        "department_name": "Faculty of Business and Economics",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MSC_CYS",
+        "name": "M.Sc. in Cyber Security",
+        "department_name": "Department of Computer Science and Engineering",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    },
+    {
+        "program_code": "MSC_AIML",
+        "name": "M.Sc. in Artificial Intelligence and Machine Learning",
+        "department_name": "Department of Computer Science and Engineering",
+        "total_degree_credits": 40.0,
+        "track": "tri_semester"
+    }
+]

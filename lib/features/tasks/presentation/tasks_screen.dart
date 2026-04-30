@@ -45,7 +45,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     final queue = cacheService.getSyncQueue(user.id);
     if (queue.isEmpty) return;
 
-    if (kDebugMode) debugPrint('[Offline Sync] Processing ${queue.length} items from tasks screen...');
+    if (kDebugMode) (){}();
     bool anySuccess = false;
     
     for (final item in queue) {
@@ -69,7 +69,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
         }
         anySuccess = true;
       } catch (e) {
-        if (kDebugMode) debugPrint('[Offline Sync] Still offline for action $action');
+        if (kDebugMode) (){}();
       }
     }
     

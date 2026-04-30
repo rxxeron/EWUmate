@@ -1,0 +1,110 @@
+[
+    {
+        "program_code": "MBA",
+        "name": "MBA",
+        "faculty": "Faculty of Business and Economics",
+        "total_degree_credits": 60.0
+    },
+    {
+        "program_code": "EMBA",
+        "name": "EMBA",
+        "faculty": "Faculty of Business and Economics",
+        "total_degree_credits": 42.0
+    },
+    {
+        "program_code": "MDS",
+        "name": "MDS",
+        "faculty": "Faculty of Business and Economics",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MSS_ECO",
+        "name": "MSS in Economics",
+        "faculty": "Faculty of Business and Economics",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MA_ENG_40",
+        "name": "MA in English",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MA_ENG_45",
+        "name": "MA in English",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 45.0
+    },
+    {
+        "program_code": "MA_TESOL_40",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MA_TESOL_42",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 42.0
+    },
+    {
+        "program_code": "MA_TESOL_48",
+        "name": "MA in Teaching English to Speakers of Other Languages (TESOL)",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 48.0
+    },
+    {
+        "program_code": "LLM",
+        "name": "LL.M",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MPRHGD",
+        "name": "MPRHGD",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 48.0
+    },
+    {
+        "program_code": "PPDM",
+        "name": "PPDM",
+        "faculty": "Faculty of Liberal Arts and Social Sciences",
+        "total_degree_credits": 21.0
+    },
+    {
+        "program_code": "MS_DSA",
+        "name": "M. S. in Data Science and Analytics",
+        "faculty": "Faculty of Sciences and Engineering",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MS_CSE",
+        "name": "MS in CSE",
+        "faculty": "Faculty of Sciences and Engineering",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "M_PHARM",
+        "name": "M. Pharm.",
+        "faculty": "Faculty of Sciences and Engineering",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "PGDED",
+        "name": "PGDED",
+        "faculty": "Faculty of Business and Economics",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MSC_CYS",
+        "name": "M.Sc. in Cyber Security",
+        "faculty": "Faculty of Sciences and Engineering",
+        "total_degree_credits": 40.0
+    },
+    {
+        "program_code": "MSC_AIML",
+        "name": "M.Sc. in Artificial Intelligence and Machine Learning",
+        "faculty": "Faculty of Sciences and Engineering",
+        "total_degree_credits": 40.0
+    }
+]

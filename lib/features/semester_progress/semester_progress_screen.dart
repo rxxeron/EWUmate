@@ -11,6 +11,7 @@ import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
 import 'semester_progress_repository.dart';
+import '../../core/models/course_metadata.dart';
 import 'course_progress_detail_screen.dart';
 import 'widgets/course_progress_card.dart';
 
@@ -53,7 +54,7 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
           await cacheService.removeQueueItem(user.id, item['data']['course_code']); 
           anySuccess = true;
         } catch (e) {
-          if (kDebugMode) debugPrint('[Offline Sync] Still offline for semester marks');
+          if (kDebugMode) (){}();
         }
       }
     }
@@ -175,18 +176,26 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                                     final code = course['course_code'] ?? 'Course';
                                     final meta = allMeta.where((m) => m.code == code).firstOrNull;
 
-                                    return CourseProgressCard(
-                                      courseData: course,
-                                      courseName: meta?.name ?? 'Loading Subject...',
-                                      onTap: () async {
-                                        await Navigator.push(context, MaterialPageRoute(
-                                          builder: (context) => CourseProgressDetailScreen(
-                                            courseData: course,
-                                            semesterCode: semCode,
-                                          ),
-                                        ));
-                                        if (mounted) setState(() {});
-                                      },
+                                    return FutureBuilder<List<CourseMetadata>>(
+                                      future: meta == null 
+                                          ? ref.read(courseRepositoryProvider).searchCourses(code) 
+                                          : Future.value([meta]),
+                                      builder: (context, metaSnapshot) {
+                                        final foundMeta = metaSnapshot.data?.firstOrNull;
+                                        return CourseProgressCard(
+                                          courseData: course,
+                                          courseName: foundMeta?.name ?? 'Loading Subject...',
+                                          onTap: () async {
+                                            await Navigator.push(context, MaterialPageRoute(
+                                              builder: (context) => CourseProgressDetailScreen(
+                                                courseData: course,
+                                                semesterCode: semCode,
+                                              ),
+                                            ));
+                                            if (mounted) setState(() {});
+                                          },
+                                        );
+                                      }
                                     );
                                   },
                                   childCount: courses.length,

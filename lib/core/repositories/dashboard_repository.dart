@@ -1,3 +1,4 @@
+import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/semester_analytics.dart';
@@ -109,8 +110,8 @@ Future<SemesterAnalytics?> currentAnalytics(CurrentAnalyticsRef ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
 
-  // Placeholder static semester
-  return repo.getAnalytics(user.id, 'Spring2026');
+  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
+  return repo.getAnalytics(user.id, semCode);
 }
 
 @riverpod
@@ -121,5 +122,6 @@ Future<UserSemesterState?> currentSemesterState(
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
 
-  return repo.getUserSemesterState(user.id, 'Spring2026');
+  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
+  return repo.getUserSemesterState(user.id, semCode);
 }

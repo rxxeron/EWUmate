@@ -80,7 +80,7 @@ class SemesterProgressRepository {
       
       return progressData;
     } catch (e) {
-      if (kDebugMode) debugPrint('[SemesterProgress] Network fetch failed: $e');
+      if (kDebugMode) (){}();
       return [];
     }
   }
@@ -105,7 +105,7 @@ class SemesterProgressRepository {
       }
       _updateProgressCache(userId, semesterCode, data);
     } catch (e) {
-      if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued');
+      if (kDebugMode) (){}();
       _updateProgressCache(userId, semesterCode, data);
       
       data['is_new'] = isNew; // restore for queue

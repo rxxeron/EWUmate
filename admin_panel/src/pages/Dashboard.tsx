@@ -18,6 +18,11 @@ export function Dashboard() {
   const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
   const [semesterStats, setSemesterStats] = useState<Record<string, SemesterTrackStats>>({});
   const [loading, setLoading] = useState(true);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -124,14 +129,90 @@ export function Dashboard() {
     fetchDashboardData();
   }, []);
 
+  // Handle Search
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm.trim().length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, full_name, student_id, program_code')
+          .or(`full_name.ilike.%${searchTerm}%,student_id.ilike.%${searchTerm}%`)
+          .limit(5);
+        
+        setSearchResults((data as Profile[]) || []);
+      } catch (err) {
+        console.error('Search failed:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   if (loading) return <div>Loading statistics...</div>;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between flex-wrap gap-4 items-center mb-8">
+      <div className="flex justify-between flex-wrap gap-6 items-center mb-8">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h2>
           <p className="text-gray-500 mt-1 text-sm">Welcome back to the EWUmate command center.</p>
+        </div>
+
+        <div className="relative w-full md:w-96">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm shadow-sm transition-all"
+            placeholder="Quick search students (Name or ID)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          
+          {(searchTerm.length >= 2 || isSearching) && (
+            <div className="absolute z-50 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+              {isSearching ? (
+                <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
+                  <Activity className="w-4 h-4 animate-spin" /> Searching...
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div className="divide-y divide-gray-50">
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id}
+                      className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors"
+                      onClick={() => navigate(`/users/${user.id}`)}
+                    >
+                      <div className="text-sm font-bold text-gray-900">{user.full_name}</div>
+                      <div className="text-xs text-gray-500 flex justify-between">
+                        <span>{user.student_id}</span>
+                        <span className="font-semibold text-indigo-600">{user.program_code}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div 
+                    className="p-2 text-center text-xs font-bold text-indigo-600 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/users?q=${searchTerm}`)}
+                  >
+                    View all results
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  No students found for "{searchTerm}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       
@@ -253,7 +334,7 @@ export function Dashboard() {
                       <div className="text-xs text-indigo-600">{user.student_id || '-'}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(user.created_at).toLocaleDateString()}
+                      {new Date(user.created_at).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </td>
                   </tr>
                 ))}
@@ -290,7 +371,7 @@ export function Dashboard() {
                       <span className="bg-gray-100 px-2 py-1 rounded-md">{user.app_open_count || 0}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                      {user.last_active_at ? new Date(user.last_active_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
                     </td>
                   </tr>
                 ))}

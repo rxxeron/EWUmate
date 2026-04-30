@@ -43,7 +43,7 @@ async function handleSingleUserSync(supabase: any, userId: string) {
     // 1. Fetch Profile & Semester Config
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('track')
+        .select('track, program_code')
         .eq('id', userId)
         .single();
 
@@ -80,7 +80,7 @@ async function handleSingleUserSync(supabase: any, userId: string) {
             .in('id', sectionIds);
 
         if (courseError) throw courseError;
-        weeklyTemplate = generateTemplate(courses);
+        weeklyTemplate = generateTemplate(courses, profile.program_code);
     }
 
     // 3. Upsert
@@ -116,7 +116,7 @@ async function handleBulkTrackSync(supabase: any, track: string) {
     // 2. Fetch all users in track
     const { data: users, error: userError } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, program_code')
         .eq('track', track);
 
     if (userError) throw userError;
@@ -149,7 +149,7 @@ async function handleBulkTrackSync(supabase: any, track: string) {
             .map((e: any) => courseMap[e.section_id])
             .filter(Boolean);
 
-        const template = generateTemplate(userSections);
+        const template = generateTemplate(userSections, u.program_code);
         return {
             user_id: u.id,
             semester_code: semesterCode,
@@ -171,10 +171,12 @@ async function handleBulkTrackSync(supabase: any, track: string) {
     return new Response(JSON.stringify({ success: true, count: upserts.length }), { headers: corsHeaders });
 }
 
-function generateTemplate(courses: any[]) {
+function generateTemplate(courses: any[], programCode?: string) {
     const dayMap: Record<number, string> = { 0: 'Sunday', 1: 'Monday', 2: 'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday' };
     const ewuCodeMap: Record<string, string> = { 'Sunday': 'S', 'Monday': 'M', 'Tuesday': 'T', 'Wednesday': 'W', 'Thursday': 'R', 'Friday': 'F', 'Saturday': 'A' };
     const template: Record<string, any[]> = {};
+
+    const isMaster = programCode ? ['AIML', 'EMBA', 'LLM', 'M_PHARM', 'MA_ENG_40', 'MA_ENG_45', 'MA_TESOL_40', 'MA_TESOL_42', 'MA_TESOL_48', 'MBA', 'MDS', 'MPRHGD', 'MS_CSE', 'MS_DSA', 'MSC_AIML', 'MSC_CYS', 'MSCCSE', 'MSS_ECO', 'PGDED', 'PPDM'].includes(programCode.toUpperCase()) : false;
 
     Object.values(dayMap).forEach(dayName => {
         const ewuDayCode = ewuCodeMap[dayName];
@@ -190,7 +192,7 @@ function generateTemplate(courses: any[]) {
                         startTime: sess.startTime || sess.start_time || 'TBA',
                         endTime: sess.endTime || sess.end_time || 'TBA',
                         room: sess.room || 'TBA',
-                        type: sess.type || 'Theory',
+                        type: isMaster ? 'Theory' : (sess.type || 'Theory'),
                         faculty: sess.faculty || sess.faculty_initials || '',
                     });
                 }

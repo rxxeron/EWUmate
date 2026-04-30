@@ -6,6 +6,7 @@ on:
       - production
       - main
       - master
+      - testing
     paths:
       - 'admin_panel/**'
       - '.github/workflows/deploy-admin.yml'
@@ -41,7 +42,7 @@ jobs:
         run: npm ci
 
       - name: Build the Admin Panel
-        run: npm run build -- --base=/${{ github.event.repository.name }}/
+        run: npm run build
         env:
           # If your Vite project needs access to Supabase variables publicly on the web URL,
           # you can optionally inject them here via GitHub Repository Secrets.

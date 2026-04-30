@@ -85,11 +85,16 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
       track == 'bi_semester' &&
       (profile.admittedSemester?.toLowerCase().startsWith('fall') ?? false);
 
+  // Filter out semesters that are effectively empty (no credits and no TGPA)
+  // unless it's the current active semester (which we might want to see as 0.00)
+  // But for the Journey/History, we usually only want completed ones.
+  final filteredSorted = sorted.where((s) => (s.creditsEarned ?? 0.0) > 0 || (s.tgpa ?? 0.0) > 0).toList();
+
   List<AcademicYear> years = [];
   int currentYearIndex = 1;
   List<SemesterSummary> currentGroup = [];
 
-  for (var s in sorted) {
+  for (var s in filteredSorted) {
     currentGroup.add(s);
 
     // Dynamic group size: Fall PHRM Year 1 = 3, Year 2+ = 2. Others = track-based.
@@ -108,7 +113,7 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
     }
   }
 
-  // Check if the current year is "full" to decide if the next year should appear automatically
+  // Only add the final group if it contains actual data
   if (currentGroup.isNotEmpty) {
     years.add(
       AcademicYear(
@@ -116,17 +121,9 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
         semesters: List.from(currentGroup),
       ),
     );
-
-    // Determine next year's target size for placeholder
-    int nextTargetSize = (track == 'bi_semester') ? 2 : 3;
-    if (isFallPhrm && currentYearIndex == 1) nextTargetSize = 3;
-
-    if (currentGroup.length == nextTargetSize && years.length < 4) {
-      years.add(AcademicYear(yearNumber: currentYearIndex + 1, semesters: []));
-    }
-  } else if (years.isNotEmpty && years.length < 4) {
-    years.add(AcademicYear(yearNumber: currentYearIndex, semesters: []));
   }
+
+  return years;
 
   return years;
 });

@@ -8,6 +8,8 @@ import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
 import 'auth_repository.dart';
 
+import 'package:ewumate/core/providers/academic_providers.dart';
+
 part 'progress_repository.g.dart';
 
 class ProgressRepository {
@@ -128,10 +130,12 @@ Future<List<SemesterCourseMarks>> currentSemesterMarks(
 ) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
-  // Hardcoded Spring2026 for now, can be read from active semester state
+  
+  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
+  
   final marks = await ref
       .watch(progressRepositoryProvider)
-      .getCourseMarks(user.id, 'Spring2026');
+      .getCourseMarks(user.id, semCode);
       
   // Hide corrupted rows (e.g., UUIDs accidentally saved as course_code)
   return marks.where((m) => m.courseCode.length <= 15 && !m.courseCode.contains('-')).toList();

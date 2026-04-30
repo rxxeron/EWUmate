@@ -188,6 +188,10 @@ class CourseProgressCard extends StatelessWidget {
 
     // Common fields
     if (data['obt_mid'] != null) items.add(_buildMarkRow('Mid', data['obt_mid'].toString()));
+    if (data['obt_project'] != null && data['obt_project'] > 0) items.add(_buildMarkRow('Project', data['obt_project'].toString()));
+    if (data['obt_term_paper'] != null && data['obt_term_paper'] > 0) items.add(_buildMarkRow('Term Paper', data['obt_term_paper'].toString()));
+    if (data['obt_class_performance'] != null && data['obt_class_performance'] > 0) items.add(_buildMarkRow('Class Perf.', data['obt_class_performance'].toString()));
+    if (data['obt_final'] != null && data['obt_final'] > 0) items.add(_buildMarkRow('Final', data['obt_final'].toString()));
     if (data['obt_attendance'] != null) items.add(_buildMarkRow('Attendance', data['obt_attendance'].toString()));
 
     if (items.isEmpty) {

@@ -469,7 +469,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildExamCard(Map<String, dynamic> exam) {
-    final dueDate = DateTime.tryParse(exam['due_date']?.toString() ?? '') ?? DateTime.now();
+    final dueDate = (DateTime.tryParse(exam['due_date']?.toString() ?? '') ?? DateTime.now()).toLocal();
     final diff = dueDate.difference(DateTime.now());
     final String countdown;
     if (diff.inDays > 0) {

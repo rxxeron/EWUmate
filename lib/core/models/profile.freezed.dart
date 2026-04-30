@@ -63,6 +63,8 @@ mixin _$Profile {
   DateTime? get lastActiveAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'app_open_count')
   int get appOpenCount => throw _privateConstructorUsedError;
+  @JsonKey(name: 'app_version')
+  String? get appVersion => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -106,6 +108,7 @@ abstract class $ProfileCopyWith<$Res> {
     @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
     @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
     @JsonKey(name: 'app_open_count') int appOpenCount,
+    @JsonKey(name: 'app_version') String? appVersion,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   });
@@ -149,6 +152,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? totalCoursesCompleted = null,
     Object? lastActiveAt = freezed,
     Object? appOpenCount = null,
+    Object? appVersion = freezed,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -246,6 +250,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
                 ? _value.appOpenCount
                 : appOpenCount // ignore: cast_nullable_to_non_nullable
                       as int,
+            appVersion: freezed == appVersion
+                ? _value.appVersion
+                : appVersion // ignore: cast_nullable_to_non_nullable
+                      as String?,
             updatedAt: freezed == updatedAt
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -292,6 +300,7 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
     @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
     @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
     @JsonKey(name: 'app_open_count') int appOpenCount,
+    @JsonKey(name: 'app_version') String? appVersion,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   });
@@ -334,6 +343,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? totalCoursesCompleted = null,
     Object? lastActiveAt = freezed,
     Object? appOpenCount = null,
+    Object? appVersion = freezed,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -431,6 +441,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
             ? _value.appOpenCount
             : appOpenCount // ignore: cast_nullable_to_non_nullable
                   as int,
+        appVersion: freezed == appVersion
+            ? _value.appVersion
+            : appVersion // ignore: cast_nullable_to_non_nullable
+                  as String?,
         updatedAt: freezed == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -473,6 +487,7 @@ class _$ProfileImpl implements _Profile {
     @JsonKey(name: 'total_courses_completed') this.totalCoursesCompleted = 0,
     @JsonKey(name: 'last_active_at') this.lastActiveAt,
     @JsonKey(name: 'app_open_count') this.appOpenCount = 0,
+    @JsonKey(name: 'app_version') this.appVersion,
     @JsonKey(name: 'updated_at') this.updatedAt,
     @JsonKey(name: 'created_at') this.createdAt,
   }) : _enrolledSections = enrolledSections,
@@ -568,6 +583,9 @@ class _$ProfileImpl implements _Profile {
   @JsonKey(name: 'app_open_count')
   final int appOpenCount;
   @override
+  @JsonKey(name: 'app_version')
+  final String? appVersion;
+  @override
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
   @override
@@ -576,7 +594,7 @@ class _$ProfileImpl implements _Profile {
 
   @override
   String toString() {
-    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, updatedAt: $updatedAt, createdAt: $createdAt)';
+    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, appVersion: $appVersion, updatedAt: $updatedAt, createdAt: $createdAt)';
   }
 
   @override
@@ -633,6 +651,8 @@ class _$ProfileImpl implements _Profile {
                 other.lastActiveAt == lastActiveAt) &&
             (identical(other.appOpenCount, appOpenCount) ||
                 other.appOpenCount == appOpenCount) &&
+            (identical(other.appVersion, appVersion) ||
+                other.appVersion == appVersion) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.createdAt, createdAt) ||
@@ -666,6 +686,7 @@ class _$ProfileImpl implements _Profile {
     totalCoursesCompleted,
     lastActiveAt,
     appOpenCount,
+    appVersion,
     updatedAt,
     createdAt,
   ]);
@@ -710,6 +731,7 @@ abstract class _Profile implements Profile {
     @JsonKey(name: 'total_courses_completed') final int totalCoursesCompleted,
     @JsonKey(name: 'last_active_at') final DateTime? lastActiveAt,
     @JsonKey(name: 'app_open_count') final int appOpenCount,
+    @JsonKey(name: 'app_version') final String? appVersion,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
     @JsonKey(name: 'created_at') final DateTime? createdAt,
   }) = _$ProfileImpl;
@@ -781,6 +803,9 @@ abstract class _Profile implements Profile {
   @override
   @JsonKey(name: 'app_open_count')
   int get appOpenCount;
+  @override
+  @JsonKey(name: 'app_version')
+  String? get appVersion;
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;

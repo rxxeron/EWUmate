@@ -6,16 +6,22 @@ import '../providers/supabase_provider.dart';
 
 /// The Session Guardian monitors the Supabase auth state and 
 /// ensures that the session is refreshed properly and persistent.
+import '../repositories/profile_repository.dart';
+
+/// The Session Guardian monitors the Supabase auth state and 
+/// ensures that the session is refreshed properly and persistent.
 final sessionGuardianProvider = Provider<SessionGuardian>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
-  return SessionGuardian(supabase);
+  final profileRepo = ref.watch(profileRepositoryProvider);
+  return SessionGuardian(supabase, profileRepo);
 });
 
 class SessionGuardian {
   final SupabaseClient _client;
+  final ProfileRepository _profileRepo;
   StreamSubscription<AuthState>? _subscription;
 
-  SessionGuardian(this._client) {
+  SessionGuardian(this._client, this._profileRepo) {
     _init();
   }
 
@@ -26,6 +32,15 @@ class SessionGuardian {
 
       if (kDebugMode) {
         print('[SessionGuardian] Auth Event: ${event.name}');
+      }
+
+      if (session?.user != null) {
+        // Record activity whenever we have a valid session event
+        if (event == AuthChangeEvent.signedIn || 
+            event == AuthChangeEvent.initialSession ||
+            event == AuthChangeEvent.tokenRefreshed) {
+          _profileRepo.recordActivity(session!.user.id);
+        }
       }
 
       switch (event) {

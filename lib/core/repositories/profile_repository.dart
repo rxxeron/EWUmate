@@ -231,6 +231,28 @@ class ProfileRepository {
       // Offline
     }
   }
+
+  Future<void> recordActivity(String userId) async {
+    try {
+      // Increment app_open_count and update last_active_at
+      await _supabase.rpc('increment_app_open_count', params: {
+        'p_user_id': userId,
+      });
+      
+      // Fallback in case RPC is not used or preferred
+      /*
+      await _supabase
+          .from('profiles')
+          .update({
+            'last_active_at': DateTime.now().toIso8601String(),
+            'app_open_count': FieldValue.increment(1), // Supabase doesn't have increment in REST easily
+          })
+          .eq('id', userId);
+      */
+    } catch (e) {
+      if (kDebugMode) print('Failed to record activity: $e');
+    }
+  }
 }
 
 @riverpod

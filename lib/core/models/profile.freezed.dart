@@ -59,6 +59,10 @@ mixin _$Profile {
   List<dynamic> get pastHistory => throw _privateConstructorUsedError;
   @JsonKey(name: 'total_courses_completed')
   int get totalCoursesCompleted => throw _privateConstructorUsedError;
+  @JsonKey(name: 'last_active_at')
+  DateTime? get lastActiveAt => throw _privateConstructorUsedError;
+  @JsonKey(name: 'app_open_count')
+  int get appOpenCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -100,6 +104,8 @@ abstract class $ProfileCopyWith<$Res> {
     @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
     @JsonKey(name: 'past_history') List<dynamic> pastHistory,
     @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+    @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+    @JsonKey(name: 'app_open_count') int appOpenCount,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   });
@@ -141,6 +147,8 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? enrolledCreditsNext = null,
     Object? pastHistory = null,
     Object? totalCoursesCompleted = null,
+    Object? lastActiveAt = freezed,
+    Object? appOpenCount = null,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -230,6 +238,14 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
                 ? _value.totalCoursesCompleted
                 : totalCoursesCompleted // ignore: cast_nullable_to_non_nullable
                       as int,
+            lastActiveAt: freezed == lastActiveAt
+                ? _value.lastActiveAt
+                : lastActiveAt // ignore: cast_nullable_to_non_nullable
+                      as DateTime?,
+            appOpenCount: null == appOpenCount
+                ? _value.appOpenCount
+                : appOpenCount // ignore: cast_nullable_to_non_nullable
+                      as int,
             updatedAt: freezed == updatedAt
                 ? _value.updatedAt
                 : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -274,6 +290,8 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
     @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
     @JsonKey(name: 'past_history') List<dynamic> pastHistory,
     @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+    @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+    @JsonKey(name: 'app_open_count') int appOpenCount,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   });
@@ -314,6 +332,8 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? enrolledCreditsNext = null,
     Object? pastHistory = null,
     Object? totalCoursesCompleted = null,
+    Object? lastActiveAt = freezed,
+    Object? appOpenCount = null,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -403,6 +423,14 @@ class __$$ProfileImplCopyWithImpl<$Res>
             ? _value.totalCoursesCompleted
             : totalCoursesCompleted // ignore: cast_nullable_to_non_nullable
                   as int,
+        lastActiveAt: freezed == lastActiveAt
+            ? _value.lastActiveAt
+            : lastActiveAt // ignore: cast_nullable_to_non_nullable
+                  as DateTime?,
+        appOpenCount: null == appOpenCount
+            ? _value.appOpenCount
+            : appOpenCount // ignore: cast_nullable_to_non_nullable
+                  as int,
         updatedAt: freezed == updatedAt
             ? _value.updatedAt
             : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -443,6 +471,8 @@ class _$ProfileImpl implements _Profile {
     @JsonKey(name: 'enrolled_credits_next') this.enrolledCreditsNext = 0.0,
     @JsonKey(name: 'past_history') final List<dynamic> pastHistory = const [],
     @JsonKey(name: 'total_courses_completed') this.totalCoursesCompleted = 0,
+    @JsonKey(name: 'last_active_at') this.lastActiveAt,
+    @JsonKey(name: 'app_open_count') this.appOpenCount = 0,
     @JsonKey(name: 'updated_at') this.updatedAt,
     @JsonKey(name: 'created_at') this.createdAt,
   }) : _enrolledSections = enrolledSections,
@@ -532,6 +562,12 @@ class _$ProfileImpl implements _Profile {
   @JsonKey(name: 'total_courses_completed')
   final int totalCoursesCompleted;
   @override
+  @JsonKey(name: 'last_active_at')
+  final DateTime? lastActiveAt;
+  @override
+  @JsonKey(name: 'app_open_count')
+  final int appOpenCount;
+  @override
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
   @override
@@ -540,7 +576,7 @@ class _$ProfileImpl implements _Profile {
 
   @override
   String toString() {
-    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, updatedAt: $updatedAt, createdAt: $createdAt)';
+    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, updatedAt: $updatedAt, createdAt: $createdAt)';
   }
 
   @override
@@ -593,6 +629,10 @@ class _$ProfileImpl implements _Profile {
             ) &&
             (identical(other.totalCoursesCompleted, totalCoursesCompleted) ||
                 other.totalCoursesCompleted == totalCoursesCompleted) &&
+            (identical(other.lastActiveAt, lastActiveAt) ||
+                other.lastActiveAt == lastActiveAt) &&
+            (identical(other.appOpenCount, appOpenCount) ||
+                other.appOpenCount == appOpenCount) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.createdAt, createdAt) ||
@@ -624,6 +664,8 @@ class _$ProfileImpl implements _Profile {
     enrolledCreditsNext,
     const DeepCollectionEquality().hash(_pastHistory),
     totalCoursesCompleted,
+    lastActiveAt,
+    appOpenCount,
     updatedAt,
     createdAt,
   ]);
@@ -666,6 +708,8 @@ abstract class _Profile implements Profile {
     @JsonKey(name: 'enrolled_credits_next') final double enrolledCreditsNext,
     @JsonKey(name: 'past_history') final List<dynamic> pastHistory,
     @JsonKey(name: 'total_courses_completed') final int totalCoursesCompleted,
+    @JsonKey(name: 'last_active_at') final DateTime? lastActiveAt,
+    @JsonKey(name: 'app_open_count') final int appOpenCount,
     @JsonKey(name: 'updated_at') final DateTime? updatedAt,
     @JsonKey(name: 'created_at') final DateTime? createdAt,
   }) = _$ProfileImpl;
@@ -731,6 +775,12 @@ abstract class _Profile implements Profile {
   @override
   @JsonKey(name: 'total_courses_completed')
   int get totalCoursesCompleted;
+  @override
+  @JsonKey(name: 'last_active_at')
+  DateTime? get lastActiveAt;
+  @override
+  @JsonKey(name: 'app_open_count')
+  int get appOpenCount;
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;

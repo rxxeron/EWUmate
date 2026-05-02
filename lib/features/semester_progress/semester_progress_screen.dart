@@ -12,8 +12,10 @@ import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
 import 'semester_progress_repository.dart';
 import '../../core/models/course_metadata.dart';
+import '../../core/utils/error_utils.dart';
 import 'course_progress_detail_screen.dart';
 import 'widgets/course_progress_card.dart';
+import '../../core/utils/refresh_utils.dart';
 
 class SemesterProgressScreen extends ConsumerStatefulWidget {
   const SemesterProgressScreen({super.key});
@@ -24,7 +26,6 @@ class SemesterProgressScreen extends ConsumerStatefulWidget {
 
 class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen> {
   Timer? _offlineHeartbeat;
-  Future<List<Map<String, dynamic>>>? _progressFuture;
 
   @override
   void initState() {
@@ -60,9 +61,8 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
     }
 
     if (anySuccess && mounted) {
-      setState(() {
-        _progressFuture = null; // Mark for refresh
-      }); 
+      RefreshUtils.refreshAcademicData(ref);
+      ref.invalidate(semesterProgressDataProvider);
     }
   }
 
@@ -89,17 +89,10 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
         final user = ref.read(currentUserProvider);
         if (user == null) return const SizedBox.shrink();
 
-        _progressFuture ??= ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
-          user.id, 
-          semCode
-        );
+        final progressAsync = ref.watch(semesterProgressDataProvider(semCode));
 
-        return FutureBuilder<List<Map<String, dynamic>>>(
-          future: _progressFuture,
-          builder: (context, snapshot) {
-            final courses = snapshot.data ?? [];
-            final isLoading = snapshot.connectionState == ConnectionState.waiting;
-
+        return progressAsync.when(
+          data: (courses) {
             return Scaffold(
               backgroundColor: const Color(0xFF0F172A),
               appBar: AppBar(
@@ -131,23 +124,12 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
               body: RefreshIndicator(
                 onRefresh: () async {
                   await _pushSyncQueue();
-                  if (mounted) {
-                    setState(() {
-                      _progressFuture = null;
-                    });
-                  }
+                  RefreshUtils.refreshAcademicData(ref);
+                  ref.invalidate(semesterProgressDataProvider(semCode));
                 },
                 color: Colors.cyanAccent,
                 backgroundColor: const Color(0xFF1E293B),
-                child: isLoading 
-                  ? const SingleChildScrollView(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      child: SizedBox(
-                        height: 500,
-                        child: Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
-                      ),
-                    )
-                  : courses.isEmpty
+                child: courses.isEmpty
                     ? SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         child: SizedBox(
@@ -192,7 +174,7 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                                                 semesterCode: semCode,
                                               ),
                                             ));
-                                            if (mounted) setState(() {});
+                                            // UI will refresh automatically because it watches semesterProgressDataProvider
                                           },
                                         );
                                       }
@@ -207,10 +189,32 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
               ),
             );
           },
+          loading: () => Scaffold(
+            backgroundColor: const Color(0xFF0F172A),
+            appBar: AppBar(title: const Text('Academic Progress'), backgroundColor: Colors.transparent, elevation: 0),
+            body: const Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
+          ),
+          error: (e, _) => Scaffold(
+            backgroundColor: const Color(0xFF0F172A),
+            appBar: AppBar(title: const Text('Academic Progress'), backgroundColor: Colors.transparent, elevation: 0),
+            body: Center(child: Text(AuthErrorUtils.getFriendlyMessage(e), style: const TextStyle(color: Colors.redAccent))),
+          ),
         );
       },
       loading: () => const Scaffold(backgroundColor: Color(0xFF0F172A), body: Center(child: CircularProgressIndicator(color: Colors.cyanAccent))),
-      error: (e, _) => Scaffold(backgroundColor: Color(0xFF0F172A), body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red)))),
+      error: (e, _) => Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              AuthErrorUtils.getFriendlyMessage(e),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ),
+      ),
     );
   }
 

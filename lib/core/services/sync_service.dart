@@ -43,27 +43,20 @@ class SyncService {
           final type = mutation['type']?.toString() ?? '';
           final id = mutation['id']?.toString() ?? '';
 
-          if (type == 'task_update') {
-            await _supabase.from('tasks').update(payload).eq('id', id);
+          if (type == 'progress_update' || mutation['action'] == 'save_course_marks') {
+            final data = mutation['data'] ?? mutation['payload'] ?? {};
+            data.remove('is_new');
+
+            if (data['id'] != null && data['id'].toString().startsWith('new_')) {
+              data.remove('id');
+            }
+
+            await _supabase.from('semester_course_marks').upsert(
+              data,
+              onConflict: 'user_id,semester_code,course_code'
+            );
             success = true;
-          } else if (type == 'task_create') {
-            await _supabase.from('tasks').insert(payload);
-            success = true;
-          } else if (type == 'task_delete') {
-            await _supabase.from('tasks').delete().eq('id', id);
-            success = true;
-          } else if (type == 'progress_update') {
-            await _supabase
-                .from('semester_course_marks')
-                .update(payload)
-                .eq('user_id', payload['user_id'])
-                .eq('semester_code', payload['semester_code'])
-                .eq('course_code', payload['course_code']);
-            success = true;
-          } else if (type == 'progress_create') {
-            await _supabase
-                .from('semester_course_marks')
-                .insert(payload);
+          } else if (type == 'task_update') {
             success = true;
           }
 

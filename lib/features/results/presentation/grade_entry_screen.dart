@@ -10,6 +10,7 @@ import '../../../core/services/cache_service.dart';
 import '../../../core/utils/grade_helper.dart';
 import '../../semester_progress/semester_summary_providers.dart';
 import '../../../core/models/grade_scale.dart';
+import '../../../core/utils/error_utils.dart';
 
 // Provides the list of enrollments needing grades
 final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
@@ -115,9 +116,9 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving grades: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -147,7 +148,16 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
         backgroundColor: const Color(0xFF1E293B),
         child: scaleAsync.when(
           loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF38BDF8))),
-          error: (e, st) => Center(child: Text('Error loading grade scale: $e', style: const TextStyle(color: Colors.red))),
+          error: (e, st) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                AuthErrorUtils.getFriendlyMessage(e),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+            ),
+          ),
           data: (scale) => pendingAsync.when(
             loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF38BDF8))),
             error: (e, st) => SingleChildScrollView(
@@ -155,7 +165,12 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
               child: Container(
                 height: 500,
                 alignment: Alignment.center,
-                child: const Text('Offline: Showing pending grades if any', style: TextStyle(color: Colors.white70)),
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  AuthErrorUtils.getFriendlyMessage(e),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70),
+                ),
               ),
             ),
             data: (pending) {

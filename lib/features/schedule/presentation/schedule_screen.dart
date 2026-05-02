@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utils/error_utils.dart';
 import '../../../core/models/task.dart';
 import '../../../core/repositories/task_repository.dart';
 import '../../dashboard/dashboard_logic.dart';
@@ -114,7 +115,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         );
       },
       loading: () => const Scaffold(backgroundColor: Color(0xFF16202A), body: Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)))),
-      error: (e, _) => Scaffold(backgroundColor: Color(0xFF16202A), body: Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red)))),
+      error: (e, _) => Scaffold(
+        backgroundColor: const Color(0xFF16202A),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              AuthErrorUtils.getFriendlyMessage(e),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -196,6 +209,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       }
     } catch (e) {
       if (kDebugMode) debugPrint("Error loading schedule: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -222,8 +240,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           TextButton(
              onPressed: () async {
                 Navigator.pop(ctx);
-                await _exceptionRepo.addCancellation(dateStr, item.courseCode, pendingMakeup: true);
-                _loadData();
+                try {
+                  await _exceptionRepo.addCancellation(dateStr, item.courseCode, pendingMakeup: true);
+                  _loadData();
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                    );
+                  }
+                }
              },
              child: const Text('Confirm (Skip Makeup)', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
@@ -263,8 +289,16 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await _exceptionRepo.removeException(item.id);
-              _loadData();
+              try {
+                await _exceptionRepo.removeException(item.id);
+                _loadData();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                  );
+                }
+              }
             },
             child: const Text('Confirm Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
@@ -555,25 +589,33 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           return;
                         }
                         Navigator.pop(ctx);
-                        if (isMakeup) {
-                          if (originalCancelDateStr != null) {
-                            await _exceptionRepo.addCancellation(originalCancelDateStr, selectedCourse!, pendingMakeup: false);
-                          } else if (resolveExceptionId != null) {
-                            await _exceptionRepo.resolvePendingMakeup(resolveExceptionId);
+                        try {
+                          if (isMakeup) {
+                            if (originalCancelDateStr != null) {
+                              await _exceptionRepo.addCancellation(originalCancelDateStr, selectedCourse!, pendingMakeup: false);
+                            } else if (resolveExceptionId != null) {
+                              await _exceptionRepo.resolvePendingMakeup(resolveExceptionId);
+                            }
+                            await _exceptionRepo.addMakeupClass(
+                              date: dateCtrl.text, courseCode: selectedCourse!, courseName: currentName,
+                              startTime: computedStartStr, endTime: computedEndStr, room: roomCtrl.text,
+                              faculty: currentFaculty,
+                            );
+                          } else {
+                            await _exceptionRepo.addManualClass(
+                              date: dateCtrl.text, courseCode: selectedCourse!, courseName: currentName,
+                              startTime: computedStartStr, endTime: computedEndStr, room: roomCtrl.text,
+                              faculty: currentFaculty,
+                            );
                           }
-                          await _exceptionRepo.addMakeupClass(
-                            date: dateCtrl.text, courseCode: selectedCourse!, courseName: currentName,
-                            startTime: computedStartStr, endTime: computedEndStr, room: roomCtrl.text,
-                            faculty: currentFaculty,
-                          );
-                        } else {
-                          await _exceptionRepo.addManualClass(
-                            date: dateCtrl.text, courseCode: selectedCourse!, courseName: currentName,
-                            startTime: computedStartStr, endTime: computedEndStr, room: roomCtrl.text,
-                            faculty: currentFaculty,
-                          );
+                          _loadDataForSemester(semesterCode);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                            );
+                          }
                         }
-                        _loadDataForSemester(semesterCode);
                       },
                       child: Text(
                         isMakeup ? 'SAVE MAKEUP' : 'SAVE ENTRY',

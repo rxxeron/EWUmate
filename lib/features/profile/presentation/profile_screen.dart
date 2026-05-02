@@ -11,6 +11,8 @@ import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
 import '../../../core/services/cache_service.dart';
 import '../../../core/models/profile.dart';
+import '../../../core/utils/error_utils.dart';
+import '../../../core/utils/refresh_utils.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -124,6 +126,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       try {
         await onSave(newValue);
         if (mounted) {
+          setState(() {}); // Force UI refresh
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('$title updated successfully!'),
@@ -135,7 +138,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to update $title: $e'),
+              content: Text(AuthErrorUtils.getFriendlyMessage(e)),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -170,81 +173,95 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextFormField(
-                    controller: currentController,
-                    obscureText: obscureCurrent,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Current Password',
-                      labelStyle: TextStyle(color: Colors.grey[400]),
-                      enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureCurrent
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () =>
-                            setState(() => obscureCurrent = !obscureCurrent),
-                      ),
-                    ),
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: newController,
-                    obscureText: obscureNew,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'New Password',
-                      labelStyle: TextStyle(color: Colors.grey[400]),
-                      enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureNew ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () =>
-                            setState(() => obscureNew = !obscureNew),
-                      ),
-                    ),
-                    validator: (val) =>
-                        val == null || val.length < 6 ? 'Min 6 chars' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: confirmController,
-                    obscureText: obscureConfirm,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Confirm New Password',
-                      labelStyle: TextStyle(color: Colors.grey[400]),
-                      enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.cyan),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          obscureConfirm
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () =>
-                            setState(() => obscureConfirm = !obscureConfirm),
-                      ),
-                    ),
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return 'Required';
-                      if (val != newController.text)
-                        return 'Passwords do not match';
-                      return null;
-                    },
+                  // Only show current password field if user has an email identity
+                  FutureBuilder<List<UserIdentity>>(
+                    future: Supabase.instance.client.auth.getUserIdentities(),
+                    builder: (context, snapshot) {
+                      final hasPassword = snapshot.data?.any((id) => id.provider == 'email') ?? true;
+                      
+                      return Column(
+                        children: [
+                          if (hasPassword) ...[
+                            TextFormField(
+                              controller: currentController,
+                              obscureText: obscureCurrent,
+                              style: const TextStyle(color: Colors.white),
+                              decoration: InputDecoration(
+                                labelText: 'Current Password',
+                                labelStyle: TextStyle(color: Colors.grey[400]),
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.cyan),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    obscureCurrent
+                                        ? Icons.visibility_off
+                                        : Icons.visibility,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () =>
+                                      setState(() => obscureCurrent = !obscureCurrent),
+                                ),
+                              ),
+                              validator: (val) =>
+                                  val == null || val.isEmpty ? 'Required' : null,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          TextFormField(
+                            controller: newController,
+                            obscureText: obscureNew,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: hasPassword ? 'New Password' : 'Set Password',
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.cyan),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureNew ? Icons.visibility_off : Icons.visibility,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () =>
+                                    setState(() => obscureNew = !obscureNew),
+                              ),
+                            ),
+                            validator: (val) =>
+                                val == null || val.length < 6 ? 'Min 6 chars' : null,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: confirmController,
+                            obscureText: obscureConfirm,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: InputDecoration(
+                              labelText: 'Confirm Password',
+                              labelStyle: TextStyle(color: Colors.grey[400]),
+                              enabledBorder: const UnderlineInputBorder(
+                                borderSide: BorderSide(color: Colors.cyan),
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureConfirm
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () =>
+                                    setState(() => obscureConfirm = !obscureConfirm),
+                              ),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.isEmpty) return 'Required';
+                              if (val != newController.text)
+                                return 'Passwords do not match';
+                              return null;
+                            },
+                          ),
+                        ],
+                      );
+                    }
                   ),
                 ],
               ),
@@ -258,33 +275,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             FilledButton(
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
-                  final user = Supabase.instance.client.auth.currentUser;
-                  if (user?.email == null) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Only available for email accounts.'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                    return;
-                  }
+                  final supabase = Supabase.instance.client;
+                  final user = supabase.auth.currentUser;
+                  
+                  if (user?.email == null) return;
 
-                  try {
-                    await Supabase.instance.client.auth.signInWithPassword(
-                      email: user!.email!,
-                      password: currentController.text,
-                    );
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Current password incorrect.'),
-                          backgroundColor: Colors.redAccent,
-                        ),
+                  // 1. Check if we need to re-authenticate (only if they have a password already)
+                  final identities = await supabase.auth.getUserIdentities();
+                  final hasPassword = identities.any((id) => id.provider == 'email');
+
+                  if (hasPassword) {
+                    try {
+                      await supabase.auth.signInWithPassword(
+                        email: user!.email!,
+                        password: currentController.text,
                       );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Current password incorrect.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        );
+                      }
+                      return;
                     }
-                    return;
                   }
 
                   try {
@@ -304,7 +320,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to update: $e'),
+                          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
@@ -375,7 +391,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to upload image: $e'),
+            content: Text(AuthErrorUtils.getFriendlyMessage(e)),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -423,7 +439,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(userProfileProvider);
+          RefreshUtils.refreshAcademicData(ref);
           // Wait a bit for the stream to emit
           await Future.delayed(const Duration(milliseconds: 500));
         },
@@ -508,9 +524,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
-                _buildSectionTitle('App Settings'),
+                const SizedBox(height: 32),
+                _buildSectionTitle('Security'),
                 const SizedBox(height: 16),
-
                 _buildSettingsCard(
                   Icons.lock_outline,
                   'Change Password',

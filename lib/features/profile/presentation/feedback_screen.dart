@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/utils/version_utils.dart';
+import '../../../core/utils/error_utils.dart';
 
 class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
@@ -88,6 +89,11 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
       }
     } catch (e) {
       if (kDebugMode) debugPrint('Error fetching feedbacks: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoadingFeedbacks = false);
@@ -107,6 +113,11 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
       _fetchMyFeedbacks();
     } catch (e) {
       if (kDebugMode) debugPrint('Error submitting reply: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 
@@ -146,7 +157,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
       await Supabase.instance.client.from('feedbacks').insert({
         'user_id': user.id,
         'message': message,
-      });
+      }).timeout(const Duration(seconds: 15));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +170,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send feedback: ')),
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
         );
       }
     } finally {

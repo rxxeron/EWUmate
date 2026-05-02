@@ -7,8 +7,11 @@ import 'dart:typed_data';
 import '../../core/services/storage_service.dart';
 import '../../core/widgets/glass_kit.dart';
 
-import 'auth_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/utils/formatters.dart';
+import 'package:flutter/services.dart';
+import '../../core/utils/error_utils.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -86,16 +89,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted) {
         context.go('/onboarding/program'); // Direct to flow
       }
-    } on AuthException catch (e) {
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Registration Failed: ${e.message}"),
-            backgroundColor: Colors.red));
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
+          backgroundColor: Colors.red,
+        ));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _googleLogin() async {
+    setState(() => _loading = true);
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+      if (mounted) {
+        context.go('/');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
+          backgroundColor: Colors.red,
+        ));
       }
     } finally {
       if (mounted) {
@@ -236,8 +256,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           controller: _studentIdController,
                           keyboardType: TextInputType.number,
                           style: const TextStyle(color: Colors.white),
+                          inputFormatters: [StudentIdFormatter()],
                           decoration: InputDecoration(
                               labelText: "Student ID",
+                              hintText: "2025-2-50-009",
+                              hintStyle: const TextStyle(color: Colors.white30),
                               labelStyle:
                                   const TextStyle(color: Colors.white70),
                               prefixIcon: const Icon(Icons.badge_outlined,
@@ -256,7 +279,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               isDense: true,
                               filled: true,
                               fillColor: Colors.white.withValues(alpha: 0.05)),
-                          validator: (v) => v!.isEmpty ? "Required" : null,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return "Required";
+                            if (v.length < 13) return "Incomplete ID";
+                            return null;
+                          },
                         ),
                       ),
                     ],
@@ -285,9 +312,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         isDense: true,
                         filled: true,
                         fillColor: Colors.white.withValues(alpha: 0.05)),
-                    validator: (value) => value!.isEmpty || !value.contains('@')
-                        ? "Valid email required"
-                        : null,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return "Email required";
+                      if (!value.endsWith('@std.ewubd.edu')) {
+                        return "Only @std.ewubd.edu allowed";
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
 
@@ -381,6 +412,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _loading ? null : _googleLogin,
+                      icon: Image.network(
+                        'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
+                        height: 20,
+                      ),
+                      label: const Text("Sign up with Google",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.1)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        backgroundColor: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

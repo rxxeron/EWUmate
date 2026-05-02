@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/widgets/glass_kit.dart';
+import '../../core/utils/error_utils.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -36,14 +37,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Update Failed: ${e.message}"),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: $e"),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }

@@ -1,40 +1,32 @@
-const SUPABASE_URL = "https://jwygjihrbwxhehijldiz.supabase.co";
-const SUPABASE_KEY = "REDACTED_SUPABASE_SERVICE_ROLE_KEY";
+const { Client } = require('pg');
 
-async function globalSync() {
-    console.log("--- Starting Global Academic Sync ---");
-
-    // 1. Fetch all user profiles
-    console.log("Fetching all user IDs...");
-    const profileRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id`, {
-        headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+async function triggerGlobalSync() {
+    const client = new Client({
+        connectionString: "postgresql://postgres.jwygjihrbwxhehijldiz:EWUmaterh12@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
     });
-    const ids = (await profileRes.json()).map(p => p.id);
-    console.log(`Found ${ids.length} users.`);
 
-    // 2. Sequential Sync
-    let count = 0;
-    for (const id of ids) {
-        count++;
-        console.log(`[${count}/${ids.length}] Syncing user: ${id}...`);
-        try {
-            const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-academic-stats`, {
-                method: 'POST',
-                headers: { "Authorization": `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: id })
-            });
-            if (!res.ok) {
-                console.error(`  Failed to sync user ${id}: ${res.status}`);
-            }
-        } catch (e) {
-            console.error(`  Error syncing user ${id}:`, e.message);
-        }
-        
-        // Minor delay to be gentle on CPU/DB
-        await new Promise(r => setTimeout(r, 100));
+    try {
+        await client.connect();
+        console.log('Starting Global Sync...');
+
+        // 1. Trigger History Sync for everyone
+        console.log('Syncing History (Completed Courses)...');
+        await client.query(`UPDATE completed_courses SET credits = credits;`);
+
+        // 2. Trigger Projection Sync for everyone
+        console.log('Syncing Projections (Course Marks)...');
+        await client.query(`UPDATE semester_course_marks SET grade_goal = grade_goal;`);
+
+        // 3. Trigger Profile-to-Analytics Sync for everyone
+        console.log('Syncing Profiles...');
+        await client.query(`UPDATE profiles SET total_credits_earned = total_credits_earned;`);
+
+        console.log('Global Sync completed successfully for all users! 🚀');
+    } catch (err) {
+        console.error('Global Sync failed:', err);
+    } finally {
+        await client.end();
     }
-
-    console.log("--- Global Academic Sync Complete ---");
 }
 
-globalSync().catch(console.error);
+triggerGlobalSync();

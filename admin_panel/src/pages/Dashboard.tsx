@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock, Mail } from 'lucide-react';
+import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock, Mail, Search } from 'lucide-react';
 import type { Profile, DashboardStats, SemesterTrackStats } from '../types';
 
 export function Dashboard() {

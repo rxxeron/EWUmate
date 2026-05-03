@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthGuard } from './components/AuthGuard';
 import { Layout } from './components/Layout';
 import { Login } from './pages/Login';
@@ -18,7 +18,7 @@ import { DataQuality } from './pages/DataQuality';
 
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <Routes>
         <Route path='/login' element={<Login />} />
 
@@ -40,7 +40,7 @@ function App() {
           </Route>
         </Route>
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 

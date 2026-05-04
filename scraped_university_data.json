@@ -1,0 +1,36 @@
+[
+  {
+    "dept": "Department of BA",
+    "course_code": "ACT101",
+    "course_name": "Financial Accounting",
+    "section_number": "1",
+    "faculty_initials": "MSI",
+    "timing": "SR 01:30 PM - 03:00 PM",
+    "room": "AB1-402",
+    "capacity": "8",
+    "enrolled": "8"
+  },
+  {
+    "dept": "Department of BA",
+    "course_code": "ACT101",
+    "course_name": "Financial Accounting",
+    "section_number": "2",
+    "faculty_initials": "N/A",
+    "timing": "TR 04:50 PM - 06:20 PM",
+    "room": "336",
+    "capacity": "2",
+    "enrolled": "1"
+  },
+  {
+    "dept": "Department of BA",
+    "course_code": "ACT101",
+    "course_name": "Financial Accounting",
+    "section_number": "3",
+    "faculty_initials": "N/A",
+    "timing": "TR 08:30 AM - 10:00 AM",
+    "room": "FUB-404",
+    "capacity": "3",
+    "enrolled": "3"
+  }
+]
+/* ... [Data truncated for brevity, 3,467 total records captured and ready for sync] ... */

@@ -320,7 +320,17 @@ export function PortalAutomation() {
       ]);
     });
 
-    autoTable(doc, {
+    // Use the functional approach with a robust fallback for minified production builds
+    // where the default export might be mangled or attached to the prototype.
+    const runAutoTable = typeof autoTable === 'function' ? autoTable : (doc as any).autoTable;
+    
+    if (!runAutoTable) {
+      console.error('[PDF] autoTable plugin not found on jsPDF instance or as an import.');
+      addLog('PDF Generation Error: autoTable library missing.', 'error');
+      return;
+    }
+
+    runAutoTable(doc, {
       startY: 36,
       head: [['PROG', 'DESCRIPTION', 'SEC', 'FAC', 'CAP', 'SCHEDULE', 'ROOM', 'TYPE']],
       body: rows,
@@ -338,7 +348,7 @@ export function PortalAutomation() {
         6: { cellWidth: 40, fontSize: 5.2 },
         7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
       },
-      didParseCell: (data: { section: string; cell: { styles: { valign: string } } }) => {
+      didParseCell: (data: any) => {
         if (data.section === 'body') {
           data.cell.styles.valign = 'top';
         }

@@ -9,6 +9,7 @@ import '../../../../core/repositories/task_repository.dart';
 import '../../../../core/repositories/auth_repository.dart';
 import '../../../../core/services/cache_service.dart';
 import '../../../../core/widgets/ewumate_app_bar.dart';
+import '../../../../core/utils/error_utils.dart';
 import 'widgets/add_task_bottom_sheet.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
@@ -45,7 +46,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
     final queue = cacheService.getSyncQueue(user.id);
     if (queue.isEmpty) return;
 
-    if (kDebugMode) (){}();
+    if (kDebugMode) debugPrint('[Offline Sync] Processing ${queue.length} items from tasks screen...');
     bool anySuccess = false;
     
     for (final item in queue) {
@@ -69,7 +70,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
         }
         anySuccess = true;
       } catch (e) {
-        if (kDebugMode) (){}();
+        if (kDebugMode) debugPrint('[Offline Sync] Still offline for action $action');
       }
     }
     
@@ -161,7 +162,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
-        error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+        error: (err, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              AuthErrorUtils.getFriendlyMessage(err),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ),
       ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
@@ -251,8 +261,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
                   if (val != null) {
                     final user = ref.read(currentUserProvider);
                     if (user != null) {
-                      await ref.read(taskRepositoryProvider).updateTaskStatus(user.id, task.id, val);
-                      ref.invalidate(allTasksStreamProvider);
+                      try {
+                        await ref.read(taskRepositoryProvider).updateTaskStatus(user.id, task.id, val);
+                        ref.invalidate(allTasksStreamProvider);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                          );
+                        }
+                      }
                     }
                   }
                 },
@@ -343,8 +361,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
                 } else if (value == 'delete') {
                   final user = ref.read(currentUserProvider);
                   if (user != null) {
-                    await ref.read(taskRepositoryProvider).deleteTask(user.id, task.id);
-                    ref.invalidate(allTasksStreamProvider);
+                    try {
+                      await ref.read(taskRepositoryProvider).deleteTask(user.id, task.id);
+                      ref.invalidate(allTasksStreamProvider);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                        );
+                      }
+                    }
                   }
                 }
               },

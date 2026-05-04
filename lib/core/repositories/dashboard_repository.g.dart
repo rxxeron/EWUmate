@@ -25,7 +25,7 @@ final dashboardRepositoryProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef DashboardRepositoryRef = AutoDisposeProviderRef<DashboardRepository>;
-String _$currentAnalyticsHash() => r'cacb0d168dc01e3662a5da38859771aee902a207';
+String _$currentAnalyticsHash() => r'ab75ece37a8cf4d8a140a7e7e20b15cf79772ffa';
 
 /// See also [currentAnalytics].
 @ProviderFor(currentAnalytics)
@@ -44,7 +44,7 @@ final currentAnalyticsProvider =
 // ignore: unused_element
 typedef CurrentAnalyticsRef = AutoDisposeFutureProviderRef<SemesterAnalytics?>;
 String _$currentSemesterStateHash() =>
-    r'906b729112e5ed2f4903a79badca2bf1661ad7b5';
+    r'15ecf04e015128f9909849550fdfdae3a0b9def4';
 
 /// See also [currentSemesterState].
 @ProviderFor(currentSemesterState)

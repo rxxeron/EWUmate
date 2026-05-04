@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/repositories/auth_repository.dart';
 import 'semester_progress_repository.dart';
+import '../../core/utils/error_utils.dart';
+import '../../core/utils/refresh_utils.dart';
 
 class CourseProgressDetailScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> courseData;
@@ -432,16 +434,20 @@ class _CourseProgressDetailScreenState
             backgroundColor: Colors.green,
           ),
         );
+        RefreshUtils.refreshAcademicData(ref);
+        ref.invalidate(semesterProgressDataProvider);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error: ',
-              style: const TextStyle(color: Colors.white),
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AuthErrorUtils.getFriendlyMessage(e),
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
       }
     }
 

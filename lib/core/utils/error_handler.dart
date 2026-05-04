@@ -9,7 +9,7 @@ class ErrorHandler {
         ? '[$context] Error: $errorMessage'
         : 'Error: $errorMessage';
 
-    if (kDebugMode) (){}();
+    if (kDebugMode) debugPrint(logMessage);
 
     // Return user-friendly message (don't expose internal details)
     if (error is Exception) {

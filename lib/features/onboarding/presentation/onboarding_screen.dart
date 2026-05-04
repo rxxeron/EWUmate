@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/models/profile.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/error_utils.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -71,9 +72,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
       }
     } finally {
       if (mounted) {

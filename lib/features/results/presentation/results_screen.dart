@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/error_utils.dart';
 
 class ResultsScreen extends ConsumerStatefulWidget {
   const ResultsScreen({super.key});
@@ -100,7 +101,12 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                 child: Container(
                   height: 500,
                   alignment: Alignment.center,
-                  child: Text('Offline: Showing cached results', style: const TextStyle(color: Colors.white70)),
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    AuthErrorUtils.getFriendlyMessage(e),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.redAccent),
+                  ),
                 ),
               ),
             );

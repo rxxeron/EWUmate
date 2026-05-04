@@ -11,6 +11,7 @@ import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/repositories/course_repository.dart';
 import 'package:ewumate/core/repositories/dashboard_repository.dart';
 import 'package:ewumate/core/models/semester_analytics.dart';
+import 'package:ewumate/core/utils/error_utils.dart';
 import 'semester_summary_providers.dart';
 
 class SemesterSummaryScreen extends ConsumerStatefulWidget {
@@ -44,7 +45,16 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-        error: (e, st) => Center(child: Text('Error loading profile: $e', style: const TextStyle(color: Colors.red))),
+        error: (e, st) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              AuthErrorUtils.getFriendlyMessage(e),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
+        ),
         data: (profile) {
           
           return RefreshIndicator(
@@ -68,7 +78,14 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
                 analyticsAsync.when(
                   data: (analytics) => _buildRigorousSummaryBox(profile, policyAsync, analytics, currentMarksAsync, awardsAsync),
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text('Error: $e'),
+                  error: (e, _) => Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      AuthErrorUtils.getFriendlyMessage(e),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 36),
 
@@ -134,7 +151,8 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
     final double historyCgpa = completedSummaries.isNotEmpty ? (completedSummaries.last.cgpa ?? 0.0) : (profile?.cgpa ?? 0.0);
     final double historyEarned = completedSummaries.fold(0.0, (acc, s) => acc + (s.creditsEarned ?? 0.0));
 
-    final predictedSgpa = analytics?.liveSgpa ?? ref.watch(projectedSGPAProvider);
+    final localProjectedSgpa = ref.watch(projectedSGPAProvider);
+    final predictedSgpa = (localProjectedSgpa > 0) ? localProjectedSgpa : (analytics?.liveSgpa ?? 0.0);
     final predictedCgpa = ref.watch(projectedCGPAProvider).valueOrNull ?? profile?.cgpa ?? 0.0;
     final currentYearEarned = analytics?.completedCredit ?? ref.watch(currentYearEarnedCreditsProvider).valueOrNull ?? 0.0;
     
@@ -247,7 +265,7 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               _buildStatItem('Last\nCGPA', (profile?.cgpa ?? 0.0).toStringAsFixed(2), Colors.white, Icons.history_rounded),
 
               _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
-              _buildStatItem('Curr\nEnrolled', (analytics?.takenInThisSem ?? enrolledCreditsFromMarks).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
+              _buildStatItem('Curr\nEnrolled', (enrolledCreditsFromMarks > 0 ? enrolledCreditsFromMarks : (analytics?.takenInThisSem ?? 0.0)).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
               if ((profile?.enrolledCreditsNext ?? 0) > 0)
                 _buildStatItem('Upcoming', (profile?.enrolledCreditsNext ?? 0.0).toStringAsFixed(1), Colors.cyanAccent, Icons.upcoming_rounded, suffix: ' Cr')
               else
@@ -290,7 +308,11 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
   Widget _buildScholarshipSelector(AsyncValue policyAsync, String? targetTier) {
     return policyAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-      error: (e, _) => const Text('Error loading policies', style: TextStyle(color: Colors.red)),
+      error: (e, _) => Text(
+        AuthErrorUtils.getFriendlyMessage(e),
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      ),
       data: (policy) {
         if (policy == null) return const Text('No scholarship policy mapped for your program yet.', style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
 
@@ -344,7 +366,11 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
   Widget _buildGoalInputGrid(AsyncValue currentMarksAsync) {
     return currentMarksAsync.when(
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-      error: (e, _) => const Text('Error loading courses', style: TextStyle(color: Colors.red)),
+      error: (e, _) => Text(
+        AuthErrorUtils.getFriendlyMessage(e),
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      ),
       data: (marks) {
         if (marks.isEmpty) {
           return const Text('No active courses found for dynamic goals.', style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
@@ -458,7 +484,10 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
                     child: DropdownButtonHideUnderline(
                       child: ref.watch(policyGradesProvider(policy)).when(
                         loading: () => const SizedBox(),
-                        error: (e, _) => Text('Error: $e', style: const TextStyle(color: Colors.red, fontSize: 10)),
+                        error: (e, _) => Text(
+                          AuthErrorUtils.getFriendlyMessage(e),
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 10),
+                        ),
                         data: (gradeOptions) {
                           // FALLBACK LOGIC: Ensure exactly one item with value exists
                           // If currentGoal is not in the list, we fallback to the highest grade (index 0)
@@ -549,7 +578,11 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
   Widget _buildAcademicYearsTimeline(AsyncValue<List<AcademicYear>> asyncYears, AsyncValue<List<ScholarshipAward>> awardsAsync) {
     return asyncYears.when(
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-      error: (e, _) => const Text('Error loading timeline', style: TextStyle(color: Colors.red)),
+      error: (e, _) => Text(
+        AuthErrorUtils.getFriendlyMessage(e),
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+      ),
       data: (years) {
         if (years.isEmpty) return const Text('No academic history found.', style: TextStyle(color: Colors.white54, fontStyle: FontStyle.italic));
 

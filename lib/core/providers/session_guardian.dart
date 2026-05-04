@@ -31,7 +31,7 @@ class SessionGuardian {
       final Session? session = data.session;
 
       if (kDebugMode) {
-        (){}();
+        print('[SessionGuardian] Auth Event: ${event.name}');
       }
 
       if (session?.user != null) {
@@ -45,16 +45,16 @@ class SessionGuardian {
 
       switch (event) {
         case AuthChangeEvent.signedIn:
-          if (kDebugMode) (){}();
+          if (kDebugMode) print('[SessionGuardian] User signed in. Session secured.');
           break;
         case AuthChangeEvent.tokenRefreshed:
-          if (kDebugMode) (){}();
+          if (kDebugMode) print('[SessionGuardian] Token refreshed successfully.');
           break;
         case AuthChangeEvent.signedOut:
-          if (kDebugMode) (){}();
+          if (kDebugMode) print('[SessionGuardian] User signed out.');
           break;
         case AuthChangeEvent.userUpdated:
-          if (kDebugMode) (){}();
+          if (kDebugMode) print('[SessionGuardian] Profile/User data updated.');
           break;
         default:
           break;
@@ -66,9 +66,9 @@ class SessionGuardian {
   Future<void> refreshNow() async {
     try {
       await _client.auth.refreshSession();
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('[SessionGuardian] Manual refresh triggered.');
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('[SessionGuardian] Manual refresh failed: $e');
     }
   }
 

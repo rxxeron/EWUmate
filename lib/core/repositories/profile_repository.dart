@@ -260,7 +260,7 @@ class ProfileRepository {
       }).eq('id', userId);
       
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('Failed to record activity: $e');
     }
   }
 }

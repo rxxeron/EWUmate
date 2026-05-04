@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/widgets/glass_kit.dart';
 import 'auth_providers.dart';
-import 'auth_repository.dart';
+import '../../core/utils/error_utils.dart';
+import '../../core/repositories/auth_repository.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -38,19 +39,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         context.go('/');
       }
-    } on AuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Login Failed: ${e.message}"),
-          backgroundColor: Colors.red,
-        ));
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: $e"),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _googleLogin() async {
+    setState(() => _loading = true);
+    try {
+      await ref.read(authRepositoryProvider).signInWithGoogle();
+      if (mounted) {
+        context.go('/');
+      }
+    } catch (e) {
+      if (mounted) {
+        if (e.toString() == 'account-not-found') {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Account not found. Please sign up first."),
+            backgroundColor: Colors.orange,
+          ));
+          context.go('/register');
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AuthErrorUtils.getFriendlyMessage(e)),
+            backgroundColor: Colors.red,
+          ));
+        }
       }
     } finally {
       if (mounted) {
@@ -169,6 +192,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.cyanAccent)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: GlassContainer(
+                    onTap: _loading ? null : _googleLogin,
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderColor: Colors.white.withValues(alpha: 0.1),
+                    borderRadius: 12,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: FittedBox(
+                      fit: MainAxisSize.min == MainAxisSize.min ? BoxFit.scaleDown : BoxFit.contain,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.network(
+                            'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
+                            height: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text("Sign in with Google",
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white)),
+                        ],
+                      ),
                     ),
                   ),
                 ),

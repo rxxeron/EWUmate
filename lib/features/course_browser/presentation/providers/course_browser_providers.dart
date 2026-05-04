@@ -123,7 +123,7 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
     cache.setMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem', {'codes': res});
     return res;
   } catch (e) {
-    if (kDebugMode) (){}();
+    if (kDebugMode) debugPrint('[CourseBrowser] Enrollment fetch failed, using cache: $e');
     final cached = cache.getMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem');
     if (cached != null && cached['codes'] != null) {
       return List<String>.from(cached['codes']);
@@ -172,7 +172,7 @@ final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((re
       {'data': res.map((e) => e.toJson()).toList()});
     return res;
   } catch (e) {
-    if (kDebugMode) (){}();
+    if (kDebugMode) debugPrint('[CourseBrowser] Available courses fallback: $e');
     final cached = cache.getMapData('dashboard_box', 'available_courses_$activeSem');
     if (cached != null && cached['data'] != null) {
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();

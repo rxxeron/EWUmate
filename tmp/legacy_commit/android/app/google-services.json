@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "10908876468",
+    "project_id": "ewumatefcm",
+    "storage_bucket": "ewumatefcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:10908876468:android:2e9311a55780a9602961e1",
+        "android_client_info": {
+          "package_name": "com.rxxeron.ewumate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnFHdMw4PhHj81mY9gx2cqCDun5J-NCSo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

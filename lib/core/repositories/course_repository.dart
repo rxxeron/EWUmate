@@ -59,7 +59,7 @@ class CourseRepository {
 
       return allResults;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('Failed to load courses from network: $e');
       return [];
     }
   }
@@ -221,7 +221,7 @@ class CourseRepository {
 
       return results;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('Database Error in getSemesterCourses: $e');
       return [];
     }
   }

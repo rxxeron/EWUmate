@@ -26,15 +26,18 @@ class OnboardingRepository {
     // Group them uniquely into old shape
     final departments = <String, Map<String, dynamic>>{};
     for (var row in data) {
-      final dept = row['department_name'] as String;
-      if (!departments.containsKey(dept)) {
-        departments[dept] = {
-          'name': dept,
+      final rawDept = row['department_name'] as String;
+      final deptKey = rawDept.trim().toLowerCase();
+      final deptDisplay = rawDept.trim();
+      
+      if (!departments.containsKey(deptKey)) {
+        departments[deptKey] = {
+          'name': deptDisplay,
           'track': row['track'],
           'programs': <Map<String, String>>[],
         };
       }
-      (departments[dept]!['programs'] as List).add({
+      (departments[deptKey]!['programs'] as List).add({
         'id': row['program_code'] as String,
         'title': row['name'] as String,
       });
@@ -227,7 +230,7 @@ _ref.invalidate(profileProvider);
         ),
       ]);
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint('[OnboardingRepo] Recalc/Sync Error: $e');
     }
   }
 

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Globe, Cpu, ShieldCheck, Database, KeyRound, Calendar, Play, 
-  CheckCircle2, AlertCircle, Loader2, Download, CloudUpload, FileText,
-  Table as TableIcon, Settings, User, Lock, Sparkles, Zap, Activity,
-  Terminal, History, ArrowRight, Check
+  Globe, ShieldCheck, Calendar, Play, 
+  Loader2, CloudUpload, FileText,
+  Table as TableIcon, User, Lock, Zap,
+  Terminal, History, Database
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';

@@ -17,13 +17,11 @@ interface LogEntry {
 
 export function PortalAutomation() {
   const [id, setId] = useState('Loading...');
-  const [id, setId] = useState('Loading...');
   const [semester, setSemester] = useState('');
   const [availableSemesters, setAvailableSemesters] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
   const [scrapedData, setScrapedData] = useState<any[]>([]);
   const [isPushing, setIsPushing] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [isAzureLive, setIsAzureLive] = useState<'checking' | 'live' | 'down'>('checking');
   const [logs, setLogs] = useState<LogEntry[]>([]);

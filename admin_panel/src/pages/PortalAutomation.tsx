@@ -15,17 +15,45 @@ interface LogEntry {
   type: 'info' | 'success' | 'error';
 }
 
+interface Course {
+  course_code: string;
+  section_number: string;
+  course_name: string;
+  faculty_initials: string;
+  capacity: string;
+  dedicated_department: string;
+  credit_val?: string;
+  schedule_data: Array<{
+    day: string;
+    startTime: string;
+    endTime: string;
+    room: string;
+    type?: string;
+  }>;
+}
+
+interface SyncLog {
+  id: string;
+  semester: string;
+  total_courses: number;
+  created_at: string;
+  status: string;
+  report?: string[];
+  added?: number;
+  updated?: number;
+}
+
 export function PortalAutomation() {
   const [id, setId] = useState('Loading...');
   const [semester, setSemester] = useState('');
   const [availableSemesters, setAvailableSemesters] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
-  const [scrapedData, setScrapedData] = useState<any[]>([]);
+  const [scrapedData, setScrapedData] = useState<Course[]>([]);
   const [isPushing, setIsPushing] = useState(false);
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [isAzureLive, setIsAzureLive] = useState<'checking' | 'live' | 'down'>('checking');
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [syncHistory, setSyncHistory] = useState<any[]>([]);
+  const [syncHistory, setSyncHistory] = useState<SyncLog[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -90,8 +118,9 @@ export function PortalAutomation() {
         addLog(`Extraction failed: ${errorMsg}`, 'error');
         setStatus('error');
       }
-    } catch (err: any) { 
-      addLog(`Network error: ${err.message}`, 'error');
+    } catch (err: unknown) { 
+      const error = err as Error;
+      addLog(`Network error: ${error.message}`, 'error');
       setStatus('error'); 
     }
   };
@@ -148,8 +177,9 @@ export function PortalAutomation() {
       } else {
         addLog(`Sync error: ${result.error || result.message}`, 'error');
       }
-    } catch (err: any) {
-      addLog(`Sync network error: ${err.message}`, 'error');
+    } catch (err: unknown) {
+      const error = err as Error;
+      addLog(`Sync network error: ${error.message}`, 'error');
     } finally {
       setIsPushing(false);
     }
@@ -201,23 +231,24 @@ export function PortalAutomation() {
         section_number: c.section,
         faculty_initials: c.faculty,
         capacity: c.capacity,
-        credit_val: c.credits,
-        dedicated_department: c.dedicated_department,
-        schedule_data: c.sessions || []
+        credit_val: String(c.credits),
+        dedicated_department: String(c.dedicated_department),
+        schedule_data: (c.sessions || []) as Course['schedule_data']
       }));
 
       // 3. Trigger PDF Generation
       handleGeneratePDF(formattedData, targetSemester);
       addLog(`PDF successfully reconstructed for ${targetSemester}. Check downloads.`, 'success');
-    } catch (err: any) {
-      console.error('[PDF] Generation Failed:', err);
-      addLog(`PDF Failed: ${err.message}`, 'error');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('[PDF] Generation Failed:', error);
+      addLog(`PDF Failed: ${error.message}`, 'error');
     } finally {
       setHistoryLoading(null);
     }
   };
 
-  const handleGeneratePDF = (dataOverride?: any[] | React.MouseEvent, semesterOverride?: string) => {
+  const handleGeneratePDF = (dataOverride?: Course[] | React.MouseEvent, semesterOverride?: string) => {
     // If called directly via onClick, dataOverride will be a MouseEvent.
     // We only want to use dataOverride if it's a valid Array.
     const dataToUse = Array.isArray(dataOverride) ? dataOverride : scrapedData;
@@ -254,7 +285,7 @@ export function PortalAutomation() {
     doc.setTextColor(148, 163, 184);
     doc.text(timestamp, pageW - 12, 27, { align: 'right' });
 
-    const sortedData = [...dataToUse].sort((a: any, b: any) => {
+    const sortedData = [...dataToUse].sort((a, b) => {
       const codeA = (a.course_code || '').toUpperCase();
       const codeB = (b.course_code || '').toUpperCase();
       
@@ -271,10 +302,10 @@ export function PortalAutomation() {
       return codeA.localeCompare(codeB);
     });
 
-    const rows: any[] = [];
-    sortedData.forEach((item: any) => {
+    const rows: Array<Array<string | number>> = [];
+    sortedData.forEach((item) => {
       const sessions = item.schedule_data || [];
-      const distinctTypes = Array.from(new Set(sessions.map((s: any) => s.type || 'Theory')));
+      const distinctTypes = Array.from(new Set(sessions.map((s) => s.type || 'Theory')));
       const typeLabel = distinctTypes.length === 1 ? distinctTypes[0] : distinctTypes.join('\n');
       
       rows.push([
@@ -283,8 +314,8 @@ export function PortalAutomation() {
         item.section_number,
         item.faculty_initials || 'TBA',
         item.capacity,
-        sessions.map((s: any) => `${s.day} ${s.startTime}-${s.endTime}`).join('\n'),
-        sessions.map((s: any) => s.room).join('\n'),
+        sessions.map((s) => `${s.day} ${s.startTime}-${s.endTime}`).join('\n'),
+        sessions.map((s) => s.room).join('\n'),
         typeLabel
       ]);
     });
@@ -307,7 +338,7 @@ export function PortalAutomation() {
         6: { cellWidth: 40, fontSize: 5.2 },
         7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
       },
-      didParseCell: (data: any) => {
+      didParseCell: (data: { section: string; cell: { styles: { valign: string } } }) => {
         if (data.section === 'body') {
           data.cell.styles.valign = 'top';
         }
@@ -462,7 +493,7 @@ export function PortalAutomation() {
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {scrapedData.map((item, idx) => {
-                      const distinctTypes = Array.from(new Set(item.schedule_data?.map((s: any) => s.type || 'Theory')));
+                      const distinctTypes = Array.from(new Set(item.schedule_data?.map((s) => s.type || 'Theory')));
                       return (
                         <tr key={idx} className="hover:bg-slate-50 transition-colors group text-[11px]">
                           <td className="px-4 py-4">
@@ -490,7 +521,7 @@ export function PortalAutomation() {
                           </td>
                           <td className="px-4 py-4">
                             <div className="space-y-1.5">
-                              {item.schedule_data?.map((s: any, sIdx: number) => (
+                              {item.schedule_data?.map((s, sIdx: number) => (
                                 <div key={sIdx} className="flex items-center gap-4 py-1 border-b border-slate-50 last:border-0">
                                   <div className="w-[120px] font-bold text-slate-500">{s.day} {s.startTime}-{s.endTime}</div>
                                   <div className="font-black text-indigo-400">{s.room}</div>

@@ -320,40 +320,63 @@ export function PortalAutomation() {
       ]);
     });
 
-    // Use the functional approach with a robust fallback for minified production builds
-    // where the default export might be mangled or attached to the prototype.
-    const runAutoTable = typeof autoTable === 'function' ? autoTable : (doc as any).autoTable;
-    
-    if (!runAutoTable) {
-      console.error('[PDF] autoTable plugin not found on jsPDF instance or as an import.');
+    // Properly handle different autoTable initiation methods to avoid
+    // 'getTextColor' undefined errors in production minified builds.
+    if (typeof autoTable === 'function') {
+      autoTable(doc, {
+        startY: 36,
+        head: [['PROG', 'DESCRIPTION', 'SEC', 'FAC', 'CAP', 'SCHEDULE', 'ROOM', 'TYPE']],
+        body: rows,
+        margin: { left: 10, right: 10 },
+        tableWidth: 'auto',
+        styles: { fontSize: 6.5, cellPadding: 1.2, overflow: 'linebreak' },
+        headStyles: { fillColor: [219, 234, 254], textColor: [30, 41, 59], fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 12 },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 10, halign: 'center' },
+          3: { cellWidth: 15, halign: 'center' },
+          4: { cellWidth: 18, halign: 'center' },
+          5: { cellWidth: 35 },
+          6: { cellWidth: 40, fontSize: 5.2 },
+          7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
+        },
+        didParseCell: (data: any) => {
+          if (data.section === 'body') {
+            data.cell.styles.valign = 'top';
+          }
+        }
+      });
+    } else if (typeof (doc as any).autoTable === 'function') {
+      (doc as any).autoTable({
+        startY: 36,
+        head: [['PROG', 'DESCRIPTION', 'SEC', 'FAC', 'CAP', 'SCHEDULE', 'ROOM', 'TYPE']],
+        body: rows,
+        margin: { left: 10, right: 10 },
+        tableWidth: 'auto',
+        styles: { fontSize: 6.5, cellPadding: 1.2, overflow: 'linebreak' },
+        headStyles: { fillColor: [219, 234, 254], textColor: [30, 41, 59], fontStyle: 'bold' },
+        columnStyles: {
+          0: { cellWidth: 12 },
+          1: { cellWidth: 'auto' },
+          2: { cellWidth: 10, halign: 'center' },
+          3: { cellWidth: 15, halign: 'center' },
+          4: { cellWidth: 18, halign: 'center' },
+          5: { cellWidth: 35 },
+          6: { cellWidth: 40, fontSize: 5.2 },
+          7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
+        },
+        didParseCell: (data: any) => {
+          if (data.section === 'body') {
+            data.cell.styles.valign = 'top';
+          }
+        }
+      });
+    } else {
+      console.error('[PDF] autoTable plugin not found.');
       addLog('PDF Generation Error: autoTable library missing.', 'error');
       return;
     }
-
-    runAutoTable(doc, {
-      startY: 36,
-      head: [['PROG', 'DESCRIPTION', 'SEC', 'FAC', 'CAP', 'SCHEDULE', 'ROOM', 'TYPE']],
-      body: rows,
-      margin: { left: 10, right: 10 },
-      tableWidth: 'auto',
-      styles: { fontSize: 6.5, cellPadding: 1.2, overflow: 'linebreak' },
-      headStyles: { fillColor: [219, 234, 254], textColor: [30, 41, 59], fontStyle: 'bold' },
-      columnStyles: {
-        0: { cellWidth: 12 },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 10, halign: 'center' },
-        3: { cellWidth: 15, halign: 'center' },
-        4: { cellWidth: 18, halign: 'center' },
-        5: { cellWidth: 35 },
-        6: { cellWidth: 40, fontSize: 5.2 },
-        7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
-      },
-      didParseCell: (data: any) => {
-        if (data.section === 'body') {
-          data.cell.styles.valign = 'top';
-        }
-      }
-    });
 
     doc.save(`EWU_Catalog_${semToUse.replace(' ', '_')}.pdf`);
   };

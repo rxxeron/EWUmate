@@ -9,16 +9,22 @@ import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+interface LogEntry {
+  msg: string;
+  time: string;
+  type: 'info' | 'success' | 'error';
+}
+
 export function PortalAutomation() {
   const [id, setId] = useState('Loading...');
-  const [password, setPassword] = useState('********');
+  const [id, setId] = useState('Loading...');
   const [semester, setSemester] = useState('');
   const [availableSemesters, setAvailableSemesters] = useState<string[]>([]);
   const [status, setStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
   const [scrapedData, setScrapedData] = useState<any[]>([]);
   const [isPushing, setIsPushing] = useState(false);
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [isAzureLive, setIsAzureLive] = useState<'checking' | 'live' | 'down'>('checking');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [syncHistory, setSyncHistory] = useState<any[]>([]);
@@ -304,7 +310,7 @@ export function PortalAutomation() {
         6: { cellWidth: 40, fontSize: 5.2 },
         7: { fontStyle: 'bold', textColor: [79, 70, 229], halign: 'center', cellWidth: 15 }
       },
-      didParseCell: (data) => {
+      didParseCell: (data: any) => {
         if (data.section === 'body') {
           data.cell.styles.valign = 'top';
         }

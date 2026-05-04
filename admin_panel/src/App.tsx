@@ -15,6 +15,7 @@ import { Feedbacks } from './pages/Feedbacks';
 
 import { CalendarEditor } from './pages/CalendarEditor';
 import { DataQuality } from './pages/DataQuality';
+import { PortalAutomation } from './pages/PortalAutomation';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path='/courses' element={<CoursesList />} />
             <Route path='/academic-data' element={<AcademicData />} />
             <Route path='/parser' element={<FileParser />} />
+            <Route path='/scraper' element={<PortalAutomation />} />
 
             <Route path='/calendar-editor' element={<CalendarEditor />} />
             <Route path='/settings' element={<Settings />} />

@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export function Layout() {
@@ -75,6 +75,10 @@ export function Layout() {
           <Link to="/parser" className={getLinkClass('/parser')}>
             <FileUp className="w-5 h-5 opacity-90" />
             File Parser
+          </Link>
+          <Link to="/scraper" className={getLinkClass('/scraper')}>
+            <Globe className="w-5 h-5 opacity-90" />
+            Portal Scraper
           </Link>
 
           <Link to="/settings" className={getLinkClass('/settings')}>

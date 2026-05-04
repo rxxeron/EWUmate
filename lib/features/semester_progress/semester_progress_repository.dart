@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/cache_service.dart';
+import '../../core/repositories/auth_repository.dart';
 
 final semesterProgressRepositoryProvider = Provider((ref) => SemesterProgressRepository(
   Supabase.instance.client,
@@ -17,19 +18,19 @@ class SemesterProgressRepository {
     try {
       final config = await _supabase.from('active_semester').select().limit(1).maybeSingle();
       final code = config?['current_semester_code'] ?? 'Spring2026';
-      _cache.setMapData('dashboard_box', 'active_semester_code', {'code': code});
+      _cache.setMapData('semester_progress_box', 'active_semester_code', {'code': code});
       return code;
     } catch(e) {
-      final cached = _cache.getMapData('dashboard_box', 'active_semester_code');
+      final cached = _cache.getMapData('semester_progress_box', 'active_semester_code');
       return cached?['code'] ?? 'Spring2026';
     }
   }
 
   Future<List<Map<String, dynamic>>> getSemesterProgressData(String userId, String semesterCode) async {
-    final cacheKey = 'progress_${userId}_$semesterCode';
+    final cacheKey = 'marks_${userId}_$semesterCode';
     
     // 1. Try cache first
-    final cached = _cache.getMapData('dashboard_box', cacheKey);
+    final cached = _cache.getMapData('semester_progress_box', cacheKey);
     if (cached != null && cached['data'] != null) {
       // Trigger background sync
       _fetchProgressAndCache(userId, semesterCode, cacheKey);
@@ -76,39 +77,36 @@ class SemesterProgressRepository {
       }
       
       // Update Cache
-      _cache.setMapData('dashboard_box', cacheKey, {'data': progressData});
+      _cache.setMapData('semester_progress_box', cacheKey, {'data': progressData});
       
       return progressData;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint('[SemesterProgress] Network fetch failed: $e');
       return [];
     }
   }
 
   Future<void> saveCourseMarks(String userId, String semesterCode, Map<String, dynamic> data) async {
-    final isNew = data['is_new'] == true;
-    data.remove('is_new');
-
-    data['user_id'] = userId;
-    data['semester_code'] = semesterCode;
-    data['updated_at'] = DateTime.now().toUtc().toIso8601String();
-
     try {
-      if (isNew) {
-        await _supabase.from('semester_course_marks').insert(data);
-      } else {
-        await _supabase.from('semester_course_marks')
-            .update(data)
-            .eq('user_id', userId)
-            .eq('semester_code', semesterCode)
-            .eq('course_code', data['course_code']);
+      // Use UPSERT for robustness (handles both insert and update automatically)
+      // We must remove the temporary 'new_' ID if it exists
+      if (data['id'] != null && data['id'].toString().startsWith('new_')) {
+        data.remove('id');
       }
-      _updateProgressCache(userId, semesterCode, data);
+
+      final res = await _supabase.from('semester_course_marks')
+          .upsert(
+            data, 
+            onConflict: 'user_id,semester_code,course_code'
+          )
+          .select()
+          .single();
+      
+      _updateProgressCache(userId, semesterCode, res);
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
       _updateProgressCache(userId, semesterCode, data);
       
-      data['is_new'] = isNew; // restore for queue
       await _cache.enqueueMutation(userId, {
         'action': 'save_course_marks',
         'semesterCode': semesterCode,
@@ -118,14 +116,24 @@ class SemesterProgressRepository {
   }
   
   void _updateProgressCache(String userId, String semesterCode, Map<String, dynamic> data) {
-    final cached = _cache.getMapData('dashboard_box', 'progress_${userId}_$semesterCode') ?? {'data': []};
-    final list = List<dynamic>.from(cached['data'] ?? []);
-    final index = list.indexWhere((m) => (m as Map)['course_code'] == data['course_code']);
+    final cacheKey = 'marks_${userId}_$semesterCode';
+    final cached = _cache.getMapData('semester_progress_box', cacheKey) ?? {'data': []};
+    final list = List<Map<String, dynamic>>.from(cached['data'] ?? []);
+    
+    final index = list.indexWhere((m) => m['course_code'] == data['course_code']);
     if (index != -1) {
-      list[index] = data;
+      // Merge new data with existing to preserve fields like 'id' if 'data' is partial
+      list[index] = {...list[index], ...data};
     } else {
       list.add(data);
     }
-    _cache.setMapData('dashboard_box', 'progress_${userId}_$semesterCode', {'data': list});
+    _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
   }
 }
+
+final semesterProgressDataProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, semesterCode) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return [];
+  
+  return ref.watch(semesterProgressRepositoryProvider).getSemesterProgressData(user.id, semesterCode);
+});

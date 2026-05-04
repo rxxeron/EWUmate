@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/widgets/glass_kit.dart';
+import '../../core/utils/error_utils.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -38,14 +39,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }
@@ -83,14 +84,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } on AuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Error: "),
+          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
           backgroundColor: Colors.red,
         ));
       }

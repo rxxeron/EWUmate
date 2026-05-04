@@ -11,6 +11,7 @@ import '../../../core/repositories/auth_repository.dart';
 import '../../../core/widgets/animations/skeleton_loader.dart';
 import 'widgets/course_card.dart';
 import 'providers/course_browser_providers.dart';
+import '../../../core/utils/error_utils.dart';
 
 class CourseBrowserScreen extends ConsumerStatefulWidget {
   const CourseBrowserScreen({super.key});
@@ -218,7 +219,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF))),
-        error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+        error: (e, _) => Center(child: Text(AuthErrorUtils.getFriendlyMessage(e), style: const TextStyle(color: Colors.red))),
       );
     }
 
@@ -244,7 +245,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
           child: CardSkeleton(),
         ),
       ),
-      error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+      error: (e, _) => Center(child: Text(AuthErrorUtils.getFriendlyMessage(e), style: const TextStyle(color: Colors.red))),
     );
   }
 
@@ -281,7 +282,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF))),
-      error: (e, _) => Center(child: Text('Error fetching enrollments: $e')),
+      error: (e, _) => Center(child: Text(AuthErrorUtils.getFriendlyMessage(e))),
     );
   }
 

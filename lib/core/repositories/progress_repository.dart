@@ -37,7 +37,7 @@ class ProgressRepository {
           {'data': marks.map((m) => m.toJson()).toList()});
       return marks;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint('[ProgressRepo] getCourseMarks fallback: $e');
       final cached = _cache.getMapData('semester_progress_box', 'marks_${userId}_$semesterCode');
       if (cached != null && cached['data'] != null) {
         return (cached['data'] as List)
@@ -53,6 +53,19 @@ class ProgressRepository {
         .from('semester_course_marks')
         .update(marks.toJson())
         .eq('id', marks.id);
+
+    // Update Cache to prevent "All data gone" flicker
+    final cacheKey = 'marks_${marks.userId}_${marks.semesterCode}';
+    final cached = _cache.getMapData('semester_progress_box', cacheKey) ?? {'data': []};
+    final list = List<Map<String, dynamic>>.from(cached['data'] ?? []);
+    
+    final index = list.indexWhere((m) => m['course_code'] == marks.courseCode);
+    if (index != -1) {
+      list[index] = marks.toJson();
+    } else {
+      list.add(marks.toJson());
+    }
+    _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
   }
 
   Future<List<SemesterSummary>> getSemesterSummaries(String userId) async {
@@ -68,7 +81,7 @@ class ProgressRepository {
           {'data': summaries.map((s) => s.toJson()).toList()});
       return summaries;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint('[ProgressRepo] getSemesterSummaries fallback: $e');
       final cached = _cache.getMapData('dashboard_box', 'summaries_$userId');
       if (cached != null && cached['data'] != null) {
         return (cached['data'] as List)
@@ -137,8 +150,8 @@ Future<List<SemesterCourseMarks>> currentSemesterMarks(
       .watch(progressRepositoryProvider)
       .getCourseMarks(user.id, semCode);
       
-  // Hide corrupted rows (e.g., UUIDs accidentally saved as course_code)
-  return marks.where((m) => m.courseCode.length <= 15 && !m.courseCode.contains('-')).toList();
+  // Hide corrupted rows (e.g., long UUIDs accidentally saved as course_code)
+  return marks.where((m) => m.courseCode.length <= 15).toList();
 }
 
 @riverpod

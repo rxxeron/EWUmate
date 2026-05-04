@@ -26,7 +26,7 @@ final progressRepositoryProvider =
 // ignore: unused_element
 typedef ProgressRepositoryRef = AutoDisposeProviderRef<ProgressRepository>;
 String _$currentSemesterMarksHash() =>
-    r'bde87a53e0c944f1cf16fce5cf84ac9c0d9b55e5';
+    r'430f97bfcc472a52846b3d9cb62f72186ae03b20';
 
 /// See also [currentSemesterMarks].
 @ProviderFor(currentSemesterMarks)

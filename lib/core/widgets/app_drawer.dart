@@ -35,8 +35,8 @@ class AppDrawer extends ConsumerWidget {
               ),
               child: profileAsync.when(
                 data: (profile) {
-                  final displayName = profile?.nickname ?? profile?.fullName ?? "Student";
-                  final photoURL = profile?.photoUrl;
+                  final displayName = profile?.nickname ?? profile?.fullName ?? user?.userMetadata?['full_name']?.toString().split(' ').first ?? "Student";
+                  final photoURL = profile?.photoUrl ?? user?.userMetadata?['avatar_url'] ?? user?.userMetadata?['photoURL'];
                   
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.center,

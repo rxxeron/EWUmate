@@ -1,0 +1,1 @@
+require('dotenv').config(); const { createClient } = require('@supabase/supabase-js'); const s = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY); s.from('programs').select('*').limit(2).then(r=>console.log(r.data));

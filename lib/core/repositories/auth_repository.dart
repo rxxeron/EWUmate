@@ -2,6 +2,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
+import '../models/profile.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
 
 part 'auth_repository.g.dart';
 
@@ -36,6 +40,22 @@ class AuthRepository {
     );
   }
 
+  // Alias for compatibility
+  Future<AuthResponse> signIn(String email, String password) => 
+    signInWithEmailPassword(email: email, password: password);
+
+  // Get Profile
+  Future<Profile?> getProfile(String userId) async {
+    final response = await _supabase
+        .from('profiles')
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return Profile.fromJson(response);
+  }
+
   // Send a Magic Link
   Future<void> signInWithOtp({required String email}) async {
     await _supabase.auth.signInWithOtp(email: email);
@@ -52,6 +72,31 @@ class AuthRepository {
       // So we catch and ignore it, allowing the logout process to finish locally.
     }
   }
+
+  // Google Sign In
+  Future<AuthResponse> signInWithGoogle() async {
+    final googleSignIn = GoogleSignIn(
+      serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+    );
+
+    // Force the account picker
+    await googleSignIn.signOut();
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) throw 'Login cancelled';
+
+    final googleAuth = await googleUser.authentication;
+    final accessToken = googleAuth.accessToken;
+    final idToken = googleAuth.idToken;
+
+    if (idToken == null) throw 'No ID Token found.';
+
+    return await _supabase.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: accessToken,
+    );
+  }
+
 }
 
 @riverpod
@@ -67,5 +112,7 @@ Stream<AuthState> authState(AuthStateRef ref) {
 
 @riverpod
 User? currentUser(CurrentUserRef ref) {
-  return ref.watch(authRepositoryProvider).currentUser;
+  // Watch auth state changes to make this provider reactive
+  final authState = ref.watch(authStateProvider).value;
+  return authState?.session?.user ?? Supabase.instance.client.auth.currentUser;
 }

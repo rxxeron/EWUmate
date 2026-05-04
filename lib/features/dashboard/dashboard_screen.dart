@@ -8,7 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/error_utils.dart';
 import '../../core/utils/version_utils.dart';
+import '../../core/utils/refresh_utils.dart';
 
 
 
@@ -86,17 +88,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _showDashboardTutorial();
 
     final _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
-      if (mounted) _refreshDashboard();
+      if (mounted) _refreshDashboard(isSilent: true);
     });
   }
 
-  Future<void> _refreshDashboard() async {
+  Future<void> _refreshDashboard({bool isSilent = false}) async {
     if (user == null) return;
     
-    setState(() => _loadingInit = true);
+    if (!isSilent && _lastValidScheduleData != null) {
+       // Manual refresh: invalidate academic data
+       RefreshUtils.refreshAcademicData(ref);
+    }
+
+    if (_lastValidScheduleData == null) {
+      setState(() => _loadingInit = true);
+    }
     
     try {
-      // 1. Get the current active semester & track
+      // 1. First ensure we have academic state (needed for the other queries)
       final academicState = await ref.read(academicStateProvider.future);
       if (academicState == null) {
         if (mounted) setState(() => _loadingInit = false);
@@ -107,20 +116,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
-      // 2. Fetch the Unified Dashboard Data (NO CACHE)
-      final dashboardData = await ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(code, _effectiveDate, track: track);
+      // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
+      final results = await Future.wait<dynamic>([
+        ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(code, _effectiveDate, track: track),
+        _supabase.from('enrollments').select('course_code').eq('user_id', user!.id).eq('semester_code', code),
+        _supabase.from('app_config').select('value, latest_version').eq('key', 'update_info').maybeSingle(),
+        PackageInfo.fromPlatform(),
+      ]);
       
-      // 3. Fetch Enrolled courses for Map<String, dynamic> Modal Dropdown
-      final enrollments = await _supabase
-          .from('enrollments')
-          .select('course_code')
-          .eq('user_id', user!.id)
-          .eq('semester_code', code);
-      
-      final loadedCourses = (enrollments as List).map((row) {
-        final cCode = row['course_code'].toString();
-        return {'code': cCode, 'courseName': cCode, 'semester': code, 'sessions': []};
-      }).toList();
+      final dashboardData = results[0] as Map<String, dynamic>;
+      final enrollments = results[1] as List;
+      final updateRes = results[2] as Map<String, dynamic>?;
+      final versionInfo = results[3] as PackageInfo;
 
       if (mounted) {
         setState(() {
@@ -136,17 +143,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _updateHomeWidget(dashboardData);
       }
       
-      // 4. Check App Update Config (Automated)
+      // 4. Handle App Update Config
       try {
-        final versionInfo = await PackageInfo.fromPlatform();
         final currentVersion = versionInfo.version;
-        
-        final updateRes = await _supabase
-            .from('app_config')
-            .select('value, latest_version')
-            .eq('key', 'update_info')
-            .maybeSingle();
-
         if (updateRes != null) {
           final val = updateRes['value'] as Map<String, dynamic>?;
           final latestVersion = updateRes['latest_version']?.toString() ?? "";
@@ -162,7 +161,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           }
         }
       } catch (e) {
-        (){}();
+        debugPrint('[Dashboard] Update Logic Error: $e');
       }
 
       // 5. Check Advising Banner for NEXT semester
@@ -171,10 +170,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
     } on PostgrestException catch (e) {
       if (e.code == '401' || e.message.contains('JWT expired')) {
-        // Handle session expiration - gracefully sign out or prompt re-login
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Session expired. Please log in again.')),
+            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
           );
           _supabase.auth.signOut();
           context.go('/login');
@@ -182,8 +180,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
       if (mounted) setState(() => _loadingInit = false);
     } catch (e, stack) {
-      (){}();
-      if (mounted) setState(() => _loadingInit = false);
+      debugPrint('[Dashboard] Refresh Error: $e\n$stack');
+      if (mounted) {
+        setState(() => _loadingInit = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 
@@ -218,7 +221,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         androidName: 'ScheduleWidgetProvider',
       );
     } catch (e, stack) {
-      (){}();
+      debugPrint('[Dashboard] HomeWidget Update Error: $e\n$stack');
     }
   }
 
@@ -361,14 +364,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                onPressed: _refreshDashboard,
+                onPressed: () => _refreshDashboard(isSilent: false),
               ),
             ],
           ),
           _buildHeader(),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _refreshDashboard,
+              onRefresh: () => _refreshDashboard(isSilent: false),
               color: Colors.cyanAccent,
               backgroundColor: const Color(0xFF1A1A2E),
               child: _lastValidScheduleData == null 
@@ -469,7 +472,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildExamCard(Map<String, dynamic> exam) {
-    final dueDate = DateTime.tryParse(exam['due_date']?.toString() ?? '') ?? DateTime.now();
+    final dueDate = (DateTime.tryParse(exam['due_date']?.toString() ?? '') ?? DateTime.now()).toLocal();
     final diff = dueDate.difference(DateTime.now());
     final String countdown;
     if (diff.inDays > 0) {
@@ -1065,7 +1068,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       await ref.read(taskRepositoryProvider).updateTaskStatus(user!.id, taskId, true);
       _refreshDashboard();
     } catch (e) {
-      (){}();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 
@@ -1076,7 +1083,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       setState(() => _reschedulePromptIds.remove(taskId));
       _refreshDashboard();
     } catch (e) {
-      (){}();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 

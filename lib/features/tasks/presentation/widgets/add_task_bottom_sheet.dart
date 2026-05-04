@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/utils/error_utils.dart';
 
 import '../../../../core/models/task.dart';
 import '../../../../core/repositories/task_repository.dart';
@@ -85,8 +86,13 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
-      if (kDebugMode) (){}();
-      if (mounted) setState(() => _isLoadingCourses = false);
+      if (kDebugMode) debugPrint("Error fetching courses: $e");
+      if (mounted) {
+        setState(() => _isLoadingCourses = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 
@@ -210,10 +216,10 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) debugPrint("Error saving task: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e)), backgroundColor: Colors.red),
         );
       }
     } finally {

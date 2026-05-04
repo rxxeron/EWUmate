@@ -1,0 +1,7 @@
+{
+    "functions": {
+        "sync-schedule": {
+            "verify_jwt": false
+        }
+    }
+}

@@ -10,6 +10,7 @@ import '../../../core/widgets/glass_kit.dart';
 import '../../../core/providers/supabase_provider.dart';
 import 'user_academic_providers.dart';
 import 'advising_notifier.dart';
+import '../../../core/utils/error_utils.dart';
 
 class AdvisingScreen extends ConsumerStatefulWidget {
   const AdvisingScreen({super.key});
@@ -115,7 +116,12 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
             child: Container(
               height: 500,
               alignment: Alignment.center,
-              child: Text('Offline: Showing cached advising data', style: const TextStyle(color: Colors.white70)),
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                AuthErrorUtils.getFriendlyMessage(err),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             ),
           ),
         ),
@@ -332,7 +338,16 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               );
             },
             loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-            error: (e, _) => Center(child: Text('Error loading courses', style: const TextStyle(color: Colors.red))),
+            error: (e, _) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  AuthErrorUtils.getFriendlyMessage(e),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ),
           ),
         ),
 
@@ -473,7 +488,16 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         return _buildResultsList(combinations, status, count, semesterName);
       },
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
-      error: (e, _) => Center(child: Text('Tracking Error', style: const TextStyle(color: Colors.red))),
+      error: (e, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Text(
+            AuthErrorUtils.getFriendlyMessage(e),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.redAccent),
+          ),
+        ),
+      ),
     );
   }
 
@@ -749,9 +773,14 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
           children: [
             const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
             const SizedBox(height: 16),
-            const Text('Something went wrong loading drafts.', 
-              style: TextStyle(color: Colors.white70)),
-            Text('$e', style: TextStyle(color: Colors.grey[800], fontSize: 10)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                AuthErrorUtils.getFriendlyMessage(e),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
           ],
         ),
       ),
@@ -768,7 +797,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               children: [
                 Icon(Icons.history, size: 64, color: Colors.grey[800]),
                 const SizedBox(height: 16),
-                Text('No generations found.', style: TextStyle(color: Colors.grey[600])),
+                Text('No generations found in the last 7 days.', style: TextStyle(color: Colors.grey[600])),
               ],
             ),
           );

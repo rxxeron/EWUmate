@@ -6,6 +6,7 @@ import 'onboarding_repository.dart';
 import '../auth/auth_providers.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
+import '../../core/utils/error_utils.dart';
 
 class ProgramSelectionScreen extends ConsumerStatefulWidget {
   const ProgramSelectionScreen({super.key});
@@ -94,7 +95,7 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to save selection")));
+            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))));
       }
       setState(() => _saving = false);
     }
@@ -122,10 +123,10 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                       final user = Supabase.instance.client.auth.currentUser;
                       final metadata = user?.userMetadata;
                       final name = profile?.nickname ?? 
-                                   profile?.fullName ?? 
-                                   metadata?['displayName'] ?? 
-                                   metadata?['fullName'] ?? 
-                                   user?.email?.split('@').first ?? 
+                                   metadata?['full_name']?.toString().split(' ').first ?? 
+                                   metadata?['name']?.toString().split(' ').first ?? 
+                                   metadata?['displayName']?.toString().split(' ').first ?? 
+                                   profile?.fullName?.split(' ').first ??
                                    'Student';
                       return Text(
                         "$name, welcome to EWUmate!",

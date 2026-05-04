@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/services/azure_functions_service.dart';
 import '../../../core/repositories/schedule_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/error_utils.dart';
 
 part 'advising_notifier.g.dart';
 
@@ -99,7 +100,7 @@ class AdvisingNotifier extends _$AdvisingNotifier {
     } catch (e) {
       state = state.copyWith(
         isGenerating: false,
-        error: e.toString(),
+        error: AuthErrorUtils.getFriendlyMessage(e),
       );
     }
   }
@@ -121,7 +122,7 @@ class AdvisingNotifier extends _$AdvisingNotifier {
       // Refresh the saved schedules list if any provider is watching it
       // ref.invalidate(savedSchedulesProvider); 
     } catch (e) {
-      state = state.copyWith(error: "Failed to save schedule: $e");
+      state = state.copyWith(error: AuthErrorUtils.getFriendlyMessage(e));
     }
   }
 

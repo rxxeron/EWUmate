@@ -61,7 +61,7 @@ class ScholarshipRepository {
 
       return fuzzyMatch;
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('Error fetching scholarship policy: $e');
       return null;
     }
   }
@@ -71,7 +71,7 @@ class ScholarshipRepository {
       final response = await _supabase.from('scholarship_policies').select();
       return (response as List).map((e) => ScholarshipRule.fromMap(e)).toList();
     } catch (e) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print('Error fetching scholarship policies: $e');
       return [];
     }
   }

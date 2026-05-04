@@ -95,12 +95,13 @@ final pastGenerationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref)
   
   final supabase = ref.watch(supabaseClientProvider);
   try {
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
     final res = await supabase
         .from('schedule_generations')
         .select('id, created_at, status, count, courses')
         .eq('user_id', user.id)
-        .order('created_at', ascending: false)
-        .limit(20);
+        .gte('created_at', sevenDaysAgo.toIso8601String())
+        .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(res);
   } catch (e) {
     return [];

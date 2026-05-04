@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/utils/grade_helper.dart';
 import '../../core/models/grade_scale.dart';
 import '../semester_progress/semester_summary_providers.dart';
+import '../../core/utils/error_utils.dart';
+import '../../core/utils/refresh_utils.dart';
 
 class CourseHistoryScreen extends ConsumerStatefulWidget {
   final bool isEditMode;
@@ -69,7 +71,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 
@@ -211,6 +218,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
       if (mounted) {
         if (widget.isEditMode) {
+          RefreshUtils.refreshAcademicData(ref);
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Degree progress updated!")),
@@ -220,10 +228,11 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         }
       }
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error saving: $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isSyncing = false);
     }
@@ -380,15 +389,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
           final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
           
-          if (admIdx != -1 && runIdx != -1 && runIdx > admIdx) {
-            // Stop at runIdx (exclusive of the running semester itself)
-            _allSemesters = _allSemesters.sublist(admIdx, runIdx);
-          } else if (admIdx != -1 && runIdx == admIdx) {
-            // If admitted semester IS the running semester, history list is empty
-            _allSemesters = [];
+          if (admIdx != -1 && runIdx != -1 && runIdx >= admIdx) {
+            // Include up to the running semester (inclusive)
+            _allSemesters = _allSemesters.sublist(admIdx, runIdx + 1);
           } else if (runIdx != -1) {
-            // Fallback: show up to before running
-            _allSemesters = _allSemesters.sublist(0, runIdx);
+            // Fallback: show up to running
+            _allSemesters = _allSemesters.sublist(0, runIdx + 1);
           }
 
           if (widget.isEditMode) {
@@ -408,7 +414,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _profileLoading = false);
+      if (mounted) {
+        setState(() => _profileLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+        );
+      }
     }
   }
 

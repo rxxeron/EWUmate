@@ -2,34 +2,37 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/profile.dart';
 import '../../core/services/cache_service.dart';
-import 'auth_repository.dart';
+import '../../core/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final profileProvider = FutureProvider<Profile?>((ref) async {
-  // Tracing log removed for release
   final authRepo = ref.watch(authRepositoryProvider);
   final user = authRepo.currentUser;
 
   if (user == null) {
-    // Removed debug print
     return null;
   }
   
-  // Tracing log removed for release
-  
   try {
     final profile = await authRepo.getProfile(user.id);
-    // Tracing log removed for release
-    if (profile != null) {
-      // Fire-and-forget caching
-      ref.read(cacheServiceProvider).cacheProfile(user.id, profile.toJson());
+    
+    if (profile == null) {
+      // GHOST SESSION CHECK:
+      // If user is authenticated but has no profile, it's likely they were deleted 
+      // from the database. We force a sign-out to clear the local session.
+      if (kDebugMode) print("DEBUG: Profile not found for ${user.id}. Invalidating session.");
+      await authRepo.signOut();
+      return null;
     }
+
+    // Fire-and-forget caching
+    ref.read(cacheServiceProvider).cacheProfile(user.id, profile.toJson());
     return profile;
   } catch (e) {
-    if (kDebugMode) (){}();
+    if (kDebugMode) print("DEBUG: Profile network fetch failed, attempting cache: $e");
     final cacheMap = ref.read(cacheServiceProvider).getCachedProfile(user.id);
     if (cacheMap != null) {
-      if (kDebugMode) (){}();
+      if (kDebugMode) print("DEBUG: Loaded profile from local cache.");
       return Profile.fromJson(cacheMap);
     }
     throw Exception("You are offline. Please connect to the internet to load your profile initially.");
@@ -87,7 +90,7 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
     // Removed debug print
     return unsubmittedGradesRes.isNotEmpty;
   } catch (e) {
-    if (kDebugMode) (){}();
+    if (kDebugMode) print("DEBUG: Grade entry check failed: $e");
     return false;
   }
 });

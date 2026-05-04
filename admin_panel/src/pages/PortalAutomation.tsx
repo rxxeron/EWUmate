@@ -206,10 +206,10 @@ export function PortalAutomation() {
     
     try {
       // 1. Fetch from Supabase
+      const tableName = `courses_${targetSemester.toLowerCase().replace(/ /g, '')}`;
       const { data, error } = await supabase
-        .from('courses')
-        .select('*')
-        .eq('semester', targetSemester);
+        .from(tableName)
+        .select('*');
 
       if (error) {
         console.error('[PDF] DB Fetch Error:', error);

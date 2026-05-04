@@ -33,7 +33,6 @@ export function PortalAutomation() {
       const { data: config } = await supabase.from('scraper_config').select('*').single();
       if (config) {
         setId(config.student_id);
-        setPassword(config.password);
       }
 
       // 2. Fetch Semesters

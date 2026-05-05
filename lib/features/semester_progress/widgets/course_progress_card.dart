@@ -29,7 +29,7 @@ class CourseProgressCard extends StatelessWidget {
     final courseModel = SemesterCourseMarks.fromJson(safeData);
     final double totalObtained = courseModel.totalObtained;
 
-    final String percentageText = totalObtained.toStringAsFixed(1) + '%';
+    final String percentageText = '${totalObtained.toStringAsFixed(1)}%';
     
     // Logic for grade badge (placeholder logic based on percentage)
     String grade = 'F';

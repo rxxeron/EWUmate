@@ -5,7 +5,6 @@ import '../models/course_metadata.dart';
 import '../models/course_section.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
-import '../../features/dashboard/dashboard_repository.dart';
 
 part 'course_repository.g.dart';
 
@@ -19,8 +18,18 @@ class CourseRepository {
     // 1. Try cache first
     final cached = _cache.getMapData('course_catalog', 'full_list');
     if (cached != null && cached['data'] != null) {
-      // Trigger background sync
-      _fetchAllAndCache(offset, limit);
+      final updatedAtStr = cached['updated_at'] as String?;
+      bool isStale = true;
+      if (updatedAtStr != null) {
+        final updatedAt = DateTime.tryParse(updatedAtStr);
+        if (updatedAt != null && DateTime.now().difference(updatedAt).inDays < 7) {
+          isStale = false;
+        }
+      }
+      if (isStale) {
+        // Trigger background sync if cache is older than 7 days
+        _fetchAllAndCache(offset, limit);
+      }
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
     }
 
@@ -165,8 +174,18 @@ class CourseRepository {
     // 1. Try cache first
     final cached = _cache.getMapData('course_catalog', cacheKey);
     if (cached != null && cached['data'] != null) {
-      // Trigger background sync
-      _fetchSemesterAndCache(semesterCode, cacheKey);
+      final updatedAtStr = cached['updated_at'] as String?;
+      bool isStale = true;
+      if (updatedAtStr != null) {
+        final updatedAt = DateTime.tryParse(updatedAtStr);
+        if (updatedAt != null && DateTime.now().difference(updatedAt).inDays < 7) {
+          isStale = false;
+        }
+      }
+      if (isStale) {
+        // Trigger background sync if cache is older than 7 days
+        _fetchSemesterAndCache(semesterCode, cacheKey);
+      }
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
     }
 

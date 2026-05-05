@@ -15,10 +15,6 @@ import '../../../core/widgets/glass_kit.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/providers/academic_providers.dart';
-import 'dart:ui' as ui;
-import 'package:flutter/rendering.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});

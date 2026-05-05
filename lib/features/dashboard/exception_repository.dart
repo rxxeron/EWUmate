@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter/foundation.dart';
 
 class ExceptionRepository {
   final SupabaseClient _supabase = Supabase.instance.client;

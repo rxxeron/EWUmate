@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'onboarding_repository.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/utils/course_utils.dart';
@@ -264,8 +263,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           _runningSemester = (config['current_semester_code'] ?? "Spring2026")
               .toString();
           _allSemesters = allSems;
-          if (!_allSemesters.contains(_runningSemester))
+          if (!_allSemesters.contains(_runningSemester)) {
             _allSemesters.add(_runningSemester);
+          }
 
           _history.clear();
           _selectedSectionIds.clear();
@@ -802,21 +802,24 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Widget _buildCourseList() {
-    if (_loading)
+    if (_loading) {
       return const Center(
         child: CircularProgressIndicator(color: Colors.cyanAccent),
       );
-    if (_catalog.isEmpty)
+    }
+    if (_catalog.isEmpty) {
       return const Center(
         child: Text(
           "No courses found.",
           style: TextStyle(color: Colors.white38),
         ),
       );
+    }
 
-    String _formatSchedule(dynamic scheduleData) {
-      if (scheduleData == null || scheduleData is! List || scheduleData.isEmpty)
+    String formatSchedule(dynamic scheduleData) {
+      if (scheduleData == null || scheduleData is! List || scheduleData.isEmpty) {
         return 'TBA';
+      }
       final formatted = scheduleData
           .map((s) {
             if (s is Map) {
@@ -840,7 +843,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
       return formatted.isEmpty ? 'TBA' : formatted;
     }
 
-    String? _getPassedGrade(String courseCode) {
+    String? getPassedGrade(String courseCode) {
       if (_history.isEmpty) return null;
       for (final sem in _history.keys) {
         if (sem == _currentSemester) continue;
@@ -874,7 +877,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             code,
           );
 
-          final String? passedGrade = _getPassedGrade(code);
+          final String? passedGrade = getPassedGrade(code);
 
           return Card(
             color: passedGrade != null
@@ -947,13 +950,13 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           final sections = grouped[code]!;
           final name = sections.first['name'] ?? '';
 
-          final String? passedGrade = _getPassedGrade(code);
+          final String? passedGrade = getPassedGrade(code);
 
           int selectedCount = 0;
           if (passedGrade == null) {
             for (var c in sections) {
               final section = (c['section'] ?? '').toString();
-              final selectionKey = code + "_Sec" + section;
+              final selectionKey = "${code}_Sec$section";
               if ((_history[_currentSemester] ?? {}).containsKey(
                 selectionKey,
               )) {
@@ -1057,12 +1060,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                     ? []
                     : sections.map((c) {
                         final section = (c['section'] ?? '').toString();
-                        final selectionKey = code + "_Sec" + section;
+                        final selectionKey = "${code}_Sec$section";
                         final isSelected = (_history[_currentSemester] ?? {})
                             .containsKey(selectionKey);
 
                         final faculty = c['faculty'] ?? 'TBA';
-                        final schedule = _formatSchedule(c['schedule']);
+                        final schedule = formatSchedule(c['schedule']);
 
                         return Container(
                           decoration: BoxDecoration(

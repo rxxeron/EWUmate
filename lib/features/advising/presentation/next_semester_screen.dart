@@ -59,7 +59,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
 
       if (!mounted) return;
 
-      if (response != null && response is List && response.isNotEmpty) {
+      if (response.isNotEmpty) {
         final sectionIds = response
             .map((e) => e['section_id']?.toString() ?? '')
             .where((id) => id.isNotEmpty)
@@ -397,13 +397,14 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
           ),
         ),
         data: (activeSem) {
-          if (activeSem == null)
+          if (activeSem == null) {
             return const Center(
               child: Text(
                 'Configuration missing.',
                 style: TextStyle(color: Colors.white),
               ),
             );
+          }
 
           final now = DateTime.now();
           final advEnd = activeSem.advisingEndDate;
@@ -432,13 +433,14 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
           }
 
           final nextSemCode = activeSem.nextSemesterCode;
-          if (nextSemCode == null)
+          if (nextSemCode == null) {
             return const Center(
               child: Text(
                 'Next semester code not available.',
                 style: TextStyle(color: Colors.white70),
               ),
             );
+          }
 
           // Trigger loading of existing enrollments once we have the semester code
           if (_loadedSemCode != nextSemCode) {
@@ -507,8 +509,9 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                     .contains(nextSemCode.toLowerCase()),
                               )
                               .toList();
-                          if (nextSemDrafts.isEmpty)
+                          if (nextSemDrafts.isEmpty) {
                             return const SizedBox.shrink();
+                          }
 
                           final latestDraft = nextSemDrafts.first;
                           return Padding(
@@ -728,13 +731,14 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                       )
                                       .toList();
 
-                                  if (filtered.isEmpty)
+                                  if (filtered.isEmpty) {
                                     return const Center(
                                       child: Text(
                                         'No courses found.',
                                         style: TextStyle(color: Colors.grey),
                                       ),
                                     );
+                                  }
                                 } else {
                                   // Selected tab
                                   final selectedCodes = _selectedCourses
@@ -746,7 +750,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                       )
                                       .toList();
 
-                                  if (filtered.isEmpty)
+                                  if (filtered.isEmpty) {
                                     return const Center(
                                       child: Padding(
                                         padding: EdgeInsets.only(top: 20.0),
@@ -760,6 +764,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                         ),
                                       ),
                                     );
+                                  }
                                 }
 
                                 return Column(
@@ -921,7 +926,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                                       ),
                                                       trailing: Switch(
                                                         value: isThisSelected,
-                                                        activeColor:
+                                                        activeThumbColor:
                                                             Colors.cyan,
                                                         onChanged: (_) =>
                                                             _toggleSection(

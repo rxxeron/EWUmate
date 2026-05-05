@@ -69,7 +69,9 @@ class TaskRepository {
           .insert(task.toJson())
           .select()
           .single();
-      return Task.fromJson(response);
+      final savedTask = Task.fromJson(response);
+      _optimisticInsert(userId, savedTask);
+      return savedTask;
     } catch (e) {
       // Offline fallback
       _optimisticInsert(userId, task);
@@ -89,7 +91,9 @@ class TaskRepository {
           .eq('id', task.id)
           .select()
           .single();
-      return Task.fromJson(response);
+      final savedTask = Task.fromJson(response);
+      _optimisticUpdate(userId, savedTask);
+      return savedTask;
     } catch (e) {
       _optimisticUpdate(userId, task);
       await _cache.enqueueMutation(userId, {
@@ -106,6 +110,7 @@ class TaskRepository {
           .from('tasks')
           .update({'is_completed': isCompleted})
           .eq('id', taskId);
+      _optimisticStatusUpdate(userId, taskId, isCompleted);
     } catch (e) {
       _optimisticStatusUpdate(userId, taskId, isCompleted);
       await _cache.enqueueMutation(userId, {
@@ -148,6 +153,7 @@ class TaskRepository {
   Future<void> deleteTask(String userId, String taskId) async {
     try {
       await _supabase.from('tasks').delete().eq('id', taskId);
+      _optimisticDelete(userId, taskId);
     } catch (e) {
       _optimisticDelete(userId, taskId);
       await _cache.enqueueMutation(userId, {
@@ -230,14 +236,14 @@ Future<List<Task>> activeTasksConfig(ActiveTasksConfigRef ref) async {
   return ref.watch(taskRepositoryProvider).getActiveTasks(user.id);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<Task>> allTasksStream(AllTasksStreamRef ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) return const Stream.empty();
   return ref.watch(taskRepositoryProvider).streamUserTasks(user.id);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<List<Notification>> userNotifications(UserNotificationsRef ref) {        
   final user = ref.watch(currentUserProvider);
   if (user == null) return const Stream.empty();

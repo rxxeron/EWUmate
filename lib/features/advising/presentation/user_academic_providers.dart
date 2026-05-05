@@ -39,7 +39,7 @@ final excludedCourseCodesProvider = FutureProvider<Set<String>>((ref) async {
   final Set<String> codes = {};
   
   for (final summary in summaries) {
-    for (final course in (summary.courses as List)) {
+    for (final course in summary.courses) {
       String? code;
       if (course is Map) {
         code = (course['code'] ?? course['course_code'])?.toString();

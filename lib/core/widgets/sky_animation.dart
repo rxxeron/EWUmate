@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 /// Time-based sky animation widget using Lottie animations
 class SkyAnimationWidget extends StatelessWidget {

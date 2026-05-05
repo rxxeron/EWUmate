@@ -273,7 +273,7 @@ ProfileRepository profileRepository(ProfileRepositoryRef ref) {
   return ProfileRepository(supabase, cache, dashboardRepo);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Stream<Profile?> userProfile(UserProfileRef ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final user = supabase.auth.currentUser;

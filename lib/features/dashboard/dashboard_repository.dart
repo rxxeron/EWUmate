@@ -31,12 +31,46 @@ class DashboardRepository {
     String semesterCode,
     DateTime date, {
     String? track,
+    DateTime? profileUpdatedAt,
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return {};
 
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final dayName = DateFormat('EEEE').format(date);
+
+    // Smart Invalidation Cache Check
+    if (_cache != null) {
+      final cached = _cache.getCachedDashboardSchedule(user.id);
+      if (cached != null) {
+        final cacheDateStr = cached['dateStr'] as String?;
+        if (cacheDateStr == dateStr) {
+          final cacheUpdatedAtStr = cached['_cache_updated_at'] as String?;
+          if (cacheUpdatedAtStr != null) {
+            final cacheUpdatedAt = DateTime.tryParse(cacheUpdatedAtStr);
+            if (cacheUpdatedAt != null) {
+              bool isStale = false;
+              // 24-hour baseline
+              if (DateTime.now().difference(cacheUpdatedAt).inHours >= 24) {
+                isStale = true;
+              }
+              // Profile-linked invalidation
+              else if (profileUpdatedAt != null && profileUpdatedAt.isAfter(cacheUpdatedAt)) {
+                isStale = true;
+              }
+              
+              if (!isStale) {
+                debugPrint('[DashboardRepository] Serving strictly from Smart Cache');
+                if (cached['date'] != null && cached['date'] is String) {
+                  cached['date'] = DateTime.tryParse(cached['date']) ?? date;
+                }
+                return cached;
+              }
+            }
+          }
+        }
+      }
+    }
 
     try {
       // 1. Fetch both track configurations (Standard & BI/PHRM)
@@ -137,7 +171,7 @@ class DashboardRepository {
           try {
             // Manual HTTP call to bypass the automatic JWT/Authorization header injection
             // which was triggering 401 Invalid JWT errors.
-            final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+            final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
             final uri = Uri.parse('$functionsUrl/sync-schedule');
             await http.post(
               uri,
@@ -179,9 +213,9 @@ class DashboardRepository {
         String title = (standardEvent['title'] ?? standardEvent['name'] ?? '')
             .toString()
             .toLowerCase();
-        if (title.contains('regular sunday'))
+        if (title.contains('regular sunday')) {
           stdDay = 'Sunday';
-        else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday'))
           stdDay = 'Monday';
         else if (title.contains('regular tuesday'))
           stdDay = 'Tuesday';
@@ -205,9 +239,9 @@ class DashboardRepository {
         String title = (phrmEvent['title'] ?? phrmEvent['name'] ?? '')
             .toString()
             .toLowerCase();
-        if (title.contains('regular sunday'))
+        if (title.contains('regular sunday')) {
           phrmDay = 'Sunday';
-        else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday'))
           phrmDay = 'Monday';
         else if (title.contains('regular tuesday'))
           phrmDay = 'Tuesday';
@@ -299,13 +333,13 @@ class DashboardRepository {
 
       if (_cache != null) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
-        _cache?.cacheDashboardSchedule(user.id, cachePayload);
+        _cache.cacheDashboardSchedule(user.id, cachePayload);
       }
 
       return payload;
     } catch (e) {
       if (_cache != null) {
-        final cached = _cache?.getCachedDashboardSchedule(user.id);
+        final cached = _cache.getCachedDashboardSchedule(user.id);
         if (cached != null) {
           debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
           if (cached['date'] != null && cached['date'] is String) {
@@ -322,7 +356,7 @@ class DashboardRepository {
   Future<void> syncWeeklySchedule(String userId) async {
     try {
       debugPrint('[Dashboard] Proactively triggering sync-schedule (No-JWT) for: $userId');
-      final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+      final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
       final uri = Uri.parse('$functionsUrl/sync-schedule');
       await http.post(
         uri,
@@ -341,15 +375,17 @@ class DashboardRepository {
 
   bool _isActualHoliday(Map<String, dynamic> event, String lowerTitle) {
     if (event['is_holiday'] == true ||
-        event['type']?.toString().toLowerCase() == 'holiday')
+        event['type']?.toString().toLowerCase() == 'holiday') {
       return true;
+    }
     if (lowerTitle.contains('holiday') ||
         lowerTitle.contains('vacation') ||
         lowerTitle.contains('break') ||
         lowerTitle.contains('leave') ||
         lowerTitle.contains('off day') ||
-        lowerTitle.contains('no classes'))
+        lowerTitle.contains('no classes')) {
       return true;
+    }
     return false;
   }
 
@@ -564,7 +600,7 @@ class DashboardRepository {
 
       if (weeklyGrid.isEmpty) {
         try {
-          final functionsUrl = dotenv.env['SUPABASE_URL']! + '/functions/v1';
+          final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
           final uri = Uri.parse('$functionsUrl/sync-schedule');
           await http.post(
             uri,
@@ -657,9 +693,9 @@ class DashboardRepository {
           String title = (stdHol['title'] ?? stdHol['name'] ?? '')
               .toString()
               .toLowerCase();
-          if (title.contains('regular sunday'))
+          if (title.contains('regular sunday')) {
             stdDay = 'Sunday';
-          else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday'))
             stdDay = 'Monday';
           else if (title.contains('regular tuesday'))
             stdDay = 'Tuesday';
@@ -681,9 +717,9 @@ class DashboardRepository {
           String title = (phrmHol['title'] ?? phrmHol['name'] ?? '')
               .toString()
               .toLowerCase();
-          if (title.contains('regular sunday'))
+          if (title.contains('regular sunday')) {
             phrmDay = 'Sunday';
-          else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday'))
             phrmDay = 'Monday';
           else if (title.contains('regular tuesday'))
             phrmDay = 'Tuesday';
@@ -707,9 +743,9 @@ class DashboardRepository {
               title.contains('regular wednesday') ||
               title.contains('regular thursday');
           if (isSwap || _isActualHoliday(stdHol, title)) {
-            if (title.contains('regular sunday'))
+            if (title.contains('regular sunday')) {
               phrmDay = 'Sunday';
-            else if (title.contains('regular monday'))
+            } else if (title.contains('regular monday'))
               phrmDay = 'Monday';
             else if (title.contains('regular tuesday'))
               phrmDay = 'Tuesday';

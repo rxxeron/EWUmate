@@ -60,7 +60,9 @@ class SemesterCourseMarks with _$SemesterCourseMarks {
     if (strategy == 'best_one') {
       total = sortedMarks.first;
     } else if (strategy == 'best_n' || strategy == 'bestN') {
-      for (int i = 0; i < n && i < sortedMarks.length; i++) total += sortedMarks[i];
+      for (int i = 0; i < n && i < sortedMarks.length; i++) {
+        total += sortedMarks[i];
+      }
     } else if (strategy == 'average_n' || strategy == 'n_average') {
       double sum = 0;
       int count = 0;

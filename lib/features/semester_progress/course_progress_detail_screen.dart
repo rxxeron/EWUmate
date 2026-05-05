@@ -157,13 +157,15 @@ class _CourseProgressDetailScreenState
 
     final List<dynamic>? qArr = _data['obt_quizzes'];
     if (qArr != null && qArr.isNotEmpty) {
-      for (var q in qArr)
+      for (var q in qArr) {
         obtQuizzesCtrls.add(TextEditingController(text: q.toString()));
+      }
     }
     final List<dynamic>? sqArr = _data['obt_short_quizzes'];
     if (sqArr != null && sqArr.isNotEmpty) {
-      for (var sq in sqArr)
+      for (var sq in sqArr) {
         obtShortQuizzesCtrls.add(TextEditingController(text: sq.toString()));
+      }
     }
 
     _tabController.addListener(_handleTabChange);
@@ -228,8 +230,12 @@ class _CourseProgressDetailScreenState
 
     _quizNCtrl.dispose();
     _shortQuizNCtrl.dispose();
-    for (var c in obtQuizzesCtrls) c.dispose();
-    for (var c in obtShortQuizzesCtrls) c.dispose();
+    for (var c in obtQuizzesCtrls) {
+      c.dispose();
+    }
+    for (var c in obtShortQuizzesCtrls) {
+      c.dispose();
+    }
 
     super.dispose();
   }
@@ -875,7 +881,7 @@ class _CourseProgressDetailScreenState
               ],
             ),
           );
-        }).toList(),
+        }),
 
         // Add new mark field
         Row(

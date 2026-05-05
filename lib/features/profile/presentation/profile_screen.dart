@@ -254,8 +254,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                             validator: (val) {
                               if (val == null || val.isEmpty) return 'Required';
-                              if (val != newController.text)
+                              if (val != newController.text) {
                                 return 'Passwords do not match';
+                              }
                               return null;
                             },
                           ),
@@ -776,7 +777,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ),
-            if (trailing != null) trailing,
+            ?trailing,
           ],
         ),
       ),

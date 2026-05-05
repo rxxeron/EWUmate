@@ -43,7 +43,7 @@ class CheckAuthScreen extends ConsumerWidget {
 }
 
 class _ProfileCheckWrapper extends ConsumerWidget {
-  const _ProfileCheckWrapper({super.key});
+  const _ProfileCheckWrapper();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -78,7 +78,7 @@ class _ProfileCheckWrapper extends ConsumerWidget {
 }
 
 class _GradeBlockerWrapper extends ConsumerWidget {
-  const _GradeBlockerWrapper({super.key});
+  const _GradeBlockerWrapper();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -244,7 +244,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                             style: TextStyle(color: Colors.grey[400], fontSize: 13, height: 1.3),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 );

@@ -440,7 +440,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                               subtitle: Text(sec.sessions.map((s) => '${s.day} ${s.startTime}-${s.endTime}').join(' | '), style: TextStyle(color: Colors.grey[600], fontSize: 11)),
                                               trailing: Switch(
                                                 value: isThisSelected,
-                                                activeColor: Colors.cyan,
+                                                activeThumbColor: Colors.cyan,
                                                 onChanged: (_) => _toggleSection(course: course, section: sec),
                                               ),
                                             );

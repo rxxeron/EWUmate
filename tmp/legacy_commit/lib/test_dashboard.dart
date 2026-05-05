@@ -1,7 +1,6 @@
 
 import 'dart:io';
 import 'package:supabase/supabase.dart';
-import 'package:intl/intl.dart';
 
 void main() async {
   final url = Platform.environment['SUPABASE_URL'] ?? 'http://127.0.0.1:54321';

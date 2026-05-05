@@ -211,7 +211,7 @@ class GoalGradesNotifier extends StateNotifier<Map<String, String>> {
         final Map<String, String> goals = {};
         for (var m in next.value) {
           if (m.gradeGoal != null) {
-            goals[m.courseCode] = m.gradeGoal!;
+            goals[m.courseCode.toUpperCase().replaceAll(' ', '')] = m.gradeGoal!;
           }
         }
         // Update state but preserve existing keys if next list is partial (though unlikely here)
@@ -224,9 +224,10 @@ class GoalGradesNotifier extends StateNotifier<Map<String, String>> {
     state = {...state, courseCode: grade};
 
     // Persist to DB
+    final normalizedCode = courseCode.toUpperCase().replaceAll(' ', '');
     final marks = ref.read(currentSemesterMarksProvider).valueOrNull ?? [];
     final courseMark = marks
-        .where((m) => m.courseCode == courseCode)
+        .where((m) => m.courseCode.toUpperCase().replaceAll(' ', '') == normalizedCode)
         .firstOrNull;
     if (courseMark != null) {
       final updated = courseMark.copyWith(gradeGoal: grade);

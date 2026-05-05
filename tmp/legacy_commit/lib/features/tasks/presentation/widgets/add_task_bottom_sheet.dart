@@ -84,7 +84,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         });
       }
     } catch (e) {
-      debugPrint("Error fetching courses: " + e.toString());
+      debugPrint("Error fetching courses: $e");
       if (mounted) setState(() => _isLoadingCourses = false);
     }
   }
@@ -147,7 +147,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
       if (finalTitle.isEmpty) {
         final typeStr = selectedType ?? "Task";
         final courseStr = selectedCourse ?? "General";
-        finalTitle = typeStr + " - " + courseStr;
+        finalTitle = "$typeStr - $courseStr";
       }
 
       DateTime? finalDueDate;
@@ -209,10 +209,10 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
         }
       }
     } catch (e) {
-      debugPrint("Error saving task: " + e.toString());
+      debugPrint("Error saving task: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving task: ' + e.toString()), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error saving task: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -245,7 +245,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
             _isLoadingCourses 
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<String>(
-                  value: selectedCourse,
+                  initialValue: selectedCourse,
                   dropdownColor: const Color(0xFF1E1E32),
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
@@ -279,7 +279,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
             const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
-              value: selectedType,
+              initialValue: selectedType,
               dropdownColor: const Color(0xFF1E1E32),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(

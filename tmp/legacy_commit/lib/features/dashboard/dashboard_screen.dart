@@ -9,7 +9,6 @@ import 'package:intl/intl.dart';
 
 
 import '../../core/widgets/glass_kit.dart';
-import '../../core/widgets/main_shell.dart';
 import '../../core/widgets/sky_animation.dart';
 
 
@@ -38,8 +37,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../auth/auth_providers.dart';
 import '../../core/models/task.dart';
 import '../tasks/presentation/widgets/add_task_bottom_sheet.dart';
-import '../../core/repositories/task_repository.dart';
-import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
 
@@ -75,7 +72,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _refreshDashboard();
     _showDashboardTutorial();
 
-    final _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    final refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) _refreshDashboard();
     });
   }
@@ -142,10 +139,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
 
       // 5. Check Advising Banner for NEXT semester
-      if (nextSemesterCode != null) {
-        _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
-      }
-    } catch (e, stack) {
+      _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
+        } catch (e, stack) {
       debugPrint("[Dashboard] Refresh error: $e\n$stack");
       if (mounted) setState(() => _loadingInit = false);
     }

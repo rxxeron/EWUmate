@@ -219,7 +219,7 @@ class ResultsScreen extends ConsumerWidget {
                 ],
               ),
               ...courses.map((c) {
-                if (c == null || c is! Map)
+                if (c == null || c is! Map) {
                   return const TableRow(
                     children: [
                       SizedBox(),
@@ -230,6 +230,7 @@ class ResultsScreen extends ConsumerWidget {
                       SizedBox(),
                     ],
                   );
+                }
 
                 final double credits =
                     double.tryParse(c['credits']?.toString() ?? '0') ?? 0.0;
@@ -276,7 +277,7 @@ class ResultsScreen extends ConsumerWidget {
                     ),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ),
           const SizedBox(height: 8),

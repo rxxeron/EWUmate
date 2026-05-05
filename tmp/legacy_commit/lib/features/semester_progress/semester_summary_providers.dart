@@ -9,7 +9,6 @@ import 'package:ewumate/core/repositories/scholarship_repository.dart';
 import 'package:ewumate/core/repositories/dashboard_repository.dart';
 import 'package:ewumate/core/repositories/course_repository.dart';
 import 'package:ewumate/core/models/models/scholarship_rule_model.dart';
-import 'package:ewumate/core/models/semester_analytics.dart';
 import 'package:ewumate/core/models/semester_course_marks.dart';
 import 'package:ewumate/core/utils/grade_helper.dart';
 

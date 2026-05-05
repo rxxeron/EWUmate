@@ -8,7 +8,6 @@ import '../../dashboard/exception_repository.dart';
 import '../../dashboard/schedule_card.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
-import '../../../core/utils/course_utils.dart';
 import '../../../core/providers/academic_providers.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {

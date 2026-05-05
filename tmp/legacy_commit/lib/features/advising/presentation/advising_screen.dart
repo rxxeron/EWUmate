@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/schedule_repository.dart';
 import '../../../core/models/active_semester.dart';
 import '../../../core/widgets/glass_kit.dart';
-import '../../../core/providers/supabase_provider.dart';
 import 'user_academic_providers.dart';
 import 'advising_notifier.dart';
 

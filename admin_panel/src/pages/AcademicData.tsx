@@ -41,7 +41,13 @@ export function AcademicData() {
 
   const handleSave = async (table: Tab) => {
     let pkField = 'id';
-    if (table === 'course_metadata') pkField = 'code';
+    if (table === 'course_metadata') {
+      pkField = 'code';
+      // Normalize course code
+      if (editForm.code) {
+        editForm.code = editForm.code.toUpperCase().replace(/\s+/g, '');
+      }
+    }
     if (table === 'grade_scale') pkField = 'grade';
     if (table === 'active_semester') pkField = 'track';
 

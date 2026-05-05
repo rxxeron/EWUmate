@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Users, BookOpen, Activity, GraduationCap, Clock, CalendarClock, Mail, Search } from 'lucide-react';
+import { 
+  Users, BookOpen, Activity, GraduationCap, Clock, 
+  CalendarClock, Mail, Search, Zap, ShieldCheck, 
+  TrendingUp, ArrowUpRight, RefreshCcw
+} from 'lucide-react';
+import { 
+  XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, AreaChart, Area 
+} from 'recharts';
+import { motion } from 'framer-motion';
 import type { Profile, DashboardStats, SemesterTrackStats } from '../types';
+import { CardSkeleton, Skeleton } from '../components/Skeleton';
+import { cn } from '../lib/utils';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -17,115 +28,135 @@ export function Dashboard() {
   const [recentUsers, setRecentUsers] = useState<Profile[]>([]);
   const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
   const [semesterStats, setSemesterStats] = useState<Record<string, SemesterTrackStats>>({});
+  const [registrationTrend, setRegistrationTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
 
-  useEffect(() => {
-    async function fetchDashboardData() {
-      try {
-        setLoading(true);
+  const fetchDashboardData = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      else setIsRefreshing(true);
 
-        const yesterday = new Date();
-        yesterday.setHours(yesterday.getHours() - 24);
-        const yesterdayIso = yesterday.toISOString();
+      const yesterday = new Date();
+      yesterday.setHours(yesterday.getHours() - 24);
+      const yesterdayIso = yesterday.toISOString();
 
-        const { count: usersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
-        // Use last_active_at for better accuracy of 'active users'
-        const { count: activeUsersCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso);
-        const { count: programsCount } = await supabase.from('programs').select('*', { count: 'exact', head: true });
-        const { count: noticesCount } = await supabase.from('notifications').select('*', { count: 'exact', head: true });
-        const { count: pendingFeedbackCount } = await supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+      // Parallel data fetching
+      const [
+        { count: usersCount },
+        { count: activeUsersCount },
+        { count: programsCount },
+        { count: noticesCount },
+        { count: pendingFeedbackCount },
+        { data: recent },
+        { data: activeNow },
+        { data: activeSemesters },
+        { data: trendData }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
+        supabase.from('programs').select('*', { count: 'exact', head: true }),
+        supabase.from('notifications').select('*', { count: 'exact', head: true }),
+        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
+        supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
+        supabase.from('active_semester').select('*'),
+        supabase.from('profiles').select('created_at').order('created_at', { ascending: true })
+      ]);
 
-        const { data: recent } = await supabase
-          .from('profiles')
-          .select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        const { data: activeNow } = await supabase
-          .from('profiles')
-          .select('id, full_name, student_id, last_active_at, app_open_count')
-          .order('last_active_at', { ascending: false })
-          .limit(5);
-
-        const { data: activeSemesters } = await supabase.from('active_semester').select('*');
-        const semStats: Record<string, SemesterTrackStats> = {};
-        let totalActiveCourses = 0;
-
-        async function fetchAllCourseCodes(tableName: string) {
-          let allCodes: { course_code: string }[] = [];
-          let from = 0;
-          let to = 999;
-          while (true) {
-            const { data, error } = await supabase.from(tableName).select('course_code').range(from, to);
-            if (error || !data || data.length === 0) break;
-            allCodes = [...allCodes, ...data];
-            if (data.length < 1000) break;
-            from += 1000;
-            to += 1000;
-          }
-          return allCodes;
-        }
-
-        if (activeSemesters) {
-          for (const sem of activeSemesters) {
-            semStats[sem.track] = {
-              current: sem.current_semester_code,
-              next: sem.next_semester_code,
-              current_courses: 0,
-              current_sections: 0,
-              next_courses: 0,
-              next_sections: 0
-            };
-
-            // 1. Fetch Current Semester Counts
-            if (sem.current_semester_code) {
-               const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-               const cData = await fetchAllCourseCodes(`courses_${tableBase}`);       
-               if (cData && Array.isArray(cData)) {
-                 semStats[sem.track].current_sections = cData.length;
-                 const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
-                 semStats[sem.track].current_courses = uniqueCourses;
-                 totalActiveCourses += uniqueCourses;
-               }
-            }
-
-            // 2. Fetch Next Semester Counts
-            if (sem.next_semester_code) {
-               const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-               const nData = await fetchAllCourseCodes(`courses_${tableBase}`);
-               if (nData && Array.isArray(nData)) {
-                 semStats[sem.track].next_sections = nData.length;
-                 const uniqueNextCourses = new Set(nData.map(c => c.course_code)).size;
-                 semStats[sem.track].next_courses = uniqueNextCourses;
-               }
-            }
-          }
-        }
-
-        setStats({
-          users: usersCount || 0,
-          activeUsers24h: activeUsersCount || 0,
-          programs: programsCount || 0,
-          courses: totalActiveCourses,
-          notifications: noticesCount || 0,
-          pendingFeedbacks: pendingFeedbackCount || 0,
+      // Process Trend Data
+      if (trendData) {
+        const groups: Record<string, number> = {};
+        trendData.forEach(p => {
+          const date = new Date(p.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+          groups[date] = (groups[date] || 0) + 1;
         });
         
-        setSemesterStats(semStats);
-        setRecentUsers((recent as Profile[]) || []);
-        setActiveUsers((activeNow as Profile[]) || []);
-      } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-      } finally {
-        setLoading(false);
+        let cumulative = 0;
+        const trend = Object.entries(groups).map(([date, count]) => {
+          cumulative += count;
+          return { date, count, total: cumulative };
+        }).slice(-14); // Last 14 days
+        setRegistrationTrend(trend);
       }
-    }
 
+      const semStats: Record<string, SemesterTrackStats> = {};
+      let totalActiveCourses = 0;
+
+      async function fetchAllCourseCodes(tableName: string) {
+        let allCodes: { course_code: string }[] = [];
+        let from = 0;
+        let to = 999;
+        while (true) {
+          const { data, error } = await supabase.from(tableName).select('course_code').range(from, to);
+          if (error || !data || data.length === 0) break;
+          allCodes = [...allCodes, ...data];
+          if (data.length < 1000) break;
+          from += 1000;
+          to += 1000;
+        }
+        return allCodes;
+      }
+
+      if (activeSemesters) {
+        for (const sem of activeSemesters) {
+          semStats[sem.track] = {
+            current: sem.current_semester_code,
+            next: sem.next_semester_code,
+            current_courses: 0,
+            current_sections: 0,
+            next_courses: 0,
+            next_sections: 0
+          };
+
+          if (sem.current_semester_code) {
+             const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+             const cData = await fetchAllCourseCodes(`courses_${tableBase}`);       
+             if (cData && Array.isArray(cData)) {
+               semStats[sem.track].current_sections = cData.length;
+               const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
+               semStats[sem.track].current_courses = uniqueCourses;
+               totalActiveCourses += uniqueCourses;
+             }
+          }
+
+          if (sem.next_semester_code) {
+             const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+             const nData = await fetchAllCourseCodes(`courses_${tableBase}`);
+             if (nData && Array.isArray(nData)) {
+               semStats[sem.track].next_sections = nData.length;
+               const uniqueNextCourses = new Set(nData.map(c => c.course_code)).size;
+               semStats[sem.track].next_courses = uniqueNextCourses;
+             }
+          }
+        }
+      }
+
+      setStats({
+        users: usersCount || 0,
+        activeUsers24h: activeUsersCount || 0,
+        programs: programsCount || 0,
+        courses: totalActiveCourses,
+        notifications: noticesCount || 0,
+        pendingFeedbacks: pendingFeedbackCount || 0,
+      });
+      
+      setSemesterStats(semStats);
+      setRecentUsers((recent as Profile[]) || []);
+      setActiveUsers((activeNow as Profile[]) || []);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDashboardData();
   }, []);
 
@@ -137,7 +168,7 @@ export function Dashboard() {
         return;
       }
 
-      setIsSearching(true);
+
       try {
         const { data } = await supabase
           .from('profiles')
@@ -149,192 +180,317 @@ export function Dashboard() {
       } catch (err) {
         console.error('Search failed:', err);
       } finally {
-        setIsSearching(false);
+
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
 
-  if (loading) return <div>Loading statistics...</div>;
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex justify-between items-center">
+          <Skeleton className="w-64 h-10" />
+          <Skeleton className="w-48 h-10 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+           <Skeleton className="lg:col-span-2 h-[400px] rounded-3xl" />
+           <Skeleton className="h-[400px] rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between flex-wrap gap-6 items-center mb-8">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Platform Overview</h2>
-          <p className="text-gray-500 mt-1 text-sm">Welcome back to the EWUmate command center.</p>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+            Platform Insights
+            {isRefreshing && <RefreshCcw className="w-5 h-5 text-indigo-500 animate-spin" />}
+          </h2>
+          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1">Live Statistics & Global Overview</p>
         </div>
 
-        <div className="relative w-full md:w-96">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm shadow-sm transition-all"
-            placeholder="Quick search students (Name or ID)..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          
-          {(searchTerm.length >= 2 || isSearching) && (
-            <div className="absolute z-50 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-              {isSearching ? (
-                <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
-                  <Activity className="w-4 h-4 animate-spin" /> Searching...
-                </div>
-              ) : searchResults.length > 0 ? (
-                <div className="divide-y divide-gray-50">
-                  {searchResults.map((user) => (
-                    <div
-                      key={user.id}
-                      className="p-3 hover:bg-indigo-50 cursor-pointer transition-colors"
-                      onClick={() => navigate(`/users/${user.id}`)}
-                    >
-                      <div className="text-sm font-bold text-gray-900">{user.full_name}</div>
-                      <div className="text-xs text-gray-500 flex justify-between">
-                        <span>{user.student_id}</span>
-                        <span className="font-semibold text-indigo-600">{user.program_code}</span>
-                      </div>
-                    </div>
-                  ))}
-                  <div 
-                    className="p-2 text-center text-xs font-bold text-indigo-600 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => navigate(`/users?q=${searchTerm}`)}
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400 shadow-sm"
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchResults.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute z-50 mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+              >
+                {searchResults.map((user) => (
+                  <button
+                    key={user.id}
+                    className="w-full text-left p-4 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                    onClick={() => navigate(`/users/${user.id}`)}
                   >
-                    View all results
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 text-center text-sm text-gray-500">
-                  No students found for "{searchTerm}"
-                </div>
-              )}
-            </div>
-          )}
+                    <div className="font-black text-slate-900">{user.full_name}</div>
+                    <div className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">{user.student_id} • {user.program_code}</div>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </div>
+          <button 
+            onClick={() => fetchDashboardData(true)}
+            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <RefreshCcw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
+          </button>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">    
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
-          <div className="p-4 rounded-xl bg-blue-50 text-blue-600 mr-5 shadow-inner">
+      {/* Top Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">    
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 shadow-inner">
             <Users className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Users</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.users.toLocaleString()}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Users</p>
+            <p className="text-2xl font-black text-slate-900">{stats.users.toLocaleString()}</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl shadow-md border-transparent p-6 flex items-center hover:shadow-lg transition-shadow text-white">
-          <div className="p-4 rounded-xl bg-white/20 mr-5 shadow-inner backdrop-blur-sm">
-            <Clock className="w-8 h-8 text-white" />
+        <motion.div whileHover={{ y: -4 }} className="bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-800 flex items-center gap-5 transition-all text-white">
+          <div className="p-4 rounded-2xl bg-white/10 text-white shadow-inner backdrop-blur-sm">
+            <Activity className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-indigo-100 uppercase tracking-wide">Active (24h)</p>
-            <p className="text-3xl font-bold text-white mt-1">{stats.activeUsers24h.toLocaleString()}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active (24h)</p>
+            <p className="text-2xl font-black text-white">{stats.activeUsers24h.toLocaleString()}</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
-          <div className="p-4 rounded-xl bg-emerald-50 text-emerald-600 mr-5 shadow-inner">
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600 shadow-inner">
             <BookOpen className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Programs</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.programs}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Programs</p>
+            <p className="text-2xl font-black text-slate-900">{stats.programs}</p>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow">
-          <div className="p-4 rounded-xl bg-amber-50 text-amber-600 mr-5 shadow-inner">
+        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 shadow-inner">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Courses</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.courses.toLocaleString()}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Courses</p>
+            <p className="text-2xl font-black text-slate-900">{stats.courses.toLocaleString()}</p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Main Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Registration Chart */}
+        <div className="lg:col-span-2 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-50 rounded-xl">
+                <TrendingUp className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Growth Trend</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New users per day (Last 14 days)</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase">
+              <ArrowUpRight className="w-3 h-3" />
+              Rising
+            </div>
+          </div>
+          
+          <div className="flex-1 min-h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={registrationTrend}>
+                <defs>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#6366f1" 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorTotal)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-center hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => navigate('/feedbacks')}
-        >
-          <div className="p-4 rounded-xl bg-red-50 text-red-600 mr-5 shadow-inner">
-            <Mail className="w-8 h-8" />
+        {/* System Health / Status */}
+        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">System Health</h3>
+          <div className="space-y-4">
+            {[
+              { label: 'Portal Scraper', status: 'Healthy', icon: Zap, color: 'bg-amber-500' },
+              { label: 'Azure Core', status: 'Live', icon: ShieldCheck, color: 'bg-emerald-500' },
+              { label: 'Cloud DB', status: 'Optimized', icon: Clock, color: 'bg-indigo-500' },
+              { label: 'Broadcaster', status: 'Idle', icon: Mail, color: 'bg-slate-400' }
+            ].map((sys, i) => (
+              <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={cn("p-2 rounded-xl bg-white shadow-sm group-hover:scale-110 transition-transform")}>
+                    <sys.icon className="w-5 h-5 text-slate-900" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900">{sys.label}</h4>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{sys.status}</p>
+                  </div>
+                </div>
+                <div className={cn("w-2 h-2 rounded-full", sys.color)} />
+              </div>
+            ))}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Pending Issues</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.pendingFeedbacks}</p>
-          </div>
+          
+          <button 
+            className="mt-8 w-full py-4 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
+            onClick={() => navigate('/scraper')}
+          >
+            <span>Launch Diagnostics</span>
+            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+      {/* Semester Tracks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {Object.entries(semesterStats).map(([track, data]) => (
-          <div key={track} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/80">
-              <CalendarClock className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-bold text-gray-800 capitalize tracking-tight">{track.replace('_', ' ')}</h3>
+          <motion.div 
+            key={track} 
+            whileHover={{ y: -4 }}
+            className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col"
+          >
+            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <CalendarClock className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-lg font-black text-slate-900 capitalize tracking-tight">{track.replace('_', ' ')}</h3>
+              </div>
+              <div className="px-3 py-1 bg-white rounded-full border border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Track</div>
             </div>
-            <div className="flex divide-x divide-gray-100">
-               <div className="flex-1 p-6 flex flex-col justify-center text-center">
-                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Current Semester</p>
-                 <p className="text-xl font-extrabold text-indigo-700 mb-3">{data.current || 'N/A'}</p>
-                 <div className="flex justify-center gap-4 text-sm">
-                   <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                     <span className="font-bold text-gray-700">{data.current_courses}</span> <span className="text-gray-500">Courses</span>
-                   </div>
-                   <div className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-                     <span className="font-bold text-gray-700">{data.current_sections}</span> <span className="text-gray-500">Sections</span>
-                   </div>
-                 </div>
-               </div>
-               
-               <div className="flex-1 p-6 flex flex-col justify-center text-center bg-gray-50/30">
-                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Upcoming Semester</p>
-                 <p className="text-xl font-extrabold text-emerald-600 mb-3">{data.next || 'N/A'}</p>
-                 <div className="flex justify-center gap-4 text-sm">
-                   <div className="bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-                     <span className="font-bold text-gray-700">{data.next_courses}</span> <span className="text-gray-500">Courses</span>
-                   </div>
-                   <div className="bg-white px-3 py-1.5 rounded-lg border border-gray-100">
-                     <span className="font-bold text-gray-700">{data.next_sections}</span> <span className="text-gray-500">Sections</span>
-                   </div>
-                 </div>
-               </div>
+            
+            <div className="grid grid-cols-2 divide-x divide-slate-50 flex-1">
+              <div className="p-8 text-center">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Current</p>
+                <h4 className="text-xl font-black text-indigo-600 mb-4">{data.current || 'N/A'}</h4>
+                <div className="flex justify-center gap-3">
+                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 flex flex-col">
+                    <span className="text-sm font-black text-slate-900">{data.current_courses}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase">Courses</span>
+                  </div>
+                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 flex flex-col">
+                    <span className="text-sm font-black text-slate-900">{data.current_sections}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase">Sec</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-8 text-center bg-slate-50/30">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Upcoming</p>
+                <h4 className="text-xl font-black text-emerald-500 mb-4">{data.next || 'N/A'}</h4>
+                <div className="flex justify-center gap-3">
+                  <div className="px-3 py-2 bg-white rounded-xl border border-slate-100 flex flex-col shadow-sm">
+                    <span className="text-sm font-black text-slate-900">{data.next_courses}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase">Courses</span>
+                  </div>
+                  <div className="px-3 py-2 bg-white rounded-xl border border-slate-100 flex flex-col shadow-sm">
+                    <span className="text-sm font-black text-slate-900">{data.next_sections}</span>
+                    <span className="text-[8px] font-bold text-slate-400 uppercase">Sec</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+      {/* Tables Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Registrations */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
+        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-50 flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-3 tracking-tight">
+              <div className="w-2 h-2 rounded-full bg-indigo-500" />
               New Students
             </h3>
+            <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View All</button>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50">
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full min-w-[500px] sm:min-w-0">
+              <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Joined</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Info</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Join Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-50">
                 {recentUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/users/${user.id}`)}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">{user.full_name || 'Unknown'}</div>
-                      <div className="text-xs text-indigo-600">{user.student_id || '-'}</div>
+                  <tr key={user.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
+                    <td className="px-8 py-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all uppercase text-xs">
+                          {user.full_name?.substring(0, 2)}
+                        </div>
+                        <div>
+                          <div className="text-sm font-black text-slate-900">{user.full_name || 'Unknown'}</div>
+                          <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{user.student_id || '-'}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(user.created_at).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    <td className="px-8 py-5">
+                      <div className="text-xs font-bold text-slate-700">
+                        {new Date(user.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-bold">
+                        {new Date(user.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -344,34 +500,42 @@ export function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-emerald-600" />
+        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+          <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-3 tracking-tight">
+              <div className="w-2 h-2 rounded-full bg-emerald-500" />
               Recent Activity
             </h3>
+            <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View Trends</button>
           </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-gray-50">
+            <table className="w-full">
+              <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase text-center">App Opens</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Last Active</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">User</th>
+                  <th className="px-8 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Sessions</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Active</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-slate-50">
                 {activeUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/users/${user.id}`)}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">{user.full_name || 'Unknown'}</div>
-                      <div className="text-xs text-indigo-600">{user.student_id || '-'}</div>
+                  <tr key={user.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
+                    <td className="px-8 py-5">
+                      <div className="text-sm font-black text-slate-900 truncate max-w-[150px]">{user.full_name || 'Unknown'}</div>
+                      <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{user.student_id || '-'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-center">
-                      <span className="bg-gray-100 px-2 py-1 rounded-md">{user.app_open_count || 0}</span>
+                    <td className="px-8 py-5 text-center">
+                      <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-black text-slate-700 border border-slate-200">
+                        {user.app_open_count || 0}
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {user.last_active_at ? new Date(user.last_active_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' }) : 'Never'}
+                    <td className="px-8 py-5">
+                      <div className="text-xs font-bold text-slate-700">
+                        {user.last_active_at ? new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Never'}
+                      </div>
+                      <div className="text-[9px] text-slate-400 font-bold">
+                        {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -383,3 +547,4 @@ export function Dashboard() {
     </div>
   );
 }
+

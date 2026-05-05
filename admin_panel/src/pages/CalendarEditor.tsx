@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, X, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '../types';
-
-
+import { cn } from '../lib/utils';
 
 export function CalendarEditor() {
   const [tracks, setTracks] = useState<any[]>([]);
@@ -27,7 +27,6 @@ export function CalendarEditor() {
       
       if (data && data.length > 0) {
         setTracks(data);
-        // Default to tri_semester if not already selected
         if (!selectedTrack) {
           const defaultTrack = data.find(s => s.track === 'tri_semester') || data[0];
           setSelectedTrack(defaultTrack.track);
@@ -64,7 +63,6 @@ export function CalendarEditor() {
         .order('event_date', { ascending: true });
         
       if (error) {
-        // Table might not exist yet if not parsed
         if (error.code === '42P01') {
           setEvents([]);
           setErrorMsg(`Table ${table} does not exist yet. Please upload a calendar first.`);
@@ -138,6 +136,7 @@ export function CalendarEditor() {
 
       setShowAddForm(false);
       setNewEvent({ date: '', title: '', type: 'Holiday', targetTrack: '' });
+      toast.success('Event added successfully');
     } catch (err: any) {
       console.error(err);
       setErrorMsg(err.message || 'Failed to add event');
@@ -147,55 +146,59 @@ export function CalendarEditor() {
   };
 
   const handleDelete = async (id: string) => {
-    // Replaced window.confirm with toast-based confirmation or simple non-blocking check
-    // In a premium UI we might use a modal, but for now we'll stick to a more reliable flow
-    if (!id) return;
+    if (!id || !confirm('Are you sure you want to delete this event?')) return;
     
-    // Optimistic UI: instantly remove from array so the UI feels immediate
     const previousEvents = [...events];
     setEvents(prev => prev.filter(evt => evt.id !== id));
     
     try {
       const { error } = await supabase.from(tableName).delete().eq('id', id);
       if (error) throw error;
+      toast.success('Event deleted');
     } catch (err: any) {
       console.error(err);
-      setEvents(previousEvents); // Rollback UI if delete fails
+      setEvents(previousEvents);
       toast.error('Failed to delete: ' + err.message);
     }
   };
 
-  // Add date formatting helper
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendar Manager</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Manually inject holidays or modify dates for <span className="font-semibold text-indigo-600">{activeSemester || 'Loading...'}</span>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100">
+               <CalendarIcon className="w-6 h-6" />
+             </div>
+             Calendar Manager
+          </h2>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 ml-1">
+            Global Academic Timeline for <span className="text-indigo-600">{activeSemester || '...'}</span>
           </p>
         </div>
-        <div className="flex flex-col md:flex-row gap-3 items-end md:items-center">
+
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {tracks.length > 1 && (
-            <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+            <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner w-full sm:w-auto">
               {tracks.map(t => (
                 <button
                   key={t.track}
                   onClick={() => setSelectedTrack(t.track)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                  className={cn(
+                    "flex-1 sm:flex-none px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
                     selectedTrack === t.track 
-                      ? 'bg-white text-indigo-600 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                      ? 'bg-white text-indigo-600 shadow-md' 
+                      : 'text-slate-400 hover:text-slate-600'
+                  )}
                 >
-                  {t.track.replace('_', ' ').toUpperCase()}
+                  {t.track.replace('_', ' ')}
                 </button>
               ))}
             </div>
@@ -203,152 +206,178 @@ export function CalendarEditor() {
           <button
             onClick={() => setShowAddForm(true)}
             disabled={!tableName || !!errorMsg}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg shadow-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 disabled:opacity-50 transition-all text-[10px] font-black uppercase tracking-widest"
           >
             <Plus className="w-4 h-4" />
-            Add Holiday / Event
+            Inject Event
           </button>
         </div>
       </div>
 
       {errorMsg && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-200">
+        <div className="bg-rose-50 text-rose-600 p-6 rounded-[1.5rem] border border-rose-100 font-bold text-sm shadow-sm flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
           {errorMsg}
         </div>
       )}
 
-      {showAddForm && (
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-indigo-100 relative">
-          <button 
-            onClick={() => setShowAddForm(false)}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0, y: -20 }}
+            animate={{ opacity: 1, height: 'auto', y: 0 }}
+            exit={{ opacity: 0, height: 0, y: -20 }}
+            className="bg-white p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-xl border border-indigo-50 relative overflow-hidden"
           >
-            <X className="w-5 h-5" />
-          </button>
-          <h2 className="text-lg font-semibold mb-4 text-gray-800 flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5 text-indigo-500" />
-            Inject Calendar Record
-          </h2>
-          <form onSubmit={handleAddSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Event Date</label>
-                <input
-                  type="date"
-                  required
-                  value={newEvent.date}
-                  onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                />
+            <button 
+              onClick={() => setShowAddForm(false)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-black mb-6 text-slate-900 flex items-center gap-3 tracking-tight">
+              <div className="p-2 bg-indigo-50 rounded-xl">
+                <CalendarIcon className="w-5 h-5 text-indigo-500" />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Event Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g., Eid-ul-Fitr"
-                  value={newEvent.title}
-                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                />
+              Inject Calendar Record
+            </h2>
+            <form onSubmit={handleAddSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={newEvent.date}
+                    onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Title</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Eid-ul-Fitr"
+                    value={newEvent.title}
+                    onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Type</label>
+                  <select
+                    value={newEvent.type}
+                    onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 appearance-none cursor-pointer"
+                  >
+                    <option value="Holiday">Holiday</option>
+                    <option value="General">General</option>
+                    <option value="Exam">Exam / Academic</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Track</label>
+                  <select
+                    value={newEvent.targetTrack || selectedTrack}
+                    onChange={(e) => setNewEvent({ ...newEvent, targetTrack: e.target.value })}
+                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 appearance-none cursor-pointer"
+                  >
+                    <option value="tri_semester">Tri-Semester</option>
+                    <option value="bi_semester">Bi-Semester (PHRM/LLB)</option>
+                    <option value="both">Both Tracks</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Event Type</label>
-                <select
-                  value={newEvent.type}
-                  onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100 text-[10px] font-black uppercase tracking-widest"
                 >
-                  <option value="Holiday">Holiday</option>
-                  <option value="General">General</option>
-                  <option value="Exam">Exam / Academic</option>
-                </select>
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {saving ? 'Synchronizing...' : 'Save Matrix Record'}
+                </button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Target Track</label>
-                <select
-                  value={newEvent.targetTrack || selectedTrack}
-                  onChange={(e) => setNewEvent({ ...newEvent, targetTrack: e.target.value })}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
-                >
-                  <option value="tri_semester">Tri-Semester</option>
-                  <option value="bi_semester">Bi-Semester (PHRM/LLB)</option>
-                  <option value="both">Both Tracks</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {saving ? 'Saving...' : 'Save to Calendar'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Name & Details</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Type</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {loading ? (
+      {/* Events Table */}
+      <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full">
+            <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
-                  Loading calendar events...
-                </td>
+                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Event & Context</th>
+                <th className="hidden sm:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</th>
+                <th className="px-6 sm:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Control</th>
               </tr>
-            ) : events.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  No records found in {tableName}.
-                </td>
-              </tr>
-            ) : (
-              events.map((evt) => (
-                <tr key={evt.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 border-l-2 border-transparent hover:border-indigo-400">
-                    {formatDate(evt.event_date)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 font-semibold">{evt.title}</div>
-                    <div className="text-xs text-gray-500">{evt.target_track}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      evt.type?.toLowerCase().includes('holiday') 
-                        ? 'bg-red-100 text-red-800' 
-                        : (evt.type?.toLowerCase().includes('exam') ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800')
-                    }`}>
-                      {evt.type || 'General'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleDelete(evt.id)}
-                      className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded-md transition-colors"
-                      title="Delete Event"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-8 py-24 text-center">
+                    <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-500" />
+                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Scanning academic timeline...</p>
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : events.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-8 py-24 text-center">
+                    <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                       <CalendarIcon className="w-10 h-10 text-slate-200" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900">No Records Found</h3>
+                    <p className="text-slate-400 text-sm font-medium mt-2">The academic timeline for this quadrant is currently empty.</p>
+                  </td>
+                </tr>
+              ) : (
+                events.map((evt, i) => (
+                  <motion.tr 
+                    key={evt.id} 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.02 }}
+                    className="hover:bg-slate-50/50 group transition-all"
+                  >
+                    <td className="px-6 sm:px-8 py-6">
+                      <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                        {formatDate(evt.event_date)}
+                      </div>
+                    </td>
+                    <td className="px-6 sm:px-8 py-6">
+                      <div className="text-sm font-black text-slate-900 group-hover:tracking-tight transition-all">{evt.title}</div>
+                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{evt.target_track}</div>
+                    </td>
+                    <td className="hidden sm:table-cell px-8 py-6">
+                      <span className={cn(
+                        "inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm border",
+                        evt.type?.toLowerCase().includes('holiday') 
+                          ? 'bg-rose-50 text-rose-600 border-rose-100' 
+                          : (evt.type?.toLowerCase().includes('exam') ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100')
+                      )}>
+                        {evt.type || 'General'}
+                      </span>
+                    </td>
+                    <td className="px-6 sm:px-8 py-6 text-right">
+                      <button
+                        onClick={() => handleDelete(evt.id)}
+                        className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all"
+                        title="Delete Event"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
-}
+}

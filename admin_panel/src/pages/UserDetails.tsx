@@ -1,9 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabaseAdmin as supabase } from '../lib/supabase';
-import { ArrowLeft, RefreshCw, Users, CheckCircle2, Clipboard, CalendarClock, AlertTriangle, Clock, Edit, Save, X, Plus, Trash2 } from 'lucide-react';
+import { 
+  ArrowLeft, RefreshCw, Users, CheckCircle2, Clipboard, 
+  CalendarClock, AlertTriangle, Clock, Edit, Save, 
+  X, Plus, Trash2, Shield, Activity, Zap, GraduationCap, BookOpen
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import type { Profile, Enrollment, CompletedCourse, Task, CourseMark, UserSemesterState } from '../types';
+import { CardSkeleton, Skeleton } from '../components/Skeleton';
+import { cn } from '../lib/utils';
 
 export function UserDetails() {
   const { id } = useParams<{ id: string }>();
@@ -57,15 +64,21 @@ export function UserDetails() {
   const handleAddCourse = async () => {
     if (!id || !courseForm.course_code || !courseForm.semester_code) return;
     setSaving(true);
+    const normalizedForm = { 
+      ...courseForm, 
+      course_code: courseForm.course_code?.toUpperCase().replace(/\s+/g, ''),
+      user_id: id 
+    };
+
     try {
       const { error } = await supabase
         .from('completed_courses')
-        .insert([{ ...courseForm, user_id: id }]);
+        .insert([normalizedForm]);
       
       if (error) throw error;
       toast.success('Course added');
       setIsAddingCourse(false);
-      fetchUser(id);
+      handleSyncData();
     } catch (err: any) {
       toast.error('Failed to add course: ' + err.message);
     } finally {
@@ -83,7 +96,7 @@ export function UserDetails() {
       
       if (error) throw error;
       toast.success('Course record deleted');
-      fetchUser(id!);
+      handleSyncData();
     } catch (err: any) {
       toast.error('Delete failed: ' + err.message);
     }
@@ -115,7 +128,8 @@ export function UserDetails() {
         department_name: user.department_name,
         cgpa: user.cgpa,
         total_credits_earned: user.total_credits_earned,
-        track: user.track
+        track: user.track,
+        onboarding_status: user.onboarding_status
       });
       setIsEditingProfile(true);
     }
@@ -298,74 +312,229 @@ export function UserDetails() {
     }
   };
 
-  if (loading) return <div className='flex justify-center items-center h-64'><div className='animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600'></div></div>;
-  if (!user) return <div className='text-center py-12'><h3 className='text-lg font-medium text-gray-900'>User not found</h3></div>;
+  if (loading) {
+    return (
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Skeleton className="w-12 h-12 rounded-2xl" />
+            <div className="space-y-2">
+              <Skeleton className="w-48 h-8" />
+              <Skeleton className="w-32 h-4" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="w-24 h-10 rounded-xl" />
+            <Skeleton className="w-32 h-10 rounded-xl" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return <div className='text-center py-24'><h3 className='text-lg font-black text-slate-900'>User not found</h3></div>;
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between flex-wrap gap-4'>
-        <div className='flex items-center gap-4'>
-          <button onClick={() => navigate('/users')} className='p-2 hover:bg-gray-100 rounded-full transition-colors'><ArrowLeft className='h-5 w-5 text-gray-600' /></button>
-          <div>
-            <h1 className='text-2xl font-bold text-gray-900'>{user.full_name || 'Unknown User'}</h1>
-            <p className='text-sm text-gray-500'>ID: {user.student_id || 'N/A'} • {user.track?.replace('_', ' ') || 'Tri-Semester'}</p>
+    <div className='space-y-8 animate-in fade-in duration-700'>
+      {/* Header */}
+      <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-6'>
+        <div className='flex items-center gap-5'>
+          <button 
+            onClick={() => navigate('/users')} 
+            className='p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 hover:shadow-md transition-all'
+          >
+            <ArrowLeft className='h-5 w-5' />
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-100 flex items-center justify-center font-black text-2xl text-indigo-500 shadow-inner">
+               {user.full_name?.substring(0, 1)}
+            </div>
+            <div>
+              <h1 className='text-3xl font-black text-slate-900 tracking-tight'>{user.full_name || 'Unknown User'}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className='text-[10px] font-black bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.student_id || 'N/A'}</span>
+                <span className='text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.track?.replace('_', ' ') || 'Tri-Semester'}</span>
+              </div>
+            </div>
           </div>
         </div>
-        <div className='flex gap-2'>
-          <button onClick={startEditing} className='flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 text-sm font-medium'>
+        
+        </div>
+        
+        <div className='flex flex-wrap sm:flex-nowrap gap-2 w-full md:w-auto'>
+          <button 
+            onClick={startEditing} 
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
+          >
             <Edit className='h-4 w-4' />
             Edit Profile
           </button>
-          <button onClick={handleSyncData} disabled={syncing} className='flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium'>
+          <button 
+            onClick={handleSyncData} 
+            disabled={syncing} 
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all'
+          >
             <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing...' : 'Sync Academic Data'}
+            {syncing ? 'Syncing...' : 'Sync Portal'}
           </button>
-          <button onClick={handleRebuildSchedule} disabled={rebuilding} className='flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 text-sm font-medium'>
+          <button 
+            onClick={handleRebuildSchedule} 
+            disabled={rebuilding} 
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all'
+          >
             <CalendarClock className={`h-4 w-4 ${rebuilding ? 'animate-spin' : ''}`} />
-            {rebuilding ? 'Rebuilding...' : 'Rebuild Schedule'}
+            {rebuilding ? 'Rebuilding...' : 'Fix Schedule'}
           </button>
         </div>
       </div>
 
-      <div className='border-b border-gray-200'>
-        <nav className='-mb-px flex space-x-8 overflow-x-auto no-scrollbar'>
+      {/* Navigation Tabs - Scrollable on Mobile */}
+      <div className='w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0'>
+        <div className='bg-white/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-slate-200/60 inline-flex gap-1 min-w-full sm:min-w-0'>
           {['overview', 'enrollments', 'schedule', 'history', 'tasks', 'marks'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <button 
+              key={tab} 
+              onClick={() => setActiveTab(tab)} 
+              className={cn(
+                'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
+                activeTab === tab 
+                ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
+                : 'text-slate-500 hover:text-slate-900 hover:bg-white'
+              )}
+            >
+              {tab}
             </button>
           ))}
-        </nav>
+        </div>
       </div>
 
-      <div className='mt-6'>
+      {/* Tab Content */}
+      <motion.div 
+        key={activeTab}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className='mt-2'
+      >
         {activeTab === 'overview' && (
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-            <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-              <h3 className='text-lg font-medium mb-4 flex items-center gap-2'><Users className='h-5 w-5 text-indigo-500' /> Academic Standing</h3>
-              <dl className='space-y-4'>
-                <div><dt className='text-sm text-gray-500'>Program</dt><dd className='mt-1 text-sm font-medium'>{user.program_name || user.program_code || 'N/A'}</dd></div>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div><dt className='text-sm text-gray-500'>CGPA</dt><dd className='mt-1 text-2xl font-bold text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd></div>
-                  <div><dt className='text-sm text-gray-500'>Credits</dt><dd className='mt-1 text-2xl font-bold text-gray-900'>{user.total_credits_earned || 0}</dd></div>
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
+            <div className="lg:col-span-2 space-y-8">
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-indigo-50 rounded-2xl">
+                      <Shield className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic Standing</h3>
+                  </div>
+                  <dl className='space-y-6'>
+                    <div>
+                      <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Selected Program</dt>
+                      <dd className='text-sm font-bold text-slate-900'>{user.program_name || user.program_code || 'N/A'}</dd>
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8'>
+                      <div>
+                        <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Current CGPA</dt>
+                        <dd className='text-2xl sm:text-3xl font-black text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd>
+                      </div>
+                      <div>
+                        <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Credits Earned</dt>
+                        <dd className='text-2xl sm:text-3xl font-black text-slate-900'>{user.total_credits_earned || 0}</dd>
+                      </div>
+                    </div>
+                  </dl>
+                </motion.div>
+                
+                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="p-3 bg-emerald-50 rounded-2xl">
+                      <Activity className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <h3 className='text-lg font-black text-slate-900 tracking-tight'>System Diagnostics</h3>
+                  </div>
+                  <div className='space-y-5'>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
+                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Onboarding</span>
+                      <span className={cn(
+                        'text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm',
+                        user.onboarding_status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                      )}>
+                        {user.onboarding_status?.replace('_', ' ') || 'Unknown'}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
+                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Engagement</span>
+                      <span className='text-sm font-black text-slate-900'>{user.app_open_count || 0} Sessions</span>
+                    </div>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
+                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Last Sync</span>
+                      <span className='text-xs font-bold text-slate-900'>{user.last_active_at ? new Date(user.last_active_at).toLocaleDateString() : 'Never'}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-slate-900 rounded-[2rem] p-8 shadow-xl text-white overflow-hidden relative group">
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
+                   <Zap className="w-32 h-32" />
                 </div>
-              </dl>
+                <div className="relative z-10">
+                  <h3 className='text-xl font-black tracking-tight mb-2'>Fast Recovery</h3>
+                  <p className='text-indigo-200/70 text-xs font-medium mb-6 max-w-md'>If the user is reporting missing schedules or incorrect CGPA, use these force-recovery tools to rebuild their data state.</p>
+                  <div className="flex flex-wrap gap-4">
+                     <button onClick={handleSyncData} className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-2">
+                        <RefreshCw className="w-3 h-3" /> Force Data Sync
+                     </button>
+                     <button onClick={handleRebuildSchedule} className="px-6 py-3 bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 transition-all flex items-center gap-2">
+                        <CalendarClock className="w-3 h-3" /> Regenerate Grid
+                     </button>
+                  </div>
+                </div>
+              </div>
             </div>
-            
-            <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-              <h3 className='text-lg font-medium mb-4 flex items-center gap-2'><Clock className='h-5 w-5 text-indigo-500' /> Systems Status</h3>
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm text-gray-500'>App Opens</span>
-                  <span className='font-bold text-gray-900'>{user.app_open_count || 0}</span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm text-gray-500'>Last Active</span>
-                  <span className='text-sm font-medium'>{user.last_active_at ? new Date(user.last_active_at).toLocaleString() : 'Never'}</span>
-                </div>
-                <div className='text-xs text-gray-400'>
-                  Account Created: {new Date(user.created_at).toLocaleString()}
+
+            {/* Sidebar / Timeline */}
+            <div className="space-y-8">
+              <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+                <h3 className='text-lg font-black text-slate-900 tracking-tight mb-6 flex items-center gap-3'>
+                  <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                  Activity Timeline
+                </h3>
+                <div className='space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100'>
+                  {[
+                    { label: 'Last App Session', date: user.last_active_at, icon: Clock, color: 'bg-indigo-500' },
+                    { label: 'Account Registered', date: user.created_at, icon: Users, color: 'bg-emerald-500' }
+                  ].map((event, i) => (
+                    <div key={i} className="relative pl-10">
+                      <div className={cn("absolute left-0 top-1 w-6 h-6 rounded-full flex items-center justify-center text-white z-10 shadow-lg", event.color)}>
+                        <event.icon className="w-3 h-3" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{event.label}</span>
+                        <span className="text-[10px] font-bold text-slate-400 mt-1">
+                          {event.date ? new Date(event.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Pending...'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="relative pl-10 opacity-50">
+                     <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 z-10">
+                        <Shield className="w-3 h-3" />
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Initial Onboarding</span>
+                        <span className="text-[10px] font-bold text-slate-300 mt-1 italic">Historical logs not available</span>
+                     </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -373,49 +542,61 @@ export function UserDetails() {
         )}
 
         {activeTab === 'schedule' && (
-          <div className='space-y-4'>
+          <div className='space-y-6'>
             {!semesterState?.weekly_grid_cache ? (
-              <div className='bg-amber-50 border border-amber-200 p-8 rounded-xl text-center'>
-                <AlertTriangle className='h-12 w-12 text-amber-500 mx-auto mb-4' />
-                <h3 className='text-lg font-bold text-amber-800'>No Schedule Cache Found</h3>
-                <p className='text-amber-700 mt-2 max-w-md mx-auto'>
+              <div className='bg-amber-50 border border-amber-200 p-12 rounded-[2rem] text-center'>
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <AlertTriangle className='h-8 w-8 text-amber-500' />
+                </div>
+                <h3 className='text-xl font-black text-amber-900'>No Schedule Cache Found</h3>
+                <p className='text-amber-700/70 text-sm font-medium mt-2 max-w-md mx-auto'>
                   The mobile app won't show any classes because the schedule hasn't been generated for this user in the current semester.
                 </p>
-                <button onClick={handleRebuildSchedule} className='mt-6 px-6 py-2 bg-amber-600 text-white rounded-lg font-bold hover:bg-amber-700 transition-colors'>
+                <button 
+                  onClick={handleRebuildSchedule} 
+                  className='mt-8 px-8 py-3 bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg shadow-amber-100'
+                >
                   Generate Schedule Now
                 </button>
               </div>
             ) : (
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'>
                 {days.map(day => {
                   const dailyClasses = semesterState.weekly_grid_cache![day] || [];
                   return (
-                    <div key={day} className='bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden'>
-                      <div className='px-4 py-2 bg-gray-50 border-b border-gray-200 font-bold text-sm text-gray-700'>{day}</div>
-                      <div className='p-4 space-y-3 min-h-[150px]'>
+                    <motion.div 
+                      key={day} 
+                      whileHover={{ y: -4 }}
+                      className='bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col'
+                    >
+                      <div className='px-6 py-4 bg-slate-50/50 border-b border-slate-50 font-black text-[10px] text-slate-400 uppercase tracking-widest'>{day}</div>
+                      <div className='p-6 space-y-4 min-h-[200px]'>
                         {dailyClasses.length === 0 ? (
-                          <div className='h-full flex items-center justify-center text-xs text-gray-400 italic'>No classes scheduled</div>
+                          <div className='h-full flex flex-col items-center justify-center text-[10px] text-slate-300 font-bold uppercase tracking-widest py-8'>
+                             <Clock className="w-8 h-8 opacity-10 mb-2" />
+                             No classes
+                          </div>
                         ) : (
                           dailyClasses.map((cls, idx) => (
-                            <div key={idx} className='p-3 bg-indigo-50 border border-indigo-100 rounded-lg'>
-                              <div className='flex justify-between items-start'>
-                                <span className='text-xs font-black text-indigo-700'>{cls.courseCode}</span>
-                                <span className='text-[10px] bg-white px-1.5 py-0.5 rounded border border-indigo-200 text-indigo-600 font-bold uppercase'>{cls.type}</span>
+                            <div key={idx} className='p-4 bg-slate-50 border border-slate-100 rounded-2xl group hover:bg-white hover:border-indigo-100 transition-all'>
+                              <div className='flex justify-between items-start mb-2'>
+                                <span className='text-xs font-black text-slate-900'>{cls.courseCode}</span>
+                                <span className='text-[8px] bg-white px-2 py-0.5 rounded-full border border-slate-200 text-slate-400 font-black uppercase tracking-widest'>{cls.type}</span>
                               </div>
-                              <p className='text-xs font-medium text-gray-900 mt-1 line-clamp-1'>{cls.courseName}</p>
-                              <div className='flex items-center gap-2 mt-2 text-[10px] text-gray-500 font-medium'>
+                              <p className='text-[10px] font-bold text-slate-500 line-clamp-1 mb-3'>{cls.courseName}</p>
+                              <div className='flex items-center gap-2 text-[10px] text-indigo-500 font-black mb-3'>
                                 <Clock className='w-3 h-3' />
                                 {cls.startTime} - {cls.endTime}
                               </div>
-                              <div className='flex items-center justify-between mt-2'>
-                                <span className='text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-bold'>{cls.room}</span>
-                                <span className='text-[10px] text-indigo-400 font-bold'>{cls.faculty}</span>
+                              <div className='flex items-center justify-between mt-auto pt-2 border-t border-slate-100'>
+                                <span className='text-[9px] font-black text-slate-900 bg-white px-2 py-1 rounded-lg border border-slate-100'>{cls.room}</span>
+                                <span className='text-[9px] text-indigo-400 font-black uppercase tracking-tighter'>{cls.faculty}</span>
                               </div>
                             </div>
                           ))
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -424,68 +605,110 @@ export function UserDetails() {
         )}
 
         {activeTab === 'enrollments' && (
-          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-            <h3 className='text-lg font-medium mb-4'>Current Enrollments</h3>
-            <div className='space-y-4'>
+          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className='text-xl font-black text-slate-900 tracking-tight'>Current Semester Enrollments</h3>
+              <div className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">Live Session</div>
+            </div>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {currentEnrollments.length > 0 ? currentEnrollments.map((enr, i) => (
-                <div key={i} className='border rounded-xl p-4 flex justify-between items-center bg-white hover:border-indigo-200 transition-colors'>
-                  <div>
-                    <h4 className='font-bold text-gray-900'>{enr.course_code} - Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</h4>
-                    <p className='text-sm text-gray-500'>{enr._sectionDetails?.course_name || 'Course details stored in schedule'}</p>
+                <motion.div 
+                  key={i} 
+                  whileHover={{ y: -2 }}
+                  className='border border-slate-100 rounded-[2rem] p-6 flex justify-between items-center bg-slate-50/50 hover:bg-white hover:border-indigo-100 hover:shadow-md transition-all group'
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-black text-indigo-500 border border-slate-100">
+                       {i + 1}
+                    </div>
+                    <div>
+                      <h4 className='font-black text-slate-900'>{enr.course_code} <span className="text-indigo-500 text-xs ml-1">Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</span></h4>
+                      <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1'>{enr._sectionDetails?.course_name || 'Generic Enrollment Record'}</p>
+                    </div>
                   </div>
                   <div className='flex items-center gap-3'>
-                    <span className='px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold'>Active</span>
                     <button 
                       onClick={() => handleDeleteEnrollment(enr.id)}
-                      className='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
+                      className='p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all'
                       title='Remove enrollment'
                     >
-                      <Trash2 className='w-4 h-4' />
+                      <Trash2 className='w-5 h-5' />
                     </button>
                   </div>
+                </motion.div>
+              )) : (
+                <div className="md:col-span-2 py-12 text-center">
+                   <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="w-8 h-8 text-slate-300" />
+                   </div>
+                   <p className='text-slate-400 font-bold text-sm uppercase tracking-widest'>No active enrollments found</p>
                 </div>
-              )) : <p className='text-gray-500 italic'>No current enrollments.</p>}
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'history' && (
-          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-            <div className='flex items-center justify-between mb-4'>
-              <h3 className='text-lg font-medium'>Past Courses</h3>
+          <div className='bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden'>
+            <div className='px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30'>
+              <div>
+                <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic History</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complete course records from previous semesters</p>
+              </div>
               <button 
                 onClick={startAddingCourse}
-                className='flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 text-sm font-bold transition-colors'
+                className='flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-100'
               >
                 <Plus className='w-4 h-4' />
                 Add Record
               </button>
             </div>
             <div className='overflow-x-auto'>
-              <table className='min-w-full divide-y divide-gray-200'>
-                <thead>
+              <table className='w-full'>
+                <thead className="bg-slate-50/50">
                   <tr>
-                    <th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Semester</th>
-                    <th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Course</th>
-                    <th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Grade</th>
-                    <th className='text-left py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Credits</th>
-                    <th className='text-right py-3 text-xs font-medium text-gray-500 uppercase tracking-wider'>Actions</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Semester</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Course Info</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Grade</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center'>Credits</th>
+                    <th className='text-right px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Actions</th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-200'>
+                <tbody className='divide-y divide-slate-50'>
                   {completedCourses.map((c, i) => (
-                    <tr key={i} className='hover:bg-gray-50'>
-                      <td className='py-4 text-sm'>{c.semester_code}</td>
-                      <td className='py-4 text-sm font-medium'>{c.course_code}</td>
-                      <td className='py-4 text-sm'>
-                        <span className='px-2 py-1 bg-gray-100 rounded text-gray-800 font-medium'>{c.grade}</span>
+                    <tr key={i} className='hover:bg-slate-50/50 group transition-colors'>
+                      <td className='px-8 py-5'>
+                        <span className="text-xs font-black text-slate-900">{c.semester_code}</span>
                       </td>
-                      <td className='py-4 text-sm'>{c.credits}</td>
-                      <td className='py-4 text-right'>
+                      <td className='px-8 py-5'>
+                        <div className="font-black text-sm text-slate-900">{c.course_code}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <div className={cn(
+                            "text-[9px] font-bold uppercase tracking-widest",
+                            ['F', 'W', 'I'].includes(c.grade) ? "text-slate-400" : "text-indigo-500"
+                          )}>
+                            {['F', 'W', 'I'].includes(c.grade) ? 'Attempted' : 'Passed'}
+                          </div>
+                          {completedCourses.filter(cc => cc.course_code.toUpperCase() === c.course_code.toUpperCase()).length > 1 && (
+                            <span className="text-[8px] bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter flex items-center gap-1">
+                              <RefreshCw className="w-2 h-2" /> Retake
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className='px-8 py-5'>
+                        <span className={cn(
+                          'px-3 py-1 rounded-lg font-black text-xs border',
+                          c.grade === 'F' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                        )}>{c.grade}</span>
+                      </td>
+                      <td className='px-8 py-5 text-center'>
+                        <span className="text-sm font-black text-slate-700">{c.credits}</span>
+                      </td>
+                      <td className='px-8 py-5 text-right'>
                         <button 
                           onClick={() => handleDeleteCourse(c.id)}
-                          className='p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors'
-                          title='Delete record'
+                          className='p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors'
                         >
                           <Trash2 className='w-4 h-4' />
                         </button>
@@ -494,7 +717,9 @@ export function UserDetails() {
                   ))}
                   {completedCourses.length === 0 && (
                     <tr>
-                      <td colSpan={5} className='py-8 text-center text-sm text-gray-500 italic'>No course history found.</td>
+                      <td colSpan={5} className='py-16 text-center'>
+                         <div className="text-slate-300 font-bold text-sm uppercase tracking-widest italic">No academic history records</div>
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -504,29 +729,44 @@ export function UserDetails() {
         )}
 
         {activeTab === 'tasks' && (
-          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-            <h3 className='text-lg font-medium mb-4'>Task History</h3>
-            <div className='space-y-3'>
+          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+            <h3 className='text-lg font-black text-slate-900 tracking-tight mb-8'>Student Task Ledger</h3>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               {tasks.length > 0 ? tasks.map((t, i) => (
-                <div key={i} className='flex items-center justify-between p-3 border rounded-lg'>
-                  <div className='flex items-center gap-3'>
-                    {t.is_completed ? <CheckCircle2 className='h-5 w-5 text-green-500' /> : t.is_missed ? <CheckCircle2 className='h-5 w-5 text-red-500' /> : <Clipboard className='h-5 w-5 text-yellow-500' />}
+                <div key={i} className='flex items-center justify-between p-5 border border-slate-100 rounded-[1.5rem] bg-slate-50/50 hover:bg-white hover:shadow-md transition-all'>
+                  <div className='flex items-center gap-4'>
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
+                      t.is_completed ? "bg-emerald-500 text-white" : t.is_missed ? "bg-rose-500 text-white" : "bg-amber-500 text-white"
+                    )}>
+                      {t.is_completed ? <CheckCircle2 className='h-5 w-5' /> : t.is_missed ? <AlertTriangle className='h-5 w-5' /> : <Clipboard className='h-5 w-5' />}
+                    </div>
                     <div>
-                      <p className='font-medium text-sm'>{t.title}</p>
-                      <p className='text-xs text-gray-500'>{t.course_code}</p>
+                      <p className='font-black text-slate-900 text-sm'>{t.title}</p>
+                      <p className='text-[10px] font-bold text-indigo-500 uppercase tracking-widest'>{t.course_code}</p>
                     </div>
                   </div>
-                  <span className='text-xs text-gray-400'>{new Date(t.due_date).toLocaleDateString()}</span>
+                  <div className="text-right">
+                    <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>{new Date(t.due_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                  </div>
                 </div>
-              )) : <p className='text-gray-500'>No tasks found.</p>}
+              )) : (
+                <div className="md:col-span-2 py-12 text-center text-slate-300 font-bold text-sm uppercase tracking-widest">
+                   Clean Task List
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === 'marks' && (
-          <div className='bg-white p-6 rounded-lg shadow-sm border border-gray-200'>
-            <h3 className='text-lg font-medium mb-4'>Course Marks & Breakdown</h3>
-            <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className='text-xl font-black text-slate-900 tracking-tight'>Portal Performance Data</h3>
+              <div className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">Live Grade Report</div>
+            </div>
+            
+            <div className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
               {marks.length > 0 ? marks.map((m: any, i) => {
                 const components = [
                   { key: 'mid', label: 'Midterm', obt: m.obt_mid, dist: m.dist_mid },
@@ -544,48 +784,62 @@ export function UserDetails() {
                 const activeComponents = components.filter(c => c.dist && c.dist > 0);
 
                 return (
-                  <div key={i} className='border border-gray-200 rounded-xl p-5 bg-slate-50 shadow-sm'>
-                    <div className='flex items-center justify-between border-b pb-3 mb-3'>
-                      <h4 className='font-bold text-gray-800 text-lg'>{m.course_code}</h4>
-                      <span className='text-xs font-semibold px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full'>{m.semester_code}</span>
+                  <motion.div 
+                    key={i} 
+                    whileHover={{ scale: 1.01 }}
+                    className='border border-slate-100 rounded-[2.5rem] overflow-hidden bg-slate-50/50 shadow-sm'
+                  >
+                    <div className='px-8 py-6 bg-white border-b border-slate-100 flex items-center justify-between'>
+                      <div>
+                        <h4 className='font-black text-slate-900 text-lg'>{m.course_code}</h4>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Graded Component Breakdown</p>
+                      </div>
+                      <span className='text-[10px] font-black px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 uppercase tracking-widest'>{m.semester_code}</span>
                     </div>
                     
-                    <div className='space-y-2 text-sm text-gray-700'>
-                      {/* Quizzes breakdown */}
+                    <div className='p-8 space-y-3'>
                       {m.dist_quiz && m.dist_quiz > 0 && (
-                        <div className='bg-white p-3 rounded-lg border border-gray-100 flex flex-col gap-1'>
-                          <div className='flex justify-between font-medium'>
-                            <span>Quizzes ({m.quiz_strategy === 'best_n' ? `Best ${m.quiz_n}` : m.quiz_strategy === 'average_n' ? `Avg of ${m.quiz_n}` : 'All'})</span>
-                            <span className='text-indigo-600 font-semibold'>{m.obt_quizzes?.length ? m.obt_quizzes.join(', ') : '-'} / {m.dist_quiz}</span>
+                        <div className='bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group hover:border-indigo-100 transition-all'>
+                          <div className='flex justify-between items-center'>
+                            <div>
+                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Quizzes ({m.quiz_strategy === 'best_n' ? `Best ${m.quiz_n}` : m.quiz_strategy === 'average_n' ? `Avg of ${m.quiz_n}` : 'All'})</span>
+                               <div className="flex gap-1">
+                                  {m.obt_quizzes?.map((q: any, qi: number) => (
+                                     <span key={qi} className="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[10px] font-black text-slate-900">{q}</span>
+                                  ))}
+                               </div>
+                            </div>
+                            <span className='text-lg font-black text-indigo-600'>{(m.obt_quizzes?.reduce((a:number,b:number)=>a+b,0)/ (m.obt_quizzes?.length || 1)).toFixed(1)} <span className="text-slate-300 text-xs font-bold">/ {m.dist_quiz}</span></span>
                           </div>
                         </div>
                       )}
 
-                      {/* Short Quizzes breakdown */}
-                      {m.dist_short_quiz && m.dist_short_quiz > 0 && (
-                        <div className='bg-white p-3 rounded-lg border border-gray-100 flex flex-col gap-1'>
-                          <div className='flex justify-between font-medium'>
-                            <span>Short Quizzes ({m.marks_data?.short_quiz_strategy === 'best_one' ? 'Best 1' : 'Sum all'})</span>
-                            <span className='text-indigo-600 font-semibold'>{m.obt_short_quizzes?.length ? m.obt_short_quizzes.join(', ') : '-'} / {m.dist_short_quiz}</span>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {activeComponents.map((comp, idx) => (
+                          <div key={idx} className='bg-white p-4 rounded-2xl border border-slate-100 flex flex-col justify-center shadow-sm group hover:border-indigo-100 transition-all'>
+                            <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1'>{comp.label}</span>
+                            <div className="flex items-baseline gap-1">
+                               <span className='text-lg font-black text-slate-900'>{comp.obt ?? '-'}</span>
+                               <span className="text-xs font-bold text-slate-300">/ {comp.dist}</span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Other dynamic components */}
-                      {activeComponents.map((comp, idx) => (
-                        <div key={idx} className='bg-white p-3 rounded-lg border border-gray-100 flex justify-between items-center'>
-                          <span className='font-medium text-gray-600'>{comp.label}</span>
-                          <span className='text-indigo-600 font-semibold'>{comp.obt ?? '-'} / {comp.dist}</span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  </motion.div>
                 );
-              }) : <p className='text-gray-500'>No detailed marks available.</p>}
+              }) : (
+                <div className="xl:col-span-2 py-24 text-center">
+                   <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                      <GraduationCap className="w-10 h-10 text-slate-200" />
+                   </div>
+                   <p className="text-slate-300 font-bold text-sm uppercase tracking-widest">No graded performance data synced yet</p>
+                </div>
+              )}
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       {isEditingProfile && (
         <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
@@ -688,6 +942,18 @@ export function UserDetails() {
                   >
                     <option value='tri_semester'>Tri-Semester</option>
                     <option value='bi_semester'>Bi-Semester</option>
+                  </select>
+                </div>
+                <div className='space-y-1'>
+                  <label className='text-xs font-bold text-gray-500 uppercase'>Onboarding Status</label>
+                  <select 
+                    value={editForm.onboarding_status || 'registered'} 
+                    onChange={e => setEditForm({...editForm, onboarding_status: e.target.value})}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                  >
+                    <option value='registered'>Registered</option>
+                    <option value='course_history'>Course History</option>
+                    <option value='completed'>Completed</option>
                   </select>
                 </div>
               </div>

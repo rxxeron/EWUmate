@@ -39,7 +39,7 @@ class CourseProgressCard extends StatelessWidget {
       totalObtained += sqArr.fold(0.0, (sum, item) => sum + (item as num).toDouble());
     }
 
-    final String percentageText = totalObtained.toStringAsFixed(1) + '%';
+    final String percentageText = '${totalObtained.toStringAsFixed(1)}%';
     
     // Logic for grade badge (placeholder logic based on percentage)
     String grade = 'F';

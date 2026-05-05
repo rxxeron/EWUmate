@@ -53,16 +53,18 @@ class _CourseProgressDetailScreenState
     _tabController = TabController(length: 2, vsync: this);
 
     _quizStrategy = _data['quiz_strategy'] ?? 'best_one';
-    if (_quizStrategy == 'best_n')
+    if (_quizStrategy == 'best_n') {
       _quizStrategy = 'sum_all'; // Handle legacy data
+    }
     _quizNCtrl = TextEditingController(
       text: _data['quiz_n']?.toString() ?? '1',
     );
 
     Map<String, dynamic> extra = _data['marks_data'] ?? {};
     _shortQuizStrategy = extra['short_quiz_strategy'] ?? 'best_one';
-    if (_shortQuizStrategy == 'best_n')
+    if (_shortQuizStrategy == 'best_n') {
       _shortQuizStrategy = 'sum_all'; // Handle legacy data
+    }
     _shortQuizNCtrl = TextEditingController(
       text: _data['short_quiz_n']?.toString() ?? '1',
     );
@@ -131,13 +133,15 @@ class _CourseProgressDetailScreenState
 
     final List<dynamic>? qArr = _data['obt_quizzes'];
     if (qArr != null && qArr.isNotEmpty) {
-      for (var q in qArr)
+      for (var q in qArr) {
         obtQuizzesCtrls.add(TextEditingController(text: q.toString()));
+      }
     }
     final List<dynamic>? sqArr = _data['obt_short_quizzes'];
     if (sqArr != null && sqArr.isNotEmpty) {
-      for (var sq in sqArr)
+      for (var sq in sqArr) {
         obtShortQuizzesCtrls.add(TextEditingController(text: sq.toString()));
+      }
     }
 
     _tabController.addListener(_handleTabChange);
@@ -778,7 +782,7 @@ class _CourseProgressDetailScreenState
               ],
             ),
           );
-        }).toList(),
+        }),
 
         // Add new mark field
         Row(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/course_metadata.dart';
-import '../../../../core/models/course_section.dart';
 import '../../../../core/models/profile.dart';
 import '../../../../core/utils/course_utils.dart';
 import '../../../../core/repositories/course_repository.dart';
@@ -219,7 +218,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                             style: TextStyle(color: Colors.grey[400], fontSize: 13, height: 1.3),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 );

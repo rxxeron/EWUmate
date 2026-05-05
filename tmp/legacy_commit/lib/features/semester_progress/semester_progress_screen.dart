@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/repositories/auth_repository.dart';
-import '../semester_progress/semester_summary_providers.dart';
 import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';

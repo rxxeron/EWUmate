@@ -148,9 +148,9 @@ class DashboardRepository {
         String title = (standardEvent['title'] ?? standardEvent['name'] ?? '')
             .toString()
             .toLowerCase();
-        if (title.contains('regular sunday'))
+        if (title.contains('regular sunday')) {
           stdDay = 'Sunday';
-        else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday'))
           stdDay = 'Monday';
         else if (title.contains('regular tuesday'))
           stdDay = 'Tuesday';
@@ -174,9 +174,9 @@ class DashboardRepository {
         String title = (phrmEvent['title'] ?? phrmEvent['name'] ?? '')
             .toString()
             .toLowerCase();
-        if (title.contains('regular sunday'))
+        if (title.contains('regular sunday')) {
           phrmDay = 'Sunday';
-        else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday'))
           phrmDay = 'Monday';
         else if (title.contains('regular tuesday'))
           phrmDay = 'Tuesday';
@@ -273,15 +273,17 @@ class DashboardRepository {
 
   bool _isActualHoliday(Map<String, dynamic> event, String lowerTitle) {
     if (event['is_holiday'] == true ||
-        event['type']?.toString().toLowerCase() == 'holiday')
+        event['type']?.toString().toLowerCase() == 'holiday') {
       return true;
+    }
     if (lowerTitle.contains('holiday') ||
         lowerTitle.contains('vacation') ||
         lowerTitle.contains('break') ||
         lowerTitle.contains('leave') ||
         lowerTitle.contains('off day') ||
-        lowerTitle.contains('no classes'))
+        lowerTitle.contains('no classes')) {
       return true;
+    }
     return false;
   }
 
@@ -577,9 +579,9 @@ class DashboardRepository {
           String title = (stdHol['title'] ?? stdHol['name'] ?? '')
               .toString()
               .toLowerCase();
-          if (title.contains('regular sunday'))
+          if (title.contains('regular sunday')) {
             stdDay = 'Sunday';
-          else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday'))
             stdDay = 'Monday';
           else if (title.contains('regular tuesday'))
             stdDay = 'Tuesday';
@@ -601,9 +603,9 @@ class DashboardRepository {
           String title = (phrmHol['title'] ?? phrmHol['name'] ?? '')
               .toString()
               .toLowerCase();
-          if (title.contains('regular sunday'))
+          if (title.contains('regular sunday')) {
             phrmDay = 'Sunday';
-          else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday'))
             phrmDay = 'Monday';
           else if (title.contains('regular tuesday'))
             phrmDay = 'Tuesday';
@@ -627,9 +629,9 @@ class DashboardRepository {
               title.contains('regular wednesday') ||
               title.contains('regular thursday');
           if (isSwap || _isActualHoliday(stdHol, title)) {
-            if (title.contains('regular sunday'))
+            if (title.contains('regular sunday')) {
               phrmDay = 'Sunday';
-            else if (title.contains('regular monday'))
+            } else if (title.contains('regular monday'))
               phrmDay = 'Monday';
             else if (title.contains('regular tuesday'))
               phrmDay = 'Tuesday';

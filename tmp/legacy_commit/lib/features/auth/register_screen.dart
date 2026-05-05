@@ -7,7 +7,6 @@ import 'dart:typed_data';
 import '../../core/services/storage_service.dart';
 import '../../core/widgets/glass_kit.dart';
 
-import 'auth_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {

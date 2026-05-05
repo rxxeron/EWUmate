@@ -16,8 +16,6 @@ class ScholarshipRepository {
       final response = await _supabase
           .from('scholarship_policies')
           .select();
-
-      if (response == null) return null;
       
       final policies = (response as List).map((e) => ScholarshipRule.fromMap(e)).toList();
       

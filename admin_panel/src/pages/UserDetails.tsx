@@ -367,8 +367,6 @@ export function UserDetails() {
           </div>
         </div>
         
-        </div>
-        
         <div className='flex flex-wrap sm:flex-nowrap gap-2 w-full md:w-auto'>
           <button 
             onClick={startEditing} 

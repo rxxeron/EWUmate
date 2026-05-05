@@ -49,21 +49,29 @@ class ProgressRepository {
   }
 
   Future<void> updateCourseMarks(SemesterCourseMarks marks) async {
+    final data = marks.toJson();
+    // Normalize course code
+    data['course_code'] = marks.courseCode.toUpperCase().replaceAll(' ', '');
+    // Remove temporary ID to allow upsert logic to use unique constraint
+    if (data['id'] != null && data['id'].toString().startsWith('new_')) {
+      data.remove('id');
+    }
+
     await _supabase
         .from('semester_course_marks')
-        .update(marks.toJson())
-        .eq('id', marks.id);
+        .upsert(data, onConflict: 'user_id,semester_code,course_code');
 
     // Update Cache to prevent "All data gone" flicker
     final cacheKey = 'marks_${marks.userId}_${marks.semesterCode}';
     final cached = _cache.getMapData('semester_progress_box', cacheKey) ?? {'data': []};
     final list = List<Map<String, dynamic>>.from(cached['data'] ?? []);
     
-    final index = list.indexWhere((m) => m['course_code'] == marks.courseCode);
+    final normalizedCode = data['course_code'];
+    final index = list.indexWhere((m) => (m['course_code'] as String).toUpperCase().replaceAll(' ', '') == normalizedCode);
     if (index != -1) {
-      list[index] = marks.toJson();
+      list[index] = data;
     } else {
-      list.add(marks.toJson());
+      list.add(data);
     }
     _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
   }

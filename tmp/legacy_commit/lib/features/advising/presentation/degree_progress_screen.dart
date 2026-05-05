@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ewumate/core/repositories/auth_repository.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
-import 'package:ewumate/core/utils/grade_helper.dart';
 
 class DegreeProgressScreen extends ConsumerStatefulWidget {
   const DegreeProgressScreen({super.key});
@@ -416,7 +414,7 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                               child: Row(
                                 children: [
                                   Expanded(flex: 3, child: Text(data['code'] ?? 'Unknown', style: const TextStyle(color: Colors.white, fontSize: 13))),
-                                  Expanded(flex: 1, child: Text('${courseCredits.toStringAsFixed(1)}', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 13))),
+                                  Expanded(flex: 1, child: Text(courseCredits.toStringAsFixed(1), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, fontSize: 13))),
                                   Expanded(flex: 1, child: Container(
                                     padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
                                     decoration: BoxDecoration(
@@ -427,7 +425,7 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),

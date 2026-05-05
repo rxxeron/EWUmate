@@ -51,6 +51,11 @@ class SyncService {
               data.remove('id');
             }
 
+            // Normalize course code
+            if (data['course_code'] != null) {
+              data['course_code'] = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
+            }
+
             await _supabase.from('semester_course_marks').upsert(
               data,
               onConflict: 'user_id,semester_code,course_code'

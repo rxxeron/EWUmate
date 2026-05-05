@@ -56,17 +56,37 @@ class SemesterProgressRepository {
           .from('semester_course_marks')
           .select('*')
           .eq('user_id', userId)
-          .eq('semester_code', semesterCode)
-          .inFilter('course_code', enrolledCourseCodes);
+          .eq('semester_code', semesterCode);
       
       final marksData = List<Map<String, dynamic>>.from(marksRes);
 
+      // 3. Merge pending mutations from sync queue to prevent race conditions
+      final queue = _cache.getSyncQueue(userId);
+      final pendingMarks = queue
+          .where((item) => item['action'] == 'save_course_marks' && item['semesterCode'] == semesterCode)
+          .map((item) => Map<String, dynamic>.from(item['data']))
+          .toList();
+
+      for (var pending in pendingMarks) {
+        final code = (pending['course_code'] as String).toUpperCase().replaceAll(' ', '');
+        final index = marksData.indexWhere((m) => (m['course_code'] as String).toUpperCase().replaceAll(' ', '') == code);
+        if (index != -1) {
+          marksData[index] = {...marksData[index], ...pending};
+        } else {
+          marksData.add(pending);
+        }
+      }
+
+      // 4. Build final list, prioritizing enrollments but including any existing marks
       List<Map<String, dynamic>> progressData = [];
+      
+      // First, add all enrolled courses
       for (var code in enrolledCourseCodes) {
+        final normalizedCode = code.toUpperCase().replaceAll(' ', '');
         final existingMark = marksData.firstWhere(
-          (m) => m['course_code'] == code, 
+          (m) => (m['course_code'] as String).toUpperCase().replaceAll(' ', '') == normalizedCode, 
           orElse: () => <String, dynamic>{
-            'id': 'new_$code', 
+            'id': 'new_$normalizedCode', 
             'user_id': userId,
             'semester_code': semesterCode,
             'course_code': code,
@@ -74,6 +94,14 @@ class SemesterProgressRepository {
           }
         );
         progressData.add(existingMark);
+      }
+
+      // Second, add any extra marks that aren't in enrollments (to prevent "disappearing" data)
+      for (var mark in marksData) {
+        final normalizedCode = (mark['course_code'] as String).toUpperCase().replaceAll(' ', '');
+        if (!progressData.any((p) => (p['course_code'] as String).toUpperCase().replaceAll(' ', '') == normalizedCode)) {
+          progressData.add(mark);
+        }
       }
       
       // Update Cache
@@ -92,6 +120,11 @@ class SemesterProgressRepository {
       // We must remove the temporary 'new_' ID if it exists
       if (data['id'] != null && data['id'].toString().startsWith('new_')) {
         data.remove('id');
+      }
+
+      // Normalize course code
+      if (data['course_code'] != null) {
+        data['course_code'] = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
       }
 
       final res = await _supabase.from('semester_course_marks')
@@ -120,7 +153,8 @@ class SemesterProgressRepository {
     final cached = _cache.getMapData('semester_progress_box', cacheKey) ?? {'data': []};
     final list = List<Map<String, dynamic>>.from(cached['data'] ?? []);
     
-    final index = list.indexWhere((m) => m['course_code'] == data['course_code']);
+    final normalizedCode = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
+    final index = list.indexWhere((m) => (m['course_code'] as String).toUpperCase().replaceAll(' ', '') == normalizedCode);
     if (index != -1) {
       // Merge new data with existing to preserve fields like 'id' if 'data' is partial
       list[index] = {...list[index], ...data};

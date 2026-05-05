@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ewumate/core/models/course_metadata.dart';
-import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/utils/course_utils.dart';
 import '../../../core/repositories/course_repository.dart';
-import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/widgets/animations/skeleton_loader.dart';
 import 'widgets/course_card.dart';
@@ -295,7 +293,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
         (c) => CourseUtils.areEquivalent(c.code, code), 
         orElse: () => results.isNotEmpty ? results.first : null as dynamic
       );
-      if (match != null) metas.add(match);
+      metas.add(match);
     }
     return metas;
   }

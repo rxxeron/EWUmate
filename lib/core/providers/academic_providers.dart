@@ -20,16 +20,27 @@ final academicStateProvider = FutureProvider<AcademicState?>((ref) async {
 
   final track = profile.track ?? 'tri_semester';
   
+  final cachedSem = ref.read(cacheServiceProvider).getMapData('dashboard_box', '${user.id}_academicState');
+  if (cachedSem != null) {
+    final updatedAtStr = cachedSem['_cache_updated_at'] as String?;
+    if (updatedAtStr != null) {
+      final updatedAt = DateTime.tryParse(updatedAtStr);
+      if (updatedAt != null && DateTime.now().difference(updatedAt).inHours < 24) {
+        return AcademicState.fromJson(cachedSem);
+      }
+    }
+  }
+
   try {
     final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track);
     final stateDict = {
       ...semesterData,
       'track': track,
+      '_cache_updated_at': DateTime.now().toIso8601String(),
     };
     ref.read(cacheServiceProvider).setMapData('dashboard_box', '${user.id}_academicState', stateDict);
     return AcademicState.fromJson(stateDict);
   } catch (e) {
-    final cachedSem = ref.read(cacheServiceProvider).getMapData('dashboard_box', '${user.id}_academicState');
     if (cachedSem != null) {
       return AcademicState.fromJson(cachedSem);
     }

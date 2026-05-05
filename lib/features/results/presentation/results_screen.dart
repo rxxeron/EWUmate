@@ -269,7 +269,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                 ],
               ),
               ...courses.map((c) {
-                if (c == null || c is! Map)
+                if (c == null || c is! Map) {
                   return const TableRow(
                     children: [
                       SizedBox(),
@@ -280,6 +280,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                       SizedBox(),
                     ],
                   );
+                }
 
                 final double credits =
                     double.tryParse(c['credits']?.toString() ?? '0') ?? 0.0;
@@ -326,7 +327,7 @@ class _ResultsScreenState extends ConsumerState<ResultsScreen> {
                     ),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ),
           const SizedBox(height: 8),

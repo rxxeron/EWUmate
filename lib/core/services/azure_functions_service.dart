@@ -44,7 +44,7 @@ class AzureFunctionsService {
       'user_id': userId,
       'semester': semester,
       'courses': courses,
-      if (filters != null) 'filters': filters,
+      'filters': ?filters,
     });
     
     // The Python function returns 'generationId' (camelCase)

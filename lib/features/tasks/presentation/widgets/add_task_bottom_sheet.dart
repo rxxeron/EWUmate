@@ -154,7 +154,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
       if (finalTitle.isEmpty) {
         final typeStr = selectedType ?? "Task";
         final courseStr = selectedCourse ?? "General";
-        finalTitle = typeStr + " - " + courseStr;
+        finalTitle = "$typeStr - $courseStr";
       }
 
       DateTime? finalDueDate;
@@ -252,7 +252,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
             _isLoadingCourses 
               ? const Center(child: CircularProgressIndicator())
               : DropdownButtonFormField<String>(
-                  value: selectedCourse,
+                  initialValue: selectedCourse,
                   dropdownColor: const Color(0xFF1E1E32),
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
@@ -286,7 +286,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
             const SizedBox(height: 16),
 
             DropdownButtonFormField<String>(
-              value: selectedType,
+              initialValue: selectedType,
               dropdownColor: const Color(0xFF1E1E32),
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(

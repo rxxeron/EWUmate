@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { BookOpen, Search, ChevronLeft, ChevronRight, Calendar, Filter, Zap } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import type { CourseSection, Semester } from '../types';
 import { Skeleton } from '../components/Skeleton';
-import { cn } from '../lib/utils';
 
 export function CoursesList() {
   const [searchParams, setSearchParams] = useSearchParams();

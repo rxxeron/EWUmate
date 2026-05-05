@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, X, Filter } from 'lucide-react';
+import { Calendar as CalendarIcon, Plus, Trash2, Loader2, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '../types';

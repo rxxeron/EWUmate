@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/scaffold_provider.dart';
-import 'main_shell.dart';
 
 class EWUmateAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;

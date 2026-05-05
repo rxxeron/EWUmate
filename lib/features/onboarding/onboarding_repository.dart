@@ -334,7 +334,7 @@ _ref.invalidate(profileProvider);
     final List<Map<String, dynamic>> completedRows = [];
 
     // Helper for basic grade point calculation (The Edge Function will final-verify this)
-    double _simpleGradePoint(String grade) {
+    double simpleGradePoint(String grade) {
       switch (grade.toUpperCase()) {
         case 'A':
           return 4.0;
@@ -378,7 +378,7 @@ _ref.invalidate(profileProvider);
           'course_code': code,
           'semester_code': semester,
           'grade': grade,
-          'grade_point': _simpleGradePoint(grade),
+          'grade_point': simpleGradePoint(grade),
           'credits': creditsMap[code] ?? 3.0,
         });
       });

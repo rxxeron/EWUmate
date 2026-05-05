@@ -136,26 +136,30 @@ final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((re
   final activeSem = await ref.watch(currentSemCodeProvider.future);
   if (activeSem.isEmpty) return [];
   
-  final profileAsync = ref.watch(userProfileProvider);
-  final completedCourseCodes = profileAsync.maybeWhen(
-    data: (profile) {
-      if (profile == null) return <String>{};
-      final history = profile.pastHistory;
-      return history.where((item) {
-        if (item is! Map) return false;
-        final grade = (item['grade'] as String?)?.toUpperCase() ?? '';
-        // Only exclude if they have a real passing grade
-        // If it's W, F, R, or empty, they might need to retake it
-        return grade.isNotEmpty && 
-               grade != 'W' && 
-               grade != 'F' && 
-               grade != 'R' && 
-               grade != 'I' &&
-               grade != 'X';
-      }).map((item) => (item['course_code'] as String?)?.toUpperCase() ?? '').toSet();
-    },
-    orElse: () => <String>{},
-  );
+  final completedCourseCodesStr = ref.watch(userProfileProvider.select((profileAsync) {
+    return profileAsync.maybeWhen(
+      data: (profile) {
+        if (profile == null) return '';
+        final history = profile.pastHistory;
+        final codes = history.where((item) {
+          if (item is! Map) return false;
+          final grade = (item['grade'] as String?)?.toUpperCase() ?? '';
+          // Only exclude if they have a real passing grade
+          // If it's W, F, R, or empty, they might need to retake it
+          return grade.isNotEmpty && 
+                 grade != 'W' && 
+                 grade != 'F' && 
+                 grade != 'R' && 
+                 grade != 'I' &&
+                 grade != 'X';
+        }).map((item) => (item['course_code'] as String?)?.toUpperCase() ?? '').toList();
+        codes.sort();
+        return codes.join(',');
+      },
+      orElse: () => '',
+    );
+  }));
+  final completedCourseCodes = completedCourseCodesStr.split(',').where((e) => e.isNotEmpty).toSet();
 
   final cache = ref.watch(cacheServiceProvider);
   

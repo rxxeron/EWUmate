@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
@@ -72,9 +71,22 @@ class CacheService {
   Future<void> cacheDashboardSchedule(
     String userId,
     Map<String, dynamic> data,
-  ) => setMapData(_dashboardBox, '${userId}_schedule', data);
+  ) {
+    data['_cache_updated_at'] = DateTime.now().toIso8601String();
+    return setMapData(_dashboardBox, '${userId}_schedule', data);
+  }
+
   Map<String, dynamic>? getCachedDashboardSchedule(String userId) =>
       getMapData(_dashboardBox, '${userId}_schedule');
+
+  Future<void> invalidateDashboardSchedule(String userId) async {
+    try {
+      final box = Hive.box(_dashboardBox);
+      await box.delete('${userId}_schedule');
+    } catch (e) {
+      if (kDebugMode) debugPrint('[CacheService] invalidateDashboardSchedule error: $e');
+    }
+  }
 
   Future<void> clearAll() async {
     await Hive.box(_profileBox).clear();

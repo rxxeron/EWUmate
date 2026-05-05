@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/error_utils.dart';
 import '../../core/utils/version_utils.dart';
 import '../../core/utils/refresh_utils.dart';
@@ -15,7 +15,6 @@ import '../../core/utils/refresh_utils.dart';
 
 
 import '../../core/widgets/glass_kit.dart';
-import '../../core/widgets/main_shell.dart';
 import '../../core/widgets/sky_animation.dart';
 
 
@@ -34,7 +33,6 @@ import '../../core/utils/time_utils.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
 import 'package:home_widget/home_widget.dart';
-import 'schedule_widget_render.dart';
 
 
 import '../../core/widgets/ewumate_app_bar.dart';
@@ -47,7 +45,6 @@ import '../auth/auth_providers.dart';
 import '../../core/models/task.dart';
 import '../tasks/presentation/widgets/add_task_bottom_sheet.dart';
 import '../../core/repositories/task_repository.dart';
-import '../../core/repositories/course_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
 
@@ -87,7 +84,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _refreshDashboard();
     _showDashboardTutorial();
 
-    final _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    final refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) _refreshDashboard(isSilent: true);
     });
   }
@@ -116,9 +113,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
+      final profile = ref.read(profileProvider).value;
+      
       // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
       final results = await Future.wait<dynamic>([
-        ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(code, _effectiveDate, track: track),
+        ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(
+          code, 
+          _effectiveDate, 
+          track: track,
+          profileUpdatedAt: profile?.updatedAt,
+        ),
         _supabase.from('enrollments').select('course_code').eq('user_id', user!.id).eq('semester_code', code),
         _supabase.from('app_config').select('value, latest_version').eq('key', 'update_info').maybeSingle(),
         PackageInfo.fromPlatform(),
@@ -143,19 +147,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _updateHomeWidget(dashboardData);
       }
       
-      // 4. Handle App Update Config
+      // 4. Handle App Update Config (v1.0.11 Force Update logic)
       try {
         final currentVersion = versionInfo.version;
         if (updateRes != null) {
           final val = updateRes['value'] as Map<String, dynamic>?;
           final latestVersion = updateRes['latest_version']?.toString() ?? "";
+          final isForceUpdate = val?['is_force_update'] == true;
           
           if (val != null && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
              final url = val['download_url']?.toString() ?? '';
-             setState(() {
-               _showUpdateBanner = true;
-               _downloadUrl = url;
-             });
+             
+             if (isForceUpdate && mounted) {
+               // Show non-dismissible blocking dialog
+               showDialog(
+                 context: context,
+                 barrierDismissible: false,
+                 builder: (context) => WillPopScope(
+                   onWillPop: () async => false,
+                   child: AlertDialog(
+                     backgroundColor: const Color(0xFF1E293B),
+                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                     title: const Text("Update Required", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                     content: const Text(
+                       "A critical update is required to keep EWUmate running smoothly and save server resources. Please update to the latest version to continue.",
+                       style: TextStyle(color: Colors.white70),
+                     ),
+                     actions: [
+                       TextButton(
+                         onPressed: () => url_launcher.launchUrl(Uri.parse(url), mode: url_launcher.LaunchMode.externalApplication),
+                         child: const Text("UPDATE NOW", style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                       ),
+                     ],
+                   ),
+                 ),
+               );
+             } else {
+               setState(() {
+                 _showUpdateBanner = true;
+                 _downloadUrl = url;
+               });
+             }
           } else {
              setState(() => _showUpdateBanner = false);
           }
@@ -165,10 +197,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
 
       // 5. Check Advising Banner for NEXT semester
-      if (nextSemesterCode != null) {
-        _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
-      }
-    } on PostgrestException catch (e) {
+      _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
+        } on PostgrestException catch (e) {
       if (e.code == '401' || e.message.contains('JWT expired')) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

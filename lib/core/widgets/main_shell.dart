@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/dashboard/dashboard_screen.dart';
-import '../router/app_router.dart';
 import 'glass_kit.dart';
 import '../providers/scaffold_provider.dart';
 import 'app_drawer.dart';

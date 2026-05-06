@@ -42,8 +42,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/profile-setup', builder: (context, state) => const ProfileSetupScreen()),
       GoRoute(path: '/onboarding/program', builder: (context, state) => const ProgramSelectionScreen()),
       GoRoute(path: '/onboarding/course-history', builder: (context, state) {
-        final isEdit = state.extra as bool? ?? false;
-        return CourseHistoryScreen(isEditMode: isEdit);
+        final extra = state.extra as Map<String, dynamic>?;
+        final isEdit = extra?['isEditMode'] as bool? ?? false;
+        final admitted = extra?['admittedSemester'] as String?;
+        return CourseHistoryScreen(isEditMode: isEdit, admittedSemester: admitted);
       }),
 
       // Main Pages wrapped in a single ShellRoute

@@ -9,6 +9,8 @@ import '../services/cache_service.dart';
 import 'auth_repository.dart';
 
 import 'package:ewumate/core/providers/academic_providers.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
+
 
 part 'progress_repository.g.dart';
 
@@ -23,11 +25,13 @@ class ProgressRepository {
     String semesterCode,
   ) async {
     try {
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      final spaceSem = semesterCode.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
       final response = await _supabase
           .from('semester_course_marks')
           .select()
           .eq('user_id', userId)
-          .eq('semester_code', semesterCode);
+          .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]);
 
       final marks = (response as List)
           .map((e) => SemesterCourseMarks.fromJson(e))
@@ -74,6 +78,8 @@ class ProgressRepository {
       list.add(data);
     }
     _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
+    // Trigger background credit recalculation
+    _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
   }
 
   Future<List<SemesterSummary>> getSemesterSummaries(String userId) async {

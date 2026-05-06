@@ -54,6 +54,7 @@ export function PortalAutomation() {
   const [isAzureLive, setIsAzureLive] = useState<'checking' | 'live' | 'down'>('checking');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [syncHistory, setSyncHistory] = useState<SyncLog[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function init() {
@@ -392,6 +393,15 @@ export function PortalAutomation() {
     doc.save(`EWU_Catalog_${semToUse.replace(' ', '_')}.pdf`);
   };
 
+  const filteredData = scrapedData.filter(item => {
+    const search = searchTerm.toLowerCase();
+    return (
+      item.course_code.toLowerCase().includes(search) ||
+      item.course_name.toLowerCase().includes(search) ||
+      item.faculty_initials.toLowerCase().includes(search)
+    );
+  });
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans animate-in fade-in duration-500">
       <div className="max-w-[1400px] mx-auto space-y-6">
@@ -513,6 +523,20 @@ export function PortalAutomation() {
                 <div className="p-3 bg-indigo-600 rounded-xl shadow-lg"><TableIcon className="w-5 h-5 text-white" /></div>
                 <h3 className="text-xl font-black text-slate-900">Extraction Results</h3>
               </div>
+              
+              <div className="flex-1 max-w-md mx-4">
+                <div className="relative">
+                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                  <input
+                    type="text"
+                    placeholder="Search by course code, name, or faculty..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+
               <div className="flex items-center gap-3">
                 <button onClick={handleGeneratePDF} className="px-5 py-3.5 bg-violet-500 hover:bg-violet-600 rounded-2xl text-xs font-black text-white transition-all shadow-lg active:scale-95 flex items-center gap-2">
                   <FileText className="w-4 h-4" /> PDF
@@ -536,7 +560,7 @@ export function PortalAutomation() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {scrapedData.map((item, idx) => {
+                    {filteredData.map((item, idx) => {
                       const distinctTypes = Array.from(new Set(item.schedule_data?.map((s) => s.type || 'Theory')));
                       return (
                         <tr key={idx} className="hover:bg-slate-50 transition-colors group text-[11px]">

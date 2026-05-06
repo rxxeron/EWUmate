@@ -26,12 +26,12 @@ final notificationRepositoryProvider =
 // ignore: unused_element
 typedef NotificationRepositoryRef =
     AutoDisposeProviderRef<NotificationRepository>;
-String _$userNotificationsHash() => r'c3187b727ba1e30a6136e0e1adf7c9c2ddff66bb';
+String _$userNotificationsHash() => r'7316a30aac64b523a2a88d1b393c46cd89403e86';
 
 /// See also [userNotifications].
 @ProviderFor(userNotifications)
 final userNotificationsProvider =
-    AutoDisposeStreamProvider<List<model.Notification>>.internal(
+    StreamProvider<List<model.Notification>>.internal(
       userNotifications,
       name: r'userNotificationsProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -43,7 +43,6 @@ final userNotificationsProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef UserNotificationsRef =
-    AutoDisposeStreamProviderRef<List<model.Notification>>;
+typedef UserNotificationsRef = StreamProviderRef<List<model.Notification>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

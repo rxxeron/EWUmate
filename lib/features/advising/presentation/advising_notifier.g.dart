@@ -6,7 +6,7 @@ part of 'advising_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$advisingNotifierHash() => r'a5ed892206be7997d770f1e51e3cc49f16af3934';
+String _$advisingNotifierHash() => r'6e3361948662cfcb3c311e7ae6c8405592ca2f30';
 
 /// See also [AdvisingNotifier].
 @ProviderFor(AdvisingNotifier)

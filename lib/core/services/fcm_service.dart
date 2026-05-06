@@ -1,23 +1,32 @@
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:go_router/go_router.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
+import '../repositories/notification_repository.dart';
+import '../models/notification.dart' as model;
 
-final fcmServiceProvider = Provider<FCMService>((ref) => FCMService());
+final fcmServiceProvider = Provider<FCMService>((ref) => FCMService(ref));
 
 class FCMService {
+  final Ref _ref;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
+  FCMService(this._ref);
+
   Future<void> initialize() async {
+    // 0. Register Background Handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
     // 1. Setup Local Notifications for Foreground and Channel Creation
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
     const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
@@ -31,18 +40,13 @@ class FCMService {
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         final payload = response.payload;
         if (payload != null && payload.isNotEmpty) {
-          if (kDebugMode) debugPrint('[FCM] Foreground Local Notification tapped with payload: $payload');
-          _handleRouteAuth(payload);
+          try {
+            final data = jsonDecode(payload);
+            _handleIncomingAction(data['title'], data['body'], data['url']);
+          } catch (_) {}
         }
       },
     );
-
-    // Create high importance channel for Android heads-up + vibration
-    final Int64List vibrationPattern = Int64List(4);
-    vibrationPattern[0] = 0;
-    vibrationPattern[1] = 500;
-    vibrationPattern[2] = 200;
-    vibrationPattern[3] = 500;
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'ewumate_high_priority_reminders_v1', 
@@ -55,16 +59,13 @@ class FCMService {
 
     final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await androidImplementation?.createNotificationChannel(channel);
-    await androidImplementation?.requestNotificationsPermission();
 
-    // Tell iOS to show foreground notifications directly via Firebase
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Request permission from OS
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
       badge: true,
@@ -72,34 +73,39 @@ class FCMService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      if (kDebugMode) debugPrint('[FCM] User granted permission');
-
-      // Registration token handling
       final token = await _messaging.getToken();
       if (token != null) {
         await _saveTokenToDatabase(token);
       }
       _messaging.onTokenRefresh.listen(_saveTokenToDatabase);
 
-      // Handle foreground notifications manually via Local Notifications
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        if (kDebugMode) debugPrint('[FCM] Foreground message received: ${message.notification?.title}');
-        
         RemoteNotification? notification = message.notification;
-        AndroidNotification? android = message.notification?.android;
-
-        if (notification != null && android != null && !kIsWeb) {
+        if (notification != null) {
           final routingUrl = message.data['url'] as String?;
           
+          // Save locally
+          try {
+            final userId = _supabase.auth.currentUser?.id;
+            if (userId != null) {
+              final newNotif = model.Notification(
+                id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                userId: userId,
+                title: notification.title ?? 'No Title',
+                body: notification.body ?? 'No Message',
+                type: message.data['type'] ?? 'system',
+                isRead: false,
+                createdAt: message.sentTime ?? DateTime.now(),
+                payload: message.data.isNotEmpty ? message.data : null,
+              );
+              _ref.read(notificationRepositoryProvider).saveLocalNotification(newNotif);
+            }
+          } catch (_) {}
+
           _localNotifications.show(
             id: notification.hashCode,
             title: notification.title,
             body: notification.body,
-            payload: jsonEncode({
-              'title': notification.title,
-              'body': notification.body,
-              'url': routingUrl,
-            }), 
             notificationDetails: NotificationDetails(
               android: AndroidNotificationDetails(
                 channel.id,
@@ -108,55 +114,44 @@ class FCMService {
                 icon: '@mipmap/ic_launcher',
                 importance: channel.importance,
                 priority: Priority.high,
-                enableVibration: true,
-                vibrationPattern: vibrationPattern,
-                playSound: true,
               ),
-              iOS: const DarwinNotificationDetails(
-                presentAlert: true,
-                presentBadge: true,
-                presentSound: true,
-              )
+              iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
             ),
+            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl}),
           );
         }
       });
 
-      // Handle clicks when app is Background
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        if (kDebugMode) debugPrint('[FCM] Background message tapped: ${message.messageId}');
         _handleIncomingAction(
           message.notification?.title, 
           message.notification?.body, 
           message.data['url'] as String?
         );
       });
+    }
+  }
 
-      // Handle clicks when app is Killed
-      final initialMessage = await _messaging.getInitialMessage();
-      if (initialMessage != null) {
-        if (kDebugMode) debugPrint('[FCM] Killed message tapped: ${initialMessage.messageId}');
-        // Delay routing slightly to let UI render first
-        Future.delayed(const Duration(milliseconds: 800), () {
-          _handleIncomingAction(
-            initialMessage.notification?.title, 
-            initialMessage.notification?.body, 
-            initialMessage.data['url'] as String?
-          );
+  Future<void> _saveTokenToDatabase(String token) async {
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      try {
+        await _supabase.from('fcm_tokens').upsert({
+          'user_id': user.id,
+          'token': token,
+          'last_updated': DateTime.now().toIso8601String(),
         });
-      }
-    } else {
-      if (kDebugMode) debugPrint('[FCM] User declined permission');
+      } catch (_) {}
     }
   }
 
   void _handleIncomingAction(String? title, String? body, String? url) {
-    // 1. Show the popup first (Front and center)
-    if (title != null || body != null) {
-      showNotificationPopup(title ?? 'Alert', body ?? '', url);
-    } else if (url != null && url.isNotEmpty) {
-      _handleRouteAuth(url);
+    if (url != null && url.isNotEmpty) {
+      if (url.startsWith('http')) {
+        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
     }
+    // You can add more complex routing here if needed
   }
 
   void showNotificationPopup(String title, String body, String? url) {
@@ -165,14 +160,13 @@ class FCMService {
 
     showDialog(
       context: context,
-      barrierDismissible: true,
       builder: (context) => Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: GlassContainer(
             borderRadius: 24,
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -181,13 +175,22 @@ class FCMService {
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     body,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.4),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 15,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -198,23 +201,17 @@ class FCMService {
                           child: const Text('Dismiss', style: TextStyle(color: Colors.white54)),
                         ),
                       ),
-                      if (url != null && url.isNotEmpty) ...[
-                        const SizedBox(width: 12),
+                      if (url != null && url.isNotEmpty)
                         Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.cyanAccent,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
+                          child: FilledButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              _handleRouteAuth(url);
+                              _handleIncomingAction(title, body, url);
                             },
-                            child: const Text('View', style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent),
+                            child: const Text('View Action', style: TextStyle(color: Colors.black)),
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ],
@@ -225,45 +222,47 @@ class FCMService {
       ),
     );
   }
+}
 
-  void _handleRouteAuth(String url) async {
-    // Check if it's a JSON payload instead of a raw URL (from foreground local notifications)
-    if (url.startsWith('{')) {
-      try {
-        final data = jsonDecode(url);
-        _handleIncomingAction(data['title'], data['body'], data['url']);
-        return;
-      } catch (_) {}
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    await Firebase.initializeApp();
+    await Hive.initFlutter();
+    if (!Hive.isBoxOpen('notifications_box')) {
+      await Hive.openBox('notifications_box');
     }
 
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      final uri = Uri.tryParse(url);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-      } else {
-        if (kDebugMode) debugPrint('[FCM] Cannot launch URL: $url');
+    final data = message.data;
+    final userId = data['user_id'];
+
+    if (userId != null) {
+      final newNotif = {
+        'id': message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        'user_id': userId,
+        'title': message.notification?.title ?? data['title'] ?? 'No Title',
+        'body': message.notification?.body ?? data['body'] ?? 'No Message',
+        'type': data['type'] ?? 'system',
+        'is_read': false,
+        'created_at': (message.sentTime ?? DateTime.now()).toIso8601String(),
+        'payload': data.isNotEmpty ? data : null,
+      };
+
+      final box = Hive.box('notifications_box');
+      final key = 'notifs_$userId';
+      final existingData = box.get(key) as String?;
+      List<dynamic> list = [];
+      if (existingData != null) {
+        try {
+          list = jsonDecode(existingData);
+        } catch (_) {}
       }
-    } else if (url.startsWith('/')) {
-      if (rootNavigatorKey.currentContext != null) {
-         rootNavigatorKey.currentContext!.go(url);
+      
+      if (!list.any((n) => n['id'] == newNotif['id'])) {
+        list.insert(0, newNotif);
+        if (list.length > 100) list = list.sublist(0, 100);
+        await box.put(key, jsonEncode(list));
       }
     }
-  }
-
-  Future<void> _saveTokenToDatabase(String token) async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
-      final platform = defaultTargetPlatform.name.toLowerCase();
-      await _supabase.from('fcm_tokens').upsert({
-        'user_id': user.id,
-        'token': token,
-        'platform': platform,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
-      if (kDebugMode) debugPrint('[FCM] Token synchronized to Database.');
-    } catch (e) {
-      if (kDebugMode) debugPrint('[FCM] Failed to sync token: $e');
-    }
-  }
+  } catch (_) {}
 }

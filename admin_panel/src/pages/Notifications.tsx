@@ -150,7 +150,8 @@ export function Notifications() {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .order('trigger_at', { ascending: false })
+        .not('alert_key', 'ilike', 'c_%') // Filter out automated class alerts
+        .order('created_at', { ascending: false })
         .limit(100);
       
       if (error) throw error;
@@ -161,9 +162,13 @@ export function Notifications() {
       
       (data || []).forEach((n: any) => {
         if (n.alert_key) {
-          const baseKey = n.alert_key.split('_')[0]; 
-          if (!seenKeys.has(baseKey)) {
-            seenKeys.add(baseKey);
+          // alert_key format is typically type_timestamp_userid
+          // We want to group by type_timestamp
+          const parts = n.alert_key.split('_');
+          const groupKey = parts.length >= 2 ? `${parts[0]}_${parts[1]}` : n.alert_key;
+          
+          if (!seenKeys.has(groupKey)) {
+            seenKeys.add(groupKey);
             unique.push(n);
           }
         } else {

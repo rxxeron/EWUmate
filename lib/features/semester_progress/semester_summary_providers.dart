@@ -154,8 +154,6 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
   }
 
   return years;
-
-  return years;
 });
 
 /// A model to represent a scholarship award for a particular year.
@@ -359,6 +357,11 @@ final projectedSGPAProvider = Provider<double>((ref) {
 });
 
 /// Calculates the projected CGPA combining past CGPA and predicted SGPA.
+final currentEnrolledCreditsProvider = Provider<double>((ref) {
+  final profile = ref.watch(userProfileProvider).valueOrNull;
+  return profile?.enrolledCredits ?? 0.0;
+});
+
 final projectedCGPAProvider = FutureProvider<double>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return 0.0;

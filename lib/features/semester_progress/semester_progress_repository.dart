@@ -44,11 +44,12 @@ class SemesterProgressRepository {
   Future<List<Map<String, dynamic>>> _fetchProgressAndCache(String userId, String semesterCode, String cacheKey) async {
     try {
       final safeSem = CourseUtils.cleanSemester(semesterCode);
+      final spaceSem = semesterCode.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
       final enrollments = await _supabase
           .from('enrollments')
           .select('course_code')
           .eq('user_id', userId)
-          .eq('semester_code', safeSem); // Fallback: try raw first or always normalize in DB later? 
+          .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]); // Fallback: try raw first or always normalize in DB later? 
           // For now, let's keep it robust by querying both or just assuming normalizing is done.
           // Better: Clean it here.
 
@@ -131,6 +132,9 @@ class SemesterProgressRepository {
         data['course_code'] = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
       }
 
+      // Remove UI-only flags before saving to DB
+      data.remove('is_new');
+
       final res = await _supabase.from('semester_course_marks')
           .upsert(
             {...data, 'semester_code': CourseUtils.cleanSemester(semesterCode)}, 
@@ -140,6 +144,8 @@ class SemesterProgressRepository {
           .single();
       
       _updateProgressCache(userId, semesterCode, res);
+      // Trigger background credit recalculation
+      _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
     } catch (e) {
       if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
       _updateProgressCache(userId, semesterCode, data);

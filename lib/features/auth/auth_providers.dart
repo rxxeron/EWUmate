@@ -14,14 +14,16 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
   }
   
   try {
-    final profile = await authRepo.getProfile(user.id);
+    final profile = await authRepo.getProfile(user.id).timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => throw Exception("Connection timeout while fetching profile."),
+    );
     
     if (profile == null) {
-      // GHOST SESSION CHECK:
-      // If user is authenticated but has no profile, it's likely they were deleted 
-      // from the database. We force a sign-out to clear the local session.
-      if (kDebugMode) print("DEBUG: Profile not found for ${user.id}. Invalidating session.");
-      await authRepo.signOut();
+      // PROVISIONAL SESSION:
+      // User is authenticated but profile record is pending (new registration).
+      // We allow the session to persist so they can complete onboarding.
+      if (kDebugMode) print("DEBUG: Profile not found for ${user.id}. Onboarding required.");
       return null;
     }
 
@@ -29,13 +31,8 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
     ref.read(cacheServiceProvider).cacheProfile(user.id, profile.toJson());
     return profile;
   } catch (e) {
-    if (kDebugMode) print("DEBUG: Profile network fetch failed, attempting cache: $e");
-    final cacheMap = ref.read(cacheServiceProvider).getCachedProfile(user.id);
-    if (cacheMap != null) {
-      if (kDebugMode) print("DEBUG: Loaded profile from local cache.");
-      return Profile.fromJson(cacheMap);
-    }
-    throw Exception("You are offline. Please connect to the internet to load your profile initially.");
+    if (kDebugMode) debugPrint("DEBUG: Profile fetch error: $e");
+    rethrow;
   }
 });
 
@@ -59,7 +56,16 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
 
   try {
     final profile = await ref.watch(profileProvider.future);
-    final track = profile?.track ?? 'tri_semester';
+    
+    // SAFETY: If no profile exists, they are a new user and can't have hanging grades.
+    // Skip the database scans entirely.
+    if (profile == null) return false;
+
+    // NORMALIZE: Map 'tri' -> 'tri_semester' to match DB Enum constraints
+    String track = profile.track ?? profile.semesterType;
+    if (track == 'tri') track = 'tri_semester';
+    if (track == 'bi') track = 'bi_semester';
+
     final activeSemRes = await client
         .from('active_semester')
         .select()

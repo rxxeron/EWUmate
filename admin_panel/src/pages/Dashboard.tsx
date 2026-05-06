@@ -29,6 +29,7 @@ export function Dashboard() {
   const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
   const [semesterStats, setSemesterStats] = useState<Record<string, SemesterTrackStats>>({});
   const [registrationTrend, setRegistrationTrend] = useState<any[]>([]);
+  const [activityTrend, setActivityTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -45,6 +46,10 @@ export function Dashboard() {
       yesterday.setHours(yesterday.getHours() - 24);
       const yesterdayIso = yesterday.toISOString();
 
+      const last7Days = new Date();
+      last7Days.setDate(last7Days.getDate() - 7);
+      const last7DaysIso = last7Days.toISOString();
+
       // Parallel data fetching
       const [
         { count: usersCount },
@@ -55,7 +60,8 @@ export function Dashboard() {
         { data: recent },
         { data: activeNow },
         { data: activeSemesters },
-        { data: trendData }
+        { data: rawTrendData },
+        { data: activityData }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
@@ -65,13 +71,14 @@ export function Dashboard() {
         supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
         supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
         supabase.from('active_semester').select('*'),
-        supabase.from('profiles').select('created_at').order('created_at', { ascending: true })
+        supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
+        supabase.from('profiles').select('last_active_at').gte('last_active_at', last7DaysIso)
       ]);
 
-      // Process Trend Data
-      if (trendData) {
+      // Process Registration Trend Data
+      if (rawTrendData) {
         const groups: Record<string, number> = {};
-        trendData.forEach(p => {
+        rawTrendData.forEach(p => {
           const date = new Date(p.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
           groups[date] = (groups[date] || 0) + 1;
         });
@@ -82,6 +89,33 @@ export function Dashboard() {
           return { date, count, total: cumulative };
         }).slice(-14); // Last 14 days
         setRegistrationTrend(trend);
+      }
+
+      // Process Activity Trend Data (Last 7 Days)
+      if (activityData) {
+        const activityGroups: Record<string, number> = {};
+        // Initialize last 7 days with 0
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dateKey = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+          activityGroups[dateKey] = 0;
+        }
+
+        activityData.forEach(p => {
+          if (p.last_active_at) {
+            const date = new Date(p.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+            if (activityGroups[date] !== undefined) {
+              activityGroups[date]++;
+            }
+          }
+        });
+
+        const actTrend = Object.entries(activityGroups).map(([date, active]) => ({
+          date,
+          active
+        }));
+        setActivityTrend(actTrend);
       }
 
       const semStats: Record<string, SemesterTrackStats> = {};
@@ -302,7 +336,7 @@ export function Dashboard() {
       </div>
 
       {/* Main Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Registration Chart */}
         <div className="lg:col-span-2 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-8">
@@ -365,38 +399,106 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* System Health / Status */}
-        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col">
-          <h3 className="text-lg font-black text-slate-900 tracking-tight mb-6">System Health</h3>
-          <div className="space-y-4">
-            {[
-              { label: 'Portal Scraper', status: 'Healthy', icon: Zap, color: 'bg-amber-500' },
-              { label: 'Azure Core', status: 'Live', icon: ShieldCheck, color: 'bg-emerald-500' },
-              { label: 'Cloud DB', status: 'Optimized', icon: Clock, color: 'bg-indigo-500' },
-              { label: 'Broadcaster', status: 'Idle', icon: Mail, color: 'bg-slate-400' }
-            ].map((sys, i) => (
-              <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:border-indigo-100 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className={cn("p-2 rounded-xl bg-white shadow-sm group-hover:scale-110 transition-transform")}>
-                    <sys.icon className="w-5 h-5 text-slate-900" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-900">{sys.label}</h4>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{sys.status}</p>
-                  </div>
-                </div>
-                <div className={cn("w-2 h-2 rounded-full", sys.color)} />
+        {/* Activity Trend Chart */}
+        <div className="lg:col-span-2 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                <Activity className="w-5 h-5 text-emerald-600" />
               </div>
-            ))}
+              <div>
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Activity Heatmap</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active users per day (Last 7 days)</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase">
+              7D Window
+            </div>
           </div>
           
-          <button 
-            className="mt-8 w-full py-4 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
-            onClick={() => navigate('/scraper')}
-          >
-            <span>Launch Diagnostics</span>
-            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-          </button>
+          <div className="flex-1 min-h-[280px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={activityTrend}>
+                <defs>
+                  <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} 
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="active" 
+                  stroke="#10b981" 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorActive)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* System Health / Status */}
+        <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+           <div className="md:col-span-3 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                 <h3 className="text-lg font-black text-slate-900 tracking-tight">System Infrastructure</h3>
+                 <span className="text-[10px] font-black px-3 py-1 bg-slate-100 text-slate-400 rounded-full uppercase">Operational</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { label: 'Portal Scraper', status: 'Healthy', icon: Zap, color: 'bg-amber-500' },
+                  { label: 'Azure Core', status: 'Live', icon: ShieldCheck, color: 'bg-emerald-500' },
+                  { label: 'Cloud DB', status: 'Optimized', icon: Clock, color: 'bg-indigo-500' },
+                  { label: 'Broadcaster', status: 'Idle', icon: Mail, color: 'bg-slate-400' }
+                ].map((sys, i) => (
+                  <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className={cn("p-2 rounded-xl bg-white shadow-sm group-hover:scale-110 transition-transform")}>
+                        <sys.icon className="w-5 h-5 text-slate-900" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-900">{sys.label}</h4>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{sys.status}</p>
+                      </div>
+                    </div>
+                    <div className={cn("w-2 h-2 rounded-full", sys.color)} />
+                  </div>
+                ))}
+              </div>
+           </div>
+           
+           <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col justify-center">
+              <button 
+                className="w-full py-6 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
+                onClick={() => navigate('/scraper')}
+              >
+                <span>Launch Scraper</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </button>
+           </div>
         </div>
       </div>
 

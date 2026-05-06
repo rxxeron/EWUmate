@@ -85,9 +85,33 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
       (profile.admittedSemester?.toLowerCase().startsWith('fall') ?? false);
 
   // Filter out semesters that are effectively empty (no credits and no TGPA)
-  // unless it's the current active semester (which we might want to see as 0.00)
-  // But for the Journey/History, we usually only want completed ones.
-  final filteredSorted = sorted.where((s) => (s.creditsEarned ?? 0.0) > 0 || (s.tgpa ?? 0.0) > 0).toList();
+  // unless it's the current active semester (which we want to see in the grouping)
+  final String? runningCode = ref.watch(currentSemesterCodeProvider).value;
+  final filteredSorted = sorted.where((s) => 
+    (s.creditsEarned ?? 0.0) > 0 || 
+    (s.tgpa ?? 0.0) > 0 || 
+    (s.semesterCode == runningCode)
+  ).toList();
+
+  // If the running semester isn't in summaries yet, we still need to account for it in the grouping
+  bool runningIncluded = filteredSorted.any((s) => s.semesterCode == runningCode);
+  if (!runningIncluded && runningCode != null) {
+    // Add a dummy summary for the ongoing semester to ensure Year grouping accounts for it
+    filteredSorted.add(SemesterSummary(
+      id: 'ongoing',
+      userId: user.id,
+      semesterCode: runningCode,
+      creditsEarned: 0.0,
+      tgpa: 0.0,
+      cgpa: profile.cgpa ?? 0.0,
+    ));
+    // Re-sort to maintain chronological order
+    filteredSorted.sort(
+      (a, b) => getSemOrder(
+        (a as dynamic).semesterCode as String,
+      ).compareTo(getSemOrder((b as dynamic).semesterCode as String)),
+    );
+  }
 
   List<AcademicYear> years = [];
   int currentYearIndex = 1;

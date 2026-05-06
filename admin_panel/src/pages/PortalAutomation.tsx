@@ -107,7 +107,18 @@ export function PortalAutomation() {
       const url = `${baseUrl}/api/portal_sync_trigger?code=${key}&preview=true&semester=${semester}`;
       
       const response = await fetch(url);
-      const result = await response.json();
+      
+      const contentType = response.headers.get("content-type");
+      let result;
+      
+      if (contentType && contentType.includes("application/json")) {
+        result = await response.json();
+      } else {
+        const text = await response.text();
+        addLog(`Server error: ${text || response.statusText}`, 'error');
+        setStatus('error');
+        return;
+      }
       
       if (result.status === 'success' && result.data) { 
         setScrapedData(result.data); 

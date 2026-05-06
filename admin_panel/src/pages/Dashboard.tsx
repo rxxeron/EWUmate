@@ -489,7 +489,7 @@ export function Dashboard() {
                         {new Date(user.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
                       <div className="text-[9px] text-slate-400 font-bold">
-                        {new Date(user.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(user.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
                       </div>
                     </td>
                   </tr>
@@ -534,7 +534,7 @@ export function Dashboard() {
                         {user.last_active_at ? new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Never'}
                       </div>
                       <div className="text-[9px] text-slate-400 font-bold">
-                        {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}
+                        {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : '-'}
                       </div>
                     </td>
                   </tr>

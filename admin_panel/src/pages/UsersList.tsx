@@ -375,7 +375,7 @@ export function UsersList() {
                       {user.last_active_at ? (
                         <div className="flex flex-col items-end">
                           <div className="text-xs font-black text-slate-900 tracking-tight whitespace-nowrap">{new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 whitespace-nowrap">{new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 whitespace-nowrap">{new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</div>
                         </div>
                       ) : (
                         <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">No Log History</span>

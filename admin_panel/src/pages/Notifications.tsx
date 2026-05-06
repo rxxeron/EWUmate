@@ -26,8 +26,10 @@ export function Notifications() {
   const [url, setUrl] = useState('');
   const [targetUserId, setTargetUserId] = useState('');
   const [targetDepartment, setTargetDepartment] = useState('');
+  const [targetStatus, setTargetStatus] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
+  const [statuses] = useState<string[]>(['registered', 'course_history', 'completed']);
 
   const [loading, setLoading] = useState(false);
 
@@ -57,10 +59,11 @@ export function Notifications() {
     setUrl('');
     setTargetUserId('');
     setTargetDepartment('');
+    setTargetStatus('');
     setScheduledAt('');
   };
 
-  const sendNotification = async (mode: 'global' | 'department' | 'user') => {
+  const sendNotification = async (mode: 'global' | 'department' | 'user' | 'status') => {
     if (!title || !message) {
       toast.error('Title and message are required');
       return;
@@ -87,6 +90,9 @@ export function Notifications() {
       } else if (mode === 'department') {
         if (!targetDepartment) throw new Error('Department selection is required');
         payload.targetDepartment = targetDepartment;
+      } else if (mode === 'status') {
+        if (!targetStatus) throw new Error('User Status selection is required');
+        payload.targetStatus = targetStatus;
       }
       // Global doesn't need extra keys
 
@@ -203,6 +209,7 @@ export function Notifications() {
         {[
           { id: 'global', label: 'Global Broadcast', icon: Target, color: 'bg-indigo-600', sub: 'To All Active Users' },
           { id: 'department', label: 'Department Wise', icon: Building, color: 'bg-amber-600', sub: 'By Academic Dept' },
+          { id: 'status', label: 'Status Specific', icon: ShieldCheck, color: 'bg-emerald-600', sub: 'By User Onboarding' },
           { id: 'user', label: 'User Specific', icon: Users, color: 'bg-rose-600', sub: 'Individual UUID' },
         ].map((tab) => (
           <button
@@ -210,14 +217,14 @@ export function Notifications() {
             onClick={() => { setActiveTab(tab.id as any); resetForm(); }}
             className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
               activeTab === tab.id 
-              ? `border-transparent ring-2 ring-offset-2 ${tab.id === 'global' ? 'ring-indigo-500' : tab.id === 'department' ? 'ring-amber-500' : 'ring-rose-500'}` 
+              ? `border-transparent ring-2 ring-offset-2 ${tab.id === 'global' ? 'ring-indigo-500' : tab.id === 'department' ? 'ring-amber-500' : tab.id === 'status' ? 'ring-emerald-500' : 'ring-rose-500'}` 
               : 'border-gray-200 bg-white hover:border-gray-300'
             }`}
           >
             {activeTab === tab.id && (
               <div className={`absolute inset-0 opacity-10 ${tab.color}`} />
             )}
-            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : 'text-rose-600') : 'text-gray-400 group-hover:text-gray-600'}`} />
+            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : tab.id === 'status' ? 'text-emerald-600' : 'text-rose-600') : 'text-gray-400 group-hover:text-gray-600'}`} />
             <p className={`font-bold block ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-500'}`}>{tab.label}</p>
             <p className="text-xs text-gray-400 font-medium">{tab.sub}</p>
           </button>
@@ -226,12 +233,13 @@ export function Notifications() {
 
       {/* Dynamic Form Area */}
       <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-indigo-50 overflow-hidden transition-all">
-        <div className={`h-1.5 w-full ${activeTab === 'global' ? 'bg-indigo-600' : activeTab === 'department' ? 'bg-amber-600' : 'bg-rose-600'}`} />
+        <div className={`h-1.5 w-full ${activeTab === 'global' ? 'bg-indigo-600' : activeTab === 'department' ? 'bg-amber-600' : activeTab === 'status' ? 'bg-emerald-600' : 'bg-rose-600'}`} />
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-bold text-gray-900">
               {activeTab === 'global' && '🌍 Global Announcement'}
               {activeTab === 'department' && '🏢 Departmental Circular'}
+              {activeTab === 'status' && '🛡️ Status Targeted Alert'}
               {activeTab === 'user' && '👤 Direct Personal Message'}
             </h3>
             <div className="flex gap-2">
@@ -324,6 +332,21 @@ export function Notifications() {
                 </div>
               )}
 
+              {activeTab === 'status' && (
+                <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target User Status</label>
+                  <select
+                    value={targetStatus}
+                    onChange={e => setTargetStatus(e.target.value)}
+                    className="w-full border-gray-200 rounded-xl bg-emerald-50 p-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all"
+                  >
+                    <option value="">Select Status...</option>
+                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <p className="mt-2 text-[10px] text-gray-400 font-medium">Tip: Use 'registered' or 'course_history' to target users who haven't finished setup.</p>
+                </div>
+              )}
+
               {activeTab === 'user' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target User UUID</label>
@@ -345,11 +368,12 @@ export function Notifications() {
                 className={`flex-1 p-4 rounded-2xl text-white font-bold text-lg shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${
                   activeTab === 'global' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' :
                   activeTab === 'department' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' :
+                  activeTab === 'status' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
                   'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
                 }`}
               >
                 <Send className="w-5 h-5" />
-                {loading ? 'Processing...' : `Deploy ${activeTab === 'global' ? 'Global' : activeTab === 'department' ? 'Dept' : 'Direct'} Alert`}
+                {loading ? 'Processing...' : `Deploy ${activeTab === 'global' ? 'Global' : activeTab === 'department' ? 'Dept' : activeTab === 'status' ? 'Status' : 'Direct'} Alert`}
               </button>
               <button
                 onClick={handleSaveTemplate}
@@ -402,6 +426,8 @@ export function Notifications() {
                           <span className="bg-indigo-100 text-indigo-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Broadcast</span>
                         ) : n.alert_key?.startsWith('dept_') ? (
                           <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Dept: {n.alert_key.split('_')[1]}</span>
+                        ) : n.alert_key?.startsWith('status_') ? (
+                          <span className="bg-emerald-100 text-emerald-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Status: {n.alert_key.split('_')[1]}</span>
                         ) : (
                           <span className="bg-rose-100 text-rose-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Direct: {n.user_id?.substring(0, 8)}...</span>
                         )}
@@ -416,6 +442,9 @@ export function Notifications() {
                         else if (n.alert_key?.startsWith('dept_')) {
                           setActiveTab('department');
                           setTargetDepartment(n.alert_key.split('_')[1]);
+                        } else if (n.alert_key?.startsWith('status_')) {
+                          setActiveTab('status');
+                          setTargetStatus(n.alert_key.split('_')[1]);
                         } else {
                           setActiveTab('user');
                           setTargetUserId(n.user_id);

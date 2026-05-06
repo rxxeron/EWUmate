@@ -16,7 +16,7 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        let { title, body, link, scheduledAt, targetUserId, targetDepartment } = await req.json();
+        let { title, body, link, scheduledAt, targetUserId, targetDepartment, targetStatus } = await req.json();
 
         if (!title || !body) {
             return new Response(JSON.stringify({ error: 'Title and body are required' }), {
@@ -35,6 +35,9 @@ serve(async (req) => {
         if (targetDepartment) {
             query = query.eq('department_name', targetDepartment);
         }
+        if (targetStatus) {
+            query = query.eq('onboarding_status', targetStatus);
+        }
 
         const { data: users, error: userError } = await query;
 
@@ -50,7 +53,12 @@ serve(async (req) => {
         const triggerAt = scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString();
         const payloadData = link ? { url: link } : {};
 
-        const baseAlertKey = 'bcast_' + Date.now();
+        let prefix = 'bcast_';
+        if (targetUserId) prefix = 'user_';
+        else if (targetDepartment) prefix = `dept_${targetDepartment}_`;
+        else if (targetStatus) prefix = `status_${targetStatus}_`;
+
+        const baseAlertKey = prefix + Date.now();
         const alerts = users.map(user => ({
             user_id: user.id,
             title: title,

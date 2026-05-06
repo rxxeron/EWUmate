@@ -155,6 +155,36 @@ export function UserDetails() {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!id || !user) return;
+    
+    const confirmText = `DELETE ${user.full_name || user.student_id}`;
+    const input = prompt(`DANGER: This will permanently delete the user's account and all data. This action cannot be undone.\n\nTo confirm, please type: ${confirmText}`);
+    
+    if (input !== confirmText) {
+      if (input !== null) toast.error('Confirmation text mismatch');
+      return;
+    }
+    
+    setSaving(true);
+    const toastId = toast.loading('Purging user data...');
+    try {
+      // Delete from Auth (requires service role key, which supabaseAdmin has)
+      const { error: authError } = await supabase.auth.admin.deleteUser(id);
+      if (authError) throw authError;
+
+      // Delete profile (though cascade should handle it)
+      await supabase.from('profiles').delete().eq('id', id);
+
+      toast.success('User has been completely removed', { id: toastId });
+      navigate('/users');
+    } catch (err: any) {
+      toast.error('Deletion failed: ' + err.message, { id: toastId });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   async function fetchUser(userId: string) {
     setLoading(true);
     
@@ -374,6 +404,13 @@ export function UserDetails() {
           >
             <Edit className='h-4 w-4' />
             Edit Profile
+          </button>
+          <button 
+            onClick={handleDeleteUser} 
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
+          >
+            <Trash2 className='h-4 w-4' />
+            Delete Account
           </button>
           <button 
             onClick={handleSyncData} 
@@ -865,6 +902,15 @@ export function UserDetails() {
                     type='text' 
                     value={editForm.student_id || ''} 
                     onChange={e => setEditForm({...editForm, student_id: e.target.value})}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                  />
+                </div>
+                <div className='space-y-1'>
+                  <label className='text-xs font-bold text-gray-500 uppercase'>Nickname</label>
+                  <input 
+                    type='text' 
+                    value={editForm.nickname || ''} 
+                    onChange={e => setEditForm({...editForm, nickname: e.target.value})}
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
                   />
                 </div>

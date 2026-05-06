@@ -43,11 +43,12 @@ class SemesterProgressRepository {
 
   Future<List<Map<String, dynamic>>> _fetchProgressAndCache(String userId, String semesterCode, String cacheKey) async {
     try {
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
       final enrollments = await _supabase
           .from('enrollments')
           .select('course_code')
           .eq('user_id', userId)
-          .eq('semester_code', semesterCode); // Fallback: try raw first or always normalize in DB later? 
+          .eq('semester_code', safeSem); // Fallback: try raw first or always normalize in DB later? 
           // For now, let's keep it robust by querying both or just assuming normalizing is done.
           // Better: Clean it here.
 
@@ -59,7 +60,7 @@ class SemesterProgressRepository {
           .from('semester_course_marks')
           .select('*')
           .eq('user_id', userId)
-          .eq('semester_code', semesterCode);
+          .eq('semester_code', CourseUtils.cleanSemester(semesterCode));
       
       final marksData = List<Map<String, dynamic>>.from(marksRes);
 
@@ -132,7 +133,7 @@ class SemesterProgressRepository {
 
       final res = await _supabase.from('semester_course_marks')
           .upsert(
-            data, 
+            {...data, 'semester_code': CourseUtils.cleanSemester(semesterCode)}, 
             onConflict: 'user_id,semester_code,course_code'
           )
           .select()
@@ -159,9 +160,9 @@ class SemesterProgressRepository {
     final normalizedCode = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
     final index = list.indexWhere((m) => (m['course_code'] as String).toUpperCase().replaceAll(' ', '') == normalizedCode);
     if (index != -1) {
-      // Merge new data with existing to preserve fields like 'id' if 'data' is partial
       list[index] = {...list[index], ...data};
     } else {
+      // Only add if it's not already there (prevent duplicates)
       list.add(data);
     }
     _cache.setMapData('semester_progress_box', cacheKey, {'data': list});

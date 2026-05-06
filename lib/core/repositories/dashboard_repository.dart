@@ -19,7 +19,7 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardAnalytics(userId);
+    final cached = _cache.getCachedDashboardAnalytics(userId, semesterCode);
     if (cached != null) {
       _fetchAndCacheAnalytics(userId, semesterCode);
       return SemesterAnalytics.fromJson(cached);
@@ -40,7 +40,7 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardAnalytics(userId, data);
+      await _cache.cacheDashboardAnalytics(userId, semesterCode, data);
       return SemesterAnalytics.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch analytics: $e');
@@ -51,7 +51,7 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardSchedule(userId);
+    final cached = _cache.getCachedDashboardSchedule(userId, semesterCode);
     if (cached != null) {
       _fetchAndCacheState(userId, semesterCode);
       return UserSemesterState.fromJson(cached);
@@ -72,7 +72,7 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardSchedule(userId, data);
+      await _cache.cacheDashboardSchedule(userId, semesterCode, data);
       return UserSemesterState.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch cache: $e');
@@ -88,7 +88,7 @@ class DashboardRepository {
           .eq('id', analytics.id);
       
       // Update cache
-      await _cache.cacheDashboardAnalytics(analytics.userId, json);
+      await _cache.cacheDashboardAnalytics(analytics.userId, analytics.semesterCode, json);
     } catch (e) {
       throw Exception('Failed to update analytics: $e');
     }

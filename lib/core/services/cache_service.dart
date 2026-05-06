@@ -63,26 +63,29 @@ class CacheService {
 
   Future<void> cacheDashboardAnalytics(
     String userId,
+    String semesterCode,
     Map<String, dynamic> data,
-  ) => setMapData(_dashboardBox, '${userId}_analytics', data);
-  Map<String, dynamic>? getCachedDashboardAnalytics(String userId) =>
-      getMapData(_dashboardBox, '${userId}_analytics');
+  ) => setMapData(_dashboardBox, '${userId}_${semesterCode}_analytics', data);
+
+  Map<String, dynamic>? getCachedDashboardAnalytics(String userId, String semesterCode) =>
+      getMapData(_dashboardBox, '${userId}_${semesterCode}_analytics');
 
   Future<void> cacheDashboardSchedule(
     String userId,
+    String semesterCode,
     Map<String, dynamic> data,
   ) {
     data['_cache_updated_at'] = DateTime.now().toIso8601String();
-    return setMapData(_dashboardBox, '${userId}_schedule', data);
+    return setMapData(_dashboardBox, '${userId}_${semesterCode}_schedule', data);
   }
 
-  Map<String, dynamic>? getCachedDashboardSchedule(String userId) =>
-      getMapData(_dashboardBox, '${userId}_schedule');
+  Map<String, dynamic>? getCachedDashboardSchedule(String userId, String semesterCode) =>
+      getMapData(_dashboardBox, '${userId}_${semesterCode}_schedule');
 
-  Future<void> invalidateDashboardSchedule(String userId) async {
+  Future<void> invalidateDashboardSchedule(String userId, String semesterCode) async {
     try {
       final box = Hive.box(_dashboardBox);
-      await box.delete('${userId}_schedule');
+      await box.delete('${userId}_${semesterCode}_schedule');
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] invalidateDashboardSchedule error: $e');
     }

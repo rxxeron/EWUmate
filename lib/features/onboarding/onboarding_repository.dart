@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../core/utils/course_utils.dart';
 import '../auth/auth_providers.dart';
 
 final onboardingRepositoryProvider = Provider<OnboardingRepository>((ref) {
@@ -224,7 +225,7 @@ _ref.invalidate(profileProvider);
         'user_id': user.id,
       };
       if (semesterCode != null) {
-        syncScheduleBody['semester_code'] = semesterCode.replaceAll(' ', '').replaceAll('_', '');
+        syncScheduleBody['semester_code'] = CourseUtils.cleanSemester(semesterCode);
       }
 
       await Future.wait([
@@ -272,7 +273,8 @@ _ref.invalidate(profileProvider);
     String searchQuery = '',
   }) async {
     if (isCurrent && semester != null) {
-      final tableName = 'courses_${semester.toLowerCase()}';
+      final safeSem = CourseUtils.cleanSemester(semester);
+      final tableName = 'courses_$safeSem';
       var query = _client
           .from(tableName)
           .select(

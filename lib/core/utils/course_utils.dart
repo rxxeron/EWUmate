@@ -31,9 +31,14 @@ class CourseUtils {
     return e1 == n2 || getEquivalent(n2) == n1;
   }
 
+  /// Centralized semester cleaning (removes spaces, underscores, and lowers case)
+  static String cleanSemester(String code) {
+    return code.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+  }
+
   /// RESTORED: Resolves dynamic table names (e.g., calendar_spring2026_phrm_llb)
   static String semesterTable(String prefix, String semesterCode, {String? cycleType}) {
-    final safeSem = semesterCode.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+    final safeSem = cleanSemester(semesterCode);
     final table = '${prefix}_$safeSem';
     final isBi = cycleType == 'bi' || cycleType == 'bi_semester' || cycleType == 'phrm_llb' || cycleType == 'bi-semester';
     final programSpecifier = (isBi) ? '_phrm_llb' : '';

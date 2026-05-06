@@ -1,11 +1,12 @@
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/semester_analytics.dart';
-import '../models/user_semester_state.dart';
-import '../providers/supabase_provider.dart';
-import 'auth_repository.dart';
-import '../services/cache_service.dart';
+import 'package:ewumate/core/models/semester_analytics.dart';
+import 'package:ewumate/core/models/user_semester_state.dart';
+import 'package:ewumate/core/providers/supabase_provider.dart';
+import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 
 part 'dashboard_repository.g.dart';
 

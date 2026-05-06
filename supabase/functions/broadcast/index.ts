@@ -16,7 +16,7 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        let { title, body, link, scheduledAt, targetUserId, targetDepartment, targetStatus } = await req.json();
+        let { title, body, link, scheduledAt, targetUserId, targetDepartment, targetStatus, targetVersion } = await req.json();
 
         if (!title || !body) {
             return new Response(JSON.stringify({ error: 'Title and body are required' }), {
@@ -38,6 +38,13 @@ serve(async (req) => {
         if (targetStatus) {
             query = query.eq('onboarding_status', targetStatus);
         }
+        if (targetVersion) {
+            if (targetVersion === 'legacy') {
+                query = query.is('app_version', null);
+            } else {
+                query = query.eq('app_version', targetVersion);
+            }
+        }
 
         const { data: users, error: userError } = await query;
 
@@ -57,6 +64,8 @@ serve(async (req) => {
         if (targetUserId) prefix = 'user_';
         else if (targetDepartment) prefix = `dept_${targetDepartment}_`;
         else if (targetStatus) prefix = `status_${targetStatus}_`;
+        else if (targetVersion === 'legacy') prefix = 'leg_';
+        else if (targetVersion) prefix = `ver_${targetVersion}_`;
 
         const baseAlertKey = prefix + Date.now();
         const alerts = users.map(user => ({

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck } from 'lucide-react'; 
+import { Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck, Package } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 import type { Notification, NotificationTemplate } from '../types';
 
@@ -19,7 +19,7 @@ function saveTemplates(templates: NotificationTemplate[]) {
 }
 
 export function Notifications() {
-  const [activeTab, setActiveTab] = useState<'global' | 'department' | 'user' | 'status'>('global');
+  const [activeTab, setActiveTab] = useState<'global' | 'department' | 'user' | 'status' | 'version'>('global');
   
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -27,8 +27,10 @@ export function Notifications() {
   const [targetUserId, setTargetUserId] = useState('');
   const [targetDepartment, setTargetDepartment] = useState('');
   const [targetStatus, setTargetStatus] = useState('');
+  const [targetVersion, setTargetVersion] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
+  const [availableVersions, setAvailableVersions] = useState<string[]>([]);
   const [statuses] = useState<string[]>(['registered', 'course_history', 'completed']);
 
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,16 @@ export function Notifications() {
         setDepartments(unique);
       }
     }
+    async function fetchVersions() {
+      const { data, error } = await supabase.from('profiles').select('app_version').not('app_version', 'is', null);
+      if (data && !error) {
+        const unique = Array.from(new Set(data.map(d => d.app_version).filter(Boolean))) as string[];
+        unique.sort((a, b) => b.localeCompare(a)); // Newest versions first
+        setAvailableVersions(unique);
+      }
+    }
     fetchDepartments();
+    fetchVersions();
   }, []);
 
   const resetForm = () => {
@@ -60,10 +71,11 @@ export function Notifications() {
     setTargetUserId('');
     setTargetDepartment('');
     setTargetStatus('');
+    setTargetVersion('');
     setScheduledAt('');
   };
 
-  const sendNotification = async (mode: 'global' | 'department' | 'user' | 'status') => {
+  const sendNotification = async (mode: 'global' | 'department' | 'user' | 'status' | 'version') => {
     if (!title || !message) {
       toast.error('Title and message are required');
       return;
@@ -93,6 +105,9 @@ export function Notifications() {
       } else if (mode === 'status') {
         if (!targetStatus) throw new Error('User Status selection is required');
         payload.targetStatus = targetStatus;
+      } else if (mode === 'version') {
+        if (!targetVersion) throw new Error('App Version selection is required');
+        payload.targetVersion = targetVersion;
       }
       // Global doesn't need extra keys
 
@@ -210,6 +225,7 @@ export function Notifications() {
           { id: 'global', label: 'Global Broadcast', icon: Target, color: 'bg-indigo-600', sub: 'To All Active Users' },
           { id: 'department', label: 'Department Wise', icon: Building, color: 'bg-amber-600', sub: 'By Academic Dept' },
           { id: 'status', label: 'Status Specific', icon: ShieldCheck, color: 'bg-emerald-600', sub: 'By User Onboarding' },
+          { id: 'version', label: 'Version Wise', icon: Package, color: 'bg-blue-600', sub: 'Target Specific App' },
           { id: 'user', label: 'User Specific', icon: Users, color: 'bg-rose-600', sub: 'Individual UUID' },
         ].map((tab) => (
           <button
@@ -217,14 +233,14 @@ export function Notifications() {
             onClick={() => { setActiveTab(tab.id as any); resetForm(); }}
             className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
               activeTab === tab.id 
-              ? `border-transparent ring-2 ring-offset-2 ${tab.id === 'global' ? 'ring-indigo-500' : tab.id === 'department' ? 'ring-amber-500' : tab.id === 'status' ? 'ring-emerald-500' : 'ring-rose-500'}` 
+              ? `border-transparent ring-2 ring-offset-2 ${tab.id === 'global' ? 'ring-indigo-500' : tab.id === 'department' ? 'ring-amber-500' : tab.id === 'status' ? 'ring-emerald-500' : tab.id === 'version' ? 'ring-blue-500' : 'ring-rose-500'}` 
               : 'border-gray-200 bg-white hover:border-gray-300'
             }`}
           >
             {activeTab === tab.id && (
               <div className={`absolute inset-0 opacity-10 ${tab.color}`} />
             )}
-            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : tab.id === 'status' ? 'text-emerald-600' : 'text-rose-600') : 'text-gray-400 group-hover:text-gray-600'}`} />
+            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : tab.id === 'status' ? 'text-emerald-600' : tab.id === 'version' ? 'text-blue-600' : 'text-rose-600') : 'text-gray-400 group-hover:text-gray-600'}`} />
             <p className={`font-bold block ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-500'}`}>{tab.label}</p>
             <p className="text-xs text-gray-400 font-medium">{tab.sub}</p>
           </button>
@@ -233,13 +249,14 @@ export function Notifications() {
 
       {/* Dynamic Form Area */}
       <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-indigo-50 overflow-hidden transition-all">
-        <div className={`h-1.5 w-full ${activeTab === 'global' ? 'bg-indigo-600' : activeTab === 'department' ? 'bg-amber-600' : activeTab === 'status' ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+        <div className={`h-1.5 w-full ${activeTab === 'global' ? 'bg-indigo-600' : activeTab === 'department' ? 'bg-amber-600' : activeTab === 'status' ? 'bg-emerald-600' : activeTab === 'version' ? 'bg-blue-600' : 'bg-rose-600'}`} />
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xl font-bold text-gray-900">
               {activeTab === 'global' && '🌍 Global Announcement'}
               {activeTab === 'department' && '🏢 Departmental Circular'}
               {activeTab === 'status' && '🛡️ Status Targeted Alert'}
+              {activeTab === 'version' && '📦 Version Specific Deployment'}
               {activeTab === 'user' && '👤 Direct Personal Message'}
             </h3>
             <div className="flex gap-2">
@@ -347,6 +364,22 @@ export function Notifications() {
                 </div>
               )}
 
+              {activeTab === 'version' && (
+                <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target App Version</label>
+                  <select
+                    value={targetVersion}
+                    onChange={e => setTargetVersion(e.target.value)}
+                    className="w-full border-gray-200 rounded-xl bg-blue-50 p-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all"
+                  >
+                    <option value="">Select Version...</option>
+                    <option value="legacy">Legacy Users (No Version Info)</option>
+                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                  </select>
+                  <p className="mt-2 text-[10px] text-gray-400 font-medium">Tip: Target 'Legacy Users' for anyone on versions older than v1.0.10.</p>
+                </div>
+              )}
+
               {activeTab === 'user' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target User UUID</label>
@@ -369,11 +402,12 @@ export function Notifications() {
                   activeTab === 'global' ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' :
                   activeTab === 'department' ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-200' :
                   activeTab === 'status' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' :
+                  activeTab === 'version' ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-200' :
                   'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
                 }`}
               >
                 <Send className="w-5 h-5" />
-                {loading ? 'Processing...' : `Deploy ${activeTab === 'global' ? 'Global' : activeTab === 'department' ? 'Dept' : activeTab === 'status' ? 'Status' : 'Direct'} Alert`}
+                {loading ? 'Processing...' : `Deploy ${activeTab === 'global' ? 'Global' : activeTab === 'department' ? 'Dept' : activeTab === 'status' ? 'Status' : activeTab === 'version' ? 'Version' : 'Direct'} Alert`}
               </button>
               <button
                 onClick={handleSaveTemplate}
@@ -428,6 +462,10 @@ export function Notifications() {
                           <span className="bg-amber-100 text-amber-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Dept: {n.alert_key.split('_')[1]}</span>
                         ) : n.alert_key?.startsWith('status_') ? (
                           <span className="bg-emerald-100 text-emerald-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Status: {n.alert_key.split('_')[1]}</span>
+                        ) : n.alert_key?.startsWith('ver_') ? (
+                          <span className="bg-blue-100 text-blue-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Version: {n.alert_key.split('_')[1]}</span>
+                        ) : n.alert_key?.startsWith('leg_') ? (
+                            <span className="bg-gray-100 text-gray-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Legacy (No Version)</span>
                         ) : (
                           <span className="bg-rose-100 text-rose-700 text-[8px] px-1.5 py-0.5 rounded font-bold uppercase">Direct: {n.user_id?.substring(0, 8)}...</span>
                         )}
@@ -445,6 +483,12 @@ export function Notifications() {
                         } else if (n.alert_key?.startsWith('status_')) {
                           setActiveTab('status');
                           setTargetStatus(n.alert_key.split('_')[1]);
+                        } else if (n.alert_key?.startsWith('ver_')) {
+                          setActiveTab('version');
+                          setTargetVersion(n.alert_key.split('_')[1]);
+                        } else if (n.alert_key?.startsWith('leg_')) {
+                          setActiveTab('version');
+                          setTargetVersion('legacy');
                         } else {
                           setActiveTab('user');
                           setTargetUserId(n.user_id);

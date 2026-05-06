@@ -216,10 +216,17 @@ _ref.invalidate(profileProvider);
     return data ?? {};
   }
 
-  Future<void> recalculateStats() async {
+  Future<void> recalculateStats([String? semesterCode]) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
     try {
+      final syncScheduleBody = {
+        'user_id': user.id,
+      };
+      if (semesterCode != null) {
+        syncScheduleBody['semester_code'] = semesterCode.replaceAll(' ', '').replaceAll('_', '');
+      }
+
       await Future.wait([
         _client.functions.invoke(
           'sync-academic-stats',
@@ -227,7 +234,7 @@ _ref.invalidate(profileProvider);
         ),
         _client.functions.invoke(
           'sync-schedule',
-          body: {'user_id': user.id},
+          body: syncScheduleBody,
         ),
       ]);
     } catch (e) {
@@ -413,6 +420,6 @@ _ref.invalidate(profileProvider);
         .eq('id', user.id);
 
     // 4. Trigger recalculation via Edge Function
-    await recalculateStats();
+    await recalculateStats(runningSemester);
   }
 }

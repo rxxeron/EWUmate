@@ -391,6 +391,10 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
           final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
           
+          if (runIdx != -1) {
+            _runningSemester = _allSemesters[runIdx];
+          }
+
           if (admIdx != -1 && runIdx != -1) {
             // Determine the range: from admitted to max(admitted, running)
             // This ensures future admissions (admIdx > runIdx) are not clipped out.

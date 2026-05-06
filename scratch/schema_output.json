@@ -1,0 +1,2058 @@
+{
+  "active_semester": [
+    {
+      "name": "track",
+      "type": "USER-DEFINED",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "current_semester_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "next_semester_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "classes_start_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "advising_start_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "advising_end_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "final_exam_start",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "final_exam_end",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "grade_submission_start",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "grade_submission_deadline",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "semester_switch_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "upcoming_classes_start_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "classes_end_date",
+      "type": "date",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "admin_users": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO",
+      "default": "timezone('utc'::text, now())"
+    }
+  ],
+  "app_config": [
+    {
+      "name": "key",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "value",
+      "type": "jsonb",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "latest_version",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "download_url",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "calendar_spring2026": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "event_date",
+      "type": "date",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "target_track",
+      "type": "USER-DEFINED",
+      "nullable": "YES",
+      "default": "'tri_semester'::academic_track"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "calendar_spring2026_phrm_llb": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "event_date",
+      "type": "date",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "target_track",
+      "type": "USER-DEFINED",
+      "nullable": "YES",
+      "default": "'bi_semester'::academic_track"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "calendar_summer2026": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "event_date",
+      "type": "date",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "target_track",
+      "type": "USER-DEFINED",
+      "nullable": "YES",
+      "default": "'tri_semester'::academic_track"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "completed_courses": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "grade",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "grade_point",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "credits",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "course_metadata": [
+    {
+      "name": "code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "equivalent_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "courses_fall2025": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "original_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_number",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "faculty_initials",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "capacity",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "schedule_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dedicated_department",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "courses_spring2025": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "original_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_number",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "faculty_initials",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "capacity",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "schedule_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dedicated_department",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "courses_spring2026": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "original_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_number",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "faculty_initials",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "capacity",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "schedule_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dedicated_department",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "courses_summer2025": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "original_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_number",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "faculty_initials",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "capacity",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "schedule_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dedicated_department",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "courses_summer2026": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "original_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_number",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "faculty_initials",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "capacity",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "schedule_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "credit_val",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dedicated_department",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "enrollments": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "USER-DEFINED",
+      "nullable": "YES",
+      "default": "'enrolled'::enrollment_status"
+    },
+    {
+      "name": "grade",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "grade_points",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "section",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "fcm_tokens": [
+    {
+      "name": "token",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "platform",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "feedback_comments": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "feedback_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "comment",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "feedbacks": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "message",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "character varying",
+      "nullable": "YES",
+      "default": "'pending'::character varying"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "admin_note",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "grade_scale": [
+    {
+      "name": "grade",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "point",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "min_score",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "policy",
+      "type": "text",
+      "nullable": "YES",
+      "default": "'modern'::text"
+    }
+  ],
+  "notifications": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "USER-DEFINED",
+      "nullable": "YES",
+      "default": "'system'::notification_type"
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "trigger_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "is_dispatched",
+      "type": "boolean",
+      "nullable": "YES",
+      "default": "true"
+    },
+    {
+      "name": "is_read",
+      "type": "boolean",
+      "nullable": "YES",
+      "default": "false"
+    },
+    {
+      "name": "payload",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "alert_key",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "parsing_logs": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "file_name",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "file_type",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "nullable": "NO",
+      "default": "'processing'::text"
+    },
+    {
+      "name": "metrics",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "profiles": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "student_id",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "full_name",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "nickname",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "program_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "admitted_semester",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "cgpa",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "total_credits_earned",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "photo_url",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "onboarding_status",
+      "type": "text",
+      "nullable": "YES",
+      "default": "'pending'::text"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "semester_type",
+      "type": "text",
+      "nullable": "YES",
+      "default": "'tri'::text"
+    },
+    {
+      "name": "department_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "scholarship_status",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "program_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "track",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "enrolled_sections",
+      "type": "ARRAY",
+      "nullable": "YES",
+      "default": "'{}'::uuid[]"
+    },
+    {
+      "name": "enrolled_sections_next",
+      "type": "ARRAY",
+      "nullable": "YES",
+      "default": "'{}'::uuid[]"
+    },
+    {
+      "name": "past_history",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'[]'::jsonb"
+    },
+    {
+      "name": "enrolled_credits",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "enrolled_credits_next",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "total_courses_completed",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "0"
+    },
+    {
+      "name": "last_active_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "app_open_count",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "0"
+    },
+    {
+      "name": "app_version",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "programs": [
+    {
+      "name": "program_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "track",
+      "type": "USER-DEFINED",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "total_degree_credits",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": "130"
+    },
+    {
+      "name": "department_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "schedule_exceptions": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "date",
+      "type": "date",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "start_time",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "end_time",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "room",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "metadata",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "faculty",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "schedule_generations": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "user_id",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "semester",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "courses",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "filters",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "combinations",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "count",
+      "type": "integer",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "scholarship_policies": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "department_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "effective_from_semester",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "effective_until_semester",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "min_yearly_credits",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "merit_cgpa_min",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "deans_cgpa_min",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "medha_cgpa_min",
+      "type": "numeric",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "merit_cgpa_max",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "4.00"
+    },
+    {
+      "name": "deans_cgpa_max",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "medha_cgpa_max",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "degree_credits_required",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "130.0"
+    }
+  ],
+  "scraper_config": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "student_id",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "password",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "target_semesters",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "last_run",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "scraper_logs": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "semester",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "added",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "0"
+    },
+    {
+      "name": "updated",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "0"
+    },
+    {
+      "name": "deleted",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "0"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "nullable": "YES",
+      "default": "'success'::text"
+    },
+    {
+      "name": "report",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'[]'::jsonb"
+    }
+  ],
+  "semester_analytics": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "timezone('utc'::text, now())"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "timezone('utc'::text, now())"
+    },
+    {
+      "name": "live_sgpa",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "live_cgpa",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "target",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "required_credit",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "completed_credit",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "taken_in_this_sem",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    },
+    {
+      "name": "credits_left",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.00"
+    }
+  ],
+  "semester_course_marks": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "section",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "quiz_strategy",
+      "type": "text",
+      "nullable": "YES",
+      "default": "'bestN'::text"
+    },
+    {
+      "name": "quiz_n",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "2"
+    },
+    {
+      "name": "short_quiz_n",
+      "type": "integer",
+      "nullable": "YES",
+      "default": "2"
+    },
+    {
+      "name": "dist_mid",
+      "type": "real",
+      "nullable": "YES",
+      "default": "30.0"
+    },
+    {
+      "name": "dist_final",
+      "type": "real",
+      "nullable": "YES",
+      "default": "40.0"
+    },
+    {
+      "name": "dist_quiz",
+      "type": "real",
+      "nullable": "YES",
+      "default": "10.0"
+    },
+    {
+      "name": "dist_short_quiz",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_assignment",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_presentation",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_viva",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_attendance",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_lab",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_mid",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_final",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_assignment",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_presentation",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_viva",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_attendance",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_lab",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_quizzes",
+      "type": "ARRAY",
+      "nullable": "YES",
+      "default": "'{}'::real[]"
+    },
+    {
+      "name": "obt_short_quizzes",
+      "type": "ARRAY",
+      "nullable": "YES",
+      "default": "'{}'::real[]"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "timezone('utc'::text, now())"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "timezone('utc'::text, now())"
+    },
+    {
+      "name": "grade_goal",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_term_paper",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_class_performance",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_term_paper",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_class_performance",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "marks_data",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_project",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_project",
+      "type": "real",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_optional_1",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_optional_1",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_optional_2",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_optional_2",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "dist_optional_3",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "obt_optional_3",
+      "type": "double precision",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "semester_course_stats": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "marks_obtained",
+      "type": "real",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "total_possible",
+      "type": "real",
+      "nullable": "YES",
+      "default": "100.0"
+    },
+    {
+      "name": "grade_goal",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "last_updated",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "semester_summaries": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "tgpa",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "cgpa",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "credits_earned",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "total_credits_earned",
+      "type": "numeric",
+      "nullable": "YES",
+      "default": "0.0"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "courses",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'[]'::jsonb"
+    }
+  ],
+  "semesters": [
+    {
+      "name": "code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "nullable": "YES",
+      "default": "false"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ],
+  "tasks": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "uuid_generate_v4()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "course_name",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "assign_date",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "due_date",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "submission_type",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "is_completed",
+      "type": "boolean",
+      "nullable": "YES",
+      "default": "false"
+    },
+    {
+      "name": "is_missed",
+      "type": "boolean",
+      "nullable": "YES",
+      "default": "false"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    },
+    {
+      "name": "track",
+      "type": "text",
+      "nullable": "YES",
+      "default": null
+    }
+  ],
+  "user_drafts": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": "gen_random_uuid()"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "combination_data",
+      "type": "jsonb",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO",
+      "default": "now()"
+    }
+  ],
+  "user_semester_states": [
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "semester_code",
+      "type": "text",
+      "nullable": "NO",
+      "default": null
+    },
+    {
+      "name": "weekly_grid_cache",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "progress_summary",
+      "type": "jsonb",
+      "nullable": "YES",
+      "default": "'{}'::jsonb"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "nullable": "YES",
+      "default": "now()"
+    }
+  ]
+}

@@ -1,0 +1,7134 @@
+[
+  {
+    "course": "CSE207",
+    "sec": "5",
+    "error": "Faculty Mismatch",
+    "pdf_val": "PC",
+    "db_val": "ATIQ"
+  },
+  {
+    "course": "CSE209",
+    "sec": "14",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SJA",
+    "db_val": "DMSA"
+  },
+  {
+    "course": "CSE251",
+    "sec": "8",
+    "error": "Faculty Mismatch",
+    "pdf_val": "PMSR",
+    "db_val": "MKN"
+  },
+  {
+    "course": "CSE251",
+    "sec": "9",
+    "error": "Faculty Mismatch",
+    "pdf_val": "PMSR",
+    "db_val": "KOUSHIK"
+  },
+  {
+    "course": "CSE302",
+    "sec": "5",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MRJ",
+    "db_val": "DMSHN"
+  },
+  {
+    "course": "CSE302",
+    "sec": "6",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMSHN",
+    "db_val": "KRI"
+  },
+  {
+    "course": "CSE303",
+    "sec": "4",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SAJID",
+    "db_val": "DMIR"
+  },
+  {
+    "course": "CSE303",
+    "sec": "5",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMIR",
+    "db_val": "TTB"
+  },
+  {
+    "course": "CSE325",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MOON",
+    "db_val": "DSHR"
+  },
+  {
+    "course": "CSE325",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "NYA",
+    "db_val": "KRI"
+  },
+  {
+    "course": "CSE366",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MIR",
+    "db_val": "TBA"
+  },
+  {
+    "course": "CSE366",
+    "sec": "4",
+    "error": "Faculty Mismatch",
+    "pdf_val": "TBA",
+    "db_val": "NAHID"
+  },
+  {
+    "course": "CSE412",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DSHR",
+    "db_val": "YS"
+  },
+  {
+    "course": "CSE430",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SAJID",
+    "db_val": "DSHR"
+  },
+  {
+    "course": "CSE438",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KMSK",
+    "db_val": "DAWR"
+  },
+  {
+    "course": "CSE438",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DAWR",
+    "db_val": "MAMRD"
+  },
+  {
+    "course": "ICE109",
+    "sec": "14",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMSA",
+    "db_val": "SJA"
+  },
+  {
+    "course": "ICE207",
+    "sec": "5",
+    "error": "Faculty Mismatch",
+    "pdf_val": "ATIQ",
+    "db_val": "PC"
+  },
+  {
+    "course": "ICE213",
+    "sec": "8",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MKN",
+    "db_val": "PMSR"
+  },
+  {
+    "course": "ICE213",
+    "sec": "9",
+    "error": "Faculty Mismatch",
+    "pdf_val": "PMSR",
+    "db_val": "KOUSHIK"
+  },
+  {
+    "course": "ICE275",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MOON",
+    "db_val": "DSHR"
+  },
+  {
+    "course": "ICE275",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KRI",
+    "db_val": "NYA"
+  },
+  {
+    "course": "ICE305",
+    "sec": "5",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMSHN",
+    "db_val": "MRJ"
+  },
+  {
+    "course": "ICE305",
+    "sec": "6",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KRI",
+    "db_val": "DMSHN"
+  },
+  {
+    "course": "ICE475",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MIR",
+    "db_val": "TBA"
+  },
+  {
+    "course": "ICE475",
+    "sec": "4",
+    "error": "Faculty Mismatch",
+    "pdf_val": "NAHID",
+    "db_val": "TBA"
+  },
+  {
+    "course": "ICE476",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MIR",
+    "db_val": "TBA"
+  },
+  {
+    "course": "ICE476",
+    "sec": "4",
+    "error": "Faculty Mismatch",
+    "pdf_val": "NAHID",
+    "db_val": "TBA"
+  },
+  {
+    "course": "CHE107",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DJKS",
+    "db_val": "SAMAD"
+  },
+  {
+    "course": "CHE109",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMLN",
+    "db_val": "ZUH"
+  },
+  {
+    "course": "CHE109",
+    "sec": "12",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DNAK",
+    "db_val": "DMLN"
+  },
+  {
+    "course": "CHE109",
+    "sec": "13",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SAMAD",
+    "db_val": "FARHAD"
+  },
+  {
+    "course": "CHE109",
+    "sec": "13",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SAMAD",
+    "db_val": "FARHAD"
+  },
+  {
+    "course": "CHE109",
+    "sec": "15",
+    "error": "Faculty Mismatch",
+    "pdf_val": "FARHAD",
+    "db_val": "DSIC"
+  },
+  {
+    "course": "CHE109",
+    "sec": "15",
+    "error": "Faculty Mismatch",
+    "pdf_val": "FARHAD",
+    "db_val": "DSIC"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DTMA"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DTMA"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZUH"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZUH"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DJKS"
+  },
+  {
+    "course": "CHE7107",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMAD"
+  },
+  {
+    "course": "CS312",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "TBA",
+    "db_val": "TBA1"
+  },
+  {
+    "course": "DSA5001",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSR"
+  },
+  {
+    "course": "DSA5002",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPCS"
+  },
+  {
+    "course": "DSA5003",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAH"
+  },
+  {
+    "course": "DSA5004",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAJIB"
+  },
+  {
+    "course": "DSA5005",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "REZAUL"
+  },
+  {
+    "course": "DSA5006",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "REZAUL"
+  },
+  {
+    "course": "DSA5007",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAH"
+  },
+  {
+    "course": "DSA5011",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPCS"
+  },
+  {
+    "course": "DSA5021",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOYAZZE"
+  },
+  {
+    "course": "DSA5041",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DRAZAD"
+  },
+  {
+    "course": "DSA5045",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MND"
+  },
+  {
+    "course": "DSA5063",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAJIB"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNI"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "AMRK"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASRAF"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASRAF"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAAK"
+  },
+  {
+    "course": "MAT7101",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAMAK"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "SIS"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSBK"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSBK"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASAD"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7102",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7104",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARHANA"
+  },
+  {
+    "course": "MAT7104",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARHANA"
+  },
+  {
+    "course": "MAT7108",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SUMAIYA"
+  },
+  {
+    "course": "MAT7108",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DNCR"
+  },
+  {
+    "course": "MAT7108",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MATH317",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "BITU",
+    "db_val": "APURBO"
+  },
+  {
+    "course": "MATH411",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "APURBO",
+    "db_val": "AP"
+  },
+  {
+    "course": "PHY107",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "NAHMED",
+    "db_val": "AF"
+  },
+  {
+    "course": "PHY109",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MONGUR",
+    "db_val": "GDM"
+  },
+  {
+    "course": "PHY109",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "NFJ",
+    "db_val": "DSAE"
+  },
+  {
+    "course": "PHY109",
+    "sec": "4",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DSAE",
+    "db_val": "MONGUR"
+  },
+  {
+    "course": "PHY109",
+    "sec": "11",
+    "error": "Faculty Mismatch",
+    "pdf_val": "MONGUR",
+    "db_val": "NFJ"
+  },
+  {
+    "course": "PHY109",
+    "sec": "18",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMNAA",
+    "db_val": "DMKZN"
+  },
+  {
+    "course": "PHY109",
+    "sec": "20",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SAYEM",
+    "db_val": "DMNAA"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHMED"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHMED"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHMED"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSAE"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSAE"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "AF"
+  },
+  {
+    "course": "PHY7107",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHMED"
+  },
+  {
+    "course": "STA7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAJ"
+  },
+  {
+    "course": "STA7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAJ"
+  },
+  {
+    "course": "STA7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERSHAD"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSH"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARI"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMQ"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "AJ"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZOA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARI"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TR"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "SFHQ"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMR"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "NSNI"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNF"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNF"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHKA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHKA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "TSK"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "TSK"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "KK"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "SDA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHZ"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZO"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZO"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "DASA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "SOLIKA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "SOLIKA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARIA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "DASA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7100",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ANISA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARIA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "AUHS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "AUHS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMKN"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "FHI"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "MEEM"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMINA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "CMR"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "FAIZA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARLINA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTJS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTJS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZRM"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZRM"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "JF"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "PARVEZ"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHAMMA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHKA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "DZ"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "MJAN"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZK"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "31",
+    "error": "Missing in Database",
+    "pdf_faculty": "WAHID"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "32",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYEDA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "33",
+    "error": "Missing in Database",
+    "pdf_faculty": "RIYA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "34",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARLINA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "35",
+    "error": "Missing in Database",
+    "pdf_faculty": "FAIZA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "36",
+    "error": "Missing in Database",
+    "pdf_faculty": "CMR"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "37",
+    "error": "Missing in Database",
+    "pdf_faculty": "SOLIKA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "38",
+    "error": "Missing in Database",
+    "pdf_faculty": "NKR"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "39",
+    "error": "Missing in Database",
+    "pdf_faculty": "AMAMUN"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "40",
+    "error": "Missing in Database",
+    "pdf_faculty": "AMAMUN"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "41",
+    "error": "Missing in Database",
+    "pdf_faculty": "NKR"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "42",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARIHA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "43",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARIHA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "44",
+    "error": "Missing in Database",
+    "pdf_faculty": "RDNA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "45",
+    "error": "Missing in Database",
+    "pdf_faculty": "RDNA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "46",
+    "error": "Missing in Database",
+    "pdf_faculty": "JF"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "47",
+    "error": "Missing in Database",
+    "pdf_faculty": "WAHID"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "48",
+    "error": "Missing in Database",
+    "pdf_faculty": "DZ"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "49",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARIA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "50",
+    "error": "Missing in Database",
+    "pdf_faculty": "SPBS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "50",
+    "error": "Missing in Database",
+    "pdf_faculty": "SPBS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "51",
+    "error": "Missing in Database",
+    "pdf_faculty": "SPBS"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "52",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHAMMA"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "53",
+    "error": "Missing in Database",
+    "pdf_faculty": "MJAN"
+  },
+  {
+    "course": "ENG7101",
+    "sec": "53",
+    "error": "Missing in Database",
+    "pdf_faculty": "MJAN"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMHK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMHK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "ANISA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NSNI"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "ROUF"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSAZ"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSAZ"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMH"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHKA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMH"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMH"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "AUHS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTR"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTR"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "KK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMINA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "RIYA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "RIYA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "31",
+    "error": "Missing in Database",
+    "pdf_faculty": "SDA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "31",
+    "error": "Missing in Database",
+    "pdf_faculty": "SDA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "32",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTUR"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "33",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "34",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "34",
+    "error": "Missing in Database",
+    "pdf_faculty": "PDS"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "36",
+    "error": "Missing in Database",
+    "pdf_faculty": "FARIHA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "37",
+    "error": "Missing in Database",
+    "pdf_faculty": "ADNAN"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "38",
+    "error": "Missing in Database",
+    "pdf_faculty": "ADNAN"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "40",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFR"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "41",
+    "error": "Missing in Database",
+    "pdf_faculty": "PARVEZ"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "42",
+    "error": "Missing in Database",
+    "pdf_faculty": "NMK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "43",
+    "error": "Missing in Database",
+    "pdf_faculty": "NMK"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "44",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYEDA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "45",
+    "error": "Missing in Database",
+    "pdf_faculty": "FHI"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "46",
+    "error": "Missing in Database",
+    "pdf_faculty": "MEEM"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "47",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMKN"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "48",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSAZ"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "48",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSAZ"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "49",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7102",
+    "sec": "51",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7145",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZOA"
+  },
+  {
+    "course": "ENG7145",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZOA"
+  },
+  {
+    "course": "ENG7154",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7154",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7154",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNF"
+  },
+  {
+    "course": "ENG7154",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7154",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRJK"
+  },
+  {
+    "course": "ENG7160",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7160",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BITHY"
+  },
+  {
+    "course": "ENG7160",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMH"
+  },
+  {
+    "course": "ENG7170",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHAM"
+  },
+  {
+    "course": "ENG7170",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHAM"
+  },
+  {
+    "course": "ENG7170",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHAM"
+  },
+  {
+    "course": "ENG7170",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHAM"
+  },
+  {
+    "course": "ENG7191",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7191",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7191",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AUHS"
+  },
+  {
+    "course": "ENG7191",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AUHS"
+  },
+  {
+    "course": "ENG7192",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7192",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7205",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHKA"
+  },
+  {
+    "course": "ENG7205",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTR"
+  },
+  {
+    "course": "ENG7207",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NSNI"
+  },
+  {
+    "course": "ENG7207",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NSNI"
+  },
+  {
+    "course": "ENG7207",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NPS"
+  },
+  {
+    "course": "ENG7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FSPI"
+  },
+  {
+    "course": "ENG7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NSNI"
+  },
+  {
+    "course": "ENG7210",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSH"
+  },
+  {
+    "course": "ENG7211",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFA"
+  },
+  {
+    "course": "ENG7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZO"
+  },
+  {
+    "course": "ENG7216",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7216",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7216",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SDA"
+  },
+  {
+    "course": "ENG7216",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSHAD"
+  },
+  {
+    "course": "ENG7222",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DBC"
+  },
+  {
+    "course": "ENG7222",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DBC"
+  },
+  {
+    "course": "ENG7222",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DBC"
+  },
+  {
+    "course": "ENG7230",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SDA"
+  },
+  {
+    "course": "ENG7230",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHZ"
+  },
+  {
+    "course": "ENG7230",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARIA"
+  },
+  {
+    "course": "ENG7230",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARIA"
+  },
+  {
+    "course": "ENG7245",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ANISA"
+  },
+  {
+    "course": "ENG7245",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ANISA"
+  },
+  {
+    "course": "ENG7245",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "YAF"
+  },
+  {
+    "course": "ENG7245",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHZ"
+  },
+  {
+    "course": "ENG7255",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7255",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7255",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7255",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HP"
+  },
+  {
+    "course": "ENG7255",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SOLIKA"
+  },
+  {
+    "course": "ENG7299",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZO"
+  },
+  {
+    "course": "ENG7299",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZO"
+  },
+  {
+    "course": "ENG7299",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHZ"
+  },
+  {
+    "course": "ENG7300",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7300",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SFHQ"
+  },
+  {
+    "course": "ENG7310",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KTK"
+  },
+  {
+    "course": "ENG7310",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNVA"
+  },
+  {
+    "course": "ENG7310",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMR"
+  },
+  {
+    "course": "ENG7311",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TSK"
+  },
+  {
+    "course": "ENG7311",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TR"
+  },
+  {
+    "course": "ENG7313",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FSPI"
+  },
+  {
+    "course": "ENG7313",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SOLIKA"
+  },
+  {
+    "course": "ENG7316",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTUR"
+  },
+  {
+    "course": "ENG7320",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMR"
+  },
+  {
+    "course": "ENG7321",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FSPI"
+  },
+  {
+    "course": "ENG7321",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAYSA"
+  },
+  {
+    "course": "ENG7333",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7333",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "IJDT"
+  },
+  {
+    "course": "ENG7338",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "YAF"
+  },
+  {
+    "course": "ENG7338",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNH"
+  },
+  {
+    "course": "ENG7338",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNVA"
+  },
+  {
+    "course": "ENG7399",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KK"
+  },
+  {
+    "course": "ENG7399",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7399",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMAS"
+  },
+  {
+    "course": "ENG7404",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFA"
+  },
+  {
+    "course": "ENG7404",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFA"
+  },
+  {
+    "course": "ENG7404",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DFA"
+  },
+  {
+    "course": "ENG7411",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMQ"
+  },
+  {
+    "course": "ENG7411",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFR"
+  },
+  {
+    "course": "ENG7412",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AJ"
+  },
+  {
+    "course": "ENG7412",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ROUF"
+  },
+  {
+    "course": "ENG7413",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNF"
+  },
+  {
+    "course": "ENG7413",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNF"
+  },
+  {
+    "course": "ENG7417",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ENG7419",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARA"
+  },
+  {
+    "course": "ENG7426",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FA"
+  },
+  {
+    "course": "ENG7426",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNH"
+  },
+  {
+    "course": "ENG7426",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNH"
+  },
+  {
+    "course": "ENG7433",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DFA"
+  },
+  {
+    "course": "ENG7455",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DASA"
+  },
+  {
+    "course": "ENG9503",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DASA"
+  },
+  {
+    "course": "ENG9507",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FA"
+  },
+  {
+    "course": "ENG9509",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNH"
+  },
+  {
+    "course": "ENG9513",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "BAM"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "IH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "AMRH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "NABILA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "NABILA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "SANJANA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAM"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMNA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "SANJANA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "AKH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "AKH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "AKH"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAHRAB"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAHRAB"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAHRAB"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAHRAB"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARIKA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARIKA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARIKA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARIKA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "PPC"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "PPC"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAM"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "UM"
+  },
+  {
+    "course": "ECO7101",
+    "sec": "31",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMSR"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "PAG"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMSR"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "NABILA"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "NABILA"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASM"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "ECO7102",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERP"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERP"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASM"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMNA"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "SEH"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "SEH"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADMAN"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMNA"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMNA"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "PPC"
+  },
+  {
+    "course": "ECO7104",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "ECO7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMK"
+  },
+  {
+    "course": "ECO7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMK"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERP"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERP"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SEH"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "PAG"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYJ"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "SEH"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYJ"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7204",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7220",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYJ"
+  },
+  {
+    "course": "ECO7220",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYJ"
+  },
+  {
+    "course": "ECO7260",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ERP"
+  },
+  {
+    "course": "ECO7260",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "PAG"
+  },
+  {
+    "course": "ECO7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "UM"
+  },
+  {
+    "course": "ECO7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "UM"
+  },
+  {
+    "course": "ECO7301",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "IH"
+  },
+  {
+    "course": "ECO7302",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SSM"
+  },
+  {
+    "course": "ECO7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SYJ"
+  },
+  {
+    "course": "ECO7310",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ECO7310",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "ECO7310",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "ECO7312",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SSM"
+  },
+  {
+    "course": "ECO7314",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AKH"
+  },
+  {
+    "course": "ECO7315",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AFD"
+  },
+  {
+    "course": "ECO7315",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "ECO7328",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ECO7349",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SSM"
+  },
+  {
+    "course": "ECO7349",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SSM"
+  },
+  {
+    "course": "ECO7354",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BAM"
+  },
+  {
+    "course": "ECO7357",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MC"
+  },
+  {
+    "course": "ECO7360",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "PPC"
+  },
+  {
+    "course": "ECO7382",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MC"
+  },
+  {
+    "course": "ECO7406",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BAM"
+  },
+  {
+    "course": "ECO7414",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "PKA"
+  },
+  {
+    "course": "ECO7443",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BB"
+  },
+  {
+    "course": "ECO7453",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ECO7455",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "PKA"
+  },
+  {
+    "course": "ECO7465",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DHN"
+  },
+  {
+    "course": "ECO7467",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MC"
+  },
+  {
+    "course": "ECO7475",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "PKA"
+  },
+  {
+    "course": "ECO7477",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DHN"
+  },
+  {
+    "course": "ECO7477",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SSM"
+  },
+  {
+    "course": "ECO7485",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DEH"
+  },
+  {
+    "course": "ECO7490",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DHN"
+  },
+  {
+    "course": "ECO7491",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AMRH"
+  },
+  {
+    "course": "ECO7495",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMD"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMD"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ALIM"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ALIM"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ATIQUE"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "AZA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "ATIQUE"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABP"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHAM"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABP"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "ALIM"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "ALIM"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAHC"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAHC"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAZB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAZB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAZB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAHC"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAHC"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZHI"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "17",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKLE"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "18",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKLE"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "19",
+    "error": "Missing in Database",
+    "pdf_faculty": "AZA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "20",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZHI"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "21",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAHSAN"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "22",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "23",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "24",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "25",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMEJ"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "26",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMEJ"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "27",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAB"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "28",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAHSAN"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "29",
+    "error": "Missing in Database",
+    "pdf_faculty": "USRA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7226",
+    "sec": "30",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "UM"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "PPC"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARF"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "STO"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "AKH"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "MAT7100",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "CYNTHIA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "GQH"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAAM"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSNR"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SANJANA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SANJANA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "ABONTI"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NTM"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "SANJANA"
+  },
+  {
+    "course": "MAT7110",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOAK"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMNA"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMM"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "UM"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIA"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "PAG"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "PAG"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOAK"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "SEH"
+  },
+  {
+    "course": "MAT7211",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASM"
+  },
+  {
+    "course": "EEE101",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KNS",
+    "db_val": "DAH"
+  },
+  {
+    "course": "EEE101",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KNS",
+    "db_val": "DAH"
+  },
+  {
+    "course": "EEE101",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DFP",
+    "db_val": "KHA"
+  },
+  {
+    "course": "EEE101",
+    "sec": "3",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DFP",
+    "db_val": "KHA"
+  },
+  {
+    "course": "EEE201",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "SMNP",
+    "db_val": "ADRN"
+  },
+  {
+    "course": "EEE201",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DMMUR",
+    "db_val": "HAB"
+  },
+  {
+    "course": "EEE205",
+    "sec": "2",
+    "error": "Faculty Mismatch",
+    "pdf_val": "TBA",
+    "db_val": "DMRK"
+  },
+  {
+    "course": "EEE301",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KHA",
+    "db_val": "SMNP"
+  },
+  {
+    "course": "EEE301",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KHA",
+    "db_val": "SMNP"
+  },
+  {
+    "course": "EEE402",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KNS",
+    "db_val": "DRAH"
+  },
+  {
+    "course": "EEE402",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "KNS",
+    "db_val": "DRAH"
+  },
+  {
+    "course": "EEE418",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "DAH",
+    "db_val": "DMMAH"
+  },
+  {
+    "course": "EEE7165",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIFUR"
+  },
+  {
+    "course": "EEE7165",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIFUR"
+  },
+  {
+    "course": "CE211",
+    "sec": "1",
+    "error": "Faculty Mismatch",
+    "pdf_val": "TAJWAR",
+    "db_val": "DMNH"
+  },
+  {
+    "course": "CE7100",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7100",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KASB"
+  },
+  {
+    "course": "CE7100",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7100",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "CE7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMNH"
+  },
+  {
+    "course": "CE7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJWAR"
+  },
+  {
+    "course": "CE7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "CE7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJWAR"
+  },
+  {
+    "course": "CE7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNZ"
+  },
+  {
+    "course": "CE7102",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNZ"
+  },
+  {
+    "course": "CE7103",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7103",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7103",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJWAR"
+  },
+  {
+    "course": "CE7103",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJWAR"
+  },
+  {
+    "course": "CE7200",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7200",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMTS"
+  },
+  {
+    "course": "CE7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMTS"
+  },
+  {
+    "course": "CE7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "FYH"
+  },
+  {
+    "course": "CE7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "FYH"
+  },
+  {
+    "course": "CE7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRMK"
+  },
+  {
+    "course": "CE7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRN"
+  },
+  {
+    "course": "CE7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAIFUL"
+  },
+  {
+    "course": "CE7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7211",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMNH"
+  },
+  {
+    "course": "CE7211",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJWAR"
+  },
+  {
+    "course": "CE7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "EIB"
+  },
+  {
+    "course": "CE7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "EIB"
+  },
+  {
+    "course": "CE7213",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FYH"
+  },
+  {
+    "course": "CE7213",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "FYH"
+  },
+  {
+    "course": "CE7227",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMKT"
+  },
+  {
+    "course": "CE7227",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMKT"
+  },
+  {
+    "course": "CE7227",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7227",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JTH"
+  },
+  {
+    "course": "CE7261",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KASB"
+  },
+  {
+    "course": "CE7261",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KASB"
+  },
+  {
+    "course": "CE7261",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIK"
+  },
+  {
+    "course": "CE7261",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SADIK"
+  },
+  {
+    "course": "INF7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DDB"
+  },
+  {
+    "course": "INF7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DDB"
+  },
+  {
+    "course": "INF7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7102",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "AIA"
+  },
+  {
+    "course": "INF7103",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMGH"
+  },
+  {
+    "course": "INF7103",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KMGH"
+  },
+  {
+    "course": "INF7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "INF7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HNI"
+  },
+  {
+    "course": "INF7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HNI"
+  },
+  {
+    "course": "INF7104",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "HNI"
+  },
+  {
+    "course": "INF7105",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIK"
+  },
+  {
+    "course": "INF7105",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIK"
+  },
+  {
+    "course": "INF7105",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIK"
+  },
+  {
+    "course": "INF7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUL"
+  },
+  {
+    "course": "INF7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUL"
+  },
+  {
+    "course": "INF7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUL"
+  },
+  {
+    "course": "INF7107",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUL"
+  },
+  {
+    "course": "INF7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ARSN"
+  },
+  {
+    "course": "INF7202",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAISA"
+  },
+  {
+    "course": "INF7207",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAISA"
+  },
+  {
+    "course": "INF7207",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAISA"
+  },
+  {
+    "course": "INF7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRZ"
+  },
+  {
+    "course": "INF7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRZ"
+  },
+  {
+    "course": "INF7209",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RRN"
+  },
+  {
+    "course": "INF7209",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIK"
+  },
+  {
+    "course": "INF7209",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASHIK"
+  },
+  {
+    "course": "INF7210",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNM"
+  },
+  {
+    "course": "INF7303",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "INF7303",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HNI"
+  },
+  {
+    "course": "INF7303",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HNI"
+  },
+  {
+    "course": "INF7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DDB"
+  },
+  {
+    "course": "INF7304",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMSL"
+  },
+  {
+    "course": "INF7306",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RRN"
+  },
+  {
+    "course": "INF7307",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNM"
+  },
+  {
+    "course": "INF7307",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNM"
+  },
+  {
+    "course": "INF7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RRN"
+  },
+  {
+    "course": "INF7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RRN"
+  },
+  {
+    "course": "INF7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RRN"
+  },
+  {
+    "course": "INF7308",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AIA"
+  },
+  {
+    "course": "INF7308",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "AIA"
+  },
+  {
+    "course": "INF7402",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSMM"
+  },
+  {
+    "course": "INF7402",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSMM"
+  },
+  {
+    "course": "INF7403",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMSL"
+  },
+  {
+    "course": "INF7403",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMSL"
+  },
+  {
+    "course": "INF7403",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMSL"
+  },
+  {
+    "course": "INF7403",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMSL"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DACY"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DACY"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "THD"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "THD"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHN"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHN"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "RHM"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "RHM"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "TOMA"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "TOMA"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "TOMA"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAMIRAH"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAMIRAH"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRDI"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZMD"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZMD"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZMD"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "THD"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "THD"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHN"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NHN"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TOMA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TOMA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAMIRAH"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAMIRAH"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMNR"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMNR"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ACT7201",
+    "sec": "16",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KB"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KB"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "FZK"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "FZK"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMFI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMFI"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7231",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MHSL"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MHSL"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MHSL"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MN"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MN"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MN"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAA"
+  },
+  {
+    "course": "BUS7361",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAA"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "KB"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KB"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSHS"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSHS"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNI"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNI"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "KAWSAR"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "KAWSAR"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "ESR7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MNS"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSBA"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSBA"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "NBR"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "NBR"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMUF"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMUF"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMUF"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "RJ"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NJAHAN"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NJAHAN"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFM"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFM"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZZH"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZZH"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7101",
+    "sec": "15",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSBA"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "LVD"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "NBR"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "NBR"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMUF"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMUF"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "RJ"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "RJ"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NJAHAN"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFM"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFM"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZZH"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZZH"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "MFM"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN7201",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARS"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARS"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ADAS"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ADAS"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARNA"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARNA"
+  },
+  {
+    "course": "HRM7301",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHARNA"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "JU"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "JU"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSHS"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNI"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TNI"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "ITB7301",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "JMA"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSHS"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "USN"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "KAWSAR"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "KAWSAR"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMASUM"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMASUM"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NNABI"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NNABI"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAZIB"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "RAZIB"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMJ"
+  },
+  {
+    "course": "MGT7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "TMJ"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "FF"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SVA"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SVA"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TPE"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TPE"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMHN"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMHN"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSIF"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "NFI"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "NFI"
+  },
+  {
+    "course": "MGT7251",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMARIF"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMARIF"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAM"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIFSAMI"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "AHNAF"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "AHNAF"
+  },
+  {
+    "course": "MGT7337",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "AHNAF"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJNIN"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAJNIN"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "RUPA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "RUPA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "11",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "12",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "13",
+    "error": "Missing in Database",
+    "pdf_faculty": "MDARN"
+  },
+  {
+    "course": "MIS7101",
+    "sec": "14",
+    "error": "Missing in Database",
+    "pdf_faculty": "MDARN"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASM"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMRN"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "BHE"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MUNIRA"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAHM"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAHM"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAHM"
+  },
+  {
+    "course": "MIS7305",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAHM"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAM"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MHZ"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MHZ"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DATR"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMEET"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMEET"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SRMALIHA"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "SRMALIHA"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAN"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAM"
+  },
+  {
+    "course": "MKT7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DATR"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMEET"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAMEET"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "SRMALIHA"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "SRMALIHA"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "FZK"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "FZK"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "RZ"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "SAT"
+  },
+  {
+    "course": "MKT7201",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMAM"
+  },
+  {
+    "course": "EHS7303",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "EHS7303",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "EHS7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIB"
+  },
+  {
+    "course": "EHS7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TT"
+  },
+  {
+    "course": "EHS7307",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASIB"
+  },
+  {
+    "course": "EHS7403",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MEI"
+  },
+  {
+    "course": "GEN7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAB"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MEI"
+  },
+  {
+    "course": "GEN7203",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "GEN7204",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7204",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RN"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNH"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNH"
+  },
+  {
+    "course": "GEN7205",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "JAKIA"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSML"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RN"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "JAKIA"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7207",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMLR"
+  },
+  {
+    "course": "GEN7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMLR"
+  },
+  {
+    "course": "GEN7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMLR"
+  },
+  {
+    "course": "GEN7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMLR"
+  },
+  {
+    "course": "GEN7208",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMHT"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RTK"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RTK"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7209",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7210",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "EH"
+  },
+  {
+    "course": "GEN7210",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "EH"
+  },
+  {
+    "course": "GEN7211",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAMA"
+  },
+  {
+    "course": "GEN7211",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAMA"
+  },
+  {
+    "course": "GEN7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAMA"
+  },
+  {
+    "course": "GEN7211",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAMA"
+  },
+  {
+    "course": "GEN7214",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TT"
+  },
+  {
+    "course": "GEN7214",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7214",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7224",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAAB"
+  },
+  {
+    "course": "GEN7224",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAAB"
+  },
+  {
+    "course": "GEN7224",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEN7239",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMME"
+  },
+  {
+    "course": "GEN7239",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMME"
+  },
+  {
+    "course": "GEN7239",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMME"
+  },
+  {
+    "course": "GEN7239",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMHT"
+  },
+  {
+    "course": "PHS7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPAC"
+  },
+  {
+    "course": "PHS7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPAC"
+  },
+  {
+    "course": "PHS7302",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PHS7303",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPAC"
+  },
+  {
+    "course": "PHS7303",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPAC"
+  },
+  {
+    "course": "PHS7303",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PHS7303",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PHS7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PHS7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PHS7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PHS7306",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DPAC"
+  },
+  {
+    "course": "PHS7307",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RTK"
+  },
+  {
+    "course": "POP7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DLN"
+  },
+  {
+    "course": "POP7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DLN"
+  },
+  {
+    "course": "POP7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAJF"
+  },
+  {
+    "course": "POP7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DAJF"
+  },
+  {
+    "course": "POP7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA2"
+  },
+  {
+    "course": "POP7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA2"
+  },
+  {
+    "course": "POP7202",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7202",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HTM"
+  },
+  {
+    "course": "POP7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HTM"
+  },
+  {
+    "course": "POP7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HTM"
+  },
+  {
+    "course": "POP7203",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7203",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7203",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "POP7203",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHM"
+  },
+  {
+    "course": "PPHS7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAMUN"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "QMR"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "QMR"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "QMR"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7102",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7103",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "PPHS7103",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "PPHS7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7105",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7105",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "QMR"
+  },
+  {
+    "course": "PPHS7106",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RTK"
+  },
+  {
+    "course": "PPHS7106",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MSML"
+  },
+  {
+    "course": "PPHS7106",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7106",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "KNN"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MEI"
+  },
+  {
+    "course": "PPHS7201",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "MRWS"
+  },
+  {
+    "course": "PPHS7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RTK"
+  },
+  {
+    "course": "PPHS7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA3"
+  },
+  {
+    "course": "PPHS7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA3"
+  },
+  {
+    "course": "PPHS7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMIN"
+  },
+  {
+    "course": "PPHS7205",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMHK"
+  },
+  {
+    "course": "PPHS7205",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMHK"
+  },
+  {
+    "course": "PPHS7306",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PPHS7306",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMZS"
+  },
+  {
+    "course": "PPHS7306",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "QMR"
+  },
+  {
+    "course": "PPHS7307",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHM"
+  },
+  {
+    "course": "PPHS7307",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHM"
+  },
+  {
+    "course": "PPHS7307",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHM"
+  },
+  {
+    "course": "PPHS7408",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MBH"
+  },
+  {
+    "course": "PPHS7408",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MBH"
+  },
+  {
+    "course": "PPHS7408",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MBH"
+  },
+  {
+    "course": "PPHS7408",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MBH"
+  },
+  {
+    "course": "PSS7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAMUN"
+  },
+  {
+    "course": "PSS7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAMUN"
+  },
+  {
+    "course": "PSS7302",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAMUN"
+  },
+  {
+    "course": "PSS7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HTM"
+  },
+  {
+    "course": "PSS7401",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TT"
+  },
+  {
+    "course": "PSS7402",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HTM"
+  },
+  {
+    "course": "PSS7405",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MAMUN"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RPN"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "RHN"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZAN"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SBZ"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "SBZ"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASOOM"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "8",
+    "error": "Missing in Database",
+    "pdf_faculty": "USRA"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "9",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKK"
+  },
+  {
+    "course": "SOC7101",
+    "sec": "10",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKK"
+  },
+  {
+    "course": "SOC7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7102",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7102",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7106",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASOOM"
+  },
+  {
+    "course": "SOC7106",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SBZ"
+  },
+  {
+    "course": "SOC7107",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RHN"
+  },
+  {
+    "course": "SOC7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZAN"
+  },
+  {
+    "course": "SOC7201",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZAN"
+  },
+  {
+    "course": "SOC7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DARK"
+  },
+  {
+    "course": "SOC7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASOOM"
+  },
+  {
+    "course": "SOC7206",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RPN"
+  },
+  {
+    "course": "SOC7206",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SBZ"
+  },
+  {
+    "course": "SOC7209",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7209",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7209",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7210",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RPN"
+  },
+  {
+    "course": "SOC7210",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RPN"
+  },
+  {
+    "course": "SOC7218",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOU"
+  },
+  {
+    "course": "SOC7219",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MASOOM"
+  },
+  {
+    "course": "SOC7220",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7221",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7221",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7302",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SBZ"
+  },
+  {
+    "course": "SOC7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOU"
+  },
+  {
+    "course": "SOC7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "HELAL"
+  },
+  {
+    "course": "SOC7309",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZAN"
+  },
+  {
+    "course": "SOC7310",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DARK"
+  },
+  {
+    "course": "SOC7313",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RHN"
+  },
+  {
+    "course": "SOC7317",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7317",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "IMF"
+  },
+  {
+    "course": "SOC7319",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DFM"
+  },
+  {
+    "course": "SOC7320",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOU"
+  },
+  {
+    "course": "SOC7401",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "AIMU"
+  },
+  {
+    "course": "SOC7406",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DARK"
+  },
+  {
+    "course": "SOC7409",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZAN"
+  },
+  {
+    "course": "SOC7413",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7413",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7413",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7414",
+    "sec": "7",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SOC7415",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MOU"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRB"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRB"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNE"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNE"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMTI"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMTI"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMTI"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAN"
+  },
+  {
+    "course": "CHE7108",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAN"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MANI"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MANI"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUS"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUS"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAN"
+  },
+  {
+    "course": "CHE7208",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TAN"
+  },
+  {
+    "course": "GEB490",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMK"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRB"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRB"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMTI"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMTI"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "5",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7101",
+    "sec": "6",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7103",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKBA"
+  },
+  {
+    "course": "GEB7103",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTQI"
+  },
+  {
+    "course": "GEB7103",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZF"
+  },
+  {
+    "course": "GEB7103",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUS"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZF"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZF"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "RFM"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "RFM"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TASMIA"
+  },
+  {
+    "course": "GEB7104",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "TASMIA"
+  },
+  {
+    "course": "GEB7105",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMK"
+  },
+  {
+    "course": "GEB7105",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DTNA"
+  },
+  {
+    "course": "GEB7105",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TASMIA"
+  },
+  {
+    "course": "GEB7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7202",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRI"
+  },
+  {
+    "course": "GEB7202",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRI"
+  },
+  {
+    "course": "GEB7203",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TASMIA"
+  },
+  {
+    "course": "GEB7203",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAZMUS"
+  },
+  {
+    "course": "GEB7301",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SNE"
+  },
+  {
+    "course": "GEB7301",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TASMIA"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKBA"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKBA"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DKBA"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RFM"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "RFM"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7304",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7305",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ZF"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMMB"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTQI"
+  },
+  {
+    "course": "GEB7308",
+    "sec": "3",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTQI"
+  },
+  {
+    "course": "GEB7402",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSN"
+  },
+  {
+    "course": "GEB7402",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DSN"
+  },
+  {
+    "course": "GEB7402",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DTNA"
+  },
+  {
+    "course": "GEB7402",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "DTNA"
+  },
+  {
+    "course": "GEB7403",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRI"
+  },
+  {
+    "course": "GEB7403",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMRI"
+  },
+  {
+    "course": "GEB7403",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMHH"
+  },
+  {
+    "course": "GEB7403",
+    "sec": "4",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMHH"
+  },
+  {
+    "course": "GEB7407",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHSAN"
+  },
+  {
+    "course": "GEB7407",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "NAHSAN"
+  },
+  {
+    "course": "GEB7420",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "RFM"
+  },
+  {
+    "course": "GEB7424",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "GEB7426",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MTQI"
+  },
+  {
+    "course": "GEB7427",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DABT"
+  },
+  {
+    "course": "GEB7428",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "DMHH"
+  },
+  {
+    "course": "GEB7499",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "LGF8701",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SHFI"
+  },
+  {
+    "course": "LGF8701",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "INK"
+  },
+  {
+    "course": "LGF8702",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MARB"
+  },
+  {
+    "course": "LGF8702",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMNA"
+  },
+  {
+    "course": "LGF8703",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MGS"
+  },
+  {
+    "course": "LGF8703",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "FZTR"
+  },
+  {
+    "course": "LGF8704",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMUI"
+  },
+  {
+    "course": "LGF8704",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TJK"
+  },
+  {
+    "course": "LGF8705",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "MZRN"
+  },
+  {
+    "course": "LGF8705",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "LGF8706",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "SMHI"
+  },
+  {
+    "course": "LGF8706",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "MMZI"
+  },
+  {
+    "course": "LGF8901",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "ASM"
+  },
+  {
+    "course": "FIN9501",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN9501",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN9523",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "FIN9525",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "HRM9501",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "HRM9521",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "HRM9527",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MGT9600",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MGT9600",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS9501",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MIS9501",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT9501",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT9501",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT9525",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "MKT9529",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "OPM9501",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "OPM9501",
+    "sec": "2",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SCM9521",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  },
+  {
+    "course": "SCM9524",
+    "sec": "1",
+    "error": "Missing in Database",
+    "pdf_faculty": "TBA"
+  }
+]

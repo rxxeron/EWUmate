@@ -13,7 +13,12 @@ import '../../core/utils/refresh_utils.dart';
 
 class CourseHistoryScreen extends ConsumerStatefulWidget {
   final bool isEditMode;
-  const CourseHistoryScreen({super.key, this.isEditMode = false});
+  final String? admittedSemester;
+  const CourseHistoryScreen({
+    super.key, 
+    this.isEditMode = false,
+    this.admittedSemester,
+  });
 
   @override
   ConsumerState<CourseHistoryScreen> createState() =>
@@ -34,7 +39,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   final Map<String, List<String>> _selectedSectionIds = {};
   final Map<String, Map<String, dynamic>> _selectedCoursesMetadata = {}; // Persistent metadata
   List<String> _allSemesters = [];
-  String _runningSemester = "Loading...";
+  String _runningSemester = "";
 
   // Current State
   String? _admittedSemester;
@@ -49,6 +54,10 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    // Instant priority for passed semester
+    if (widget.admittedSemester != null) {
+       _currentSemester = widget.admittedSemester;
+    }
     _loadInitialData();
   }
 
@@ -102,7 +111,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   void _nextSemester() async {
-    if ((_history[_currentSemester!] ?? {}).isEmpty) {
+    if ((_history[_currentSemester!] ?? {}).isEmpty && !_isCurrentSemester) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -166,7 +175,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Future<void> _finishOnboarding() async {
-    if ((_history[_currentSemester!] ?? {}).isEmpty) {
+    if ((_history[_currentSemester!] ?? {}).isEmpty && !_isCurrentSemester) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -262,7 +271,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
       if (mounted) {
         setState(() {
-          _runningSemester = (config['current_semester_code'] ?? "Spring2026")
+          _runningSemester = (config['current_semester_code'] ?? "Summer2026")
               .toString();
           _allSemesters = allSems;
           if (!_allSemesters.contains(_runningSemester)) {
@@ -328,7 +337,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             }
           }
 
-          _admittedSemester = (profileData['admitted_semester'] ?? "").toString();
+          // Priority: use passed semester if available (instant handover)
+          if (widget.admittedSemester != null && widget.admittedSemester!.isNotEmpty) {
+             _admittedSemester = widget.admittedSemester;
+          } else {
+             _admittedSemester = (profileData['admitted_semester'] ?? "").toString();
+          }
           
           // Check if user is a new student (no history to edit)
           if (widget.isEditMode && _admittedSemester == _runningSemester) {
@@ -365,7 +379,11 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                   .toString()
                   .toLowerCase();
 
-          // Pharmacy specific fallback for Fall admissions
+          // CRITICAL: Remember the actual admission semester before we bridge it to Summer
+          final actualAdmission = _admittedSemester ?? '';
+          final isFallAdmitted = actualAdmission.toLowerCase().contains('fall');
+
+          // 1. Pharmacy specific fallback for Fall admissions: Add a one-time Summer session
           if (!widget.isEditMode &&
               programName.contains("pharmacy") &&
               _admittedSemester != null &&
@@ -381,11 +399,50 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                 _allSemesters.add(forcedSummer);
               }
             }
-            _admittedSemester = forcedSummer;
+            _admittedSemester = forcedSummer; // Start onboarding from this Summer
           }
 
-          // Dynamic Semester Filtering: From Admitted up to the semester BEFORE Running
-          // Use fuzzy matching (strip spaces/underscores and ignore case) to find indices
+          // 2. Pharmacy/Law (Bi-semester) Admission Normalization
+          // WE SKIP THIS mapping if it's the "Forced Summer" we just created
+          final isForcedSummer = programName.contains("pharmacy") && (_admittedSemester?.toLowerCase().contains('summer') ?? false);
+
+          if (!isForcedSummer && semesterType == 'bi_semester' && (_admittedSemester?.toLowerCase().contains('summer') ?? false)) {
+            // PHRM/LLB don't have Summer. If they chose Summer, map to the preceding Spring.
+            final yearMatch = RegExp(r'\d{4}').firstMatch(_admittedSemester!);
+            final year = yearMatch?.group(0) ?? '2026';
+            _admittedSemester = 'Spring$year'; 
+          }
+
+          // 2. Ensure required semesters exist in the list
+          if (_admittedSemester != null && !_allSemesters.contains(_admittedSemester)) {
+             _allSemesters.add(_admittedSemester!);
+          }
+          if (!_allSemesters.contains(_runningSemester)) {
+             _allSemesters.add(_runningSemester);
+          }
+
+          // 2. Sort chronologically (Year first, then season)
+          _allSemesters.sort((a, b) {
+            final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
+            final matchA = reg.firstMatch(a);
+            final matchB = reg.firstMatch(b);
+            if (matchA != null && matchB != null) {
+              final yearA = int.parse(matchA.group(2)!);
+              final yearB = int.parse(matchB.group(2)!);
+              if (yearA != yearB) return yearA.compareTo(yearB);
+              int getSeasonWeight(String s) {
+                final season = s.toLowerCase();
+                if (season.contains('spring')) return 1;
+                if (season.contains('summer')) return 2;
+                if (season.contains('fall')) return 3;
+                return 4;
+              }
+              return getSeasonWeight(matchA.group(1)!).compareTo(getSeasonWeight(matchB.group(1)!));
+            }
+            return a.compareTo(b);
+          });
+
+          // 3. Dynamic Semester Filtering
           String clean(String s) => s.replaceAll(' ', '').replaceAll('_', '').toLowerCase();
           
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
@@ -396,14 +453,30 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           }
 
           if (admIdx != -1 && runIdx != -1) {
-            // Determine the range: from admitted to max(admitted, running)
-            // This ensures future admissions (admIdx > runIdx) are not clipped out.
             final startIndex = admIdx;
             final endIndex = (runIdx > admIdx) ? runIdx : admIdx;
             _allSemesters = _allSemesters.sublist(startIndex, endIndex + 1);
           } else if (runIdx != -1) {
-            // Fallback: show up to running if admission is unknown
             _allSemesters = _allSemesters.sublist(0, runIdx + 1);
+          }
+
+          // 4. Bi-semester (PHRM/LLB) Filter: 
+          // Rule: Only Fall-admitted students can access Summer terms, and only ONCE (the first summer after admission).
+          if (semesterType == 'bi_semester') {
+            if (!isFallAdmitted) {
+              _allSemesters = _allSemesters.where((s) => !s.toLowerCase().contains('summer')).toList();
+            } else {
+              // Keep only the FIRST summer that appears after admission
+              bool summerFound = false;
+              _allSemesters = _allSemesters.where((s) {
+                if (s.toLowerCase().contains('summer')) {
+                  if (summerFound) return false;
+                  summerFound = true;
+                  return true;
+                }
+                return true;
+              }).toList();
+            }
           }
 
           if (widget.isEditMode) {
@@ -411,10 +484,15 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                _confirmAdmittedSemester(_allSemesters.first);
              }
           } else {
-            // Find the best match for initial selection in the filtered list
-            final matchIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
+            final matchIdx = _allSemesters.indexWhere((s) {
+              final cleaned = clean(s);
+              return cleaned.isNotEmpty && cleaned == clean(_admittedSemester ?? '');
+            });
+
             if (matchIdx != -1) {
               _confirmAdmittedSemester(_allSemesters[matchIdx]);
+            } else if (_allSemesters.isNotEmpty) {
+              _confirmAdmittedSemester(_allSemesters.first);
             } else {
               _confirmAdmittedSemester(_runningSemester);
             }
@@ -690,13 +768,32 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                   },
                 ),
               )
-            : Text(
-                _currentSemester ?? "Select Semester",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            : Column(
+                children: [
+                  const Text(
+                    "ACADEMIC HISTORY",
+                    style: TextStyle(
+                      fontSize: 10,
+                      letterSpacing: 2,
+                      color: Colors.cyanAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    CourseUtils.prettifySemesterCode(
+                      (_currentSemester == null || _currentSemester!.isEmpty) 
+                          ? "Syncing Term..." 
+                          : _currentSemester!
+                    ),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
+        centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -741,9 +838,14 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           ),
           const SizedBox(height: 8),
           if (currentMap.isEmpty)
-            const Text(
-              "No courses selected for this semester.",
-              style: TextStyle(color: Colors.white60),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  "No courses selected for ${CourseUtils.prettifySemesterCode((_currentSemester == null || _currentSemester!.isEmpty) ? "this semester" : _currentSemester!)}",
+                  style: const TextStyle(color: Colors.white60, fontSize: 13),
+                ),
+              ),
             )
           else
             Wrap(

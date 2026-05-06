@@ -39,9 +39,14 @@ class DashboardRepository {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final dayName = DateFormat('EEEE').format(date);
 
+    // Determine student track (PHRM/LAW vs Standard)
+    final programName = track?.toUpperCase() ?? '';
+    final bool isBiSemester = programName.contains('PHRM') || programName.contains('LAW') || programName.contains('LLB');
+
     // Smart Invalidation Cache Check
     if (_cache != null) {
-      final cached = _cache.getCachedDashboardSchedule(user.id);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
       if (cached != null) {
         final cacheDateStr = cached['dateStr'] as String?;
         if (cacheDateStr == dateStr) {
@@ -73,17 +78,17 @@ class DashboardRepository {
     }
 
     try {
-      // 1. Fetch both track configurations (Standard & BI/PHRM)
+      // 1. Fetch relevant track configuration
       final standardTable = CourseUtils.semesterTable(
         'calendar',
         semesterCode,
         cycleType: 'tri_semester',
       );
-      final phrmTable = CourseUtils.semesterTable(
-        'calendar',
-        semesterCode,
-        cycleType: 'bi_semester',
-      );
+      
+      // Professional calendar is ONLY needed for PHRM/LLB students (who can take hybrid courses)
+      final phrmTable = isBiSemester 
+          ? CourseUtils.semesterTable('calendar', semesterCode, cycleType: 'bi_semester')
+          : null;
 
       final results = await Future.wait<dynamic>([
         // [0] Weekly grid cache
@@ -100,19 +105,23 @@ class DashboardRepository {
             .eq('user_id', user.id)
             .eq('date', dateStr),
         // [2] Standard (Tri) holiday/swap
-        _supabase
-            .from(standardTable)
-            .select()
-            .eq('event_date', dateStr)
-            .maybeSingle()
-            .catchError((_) => null),
+        (standardTable != null)
+            ? _supabase
+                .from(standardTable)
+                .select()
+                .eq('event_date', dateStr)
+                .maybeSingle()
+                .catchError((_) => null)
+            : Future.value(null),
         // [3] Professional (Bi) holiday/swap
-        _supabase
-            .from(phrmTable)
-            .select()
-            .eq('event_date', dateStr)
-            .maybeSingle()
-            .catchError((_) => null),
+        (phrmTable != null)
+            ? _supabase
+                .from(phrmTable)
+                .select()
+                .eq('event_date', dateStr)
+                .maybeSingle()
+                .catchError((_) => null)
+            : Future.value(null),
         // [4] Tasks
         _supabase
             .from('tasks')
@@ -129,15 +138,15 @@ class DashboardRepository {
             )
             .order('due_date', ascending: true)
             .limit(10),
-        // [5, 6] Classes End Dates
+        // [5, 6] Classes End/Start Dates
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'tri_semester')
             .maybeSingle(),
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'bi_semester')
             .maybeSingle(),
       ]);
@@ -158,8 +167,14 @@ class DashboardRepository {
       final stdEndDateStr =
           (results[5] as Map<String, dynamic>?)?['classes_end_date']
               ?.toString();
+      final stdStartDateStr =
+          (results[5] as Map<String, dynamic>?)?['classes_start_date']
+              ?.toString();
       final phrmEndDateStr =
           (results[6] as Map<String, dynamic>?)?['classes_end_date']
+              ?.toString();
+      final phrmStartDateStr =
+          (results[6] as Map<String, dynamic>?)?['classes_start_date']
               ?.toString();
 
       if (weeklyGrid.isEmpty) {
@@ -261,11 +276,15 @@ class DashboardRepository {
 
       bool isStdOver =
           stdEndDateStr != null && dateStr.compareTo(stdEndDateStr) > 0;
+      bool isStdNotStarted =
+          stdStartDateStr != null && dateStr.compareTo(stdStartDateStr) < 0;
       bool isPhrmOver =
           phrmEndDateStr != null && dateStr.compareTo(phrmEndDateStr) > 0;
+      bool isPhrmNotStarted =
+          phrmStartDateStr != null && dateStr.compareTo(phrmStartDateStr) < 0;
 
       // Pull Standard Courses (Non-PHRM/LAW)
-      if (!stdIsHoliday && !isStdOver) {
+      if (!stdIsHoliday && !isStdOver && !isStdNotStarted) {
         final stdClasses = List<Map<String, dynamic>>.from(
           weeklyGrid[stdDay] ?? [],
         );
@@ -280,7 +299,7 @@ class DashboardRepository {
       }
 
       // Pull Professional Courses (PHRM/LAW)
-      if (!phrmIsHoliday && !isPhrmOver) {
+      if (!phrmIsHoliday && !isPhrmOver && !isPhrmNotStarted) {
         final phClasses = List<Map<String, dynamic>>.from(
           weeklyGrid[phrmDay] ?? [],
         );
@@ -318,6 +337,9 @@ class DashboardRepository {
         } else if (isPhrmOver && isStdOver) {
           status = 'chill';
           reason = 'The semester classes have officially concluded.';
+        } else if (isPhrmNotStarted && isStdNotStarted) {
+          status = 'chill';
+          reason = 'The semester classes haven\'t officially started yet.';
         }
       }
 
@@ -333,13 +355,15 @@ class DashboardRepository {
 
       if (_cache != null) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
-        _cache.cacheDashboardSchedule(user.id, cachePayload);
+        final safeSem = CourseUtils.cleanSemester(semesterCode);
+        _cache.cacheDashboardSchedule(user.id, safeSem, cachePayload);
       }
 
       return payload;
     } catch (e) {
       if (_cache != null) {
-        final cached = _cache.getCachedDashboardSchedule(user.id);
+        final safeSem = CourseUtils.cleanSemester(semesterCode);
+        final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
         if (cached != null) {
           debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
           if (cached['date'] != null && cached['date'] is String) {
@@ -529,8 +553,9 @@ class DashboardRepository {
   }
 
   Future<List<Map<String, dynamic>>> getTwoWeekSchedule(
-    String semesterCode,
-  ) async {
+    String semesterCode, {
+    String? track,
+  }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return [];
 
@@ -541,16 +566,28 @@ class DashboardRepository {
     final endDateStr = DateFormat('yyyy-MM-dd').format(twoWeeksLater);
 
     try {
-      final standardTable = CourseUtils.semesterTable(
-        'calendar',
-        semesterCode,
-        cycleType: 'tri_semester',
-      );
-      final phrmTable = CourseUtils.semesterTable(
-        'calendar',
-        semesterCode,
-        cycleType: 'bi_semester',
-      );
+      // Determine track
+      final programName = track?.toUpperCase() ?? '';
+      final bool isBiSemester = programName.contains('PHRM') ||
+          programName.contains('LAW') ||
+          programName.contains('LLB');
+
+      String? standardTable;
+      String? phrmTable;
+
+      if (!isBiSemester) {
+        standardTable = CourseUtils.semesterTable(
+          'calendar',
+          semesterCode,
+          cycleType: 'tri_semester',
+        );
+      } else {
+        phrmTable = CourseUtils.semesterTable(
+          'calendar',
+          semesterCode,
+          cycleType: 'bi_semester',
+        );
+      }
 
       final results = await Future.wait<dynamic>([
         _supabase
@@ -567,27 +604,37 @@ class DashboardRepository {
             .gte('date', startDateStr)
             .lte('date', endDateStr)
             .catchError((e) { debugPrint('Error in exceptions fetch: $e'); return []; }),
-        _supabase
-            .from(standardTable)
-            .select()
-            .gte('event_date', startDateStr)
-            .lte('event_date', endDateStr)
-            .catchError((e) { debugPrint('Error in standardTable fetch: $e'); return []; }),
-        _supabase
-            .from(phrmTable)
-            .select()
-            .gte('event_date', startDateStr)
-            .lte('event_date', endDateStr)
-            .catchError((e) { debugPrint('Error in phrmTable fetch: $e'); return []; }),
+        (standardTable != null)
+            ? _supabase
+                .from(standardTable)
+                .select()
+                .gte('event_date', startDateStr)
+                .lte('event_date', endDateStr)
+                .catchError((e) {
+                debugPrint('Error in standardTable fetch: $e');
+                return [];
+              })
+            : Future.value([]),
+        (phrmTable != null)
+            ? _supabase
+                .from(phrmTable)
+                .select()
+                .gte('event_date', startDateStr)
+                .lte('event_date', endDateStr)
+                .catchError((e) {
+                debugPrint('Error in phrmTable fetch: $e');
+                return [];
+              })
+            : Future.value([]),
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'tri_semester')
             .maybeSingle()
             .catchError((e) { debugPrint('Error in tri end_date fetch: $e'); return null; }),
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'bi_semester')
             .maybeSingle()
             .catchError((e) { debugPrint('Error in bi end_date fetch: $e'); return null; }),
@@ -658,8 +705,14 @@ class DashboardRepository {
       final stdEndDateStr =
           (results[4] as Map<String, dynamic>?)?['classes_end_date']
               ?.toString();
+      final stdStartDateStr =
+          (results[4] as Map<String, dynamic>?)?['classes_start_date']
+              ?.toString();
       final phrmEndDateStr =
           (results[5] as Map<String, dynamic>?)?['classes_end_date']
+              ?.toString();
+      final phrmStartDateStr =
+          (results[5] as Map<String, dynamic>?)?['classes_start_date']
               ?.toString();
 
       List<Map<String, dynamic>> finalDays = [];
@@ -764,10 +817,15 @@ class DashboardRepository {
         List<Map<String, dynamic>> combinedClasses = [];
         bool isStdOver =
             stdEndDateStr != null && dateStr.compareTo(stdEndDateStr) > 0;
+        bool isStdNotStarted =
+            stdStartDateStr != null && dateStr.compareTo(stdStartDateStr) < 0;
         bool isPhrmOver =
             phrmEndDateStr != null && dateStr.compareTo(phrmEndDateStr) > 0;
+        bool isPhrmNotStarted =
+            phrmStartDateStr != null && dateStr.compareTo(phrmStartDateStr) < 0;
 
-        if (!stdIsHoliday && !isStdOver) {
+        List<Map<String, dynamic>> hybridClasses = [];
+        if (!stdIsHoliday && !isStdOver && !isStdNotStarted) {
           final stdClasses = List<Map<String, dynamic>>.from(
             weeklyGrid[stdDay] ?? [],
           );
@@ -780,7 +838,7 @@ class DashboardRepository {
             }),
           );
         }
-        if (!phrmIsHoliday && !isPhrmOver) {
+        if (!phrmIsHoliday && !isPhrmOver && !isPhrmNotStarted) {
           final phClasses = List<Map<String, dynamic>>.from(
             weeklyGrid[phrmDay] ?? [],
           );

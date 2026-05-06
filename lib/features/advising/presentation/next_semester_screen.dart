@@ -13,6 +13,7 @@ import '../../../core/models/course_section.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../course_browser/presentation/providers/course_browser_providers.dart';
 import 'user_academic_providers.dart';
+import '../../../core/providers/feature_flag_provider.dart';
 
 class NextSemesterScreen extends ConsumerStatefulWidget {
   const NextSemesterScreen({super.key});
@@ -375,6 +376,7 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
   Widget build(BuildContext context) {
     final activeSemAsync = ref.watch(activeSemesterProvider);
     final draftsAsync = ref.watch(savedSchedulesProvider);
+    final isFeatureOpenAsync = ref.watch(isNextSemesterOpenProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF16202A),
@@ -410,13 +412,9 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
           final advEnd = activeSem.advisingEndDate;
           final classStart = activeSem.upcomingClassesStartDate;
 
-          bool isLocked = true;
-          if (advEnd != null && classStart != null) {
-            // Unlocked from advising end date until upcoming classes start
-            if (now.isAfter(advEnd) && now.isBefore(classStart)) {
-              isLocked = false;
-            }
-          }
+          // Manual Admin Switch Overrides Automatic Dates
+          final isFeatureOpen = isFeatureOpenAsync.value ?? false;
+          bool isLocked = !isFeatureOpen;
 
           if (isLocked) {
             final openDateStr = advEnd != null

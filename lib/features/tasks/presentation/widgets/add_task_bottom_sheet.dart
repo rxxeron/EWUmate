@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/utils/error_utils.dart';
+import '../../../../core/providers/academic_providers.dart';
+
 
 import '../../../../core/models/task.dart';
 import '../../../../core/repositories/task_repository.dart';
@@ -64,7 +66,11 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
       return;
     }
     try {
-      final String currentSemester = 'Spring2026';
+      final String? currentSemester = ref.read(currentSemesterCodeProvider).value;
+      if (currentSemester == null) {
+         if (mounted) setState(() => _isLoadingCourses = false);
+         return;
+      }
       
       final enrollments = await _supabase
           .from('enrollments')
@@ -181,7 +187,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           type: selectedType,
           assignDate: assignedDate?.toUtc(),
           dueDate: finalDueDate?.toUtc(),
-          semesterCode: 'Spring2026',
+          semesterCode: ref.read(currentSemesterCodeProvider).value ?? 'Spring2026',
         );
         await taskRepo.updateTask(user!.id, updatedTask);
         ref.invalidate(allTasksStreamProvider);
@@ -200,7 +206,7 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
           type: selectedType,
           assignDate: assignedDate?.toUtc(),
           dueDate: finalDueDate?.toUtc(),
-          semesterCode: 'Spring2026',
+          semesterCode: ref.read(currentSemesterCodeProvider).value ?? 'Spring2026',
           isCompleted: false,
           createdAt: DateTime.now().toUtc(),
         );

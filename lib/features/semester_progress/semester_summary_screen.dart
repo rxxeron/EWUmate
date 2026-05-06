@@ -153,16 +153,9 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
     final localProjectedSgpa = ref.watch(projectedSGPAProvider);
     final predictedSgpa = (localProjectedSgpa > 0) ? localProjectedSgpa : (analytics?.liveSgpa ?? 0.0);
     final predictedCgpa = ref.watch(projectedCGPAProvider).valueOrNull ?? profile?.cgpa ?? 0.0;
-    final currentYearEarned = analytics?.completedCredit ?? ref.watch(currentYearEarnedCreditsProvider).valueOrNull ?? 0.0;
+    final currentYearEarned = ref.watch(currentYearEarnedCreditsProvider).valueOrNull ?? 0.0;
     
-    // Calculate fallback enrolled credits from currently loaded marks
-    final currentMarks = currentMarksAsync.valueOrNull ?? [];
-    final allMeta = ref.watch(allCoursesProvider).valueOrNull ?? [];
-    double enrolledCreditsFromMarks = 0.0;
-    for (var m in currentMarks) {
-      final meta = allMeta.where((c) => c.code == m.courseCode).firstOrNull;
-      enrolledCreditsFromMarks += meta?.creditVal ?? 3.0;
-    }
+    final enrolledCredits = ref.watch(currentEnrolledCreditsProvider);
 
     // Check if on track for target
     final targetTier = ref.watch(scholarshipTargetProvider);
@@ -264,7 +257,7 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               _buildStatItem('Last\nCGPA', (profile?.cgpa ?? 0.0).toStringAsFixed(2), Colors.white, Icons.history_rounded),
 
               _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
-              _buildStatItem('Curr\nEnrolled', (enrolledCreditsFromMarks > 0 ? enrolledCreditsFromMarks : (analytics?.takenInThisSem ?? 0.0)).toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
+              _buildStatItem('Curr\nEnrolled', enrolledCredits.toStringAsFixed(1), const Color(0xFFF43F5E), Icons.school_rounded, suffix: ' Cr'),
               if ((profile?.enrolledCreditsNext ?? 0) > 0)
                 _buildStatItem('Upcoming', (profile?.enrolledCreditsNext ?? 0.0).toStringAsFixed(1), Colors.cyanAccent, Icons.upcoming_rounded, suffix: ' Cr')
               else

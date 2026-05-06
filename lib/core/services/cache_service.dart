@@ -11,6 +11,7 @@ class CacheService {
   static const String _scheduleBox = 'schedule_box';
   static const String _syncQueueBox = 'sync_queue_box';
   static const String _semesterProgressBox = 'semester_progress_box';
+  static const String _notificationsBox = 'notifications_box';
 
   Future<void> init() async {
     try {
@@ -21,6 +22,7 @@ class CacheService {
       await Hive.openBox(_scheduleBox);
       await Hive.openBox(_syncQueueBox);
       await Hive.openBox(_semesterProgressBox);
+      await Hive.openBox(_notificationsBox);
       if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] Failed to initialize Hive: $e');
@@ -63,26 +65,29 @@ class CacheService {
 
   Future<void> cacheDashboardAnalytics(
     String userId,
+    String semesterCode,
     Map<String, dynamic> data,
-  ) => setMapData(_dashboardBox, '${userId}_analytics', data);
-  Map<String, dynamic>? getCachedDashboardAnalytics(String userId) =>
-      getMapData(_dashboardBox, '${userId}_analytics');
+  ) => setMapData(_dashboardBox, '${userId}_${semesterCode}_analytics', data);
+
+  Map<String, dynamic>? getCachedDashboardAnalytics(String userId, String semesterCode) =>
+      getMapData(_dashboardBox, '${userId}_${semesterCode}_analytics');
 
   Future<void> cacheDashboardSchedule(
     String userId,
+    String semesterCode,
     Map<String, dynamic> data,
   ) {
     data['_cache_updated_at'] = DateTime.now().toIso8601String();
-    return setMapData(_dashboardBox, '${userId}_schedule', data);
+    return setMapData(_dashboardBox, '${userId}_${semesterCode}_schedule', data);
   }
 
-  Map<String, dynamic>? getCachedDashboardSchedule(String userId) =>
-      getMapData(_dashboardBox, '${userId}_schedule');
+  Map<String, dynamic>? getCachedDashboardSchedule(String userId, String semesterCode) =>
+      getMapData(_dashboardBox, '${userId}_${semesterCode}_schedule');
 
-  Future<void> invalidateDashboardSchedule(String userId) async {
+  Future<void> invalidateDashboardSchedule(String userId, String semesterCode) async {
     try {
       final box = Hive.box(_dashboardBox);
-      await box.delete('${userId}_schedule');
+      await box.delete('${userId}_${semesterCode}_schedule');
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] invalidateDashboardSchedule error: $e');
     }

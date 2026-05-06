@@ -1,11 +1,12 @@
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/semester_analytics.dart';
-import '../models/user_semester_state.dart';
-import '../providers/supabase_provider.dart';
-import 'auth_repository.dart';
-import '../services/cache_service.dart';
+import 'package:ewumate/core/models/semester_analytics.dart';
+import 'package:ewumate/core/models/user_semester_state.dart';
+import 'package:ewumate/core/providers/supabase_provider.dart';
+import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 
 part 'dashboard_repository.g.dart';
 
@@ -19,12 +20,13 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardAnalytics(userId);
+    final safeSem = CourseUtils.cleanSemester(semesterCode);
+    final cached = _cache.getCachedDashboardAnalytics(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheAnalytics(userId, semesterCode);
+      _fetchAndCacheAnalytics(userId, safeSem);
       return SemesterAnalytics.fromJson(cached);
     }
-    return await _fetchAndCacheAnalytics(userId, semesterCode);
+    return await _fetchAndCacheAnalytics(userId, safeSem);
   }
 
   Future<SemesterAnalytics?> _fetchAndCacheAnalytics(
@@ -40,7 +42,8 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardAnalytics(userId, data);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      await _cache.cacheDashboardAnalytics(userId, safeSem, data);
       return SemesterAnalytics.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch analytics: $e');
@@ -51,12 +54,13 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardSchedule(userId);
+    final safeSem = CourseUtils.cleanSemester(semesterCode);
+    final cached = _cache.getCachedDashboardSchedule(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheState(userId, semesterCode);
+      _fetchAndCacheState(userId, safeSem);
       return UserSemesterState.fromJson(cached);
     }
-    return await _fetchAndCacheState(userId, semesterCode);
+    return await _fetchAndCacheState(userId, safeSem);
   }
 
   Future<UserSemesterState?> _fetchAndCacheState(
@@ -72,7 +76,8 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardSchedule(userId, data);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      await _cache.cacheDashboardSchedule(userId, safeSem, data);
       return UserSemesterState.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch cache: $e');
@@ -88,7 +93,7 @@ class DashboardRepository {
           .eq('id', analytics.id);
       
       // Update cache
-      await _cache.cacheDashboardAnalytics(analytics.userId, json);
+      await _cache.cacheDashboardAnalytics(analytics.userId, analytics.semesterCode, json);
     } catch (e) {
       throw Exception('Failed to update analytics: $e');
     }
@@ -111,7 +116,8 @@ Future<SemesterAnalytics?> currentAnalytics(CurrentAnalyticsRef ref) async {
   if (user == null) return null;
 
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
-  return repo.getAnalytics(user.id, semCode);
+  final safeSem = CourseUtils.cleanSemester(semCode);
+  return repo.getAnalytics(user.id, safeSem);
 }
 
 @riverpod
@@ -123,5 +129,6 @@ Future<UserSemesterState?> currentSemesterState(
   if (user == null) return null;
 
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
-  return repo.getUserSemesterState(user.id, semCode);
+  final safeSem = CourseUtils.cleanSemester(semCode);
+  return repo.getUserSemesterState(user.id, safeSem);
 }

@@ -92,17 +92,21 @@ class OnboardingRepository {
     final user = _client.auth.currentUser;
     if (user == null) throw Exception("User not authenticated");
 
+    // Use upsert to ensure profile row exists. 
+    // We include a fallback for full_name from auth metadata to satisfy NOT NULL constraints.
+    final name = user.userMetadata?['full_name'] ?? user.userMetadata?['display_name'] ?? 'New Student';
+    
     await _client
         .from('profiles')
-        .update({
+        .upsert({
+          'id': user.id,
+          'full_name': name,
           'program_code': programCode,
           'department_name': department,
           'admitted_semester': admittedSemester,
           'semester_type': semType,
-          'track': semType,
           'onboarding_status': 'course_history',
-        })
-        .eq('id', user.id);
+        });
 
 _ref.invalidate(profileProvider);
     }
@@ -131,7 +135,11 @@ _ref.invalidate(profileProvider);
         .eq('id', user.id)
         .maybeSingle();
     
-    final track = profile?['semester_type'] ?? 'tri_semester';
+    String track = profile?['semester_type'] ?? 'tri_semester';
+    
+    // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
+    if (track == 'tri') track = 'tri_semester';
+    if (track == 'bi') track = 'bi_semester';
 
     // 2. Get the active semester configuration for that track
     final activeSem = await _client
@@ -275,30 +283,36 @@ _ref.invalidate(profileProvider);
     if (isCurrent && semester != null) {
       final safeSem = CourseUtils.cleanSemester(semester);
       final tableName = 'courses_$safeSem';
-      var query = _client
-          .from(tableName)
-          .select(
-            'id, course_code, course_name, credit_val, section_number, faculty_initials, schedule_data',
+      try {
+        var query = _client
+            .from(tableName)
+            .select(
+              'id, course_code, course_name, credit_val, section_number, faculty_initials, schedule_data',
+            );
+        if (searchQuery.isNotEmpty) {
+          query = query.or(
+            'course_code.ilike.%$searchQuery%,course_name.ilike.%$searchQuery%',
           );
-      if (searchQuery.isNotEmpty) {
-        query = query.or(
-          'course_code.ilike.%$searchQuery%,course_name.ilike.%$searchQuery%',
-        );
+        }
+        final data = await query;
+        return (data as List)
+            .map<Map<String, dynamic>>(
+              (e) => {
+                'id': e['id'],
+                'code': e['course_code'],
+                'name': e['course_name'],
+                'credit_val': e['credit_val'],
+                'section': e['section_number'],
+                'faculty': e['faculty_initials'],
+                'schedule': e['schedule_data'],
+              },
+            )
+            .toList();
+      } catch (e) {
+        if (kDebugMode) debugPrint('[OnboardingRepo] Catalog table $tableName not found, falling back to metadata');
+        // Fallback to metadata if term-specific catalog is not yet populated
+        return fetchCourseCatalog(semester: semester, isCurrent: false, searchQuery: searchQuery);
       }
-      final data = await query;
-      return (data as List)
-          .map<Map<String, dynamic>>(
-            (e) => {
-              'id': e['id'],
-              'code': e['course_code'],
-              'name': e['course_name'],
-              'credit_val': e['credit_val'],
-              'section': e['section_number'],
-              'faculty': e['faculty_initials'],
-              'schedule': e['schedule_data'],
-            },
-          )
-          .toList();
     } else {
       var query = _client
           .from('course_metadata')
@@ -327,8 +341,21 @@ _ref.invalidate(profileProvider);
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
+    
+    final cleanRunningSemester = runningSemester.replaceAll(' ', '');
 
-    // 0. Clean up existing data to reflect removals accurately
+    // 0. Ensure profile exists first (Fixes foreign key constraint error)
+    final existingProfile = await _client
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+    
+    if (existingProfile == null) {
+      await _client.from('profiles').insert({'id': user.id});
+    }
+
+    // Clean up existing data to reflect removals accurately
     await _client
         .from('completed_courses')
         .delete()
@@ -338,7 +365,7 @@ _ref.invalidate(profileProvider);
         .from('enrollments')
         .delete()
         .eq('user_id', user.id)
-        .eq('semester_code', runningSemester);
+        .eq('semester_code', cleanRunningSemester);
 
     // 1. Prepare data for completed_courses
     final List<Map<String, dynamic>> completedRows = [];
@@ -381,7 +408,7 @@ _ref.invalidate(profileProvider);
     };
     
     history.forEach((semester, courses) {
-      if (semester == runningSemester) return;
+      if (semester.replaceAll(' ', '') == cleanRunningSemester) return;
       courses.forEach((code, grade) {
         completedRows.add({
           'user_id': user.id,
@@ -394,34 +421,63 @@ _ref.invalidate(profileProvider);
       });
     });
 
-    // 2. Perform bulk insert on completed_courses
-    if (completedRows.isNotEmpty) {
-      await _client.from('completed_courses').insert(completedRows);
-    }
-
-    // 2.5 Insert ongoing active explicitly into enrollments
-    if (enrolledCourseDetails != null && enrolledCourseDetails.isNotEmpty) {
-      final List<Map<String, dynamic>> enrollmentRows = [];
-      for (final detail in enrolledCourseDetails) {
-        enrollmentRows.add({
-          'user_id': user.id,
-          'course_code': detail['code'],
-          'section_id': detail['id'],
-          'section': detail['section'],
-          'semester_code': runningSemester,
-          'status': 'enrolled',
-        });
+    try {
+      // 2. Perform bulk insert on completed_courses
+      if (completedRows.isNotEmpty) {
+        await _client.from('completed_courses').insert(completedRows);
       }
-      await _client.from('enrollments').insert(enrollmentRows);
+
+      // 2.5 Insert ongoing active explicitly into enrollments
+      if (enrolledCourseDetails != null && enrolledCourseDetails.isNotEmpty) {
+        final List<Map<String, dynamic>> enrollmentRows = [];
+        for (final detail in enrolledCourseDetails) {
+          final rawCode = detail['code'].toString();
+          final cleanCode = rawCode.contains('_') ? rawCode.split('_')[0] : rawCode;
+          final section = rawCode.contains('_Sec') ? rawCode.split('_Sec')[1] : (detail['section'] ?? '');
+          
+          if (detail['id'] == null) continue;
+          
+          enrollmentRows.add({
+            'user_id': user.id,
+            'course_code': cleanCode,
+            'section_id': detail['id'],
+            'section': section,
+            'semester_code': cleanRunningSemester,
+            'status': 'enrolled',
+          });
+        }
+        if (enrollmentRows.isNotEmpty) {
+          await _client.from('enrollments').insert(enrollmentRows);
+          
+          // Initialize progress entries for each enrolled course
+          final List<Map<String, dynamic>> progressRows = [];
+          for (final detail in enrolledCourseDetails) {
+            final rawCode = detail['code'].toString();
+            final cleanCode = rawCode.contains('_') ? rawCode.split('_')[0] : rawCode;
+            
+            progressRows.add({
+              'user_id': user.id,
+              'course_code': cleanCode,
+              'semester_code': cleanRunningSemester,
+              'obtained_marks': 0.0,
+              'total_marks': 100.0,
+            });
+          }
+          await _client.from('semester_course_marks').upsert(progressRows, onConflict: 'user_id,course_code,semester_code');
+        }
+      }
+
+      // 3. Update enrolled sections in profiles
+      await _client
+          .from('profiles')
+          .update({'enrolled_sections': enrolledIds})
+          .eq('id', user.id);
+
+      // 4. Trigger recalculation
+      await recalculateStats(runningSemester);
+    } catch (e) {
+      debugPrint('[OnboardingRepo] Save History Error: $e');
+      rethrow;
     }
-
-    // 3. Update enrolled sections in profiles (Ensures Admin Panel is synced)
-    await _client
-        .from('profiles')
-        .update({'enrolled_sections': enrolledIds})
-        .eq('id', user.id);
-
-    // 4. Trigger recalculation via Edge Function
-    await recalculateStats(runningSemester);
   }
 }

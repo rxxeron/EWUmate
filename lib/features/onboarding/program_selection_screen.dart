@@ -16,6 +16,7 @@ class ProgramSelectionScreen extends ConsumerStatefulWidget {
 }
 
 class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen> {
+  static bool _welcomeShown = false;
   List<Map<String, dynamic>> _departments = [];
   String? _selectedProgramId;
   String? _selectedDeptName;
@@ -33,6 +34,8 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
   }
 
   void _showWelcomeOnboarding() {
+    if (_welcomeShown) return;
+    _welcomeShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       OnboardingOverlay.show(
         context: context,
@@ -63,13 +66,33 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
     final results = await Future.wait([
       repo.fetchDepartments(),
       repo.fetchSemesters(),
+      repo.fetchUserProfile(),
+      repo.getActiveSemesterConfig(),
     ]);
 
     if (mounted) {
       setState(() {
         _departments = results[0] as List<Map<String, dynamic>>;
-        // We want chronological for admission semester dropdown
         _semesters = results[1] as List<String>;
+        
+        final profile = results[2] as Map<String, dynamic>;
+        final config = results[3] as Map<String, dynamic>;
+        final runningSem = config['current_semester_code']?.toString();
+
+        _selectedAdmittedSemester = profile['admitted_semester']?.toString();
+        _selectedDeptName = profile['department_name']?.toString();
+        _selectedProgramId = profile['program_code']?.toString();
+
+        // Safety: Ensure _selectedAdmittedSemester exists in _semesters to avoid Dropdown crash
+        if (_selectedAdmittedSemester != null && !_semesters.contains(_selectedAdmittedSemester)) {
+          _semesters.insert(0, _selectedAdmittedSemester!);
+        }
+        
+        // Also ensure running semester is available
+        if (runningSem != null && !_semesters.contains(runningSem)) {
+          _semesters.insert(0, runningSem);
+        }
+
         _loading = false;
       });
     }
@@ -91,11 +114,17 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
 
       await ref.read(onboardingRepositoryProvider).saveProgram(
           _selectedProgramId!, _selectedDeptName!, _selectedAdmittedSemester!, semType);
-      if (mounted) context.push('/onboarding/course-history');
+      if (mounted) {
+        setState(() => _saving = false);
+        context.push('/onboarding/course-history', extra: {
+          'isEditMode': false,
+          'admittedSemester': _selectedAdmittedSemester,
+        });
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))));
+            SnackBar(content: Text(e.toString())));
       }
       setState(() => _saving = false);
     }
@@ -167,7 +196,7 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
                         // value: deprecated, using initialValue
-                        initialValue: _selectedDeptName,
+                        value: _selectedDeptName,
                         items: _departments.map((dept) {
                           final name = dept['name'] as String;
                           return DropdownMenuItem(
@@ -204,7 +233,7 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                         ),
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
-                        initialValue: _selectedProgramId,
+                        value: _selectedProgramId,
                         disabledHint: const Text("Select Department First",
                             style: TextStyle(color: Colors.white38)),
                         items: _selectedDeptName == null
@@ -247,7 +276,7 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                         ),
                         dropdownColor: const Color(0xFF1e1e1e),
                         style: const TextStyle(color: Colors.white),
-                        initialValue: _selectedAdmittedSemester,
+                        value: _selectedAdmittedSemester,
                         items: _semesters.where((sem) {
                           if (_selectedDeptName == null) return true;
                           final dept = _departments.where((d) => d['name'] == _selectedDeptName).firstOrNull;

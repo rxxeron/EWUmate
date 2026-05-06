@@ -3,15 +3,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/models/profile.dart';
+import 'package:ewumate/core/models/semester_summary.dart';
+import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/repositories/scholarship_repository.dart';
-import 'package:ewumate/core/repositories/dashboard_repository.dart';
-import 'package:ewumate/core/repositories/course_repository.dart';
-import 'package:ewumate/core/models/models/scholarship_rule_model.dart';
 import 'package:ewumate/core/models/semester_course_marks.dart';
 import 'package:ewumate/core/utils/grade_helper.dart';
 import 'package:ewumate/core/models/grade_scale.dart';
+import 'package:ewumate/core/providers/academic_providers.dart';
+import 'package:ewumate/core/models/models/scholarship_rule_model.dart';
+import 'package:ewumate/core/repositories/course_repository.dart';
+import 'package:ewumate/core/repositories/dashboard_repository.dart';
 
 class AcademicYear {
   final int yearNumber;
@@ -85,9 +92,33 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
       (profile.admittedSemester?.toLowerCase().startsWith('fall') ?? false);
 
   // Filter out semesters that are effectively empty (no credits and no TGPA)
-  // unless it's the current active semester (which we might want to see as 0.00)
-  // But for the Journey/History, we usually only want completed ones.
-  final filteredSorted = sorted.where((s) => (s.creditsEarned ?? 0.0) > 0 || (s.tgpa ?? 0.0) > 0).toList();
+  // unless it's the current active semester (which we want to see in the grouping)
+  final String? runningCode = ref.watch(currentSemesterCodeProvider).value;
+  final filteredSorted = sorted.where((s) => 
+    (s.creditsEarned ?? 0.0) > 0 || 
+    (s.tgpa ?? 0.0) > 0 || 
+    (s.semesterCode == runningCode)
+  ).toList();
+
+  // If the running semester isn't in summaries yet, we still need to account for it in the grouping
+  bool runningIncluded = filteredSorted.any((s) => s.semesterCode == runningCode);
+  if (!runningIncluded && runningCode != null) {
+    // Add a dummy summary for the ongoing semester to ensure Year grouping accounts for it
+    filteredSorted.add(SemesterSummary(
+      id: 'ongoing',
+      userId: user.id,
+      semesterCode: runningCode,
+      creditsEarned: 0.0,
+      tgpa: 0.0,
+      cgpa: profile.cgpa ?? 0.0,
+    ));
+    // Re-sort to maintain chronological order
+    filteredSorted.sort(
+      (a, b) => getSemOrder(
+        (a as dynamic).semesterCode as String,
+      ).compareTo(getSemOrder((b as dynamic).semesterCode as String)),
+    );
+  }
 
   List<AcademicYear> years = [];
   int currentYearIndex = 1;
@@ -121,8 +152,6 @@ final academicYearsFutureProvider = FutureProvider<List<AcademicYear>>((
       ),
     );
   }
-
-  return years;
 
   return years;
 });
@@ -328,6 +357,11 @@ final projectedSGPAProvider = Provider<double>((ref) {
 });
 
 /// Calculates the projected CGPA combining past CGPA and predicted SGPA.
+final currentEnrolledCreditsProvider = Provider<double>((ref) {
+  final profile = ref.watch(userProfileProvider).valueOrNull;
+  return profile?.enrolledCredits ?? 0.0;
+});
+
 final projectedCGPAProvider = FutureProvider<double>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return 0.0;

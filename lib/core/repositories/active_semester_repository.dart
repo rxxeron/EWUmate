@@ -10,10 +10,15 @@ class ActiveSemesterRepository {
   ActiveSemesterRepository(this._supabase);
 
   Future<Map<String, dynamic>> getActiveSemester(String track) async {
+    // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
+    String normalizedTrack = track;
+    if (normalizedTrack == 'tri') normalizedTrack = 'tri_semester';
+    if (normalizedTrack == 'bi') normalizedTrack = 'bi_semester';
+
     final response = await _supabase
         .from('active_semester')
         .select()
-        .eq('track', track)
+        .eq('track', normalizedTrack)
         .limit(1)
         .single();
     return response;

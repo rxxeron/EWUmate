@@ -3,15 +3,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/models/profile.dart';
+import 'package:ewumate/core/models/semester_summary.dart';
+import 'package:ewumate/core/repositories/auth_repository.dart';
+import 'package:ewumate/core/services/cache_service.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/repositories/scholarship_repository.dart';
-import 'package:ewumate/core/repositories/dashboard_repository.dart';
-import 'package:ewumate/core/repositories/course_repository.dart';
-import 'package:ewumate/core/models/models/scholarship_rule_model.dart';
 import 'package:ewumate/core/models/semester_course_marks.dart';
 import 'package:ewumate/core/utils/grade_helper.dart';
 import 'package:ewumate/core/models/grade_scale.dart';
+import 'package:ewumate/core/providers/academic_providers.dart';
+import 'package:ewumate/core/models/models/scholarship_rule_model.dart';
+import 'package:ewumate/core/repositories/course_repository.dart';
+import 'package:ewumate/core/repositories/dashboard_repository.dart';
 
 class AcademicYear {
   final int yearNumber;

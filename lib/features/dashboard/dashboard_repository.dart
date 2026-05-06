@@ -41,7 +41,8 @@ class DashboardRepository {
 
     // Smart Invalidation Cache Check
     if (_cache != null) {
-      final cached = _cache.getCachedDashboardSchedule(user.id);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
       if (cached != null) {
         final cacheDateStr = cached['dateStr'] as String?;
         if (cacheDateStr == dateStr) {
@@ -129,15 +130,15 @@ class DashboardRepository {
             )
             .order('due_date', ascending: true)
             .limit(10),
-        // [5, 6] Classes End Dates
+        // [5, 6] Classes End/Start Dates
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'tri_semester')
             .maybeSingle(),
         _supabase
             .from('active_semester')
-            .select('classes_end_date')
+            .select('classes_end_date, classes_start_date')
             .eq('track', 'bi_semester')
             .maybeSingle(),
       ]);
@@ -158,8 +159,14 @@ class DashboardRepository {
       final stdEndDateStr =
           (results[5] as Map<String, dynamic>?)?['classes_end_date']
               ?.toString();
+      final stdStartDateStr =
+          (results[5] as Map<String, dynamic>?)?['classes_start_date']
+              ?.toString();
       final phrmEndDateStr =
           (results[6] as Map<String, dynamic>?)?['classes_end_date']
+              ?.toString();
+      final phrmStartDateStr =
+          (results[6] as Map<String, dynamic>?)?['classes_start_date']
               ?.toString();
 
       if (weeklyGrid.isEmpty) {
@@ -261,11 +268,15 @@ class DashboardRepository {
 
       bool isStdOver =
           stdEndDateStr != null && dateStr.compareTo(stdEndDateStr) > 0;
+      bool isStdNotStarted =
+          stdStartDateStr != null && dateStr.compareTo(stdStartDateStr) < 0;
       bool isPhrmOver =
           phrmEndDateStr != null && dateStr.compareTo(phrmEndDateStr) > 0;
+      bool isPhrmNotStarted =
+          phrmStartDateStr != null && dateStr.compareTo(phrmStartDateStr) < 0;
 
       // Pull Standard Courses (Non-PHRM/LAW)
-      if (!stdIsHoliday && !isStdOver) {
+      if (!stdIsHoliday && !isStdOver && !isStdNotStarted) {
         final stdClasses = List<Map<String, dynamic>>.from(
           weeklyGrid[stdDay] ?? [],
         );
@@ -280,7 +291,7 @@ class DashboardRepository {
       }
 
       // Pull Professional Courses (PHRM/LAW)
-      if (!phrmIsHoliday && !isPhrmOver) {
+      if (!phrmIsHoliday && !isPhrmOver && !isPhrmNotStarted) {
         final phClasses = List<Map<String, dynamic>>.from(
           weeklyGrid[phrmDay] ?? [],
         );
@@ -318,6 +329,9 @@ class DashboardRepository {
         } else if (isPhrmOver && isStdOver) {
           status = 'chill';
           reason = 'The semester classes have officially concluded.';
+        } else if (isPhrmNotStarted && isStdNotStarted) {
+          status = 'chill';
+          reason = 'The semester classes haven\'t officially started yet.';
         }
       }
 
@@ -333,13 +347,15 @@ class DashboardRepository {
 
       if (_cache != null) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
-        _cache.cacheDashboardSchedule(user.id, cachePayload);
+        final safeSem = CourseUtils.cleanSemester(semesterCode);
+        _cache.cacheDashboardSchedule(user.id, safeSem, cachePayload);
       }
 
       return payload;
     } catch (e) {
       if (_cache != null) {
-        final cached = _cache.getCachedDashboardSchedule(user.id);
+        final safeSem = CourseUtils.cleanSemester(semesterCode);
+        final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
         if (cached != null) {
           debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
           if (cached['date'] != null && cached['date'] is String) {

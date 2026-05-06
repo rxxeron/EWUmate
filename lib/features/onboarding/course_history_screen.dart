@@ -91,9 +91,11 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     setState(() {
       _currentSemester = semester;
       _currentIndex = _allSemesters.indexOf(semester);
-      final cleanRunning = _runningSemester.trim().toLowerCase();
-      final cleanCurrent = semester.trim().toLowerCase();
-      _isCurrentSemester = (cleanCurrent == cleanRunning);
+
+      // Fuzzy matching for current semester detection
+      String clean(String s) =>
+          s.replaceAll(' ', '').replaceAll('_', '').toLowerCase();
+      _isCurrentSemester = (clean(semester) == clean(_runningSemester));
       _catalog = [];
     });
     _loadCatalog();
@@ -389,11 +391,14 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
           final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
           
-          if (admIdx != -1 && runIdx != -1 && runIdx >= admIdx) {
-            // Include up to the running semester (inclusive)
-            _allSemesters = _allSemesters.sublist(admIdx, runIdx + 1);
+          if (admIdx != -1 && runIdx != -1) {
+            // Determine the range: from admitted to max(admitted, running)
+            // This ensures future admissions (admIdx > runIdx) are not clipped out.
+            final startIndex = admIdx;
+            final endIndex = (runIdx > admIdx) ? runIdx : admIdx;
+            _allSemesters = _allSemesters.sublist(startIndex, endIndex + 1);
           } else if (runIdx != -1) {
-            // Fallback: show up to running
+            // Fallback: show up to running if admission is unknown
             _allSemesters = _allSemesters.sublist(0, runIdx + 1);
           }
 
@@ -402,10 +407,10 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                _confirmAdmittedSemester(_allSemesters.first);
              }
           } else {
-            if (_admittedSemester != null &&
-                _admittedSemester!.isNotEmpty &&
-                _allSemesters.contains(_admittedSemester)) {
-              _confirmAdmittedSemester(_admittedSemester!);
+            // Find the best match for initial selection in the filtered list
+            final matchIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
+            if (matchIdx != -1) {
+              _confirmAdmittedSemester(_allSemesters[matchIdx]);
             } else {
               _confirmAdmittedSemester(_runningSemester);
             }

@@ -225,13 +225,9 @@ _ref.invalidate(profileProvider);
           'sync-academic-stats',
           body: {'user_id': user.id},
         ),
-        http.post(
-          Uri.parse('${dotenv.env['SUPABASE_URL']!}/functions/v1/sync-schedule'),
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
-          },
-          body: jsonEncode({'user_id': user.id}),
+        _client.functions.invoke(
+          'sync-schedule',
+          body: {'user_id': user.id},
         ),
       ]);
     } catch (e) {

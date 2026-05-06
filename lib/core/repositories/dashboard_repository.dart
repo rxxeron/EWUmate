@@ -19,12 +19,13 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardAnalytics(userId, semesterCode);
+    final safeSem = CourseUtils.cleanSemester(semesterCode);
+    final cached = _cache.getCachedDashboardAnalytics(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheAnalytics(userId, semesterCode);
+      _fetchAndCacheAnalytics(userId, safeSem);
       return SemesterAnalytics.fromJson(cached);
     }
-    return await _fetchAndCacheAnalytics(userId, semesterCode);
+    return await _fetchAndCacheAnalytics(userId, safeSem);
   }
 
   Future<SemesterAnalytics?> _fetchAndCacheAnalytics(
@@ -40,7 +41,8 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardAnalytics(userId, semesterCode, data);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      await _cache.cacheDashboardAnalytics(userId, safeSem, data);
       return SemesterAnalytics.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch analytics: $e');
@@ -51,12 +53,13 @@ class DashboardRepository {
     String userId,
     String semesterCode,
   ) async {
-    final cached = _cache.getCachedDashboardSchedule(userId, semesterCode);
+    final safeSem = CourseUtils.cleanSemester(semesterCode);
+    final cached = _cache.getCachedDashboardSchedule(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheState(userId, semesterCode);
+      _fetchAndCacheState(userId, safeSem);
       return UserSemesterState.fromJson(cached);
     }
-    return await _fetchAndCacheState(userId, semesterCode);
+    return await _fetchAndCacheState(userId, safeSem);
   }
 
   Future<UserSemesterState?> _fetchAndCacheState(
@@ -72,7 +75,8 @@ class DashboardRepository {
           .maybeSingle();
 
       if (data == null) return null;
-      await _cache.cacheDashboardSchedule(userId, semesterCode, data);
+      final safeSem = CourseUtils.cleanSemester(semesterCode);
+      await _cache.cacheDashboardSchedule(userId, safeSem, data);
       return UserSemesterState.fromJson(data);
     } catch (e) {
       throw Exception('Failed to fetch cache: $e');
@@ -111,7 +115,8 @@ Future<SemesterAnalytics?> currentAnalytics(CurrentAnalyticsRef ref) async {
   if (user == null) return null;
 
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
-  return repo.getAnalytics(user.id, semCode);
+  final safeSem = CourseUtils.cleanSemester(semCode);
+  return repo.getAnalytics(user.id, safeSem);
 }
 
 @riverpod
@@ -123,5 +128,6 @@ Future<UserSemesterState?> currentSemesterState(
   if (user == null) return null;
 
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
-  return repo.getUserSemesterState(user.id, semCode);
+  final safeSem = CourseUtils.cleanSemester(semCode);
+  return repo.getUserSemesterState(user.id, safeSem);
 }

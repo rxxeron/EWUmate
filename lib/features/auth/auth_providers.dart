@@ -52,7 +52,6 @@ final authStateProvider = StreamProvider<AuthState>((ref) async* {
 });
 
 final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
-  // Tracing log removed for release
   final user = ref.watch(authRepositoryProvider).currentUser;
   if (user == null) return false;
 
@@ -71,24 +70,46 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
     
     if (activeSemRes == null) return false;
 
-    final submissionStartStr = activeSemRes['grade_submission_start'];
-    if (submissionStartStr == null) return false;
-    final submissionStart = DateTime.tryParse(submissionStartStr.toString());
-    if (submissionStart == null || DateTime.now().isBefore(submissionStart.add(const Duration(days: 1)))) {
-      return false;
-    }
+    final activeCode = activeSemRes['current_semester_code'];
 
-    final unsubmittedGradesRes = await client
+    // PHASE 1: Check for PAST "Hanging" Courses
+    // If a course from a previous semester is still 'enrolled' without a grade, 
+    // we block immediately regardless of the current semester's dates.
+    final pastHangingRes = await client
         .from('enrollments')
         .select('id')
         .eq('user_id', user.id)
         .eq('status', 'enrolled')
+        .neq('semester_code', activeCode) // Different from the current active one
         .isFilter('grade', null)
         .limit(1)
         .timeout(const Duration(seconds: 5));
 
-    // Removed debug print
-    return unsubmittedGradesRes.isNotEmpty;
+    if (pastHangingRes.isNotEmpty) {
+      return true;
+    }
+
+    // PHASE 2: Check for CURRENT Semester Hand-off
+    // We only block for the current semester if the submission window has started.
+    final submissionStartStr = activeSemRes['grade_submission_start'];
+    if (submissionStartStr != null) {
+      final submissionStart = DateTime.tryParse(submissionStartStr.toString());
+      if (submissionStart != null && DateTime.now().isAfter(submissionStart.add(const Duration(days: 1)))) {
+        final currentUnsubmittedRes = await client
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'enrolled')
+            .eq('semester_code', activeCode) // Specifically the current one
+            .isFilter('grade', null)
+            .limit(1)
+            .timeout(const Duration(seconds: 5));
+
+        return currentUnsubmittedRes.isNotEmpty;
+      }
+    }
+
+    return false;
   } catch (e) {
     if (kDebugMode) print("DEBUG: Grade entry check failed: $e");
     return false;

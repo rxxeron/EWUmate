@@ -1,0 +1,3 @@
+{
+  "sql_query": "SELECT course_code, section_number, count(*) FROM public.courses_summer2026 GROUP BY course_code, section_number HAVING count(*) > 1;"
+}

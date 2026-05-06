@@ -1,0 +1,3 @@
+{
+  "sql_query": "UPDATE public.enrollments e SET section_id = c.id FROM public.courses_summer2026 c WHERE e.course_code = c.course_code AND e.section = c.section_number AND e.semester_code = 'Summer2026';"
+}

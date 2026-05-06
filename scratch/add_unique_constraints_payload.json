@@ -1,0 +1,3 @@
+{
+  "sql_query": "ALTER TABLE public.courses_spring2026 ADD CONSTRAINT courses_spring2026_course_code_section_number_key UNIQUE (course_code, section_number); ALTER TABLE public.courses_summer2026 ADD CONSTRAINT courses_summer2026_course_code_section_number_key UNIQUE (course_code, section_number);"
+}

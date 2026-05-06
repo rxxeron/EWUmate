@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users } from 'lucide-react'; 
+import { Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck } from 'lucide-react'; 
 import toast from 'react-hot-toast';
 import type { Notification, NotificationTemplate } from '../types';
 
@@ -19,7 +19,7 @@ function saveTemplates(templates: NotificationTemplate[]) {
 }
 
 export function Notifications() {
-  const [activeTab, setActiveTab] = useState<'global' | 'department' | 'user'>('global');
+  const [activeTab, setActiveTab] = useState<'global' | 'department' | 'user' | 'status'>('global');
   
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');

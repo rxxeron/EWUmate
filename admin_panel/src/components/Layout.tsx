@@ -2,7 +2,7 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { CommandPalette } from './CommandPalette';
 
@@ -10,6 +10,34 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [userProfile, setUserProfile] = useState<{ name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        // Check if admin
+        const { data: admin } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        setUserProfile({
+          name: profile?.full_name || user.email?.split('@')[0] || 'Administrator',
+          role: admin ? 'System Architect' : 'Staff Member'
+        });
+      }
+    }
+    fetchProfile();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -177,11 +205,13 @@ export function Layout() {
           
           <div className="flex items-center gap-4">
              <div className="hidden sm:flex flex-col items-end mr-2">
-               <span className="text-xs font-black text-slate-900">Farzana Safa</span>
-               <span className="text-[9px] font-bold text-indigo-500 uppercase">System Architect</span>
+               <span className="text-xs font-black text-slate-900">{userProfile?.name || 'Loading...'}</span>
+               <span className="text-[9px] font-bold text-indigo-500 uppercase">{userProfile?.role || 'Staff'}</span>
              </div>
              <div className="w-10 h-10 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
-                <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-blue-400 opacity-80" />
+                <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-blue-400 opacity-80 flex items-center justify-center text-white font-black">
+                  {userProfile?.name?.charAt(0) || 'A'}
+                </div>
              </div>
           </div>
         </header>

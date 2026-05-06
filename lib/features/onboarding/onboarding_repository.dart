@@ -123,20 +123,25 @@ _ref.invalidate(profileProvider);
     final user = _client.auth.currentUser;
     if (user == null) return {'track': null, 'current_semester_code': null};
 
-    final activeSem = await _client
-        .from('semesters')
-        .select('code')
-        .eq('is_active', true)
-        .maybeSingle();
+    // 1. Get the user's track from their profile
     final profile = await _client
         .from('profiles')
         .select('semester_type')
         .eq('id', user.id)
         .maybeSingle();
+    
+    final track = profile?['semester_type'] ?? 'tri_semester';
+
+    // 2. Get the active semester configuration for that track
+    final activeSem = await _client
+        .from('active_semester')
+        .select('current_semester_code')
+        .eq('track', track)
+        .maybeSingle();
 
     return {
-      'track': profile?['semester_type'],
-      'current_semester_code': activeSem?['code'],
+      'track': track,
+      'current_semester_code': activeSem?['current_semester_code'],
     };
   }
 

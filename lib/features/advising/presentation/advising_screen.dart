@@ -9,6 +9,7 @@ import '../../../core/widgets/glass_kit.dart';
 import 'user_academic_providers.dart';
 import 'advising_notifier.dart';
 import '../../../core/utils/error_utils.dart';
+import '../../../core/providers/feature_flag_provider.dart';
 
 class AdvisingScreen extends ConsumerStatefulWidget {
   const AdvisingScreen({super.key});
@@ -49,6 +50,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
   Widget build(BuildContext context) {
     final activeSemAsync = ref.watch(activeSemesterProvider);
     final advisingState = ref.watch(advisingNotifierProvider);
+    final isFeatureOpenAsync = ref.watch(isAdvisingOpenProvider);
 
     return Scaffold(
       backgroundColor: const Color(0xFF16202A),
@@ -76,13 +78,9 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               final advStart = activeSem.advisingStartDate;
               final classStart = activeSem.upcomingClassesStartDate;
 
-              bool isLocked = true;
-              if (advStart != null && classStart != null) {
-                final unlockDate = advStart.subtract(const Duration(days: 16));
-                if (now.isAfter(unlockDate) && now.isBefore(classStart)) {
-                  isLocked = false;
-                }
-              }
+              // Manual Admin Switch Overrides Automatic Dates
+              final isFeatureOpen = isFeatureOpenAsync.value ?? false;
+              bool isLocked = !isFeatureOpen;
 
               if (isLocked) {
                 final openDateStr = advStart != null ? DateFormat('MMM dd, yyyy h:mm a').format(advStart.subtract(const Duration(days: 16))) : 'TBA';

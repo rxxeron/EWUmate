@@ -9,6 +9,7 @@ import 'core/services/fcm_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
+import 'core/repositories/auth_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,21 +32,7 @@ void main() async {
     if (kDebugMode) debugPrint('Supabase init error: $e');
   }
 
-  // Set up Firebase Cloud Messaging bindings if user is authenticated natively
-  try {
-    final supabase = Supabase.instance.client;
-    // We listen to dynamic auth changes to secure push token binding even if they re-login
-    supabase.auth.onAuthStateChange.listen((data) {
-      final AuthChangeEvent event = data.event;
-      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
-        FCMService().initialize().catchError((err) {
-          if (kDebugMode) debugPrint('FCM Init Error: $err');
-        });
-      }
-    });
-  } catch (e) {
-    if (kDebugMode) debugPrint('FCM Auth listener error: $e');
-  }
+  // FCM setup moved to MyApp for better Riverpod integration
 
   runApp(
     ProviderScope(
@@ -65,6 +52,16 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize Session Guardian
     ref.read(sessionGuardianProvider);
+    
+    // Initialize FCM when user is logged in
+    ref.listen(authStateProvider, (previous, next) {
+      final event = next.value?.event;
+      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
+        ref.read(fcmServiceProvider).initialize().catchError((err) {
+          if (kDebugMode) debugPrint('FCM Init Error: $err');
+        });
+      }
+    });
     
     final router = ref.watch(appRouterProvider);
 

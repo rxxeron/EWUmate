@@ -11,6 +11,7 @@ class CacheService {
   static const String _scheduleBox = 'schedule_box';
   static const String _syncQueueBox = 'sync_queue_box';
   static const String _semesterProgressBox = 'semester_progress_box';
+  static const String _notificationsBox = 'notifications_box';
 
   Future<void> init() async {
     try {
@@ -21,6 +22,7 @@ class CacheService {
       await Hive.openBox(_scheduleBox);
       await Hive.openBox(_syncQueueBox);
       await Hive.openBox(_semesterProgressBox);
+      await Hive.openBox(_notificationsBox);
       if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] Failed to initialize Hive: $e');

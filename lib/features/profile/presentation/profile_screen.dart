@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -339,61 +340,76 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _uploadProfileImage(Profile profile) async {
-    final picker = ImagePicker();
-    final xFile = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-    );
-    if (xFile == null) return;
-
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-
     try {
+      final picker = ImagePicker();
+      final xFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 60, // Slightly lower quality to ensure small file size
+        maxWidth: 800,    // Limit dimensions to avoid massive files
+      );
+      
+      if (xFile == null) return;
+
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Uploading image...'),
+            content: Text('Updating profile picture...'),
             backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
           ),
         );
       }
 
       final file = File(xFile.path);
-      final fileExt = xFile.path.split('.').last;
-      final fileName =
-          '${user.id}/avatar.${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      // Fixed filename to prevent storage bloat (one avatar per user)
+      final fileExt = xFile.path.split('.').last.toLowerCase();
+      final fileName = '${user.id}/avatar.$fileExt';
 
+      // 1. Upload to Storage
       await Supabase.instance.client.storage
           .from('profile_images')
           .upload(
             fileName,
             file,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+            fileOptions: const FileOptions(cacheControl: '0', upsert: true),
           );
 
+      // 2. Get Public URL
       final imageUrl = Supabase.instance.client.storage
           .from('profile_images')
           .getPublicUrl(fileName);
 
+      // 3. Add timestamp to URL to bypass image caching in the app
+      final timestampedUrl = '$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+
+      // 4. Update Profile Table
       await ref
           .read(profileRepositoryProvider)
-          .updateProfile(profile.copyWith(photoUrl: imageUrl));
+          .updateProfile(profile.copyWith(photoUrl: timestampedUrl));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Avatar updated successfully!'),
+            content: Text('Profile picture updated!'),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
+      if (kDebugMode) debugPrint('[ProfileImage] Upload Error: $e');
       if (mounted) {
+        String errorMsg = AuthErrorUtils.getFriendlyMessage(e);
+        if (errorMsg.contains('403') || errorMsg.contains('Permission denied')) {
+          errorMsg = 'Permission denied. Please contact admin to check Storage RLS.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AuthErrorUtils.getFriendlyMessage(e)),
+            content: Text(errorMsg),
             backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

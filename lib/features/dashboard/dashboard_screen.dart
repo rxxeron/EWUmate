@@ -30,6 +30,7 @@ import '../../core/utils/date_utils.dart' as date_util;
 
 
 import '../../core/utils/time_utils.dart';
+import '../../core/services/cache_service.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
 import 'package:home_widget/home_widget.dart';
@@ -97,10 +98,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
        RefreshUtils.refreshAcademicData(ref);
     }
 
+    // PHASE 0: Instant Cache Load (User Request: Show cache first)
     if (_lastValidScheduleData == null) {
-      setState(() => _loadingInit = true);
+      final cacheService = ref.read(cacheServiceProvider);
+      final user = this.user;
+      final profile = ref.read(profileProvider).value;
+
+      // SAFETY GATE: Only show cache if we have a verified profile and it is 'completed'
+      if (user != null && profile != null && profile.onboardingStatus == 'completed') {
+         final lastSem = _semesterCode.isNotEmpty ? _semesterCode : "Summer2026"; 
+         final cached = cacheService.getCachedDashboardSchedule(user.id, lastSem);
+         if (cached != null && mounted) {
+           setState(() {
+             _lastValidScheduleData = cached;
+             _loadingInit = false; // Show the UI immediately
+           });
+         } else {
+           setState(() => _loadingInit = true);
+         }
+      }
     }
-    
+
     try {
       // 1. First ensure we have academic state (needed for the other queries)
       final academicState = await ref.read(academicStateProvider.future);
@@ -113,7 +131,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
-      final profile = ref.read(profileProvider).value;
+      // Force a fresh profile fetch to get the latest 'updatedAt' timestamp
+      // This ensures the Smart Cache knows if the DB has changed.
+      final profile = await ref.refresh(profileProvider.future);
       
       // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
       final results = await Future.wait<dynamic>([

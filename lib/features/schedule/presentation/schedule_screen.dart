@@ -15,6 +15,7 @@ import '../../../core/widgets/glass_kit.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/providers/academic_providers.dart';
+import '../../../core/repositories/profile_repository.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -57,10 +58,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   Widget build(BuildContext context) {
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
     final userTasks = ref.watch(allTasksStreamProvider).valueOrNull ?? [];
+    final profile = ref.watch(userProfileProvider).valueOrNull;
 
     return currentSemAsync.when(
       data: (semCode) {
         if (semCode == null) return const Scaffold(backgroundColor: Color(0xFF16202A), body: Center(child: Text('No active semester found.', style: TextStyle(color: Colors.white))));
+        
+        final track = profile?.track; // Use track hint
         
         return DefaultTabController(
           length: 2,
@@ -86,7 +90,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               color: const Color(0xFF00E5FF),
               backgroundColor: const Color(0xFF1E2836),
               child: FutureBuilder(
-                future: _loadDataForSemester(semCode),
+                future: _loadDataForSemester(semCode, track: track),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting && _loading) {
                     return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
@@ -127,7 +131,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     );
   }
 
-  Future<void> _loadDataForSemester(String semCode) async {
+  Future<void> _loadDataForSemester(String semCode, {String? track}) async {
     if (!mounted) return;
     _semesterCode = semCode;
     
@@ -188,7 +192,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           return a['type'] == 'cancel' && metadata['pendingMakeup'] == true;
         }).toList();
 
-        final weeksRaw = await repo.getTwoWeekSchedule(semCode);
+        final weeksRaw = await repo.getTwoWeekSchedule(semCode, track: track);
         
         _twoWeekSchedule = weeksRaw.map((dayData) {
            final date = dayData['date'] as DateTime;

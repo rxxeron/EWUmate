@@ -1,15 +1,47 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/widgets/sky_animation.dart';
 import 'auth_providers.dart';
+import '../../core/repositories/auth_repository.dart' hide authStateProvider;
 
-class CheckAuthScreen extends ConsumerWidget {
+class CheckAuthScreen extends ConsumerStatefulWidget {
   const CheckAuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CheckAuthScreen> createState() => _CheckAuthScreenState();
+}
+
+class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
+  Timer? _stallTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startStallTimer();
+  }
+
+  void _startStallTimer() {
+    _stallTimer?.cancel();
+    _stallTimer = Timer(const Duration(seconds: 12), () {
+      if (mounted) {
+        debugPrint("[CheckAuth] STALL DETECTED: Screen stuck for 12s. Forcing logout.");
+        ref.read(authRepositoryProvider).signOut();
+        if (context.mounted) context.go('/login');
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _stallTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
@@ -22,6 +54,7 @@ class CheckAuthScreen extends ConsumerWidget {
                 final syncUser = Supabase.instance.client.auth.currentUser;
                 if (state.event == AuthChangeEvent.signedOut ||
                     (state.session == null && syncUser == null)) {
+                  _stallTimer?.cancel(); // Success: moved to login
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     context.go('/login');
                   });
@@ -29,10 +62,16 @@ class CheckAuthScreen extends ConsumerWidget {
                 }
                 return const _ProfileCheckWrapper();
               },
-              error: (err, stack) => _ErrorView(
-                message: 'Auth Error: $err',
-                onRetry: () => ref.refresh(authStateProvider),
-              ),
+              error: (err, stack) {
+                _stallTimer?.cancel();
+                return _ErrorView(
+                  message: 'Auth Error: $err',
+                  onRetry: () {
+                    _startStallTimer();
+                    ref.refresh(authStateProvider);
+                  },
+                );
+              },
               loading: () => const CircularProgressBinding(),
             ),
           ),
@@ -48,6 +87,7 @@ class _ProfileCheckWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(profileProvider);
+    debugPrint("[CheckAuth] Phase: Profile Verification (${profileAsync.isLoading ? 'WAITING' : 'READY'})");
 
     return profileAsync.when(
       data: (profile) {
@@ -68,10 +108,18 @@ class _ProfileCheckWrapper extends ConsumerWidget {
           return const _GradeBlockerWrapper();
         }
       },
-      error: (err, stack) => _ErrorView(
-        message: 'Could not fetch profile: $err',
-        onRetry: () => ref.refresh(profileProvider),
-      ),
+      error: (err, stack) {
+        if (err.toString().contains("timeout") || err.toString().contains("Profile not found")) {
+           WidgetsBinding.instance.addPostFrameCallback((_) {
+              ref.read(authRepositoryProvider).signOut();
+              context.go('/login');
+           });
+        }
+        return _ErrorView(
+          message: 'Could not fetch profile: $err',
+          onRetry: () => ref.refresh(profileProvider),
+        );
+      },
       loading: () => const CircularProgressBinding(),
     );
   }
@@ -83,6 +131,7 @@ class _GradeBlockerWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gradeCheckAsync = ref.watch(requiresGradeEntryProvider);
+    debugPrint("[CheckAuth] Phase: Grade Scanning (${gradeCheckAsync.isLoading ? 'SCANNING' : 'DONE'})");
 
     return gradeCheckAsync.when(
       data: (requiresGrade) {

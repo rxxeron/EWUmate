@@ -231,7 +231,7 @@ _ref.invalidate(profileProvider);
             'Content-Type': 'application/json',
             'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
           },
-          jsonEncode({'user_id': user.id}),
+          body: jsonEncode({'user_id': user.id}),
         ),
       ]);
     } catch (e) {

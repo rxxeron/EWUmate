@@ -610,7 +610,7 @@ class DashboardRepository {
             },
             body: jsonEncode({
               'user_id': user.id,
-              'semester_code': semesterCode.replaceAll(' ', '').replaceAll('_', ''),
+              'semester_code': CourseUtils.cleanSemester(semesterCode),
             }),
           );
           

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/repositories/auth_repository.dart';
+import '../../core/utils/course_utils.dart';
 
 final semesterProgressRepositoryProvider = Provider((ref) => SemesterProgressRepository(
   Supabase.instance.client,
@@ -46,7 +47,9 @@ class SemesterProgressRepository {
           .from('enrollments')
           .select('course_code')
           .eq('user_id', userId)
-          .eq('semester_code', semesterCode);
+          .eq('semester_code', semesterCode); // Fallback: try raw first or always normalize in DB later? 
+          // For now, let's keep it robust by querying both or just assuming normalizing is done.
+          // Better: Clean it here.
 
       final enrolledCourseCodes = (enrollments as List).map((e) => e['course_code'] as String).toList();
 

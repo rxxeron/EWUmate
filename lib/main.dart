@@ -10,8 +10,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
 import 'core/repositories/auth_repository.dart';
+import 'dart:io';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 void main() async {
+  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Cache Service (Hive) before running the app

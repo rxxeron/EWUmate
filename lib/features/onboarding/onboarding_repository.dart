@@ -84,32 +84,66 @@ class OnboardingRepository {
   }
 
   Future<void> saveProgram(
-    String programCode,
+    String programId,
+    String programName,
     String department,
     String admittedSemester,
     String semType,
   ) async {
     final user = _client.auth.currentUser;
-    if (user == null) throw Exception("User not authenticated");
+    if (user == null) return;
 
-    // Use upsert to ensure profile row exists. 
-    // We include a fallback for full_name from auth metadata to satisfy NOT NULL constraints.
-    final name = user.userMetadata?['full_name'] ?? user.userMetadata?['display_name'] ?? 'New Student';
-    
-    await _client
+    final programCode = programId.toUpperCase();
+
+    // 1. Fetch current profile to detect if program/dept/admitted_semester has changed
+    final existing = await _client
         .from('profiles')
-        .upsert({
-          'id': user.id,
-          'full_name': name,
-          'program_code': programCode,
-          'department_name': department,
-          'admitted_semester': admittedSemester,
-          'semester_type': semType,
-          'onboarding_status': 'course_history',
-        });
+        .select('program_code, department_name, admitted_semester')
+        .eq('id', user.id)
+        .maybeSingle();
 
-_ref.invalidate(profileProvider);
+    bool hasChanged = false;
+    if (existing != null) {
+      final oldProg = existing['program_code']?.toString();
+      final oldDept = existing['department_name']?.toString();
+      final oldAdm = existing['admitted_semester']?.toString();
+      
+      if (oldProg != programCode || oldDept != department || oldAdm != admittedSemester) {
+        hasChanged = true;
+      }
     }
+
+    // 2. If program details changed, clear previous course history/enrollments for a fresh start
+    if (hasChanged) {
+      await Future.wait([
+        _client.from('completed_courses').delete().eq('user_id', user.id),
+        _client.from('enrollments').delete().eq('user_id', user.id),
+        _client.from('semester_course_marks').delete().eq('user_id', user.id),
+      ]);
+    }
+
+    // 3. Save the new program details
+    final payload = {
+      'id': user.id,
+      'program_code': programCode,
+      'program_name': programName,
+      'department_name': department,
+      'admitted_semester': admittedSemester,
+      'semester_type': semType,
+      'onboarding_status': 'course_history',
+    };
+
+    // Safety: If profile doesn't exist, provide basic fallback info to avoid constraint violations
+    if (existing == null) {
+      final meta = user.userMetadata;
+      payload['full_name'] = meta?['full_name'] ?? meta?['name'] ?? meta?['displayName'] ?? 'Student';
+      payload['nickname'] = payload['full_name'].toString().split(' ').first;
+    }
+
+    await _client.from('profiles').upsert(payload);
+
+    _ref.invalidate(profileProvider);
+  }
 
     Future<void> completeOnboarding() async {
       final user = _client.auth.currentUser;
@@ -206,11 +240,12 @@ _ref.invalidate(profileProvider);
     final user = _client.auth.currentUser;
     if (user == null) throw Exception("User not authenticated");
 
-    await _client.from('profiles').update({
+    await _client.from('profiles').upsert({
+      'id': user.id,
       'full_name': fullName,
       'nickname': nickname,
       'student_id': studentId,
-    }).eq('id', user.id);
+    });
 
     _ref.invalidate(profileProvider);
   }
@@ -342,18 +377,7 @@ _ref.invalidate(profileProvider);
     final user = _client.auth.currentUser;
     if (user == null) return;
     
-    final cleanRunningSemester = runningSemester.replaceAll(' ', '');
-
-    // 0. Ensure profile exists first (Fixes foreign key constraint error)
-    final existingProfile = await _client
-        .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-    
-    if (existingProfile == null) {
-      await _client.from('profiles').insert({'id': user.id});
-    }
+    final cleanRunningSemester = CourseUtils.cleanSemester(runningSemester);
 
     // Clean up existing data to reflect removals accurately
     await _client
@@ -447,23 +471,44 @@ _ref.invalidate(profileProvider);
           });
         }
         if (enrollmentRows.isNotEmpty) {
-          await _client.from('enrollments').insert(enrollmentRows);
+          try {
+            await _client.from('enrollments').insert(enrollmentRows);
+          } catch (e) {
+            throw Exception("Failed to save enrollments: $e");
+          }
           
           // Initialize progress entries for each enrolled course
           final List<Map<String, dynamic>> progressRows = [];
+          final Set<String> seenCodes = {}; // Prevention: UPSERT fails if input has duplicates
+          
           for (final detail in enrolledCourseDetails) {
             final rawCode = detail['code'].toString();
             final cleanCode = rawCode.contains('_') ? rawCode.split('_')[0] : rawCode;
+            final section = rawCode.contains('_Sec') ? rawCode.split('_Sec')[1] : (detail['section'] ?? '');
+            
+            if (seenCodes.contains(cleanCode)) continue;
+            seenCodes.add(cleanCode);
             
             progressRows.add({
               'user_id': user.id,
               'course_code': cleanCode,
+              'course_name': detail['name'] ?? '',
+              'section': section,
               'semester_code': cleanRunningSemester,
-              'obtained_marks': 0.0,
-              'total_marks': 100.0,
             });
           }
-          await _client.from('semester_course_marks').upsert(progressRows, onConflict: 'user_id,course_code,semester_code');
+          
+          if (progressRows.isNotEmpty) {
+            try {
+              await _client.from('semester_course_marks').upsert(
+                progressRows, 
+                onConflict: 'user_id,course_code,semester_code'
+              );
+            } catch (e) {
+              debugPrint("[OnboardingRepo] Progress Init Warning (Non-Fatal): $e");
+              // We don't throw here to allow the user to finish onboarding even if progress rows fail
+            }
+          }
         }
       }
 

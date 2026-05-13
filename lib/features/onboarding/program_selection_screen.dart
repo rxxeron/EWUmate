@@ -110,10 +110,15 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
     try {
       final dept = _departments.where((d) => d['name'] == _selectedDeptName).firstOrNull;
       if (dept == null) throw Exception("Selected department not found");
+      
+      final programList = dept['programs'] as List<dynamic>? ?? [];
+      final program = programList.where((p) => p['id'] == _selectedProgramId).firstOrNull;
+      final programName = program?['name'] ?? _selectedProgramId!;
+      
       final semType = dept['track'] ?? 'tri_semester';
 
       await ref.read(onboardingRepositoryProvider).saveProgram(
-          _selectedProgramId!, _selectedDeptName!, _selectedAdmittedSemester!, semType);
+          _selectedProgramId!, programName, _selectedDeptName!, _selectedAdmittedSemester!, semType);
       if (mounted) {
         setState(() => _saving = false);
         context.push('/onboarding/course-history', extra: {

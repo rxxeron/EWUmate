@@ -80,7 +80,7 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
           IconButton(
             icon: const Icon(Icons.edit, color: Colors.cyan),
             onPressed: () async {
-              await context.push('/onboarding/course-history', extra: true);
+              await context.push('/onboarding/course-history', extra: {'isEditMode': true});
               ref.invalidate(allSemesterSummariesProvider);
               ref.invalidate(academicStateProvider);
             },

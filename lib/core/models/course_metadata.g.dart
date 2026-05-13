@@ -14,9 +14,9 @@ _$CourseMetadataImpl _$$CourseMetadataImplFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$$CourseMetadataImplToJson(
-  _$CourseMetadataImpl instance,
-) => <String, dynamic>{
-  'code': instance.code,
-  'name': instance.name,
-  'credit_val': instance.creditVal,
-};
+        _$CourseMetadataImpl instance) =>
+    <String, dynamic>{
+      'code': instance.code,
+      'name': instance.name,
+      'credit_val': instance.creditVal,
+    };

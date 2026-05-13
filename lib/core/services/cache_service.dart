@@ -23,6 +23,7 @@ class CacheService {
       await Hive.openBox(_syncQueueBox);
       await Hive.openBox(_semesterProgressBox);
       await Hive.openBox(_notificationsBox);
+      await Hive.openBox('faculty');
       if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] Failed to initialize Hive: $e');

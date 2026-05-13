@@ -12,8 +12,7 @@ part of 'semester_summary.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 SemesterSummary _$SemesterSummaryFromJson(Map<String, dynamic> json) {
   return _SemesterSummary.fromJson(json);
@@ -36,12 +35,8 @@ mixin _$SemesterSummary {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this SemesterSummary to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SemesterSummary
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SemesterSummaryCopyWith<SemesterSummary> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,21 +44,19 @@ mixin _$SemesterSummary {
 /// @nodoc
 abstract class $SemesterSummaryCopyWith<$Res> {
   factory $SemesterSummaryCopyWith(
-    SemesterSummary value,
-    $Res Function(SemesterSummary) then,
-  ) = _$SemesterSummaryCopyWithImpl<$Res, SemesterSummary>;
+          SemesterSummary value, $Res Function(SemesterSummary) then) =
+      _$SemesterSummaryCopyWithImpl<$Res, SemesterSummary>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    double? tgpa,
-    double? cgpa,
-    @JsonKey(name: 'credits_earned') double? creditsEarned,
-    @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
-    List<dynamic> courses,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      double? tgpa,
+      double? cgpa,
+      @JsonKey(name: 'credits_earned') double? creditsEarned,
+      @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+      List<dynamic> courses,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -76,8 +69,6 @@ class _$SemesterSummaryCopyWithImpl<$Res, $Val extends SemesterSummary>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SemesterSummary
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,70 +82,65 @@ class _$SemesterSummaryCopyWithImpl<$Res, $Val extends SemesterSummary>
     Object? courses = null,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            semesterCode: null == semesterCode
-                ? _value.semesterCode
-                : semesterCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            tgpa: freezed == tgpa
-                ? _value.tgpa
-                : tgpa // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            cgpa: freezed == cgpa
-                ? _value.cgpa
-                : cgpa // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            creditsEarned: freezed == creditsEarned
-                ? _value.creditsEarned
-                : creditsEarned // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            totalCreditsEarned: freezed == totalCreditsEarned
-                ? _value.totalCreditsEarned
-                : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            courses: null == courses
-                ? _value.courses
-                : courses // ignore: cast_nullable_to_non_nullable
-                      as List<dynamic>,
-            updatedAt: freezed == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      tgpa: freezed == tgpa
+          ? _value.tgpa
+          : tgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      cgpa: freezed == cgpa
+          ? _value.cgpa
+          : cgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      creditsEarned: freezed == creditsEarned
+          ? _value.creditsEarned
+          : creditsEarned // ignore: cast_nullable_to_non_nullable
+              as double?,
+      totalCreditsEarned: freezed == totalCreditsEarned
+          ? _value.totalCreditsEarned
+          : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
+              as double?,
+      courses: null == courses
+          ? _value.courses
+          : courses // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$SemesterSummaryImplCopyWith<$Res>
     implements $SemesterSummaryCopyWith<$Res> {
-  factory _$$SemesterSummaryImplCopyWith(
-    _$SemesterSummaryImpl value,
-    $Res Function(_$SemesterSummaryImpl) then,
-  ) = __$$SemesterSummaryImplCopyWithImpl<$Res>;
+  factory _$$SemesterSummaryImplCopyWith(_$SemesterSummaryImpl value,
+          $Res Function(_$SemesterSummaryImpl) then) =
+      __$$SemesterSummaryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    double? tgpa,
-    double? cgpa,
-    @JsonKey(name: 'credits_earned') double? creditsEarned,
-    @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
-    List<dynamic> courses,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      double? tgpa,
+      double? cgpa,
+      @JsonKey(name: 'credits_earned') double? creditsEarned,
+      @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+      List<dynamic> courses,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -162,12 +148,9 @@ class __$$SemesterSummaryImplCopyWithImpl<$Res>
     extends _$SemesterSummaryCopyWithImpl<$Res, _$SemesterSummaryImpl>
     implements _$$SemesterSummaryImplCopyWith<$Res> {
   __$$SemesterSummaryImplCopyWithImpl(
-    _$SemesterSummaryImpl _value,
-    $Res Function(_$SemesterSummaryImpl) _then,
-  ) : super(_value, _then);
+      _$SemesterSummaryImpl _value, $Res Function(_$SemesterSummaryImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of SemesterSummary
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -181,63 +164,61 @@ class __$$SemesterSummaryImplCopyWithImpl<$Res>
     Object? courses = null,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _$SemesterSummaryImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        semesterCode: null == semesterCode
-            ? _value.semesterCode
-            : semesterCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        tgpa: freezed == tgpa
-            ? _value.tgpa
-            : tgpa // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        cgpa: freezed == cgpa
-            ? _value.cgpa
-            : cgpa // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        creditsEarned: freezed == creditsEarned
-            ? _value.creditsEarned
-            : creditsEarned // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        totalCreditsEarned: freezed == totalCreditsEarned
-            ? _value.totalCreditsEarned
-            : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        courses: null == courses
-            ? _value._courses
-            : courses // ignore: cast_nullable_to_non_nullable
-                  as List<dynamic>,
-        updatedAt: freezed == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$SemesterSummaryImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      tgpa: freezed == tgpa
+          ? _value.tgpa
+          : tgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      cgpa: freezed == cgpa
+          ? _value.cgpa
+          : cgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      creditsEarned: freezed == creditsEarned
+          ? _value.creditsEarned
+          : creditsEarned // ignore: cast_nullable_to_non_nullable
+              as double?,
+      totalCreditsEarned: freezed == totalCreditsEarned
+          ? _value.totalCreditsEarned
+          : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
+              as double?,
+      courses: null == courses
+          ? _value._courses
+          : courses // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$SemesterSummaryImpl implements _SemesterSummary {
-  const _$SemesterSummaryImpl({
-    required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
-    @JsonKey(name: 'semester_code') required this.semesterCode,
-    this.tgpa,
-    this.cgpa,
-    @JsonKey(name: 'credits_earned') this.creditsEarned,
-    @JsonKey(name: 'total_credits_earned') this.totalCreditsEarned,
-    final List<dynamic> courses = const [],
-    @JsonKey(name: 'updated_at') this.updatedAt,
-  }) : _courses = courses;
+  const _$SemesterSummaryImpl(
+      {required this.id,
+      @JsonKey(name: 'user_id') required this.userId,
+      @JsonKey(name: 'semester_code') required this.semesterCode,
+      this.tgpa,
+      this.cgpa,
+      @JsonKey(name: 'credits_earned') this.creditsEarned,
+      @JsonKey(name: 'total_credits_earned') this.totalCreditsEarned,
+      final List<dynamic> courses = const [],
+      @JsonKey(name: 'updated_at') this.updatedAt})
+      : _courses = courses;
 
   factory _$SemesterSummaryImpl.fromJson(Map<String, dynamic> json) =>
       _$$SemesterSummaryImplFromJson(json);
@@ -298,50 +279,47 @@ class _$SemesterSummaryImpl implements _SemesterSummary {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    semesterCode,
-    tgpa,
-    cgpa,
-    creditsEarned,
-    totalCreditsEarned,
-    const DeepCollectionEquality().hash(_courses),
-    updatedAt,
-  );
+      runtimeType,
+      id,
+      userId,
+      semesterCode,
+      tgpa,
+      cgpa,
+      creditsEarned,
+      totalCreditsEarned,
+      const DeepCollectionEquality().hash(_courses),
+      updatedAt);
 
-  /// Create a copy of SemesterSummary
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SemesterSummaryImplCopyWith<_$SemesterSummaryImpl> get copyWith =>
       __$$SemesterSummaryImplCopyWithImpl<_$SemesterSummaryImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SemesterSummaryImplToJson(this);
+    return _$$SemesterSummaryImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _SemesterSummary implements SemesterSummary {
-  const factory _SemesterSummary({
-    required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
-    @JsonKey(name: 'semester_code') required final String semesterCode,
-    final double? tgpa,
-    final double? cgpa,
-    @JsonKey(name: 'credits_earned') final double? creditsEarned,
-    @JsonKey(name: 'total_credits_earned') final double? totalCreditsEarned,
-    final List<dynamic> courses,
-    @JsonKey(name: 'updated_at') final DateTime? updatedAt,
-  }) = _$SemesterSummaryImpl;
+  const factory _SemesterSummary(
+      {required final String id,
+      @JsonKey(name: 'user_id') required final String userId,
+      @JsonKey(name: 'semester_code') required final String semesterCode,
+      final double? tgpa,
+      final double? cgpa,
+      @JsonKey(name: 'credits_earned') final double? creditsEarned,
+      @JsonKey(name: 'total_credits_earned') final double? totalCreditsEarned,
+      final List<dynamic> courses,
+      @JsonKey(name: 'updated_at')
+      final DateTime? updatedAt}) = _$SemesterSummaryImpl;
 
   factory _SemesterSummary.fromJson(Map<String, dynamic> json) =
       _$SemesterSummaryImpl.fromJson;
@@ -369,11 +347,8 @@ abstract class _SemesterSummary implements SemesterSummary {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of SemesterSummary
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SemesterSummaryImplCopyWith<_$SemesterSummaryImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

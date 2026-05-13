@@ -793,7 +793,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
             ),
-            ?trailing,
+            trailing ?? const SizedBox(),
           ],
         ),
       ),

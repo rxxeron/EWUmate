@@ -13,6 +13,10 @@ import '../../features/onboarding/presentation/profile_setup_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
 import '../../features/semester_progress/semester_progress_screen.dart';
+import '../../features/services/presentation/services_screen.dart';
+import '../../features/services/presentation/cover_page_screen.dart';
+import '../../features/services/presentation/faculty_list_screen.dart';
+import '../../features/faculty_directory/presentation/faculty_directory_screen.dart';
 import '../../core/widgets/main_shell.dart';
 
 import '../../features/profile/presentation/profile_screen.dart';
@@ -55,6 +59,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
           GoRoute(path: '/tasks', builder: (context, state) => const TasksScreen()),
           GoRoute(path: '/semester-progress', builder: (context, state) => const SemesterProgressScreen()),
+          GoRoute(path: '/services', builder: (context, state) => const ServicesScreen()),
+          GoRoute(path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
+          GoRoute(path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
+          GoRoute(path: '/services/faculty-directory', builder: (context, state) => const FacultyDirectoryScreen()),
         ],
       ),
 

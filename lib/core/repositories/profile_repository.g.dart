@@ -12,17 +12,15 @@ String _$profileRepositoryHash() => r'877f1f2f1b65e64a78584d3706d4ba6ff74e09b8';
 @ProviderFor(profileRepository)
 final profileRepositoryProvider =
     AutoDisposeProvider<ProfileRepository>.internal(
-      profileRepository,
-      name: r'profileRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$profileRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  profileRepository,
+  name: r'profileRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$profileRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef ProfileRepositoryRef = AutoDisposeProviderRef<ProfileRepository>;
 String _$userProfileHash() => r'7c05be2b2ccda809eb2e8880c1b48ca09bc6c873';
 
@@ -31,15 +29,12 @@ String _$userProfileHash() => r'7c05be2b2ccda809eb2e8880c1b48ca09bc6c873';
 final userProfileProvider = StreamProvider<Profile?>.internal(
   userProfile,
   name: r'userProfileProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$userProfileHash,
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$userProfileHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef UserProfileRef = StreamProviderRef<Profile?>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

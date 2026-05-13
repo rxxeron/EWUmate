@@ -28,6 +28,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   String _headerDept = 'Department of CSE';
   String _groupNo = '';
   String _labNo = '';
+  String _semester = ''; // New state for editable semester
   
   // Course Info
   String _courseTitle = '';
@@ -366,7 +367,14 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
             _profileInitialized = true;
           }
           
-          final semester = currentSemAsync.value ?? 'Unknown Semester';
+          final semesterCode = currentSemAsync.value ?? 'Summer2026';
+          
+          // Initialize _semester if empty
+          if (_semester.isEmpty && semesterCode != 'Unknown Semester') {
+             // Format 'Summer2026' -> 'Summer 2026'
+             _semester = semesterCode.replaceAllMapped(RegExp(r'(\d+)'), (match) => ' ${match.group(0)}').trim();
+          }
+          
           final enrolledCourses = marksAsync.value ?? [];
 
           return Form(
@@ -388,6 +396,20 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                       }
                     });
                   },
+                ),
+                const SizedBox(height: 16),
+                
+                TextFormField(
+                  key: ValueKey('semester_field_$_semester'),
+                  initialValue: _semester,
+                  decoration: const InputDecoration(
+                    labelText: 'Academic Semester',
+                    border: OutlineInputBorder(),
+                    hintText: 'e.g. Summer 2026',
+                  ),
+                  onChanged: (v) => _semester = v,
+                  onSaved: (v) => _semester = v ?? '',
+                  validator: (v) => v!.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 16),
                 
@@ -617,7 +639,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                                 _courseCode = course['course_code'].toString();
                                 _section = course['section']?.toString() ?? '';
                               });
-                              _fetchFacultyDetails(_courseCode, _section, semester);
+                              _fetchFacultyDetails(_courseCode, _section, semesterCode);
                             },
                             onSaved: (v) => _courseCode = v ?? '',
                           )
@@ -735,7 +757,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                 const SizedBox(height: 24),
 
                 ElevatedButton(
-                  onPressed: () => _generatePDF({}, semester),
+                  onPressed: () => _generatePDF({}, _semester),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Theme.of(context).primaryColor,

@@ -377,7 +377,7 @@ class OnboardingRepository {
     final user = _client.auth.currentUser;
     if (user == null) return;
     
-    final cleanRunningSemester = runningSemester.replaceAll(' ', '');
+    final cleanRunningSemester = CourseUtils.cleanSemester(runningSemester);
 
     // Clean up existing data to reflect removals accurately
     await _client

@@ -61,7 +61,12 @@ class SemesterProgressRepository {
           .from('semester_course_marks')
           .select('*')
           .eq('user_id', userId)
-          .eq('semester_code', CourseUtils.cleanSemester(semesterCode));
+          .inFilter('semester_code', [
+            semesterCode, 
+            CourseUtils.cleanSemester(semesterCode), 
+            semesterCode.toLowerCase(),
+            semesterCode.replaceAll(' ', '')
+          ]);
       
       final marksData = List<Map<String, dynamic>>.from(marksRes);
 

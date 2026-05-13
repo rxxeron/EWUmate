@@ -39,12 +39,22 @@ class ServicesScreen extends StatelessWidget {
                   ),
                   _buildServiceCard(
                     context,
-                    title: 'Faculty List',
-                    icon: Icons.people_outline,
+                    title: 'Faculty List (PDF)',
+                    icon: Icons.picture_as_pdf_outlined,
                     color: Colors.green.shade100,
                     iconColor: Colors.green.shade700,
                     onTap: () {
                       context.push('/services/faculty-list');
+                    },
+                  ),
+                  _buildServiceCard(
+                    context,
+                    title: 'Faculty Directory',
+                    icon: Icons.people_alt_outlined,
+                    color: Colors.purple.shade100,
+                    iconColor: Colors.purple.shade700,
+                    onTap: () {
+                      context.push('/services/faculty-directory');
                     },
                   ),
                 ],

@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cache_service.dart';
+import '../utils/course_utils.dart';
 
 class SyncService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -53,7 +54,14 @@ class SyncService {
 
             // Normalize course code
             if (data['course_code'] != null) {
-              data['course_code'] = (data['course_code'] as String).toUpperCase().replaceAll(' ', '');
+              data['course_code'] = CourseUtils.normalize(data['course_code']);
+            }
+
+            // Normalize semester code
+            if (data['semester_code'] != null) {
+              data['semester_code'] = CourseUtils.cleanSemester(data['semester_code']);
+            } else if (mutation['semesterCode'] != null) {
+              data['semester_code'] = CourseUtils.cleanSemester(mutation['semesterCode']);
             }
 
             await _supabase.from('semester_course_marks').upsert(

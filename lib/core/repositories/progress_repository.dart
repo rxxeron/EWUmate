@@ -54,8 +54,9 @@ class ProgressRepository {
 
   Future<void> updateCourseMarks(SemesterCourseMarks marks) async {
     final data = marks.toJson();
-    // Normalize course code
-    data['course_code'] = marks.courseCode.toUpperCase().replaceAll(' ', '');
+    // Normalize course and semester codes
+    data['course_code'] = CourseUtils.normalize(marks.courseCode);
+    data['semester_code'] = CourseUtils.cleanSemester(marks.semesterCode);
     // Remove temporary ID to allow upsert logic to use unique constraint
     if (data['id'] != null && data['id'].toString().startsWith('new_')) {
       data.remove('id');

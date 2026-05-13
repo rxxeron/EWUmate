@@ -2,9 +2,11 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle, SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from datetime import datetime
 import os
+import re
 
 class EWUmatePDFEngine:
     def __init__(self, output_path, data):
@@ -27,10 +29,6 @@ class EWUmatePDFEngine:
 
     def generate(self):
         template = self.data.get('template', 'assignment')
-        
-        if template == 'catalog':
-            self.render_catalog()
-            return
 
         # Initialize canvas for standard templates
         self.c = canvas.Canvas(self.output_path, pagesize=A4)
@@ -47,28 +45,51 @@ class EWUmatePDFEngine:
         self.c.setFillColor(colors.black)
         self.c.setLineWidth(0.5)
 
-        self.draw_header()
+        # Draw header and get the y position where it finished
+        curr_y = self.draw_header()
+        
+        # Start template content from where header left off
+        curr_y -= 40 # Gap after header
         
         if template in ['physics_lab', 'Physics Lab']:
-            self.render_physics_lab()
+            self.render_physics_lab(curr_y)
         elif template == 'mps_assignment':
-            self.render_mps_assignment()
+            self.render_mps_assignment(curr_y)
         elif template in ['lab_report', 'Lab Report']:
-            self.render_lab_report()
+            self.render_lab_report(curr_y)
         elif template in ['assignment', 'general_assignment']:
-            self.render_assignment()
+            self.render_assignment(curr_y)
         elif template in ['group_project', 'term_paper', 'project_report']:
-            self.render_group_project()
+            self.render_group_project(curr_y)
         else:
-            self.render_assignment()
+            self.render_assignment(curr_y)
         
         self.c.save()
+
+    def _format_date(self, date_str):
+        if not date_str or not isinstance(date_str, str):
+            return date_str
+        
+        clean_date = date_str.strip()
+        if not clean_date:
+            return ""
+
+        # Try multiple common formats
+        for fmt in ('%Y-%m-%d', '%d-%m-%Y', '%Y/%m/%d', '%d/%m/%Y'):
+            try:
+                dt = datetime.strptime(clean_date, fmt)
+                return dt.strftime('%d %B %Y')
+            except ValueError:
+                continue
+        
+        # If no format matches, return original
+        return date_str
 
     def draw_footer_dates(self):
         self.c.setFont("Times-Bold", self.label_size)
         y_footer = 100 
-        alloc_date = self.data.get('allocation_date', '').strip()
-        sub_date = self.data.get('submission_date', '').strip()
+        alloc_date = self._format_date(self.data.get('allocation_date', '').strip())
+        sub_date = self._format_date(self.data.get('submission_date', '').strip())
         
         if alloc_date:
             self.c.drawString(self.label_x, y_footer, f"Date of Allocation: {alloc_date}")
@@ -131,21 +152,33 @@ class EWUmatePDFEngine:
         return curr_y
 
     def draw_header(self):
-        y_top = self.height - 50
+        curr_y = self.height - 40
         if os.path.exists(self.logo_path):
             try:
-                self.c.drawImage(ImageReader(self.logo_path), (self.width-150)/2, y_top-50, width=150, height=50, preserveAspectRatio=True, mask='auto')
+                # HUGE logo size (260x85)
+                logo_w = 260
+                logo_h = 85
+                self.c.drawImage(ImageReader(self.logo_path), (self.width-logo_w)/2, curr_y-logo_h, width=logo_w, height=logo_h, preserveAspectRatio=True, mask='auto')
+                curr_y -= (logo_h + 10) # Position after logo
             except:
-                pass
+                curr_y -= 20
+        
         self.c.setFont("Times-Bold", 14)
-        self.c.drawCentredString(self.width/2, y_top-70, self.data.get('header_dept', 'Department of CSE'))
+        self.c.drawCentredString(self.width/2, curr_y, self.data.get('header_dept', 'Department of CSE').upper())
+        curr_y -= 15
+        
         self.c.setFont("Times-Roman", 8)
-        self.c.drawCentredString(self.width/2, y_top-80, "A/2, Jahurul Islam Avenue, Jahurul Islam City, Aftabnagar, Dhaka-1212")
+        self.c.drawCentredString(self.width/2, curr_y, "A/2, Jahurul Islam Avenue, Jahurul Islam City, Aftabnagar, Dhaka-1212")
+        curr_y -= 15
+        
         self.c.setFont("Times-Bold", 11)
-        self.c.drawCentredString(self.width/2, y_top-95, f"Semester: {self.data.get('semester', 'Summer 2026')}")
+        self.c.drawCentredString(self.width/2, curr_y, f"Semester: {self.data.get('semester', 'Summer 2026')}")
+        curr_y -= 10
+        
+        return curr_y
 
-    def render_physics_lab(self):
-        y = self.height - 210
+    def render_physics_lab(self, start_y):
+        y = start_y
         
         # Right Side items (Course info)
         items_right = [("Course Name", self.data.get('course_title', '')), 
@@ -183,8 +216,8 @@ class EWUmatePDFEngine:
         y -= 20 # gap before dates
         
         # Dates block
-        alloc_date = self.data.get('allocation_date', '').strip()
-        sub_date = self.data.get('submission_date', '').strip()
+        alloc_date = self._format_date(self.data.get('allocation_date', '').strip())
+        sub_date = self._format_date(self.data.get('submission_date', '').strip())
         
         if alloc_date:
             self.c.setFont("Times-Bold", self.label_size)
@@ -206,8 +239,8 @@ class EWUmatePDFEngine:
 
     def draw_inline_dates(self, start_y):
         y = start_y
-        alloc_date = self.data.get('allocation_date', '').strip()
-        sub_date = self.data.get('submission_date', '').strip()
+        alloc_date = self._format_date(self.data.get('allocation_date', '').strip())
+        sub_date = self._format_date(self.data.get('submission_date', '').strip())
         self.c.setFont("Times-Bold", self.label_size)
         
         if alloc_date:
@@ -219,8 +252,8 @@ class EWUmatePDFEngine:
             y -= self.line_height
         return y
 
-    def render_lab_report(self):
-        y_top = self.height - 210
+    def render_lab_report(self, start_y):
+        y_top = start_y
         self.c.setFont("Times-Bold", 14)
         self.c.drawCentredString(self.width/2, y_top, f"Lab Report No: {self.data.get('lab_no', '01')}")
         self.c.drawCentredString(self.width/2, y_top-30, "Lab Topic:")
@@ -240,8 +273,8 @@ class EWUmatePDFEngine:
         y = self.draw_submission_footer(y - 60, is_lab=True)
         self.draw_inline_dates(y - 40)
 
-    def render_mps_assignment(self):
-        y_top = self.height - 210
+    def render_mps_assignment(self, start_y):
+        y_top = start_y
         self.c.setFont("Times-Bold", 20)
         self.c.drawCentredString(self.width/2, y_top, "Assignment")
         tw = self.c.stringWidth("Assignment", "Times-Bold", 20)
@@ -283,9 +316,9 @@ class EWUmatePDFEngine:
             curr_y -= row_height
         return curr_y
 
-    def render_assignment(self):
+    def render_assignment(self, start_y):
         topic = self.data.get('topic', '').strip()
-        y_top = self.height - 210
+        y_top = start_y
         if topic:
             self.c.setFont("Times-Bold", 12)
             self.c.drawCentredString(self.width/2, y_top, "ASSIGNMENT ON")
@@ -312,14 +345,14 @@ class EWUmatePDFEngine:
         y = self.draw_submission_footer(y - 60)
         self.draw_inline_dates(y - 40)
 
-    def render_group_project(self):
+    def render_group_project(self, start_y):
         template = self.data.get('template')
         is_term_paper = (template == 'term_paper')
         students = self.data.get('students', [])
         num_students = len(students) if students else 1
         
         is_compact = (num_students > 2)
-        y_top_offset = 180 if is_compact else 210
+        y_top_offset = 10 if is_compact else 30
         gap_title = 20 if is_compact else 30
         gap_topic = 25 if is_compact else 30
         gap_after_topic = 25 if is_compact else 50
@@ -328,7 +361,7 @@ class EWUmatePDFEngine:
         gap_dates = 10 if is_compact else 30
         
         title_label = "TERM PAPER ON" if is_term_paper else "PROJECT REPORT ON"
-        y = self.height - y_top_offset
+        y = start_y - y_top_offset
         self.c.setFont("Times-Bold", 12)
         self.c.drawCentredString(self.width/2, y, title_label)
         
@@ -447,7 +480,3 @@ class EWUmatePDFEngine:
                 self.c.setStrokeColor(colors.black)
             y -= 5 
         return y
-
-        return y
-
-

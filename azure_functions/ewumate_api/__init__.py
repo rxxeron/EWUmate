@@ -15,6 +15,11 @@ import uuid
 from datetime import datetime as _dt
 import azure.functions as func
 from supabase import create_client, Client
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.units import inch
 
 try:
     from pypdf import PdfReader
@@ -25,7 +30,6 @@ from . import calendar_parser
 from . import course_parser
 from . import exam_parser
 from . import advising_parser
-from . import pdf_handler # We will create this
 
 # ─── Supabase Config ───────────────────────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://jwygjihrbwxhehijldiz.supabase.co")
@@ -47,6 +51,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         body = {}
 
+    # Special handling for binary PDF generation
+    if action == "generate_pdf":
+        try:
+            pdf_bytes = handle_generate_pdf(body)
+            return func.HttpResponse(
+                pdf_bytes,
+                status_code=200,
+                mimetype="application/pdf",
+                headers={
+                    "Content-Disposition": f"attachment; filename=CoverPage.pdf",
+                    "Access-Control-Allow-Origin": "*", # Enable CORS for browser
+                }
+            )
+        except Exception as e:
+            logging.exception("PDF Generation failed")
+            return func.HttpResponse(json.dumps({"error": str(e)}), status_code=500, headers={"Access-Control-Allow-Origin": "*"})
+
     handlers = {
         "generate_schedules": handle_generate_schedules,
         "parse_calendar": handle_parse_calendar,
@@ -55,33 +76,23 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "parse_advising": handle_parse_advising,
         "parse_faculty_webhook": handle_parse_webhook,
         "sync_api_courses": handle_sync_api_courses,
-        "generate_pdf": handle_generate_pdf, # NEW
+        "generate_pdf": handle_generate_pdf,
     }
 
     handler = handlers.get(action)
     if not handler:
         return func.HttpResponse(
             json.dumps({"error": f"Unknown action: {action}"}),
-            status_code=404, mimetype="application/json"
+            status_code=404, mimetype="application/json",
+            headers={"Access-Control-Allow-Origin": "*"}
         )
 
     try:
         result = handler(body)
-        
-        # If result is bytes, it's a direct PDF response
-        if isinstance(result, bytes):
-            return func.HttpResponse(
-                result,
-                mimetype="application/pdf",
-                headers={
-                    "Content-Disposition": 'attachment; filename="academic_report.pdf"',
-                    "Access-Control-Allow-Origin": "*"
-                }
-            )
-
         return func.HttpResponse(
             json.dumps(result, default=str),
-            status_code=200, mimetype="application/json"
+            status_code=200, mimetype="application/json",
+            headers={"Access-Control-Allow-Origin": "*"}
         )
     except Exception as e:
         logging.exception(f"Error in {action}")
@@ -549,13 +560,13 @@ def handle_sync_api_courses(body: dict) -> dict:
             "original_code":    raw_code,
             "section_number":   sec,
             "faculty_initials":  c.get("faculty") or "TBA",
-            "faculty_full_name": c.get("faculty_full_name") or "",
-            "faculty_designation": c.get("faculty_designation") or "",
             "dedicated_department": c.get("dedicated_department") or "",
             "capacity":          c.get("capacity") or "0/0",
             "schedule_data":     c.get("sessions") or [],
             "course_name":       final_name,
             "credit_val":        final_cred,
+            "faculty_full_name": re.sub(r'^(Mr|Ms|Mrs)\.?\s+', '', c.get("faculty_full_name") or "", flags=re.IGNORECASE).title(),
+            "faculty_designation": c.get("faculty_designation") or "",
         })
 
     if not mapped_courses:
@@ -691,7 +702,9 @@ def _do_parse_faculty(file_path: str) -> dict:
                 "capacity": c.get("capacity"),
                 "schedule_data": c.get("sessions"),
                 "course_name": c.get("course_name"),
-                "credit_val": float(c.get("credits", 0) or 0)
+                "credit_val": float(c.get("credits", 0) or 0),
+                "faculty_full_name": re.sub(r'^(Mr|Ms|Mrs)\.?\s+', '', c.get("faculty_full_name") or "", flags=re.IGNORECASE).title(),
+                "faculty_designation": c.get("faculty_designation") or "",
             })
 
         # Create table if it doesn't exist (idempotent RPC)
@@ -960,5 +973,16 @@ def _do_parse_advising(file_path: str) -> dict:
     except Exception as e:
         logging.exception("_do_parse_advising failed")
         return {"error": str(e)}
+
+# ═══════════════════════════════════════════════════════════════════
+#  PROFESSIONAL PDF GENERATION (EWUmatePDFEngine)
+# ═══════════════════════════════════════════════════════════════════
+from .ewumate_pdf_engine import EWUmatePDFEngine
+
 def handle_generate_pdf(body):
-    return pdf_handler.handle(body)
+    buffer = io.BytesIO()
+    engine = EWUmatePDFEngine(buffer, body)
+    engine.generate()
+    buffer.seek(0)
+    return buffer.read()
+

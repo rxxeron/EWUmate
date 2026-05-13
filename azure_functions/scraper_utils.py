@@ -1,4 +1,5 @@
 import logging
+import re
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -105,6 +106,19 @@ def run_sync(custom_semester=None, is_preview=False):
                 continue
 
             course_map = {}
+            
+            # [ENRICHMENT] Fetch Faculty Master mapping for on-the-fly enrichment
+            faculty_enrichment_map = {}
+            try:
+                fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
+                for f in fac_res.data:
+                    faculty_enrichment_map[f['short_name'].upper()] = {
+                        "full_name": f['full_name'],
+                        "designation": f['designation_name']
+                    }
+            except Exception as e:
+                logging.warning(f"Enrichment lookup failed: {e}")
+
             for item in all_raw_data:
                 raw_code = (item.get("CourseCode") or "").strip()
                 code = equiv_map.get(raw_code, raw_code)
@@ -137,10 +151,15 @@ def run_sync(custom_semester=None, is_preview=False):
 
                 course_key = f"{code}_{section}"
                 if course_key not in course_map:
+                    # Enrich with full name if available
+                    enrich = faculty_enrichment_map.get(faculty.upper(), {})
+                    
                     course_map[course_key] = {
                         "course_code":      code,
                         "section_number":   section,
                         "faculty_initials": faculty,
+                        "faculty_full_name": enrich.get("full_name") or "",
+                        "faculty_designation": enrich.get("designation") or "",
                         "capacity":         f"{item.get('SeatTaken', 0)}/{item.get('SeatCapacity', 0)}",
                         "course_name":      item.get("CourseName") or "",
                         "credit_val":       3.0,
@@ -177,6 +196,8 @@ def run_sync(custom_semester=None, is_preview=False):
                             "course_name": c["course_name"],
                             "credits": c["credit_val"],
                             "dedicated_department": c["dedicated_department"],
+                            "faculty_full_name": c["faculty_full_name"],
+                            "faculty_designation": c["faculty_designation"],
                             "sessions": c["schedule_data"]
                         } for c in all_scraped_courses
                     ]
@@ -199,6 +220,13 @@ def run_sync(custom_semester=None, is_preview=False):
                     "updated": sync_res.get("updated", 0),
                     "deleted": sync_res.get("deleted", 0)
                 })
+
+                # [SNAPSHOT] Trigger PDF generation and archival
+                try:
+                    from snapshot_utils import run_automated_snapshot
+                    run_automated_snapshot(sem_name)
+                except Exception as e:
+                    logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
 
         if not is_preview:
             sb.table("scraper_config").update({"last_run": "now()"}).eq("id", config["id"]).execute()
@@ -249,21 +277,68 @@ def run_faculty_master_sync():
         for f in faculty_raw:
             short = (f.get("ShortName") or "").strip().upper()
             if short:
+                # [FIX] Combine name parts
+                first = (f.get("FirstName") or "").strip()
+                middle = (f.get("MiddleName") or "").strip()
+                last = (f.get("LastName") or "").strip()
+                full_name = " ".join([n for n in [first, middle, last] if n])
+                
+                # Remove Mr., Ms., Mrs. prefixes
+                clean_name = re.sub(r'^(Mr|Ms|Mrs)\.?\s+', '', full_name, flags=re.IGNORECASE)
+                # Convert to Title Case if it's all caps or for consistency
+                clean_name = clean_name.title()
+                
                 faculty_map[short] = {
-                    "full_name": (f.get("FacultyName") or "").strip(),
-                    "email": (f.get("Email") or "").strip(),
+                    "full_name": clean_name,
+                    "email": (f.get("Email") or "").strip().lower(),
+                    "phone": (f.get("Mobile") or "").strip(),
                     "designation_id": f.get("DesignationId")
                 }
 
-        # 2. Sync to faculty_master table
-        logging.info(f"Syncing {len(faculty_map)} faculty to master table...")
+        # 2. Sync to faculty_master table in batches
+        logging.info(f"Syncing {len(faculty_map)} faculty to master table in batches (Strict Protection)...")
+        faculty_list = []
         for short, info in faculty_map.items():
-            sb.table("faculty_master").upsert({
+            # [USER REQUEST] Handle designation and photo url strictly
+            # 1. If designation is numeric or missing, it must be NULL
+            # 2. Photo URL from portal is ignored (stays NULL or previous value)
+            faculty_list.append({
                 "short_name": short,
                 "full_name": info["full_name"],
                 "email": info["email"],
-                "designation_name": str(info["designation_id"]) # Designation Name lookup can be added later
-            }).execute()
+                "phone": info["phone"]
+            })
+        
+        # Batch upsert (100 at a time) using SQL to ensure atomic field-level control
+        for i in range(0, len(faculty_list), 100):
+            batch = faculty_list[i:i+100]
+            values = []
+            for f in batch:
+                s = f['short_name'].replace("'", "''")
+                full = f['full_name'].replace("'", "''")
+                e = f['email'].replace("'", "''")
+                p = f['phone'].replace("'", "''")
+                
+                # For INSERT (new records): designation_name and photo_url are NULL
+                values.append(f"('{s}', '{full}', '{e}', '{p}', NULL, NULL)")
+            
+            if values:
+                sql = f"""
+                INSERT INTO public.faculty_master (short_name, full_name, email, phone, designation_name, photo_url)
+                VALUES {", ".join(values)}
+                ON CONFLICT (short_name) DO UPDATE SET
+                    full_name = EXCLUDED.full_name,
+                    email = EXCLUDED.email,
+                    phone = EXCLUDED.phone,
+                    updated_at = NOW();
+                -- Note: designation_name and photo_url are NOT in the UPDATE set, preserving our premium data
+                """
+                try:
+                    sb.rpc("exec_sql", {"sql_query": sql}).execute()
+                except Exception as e:
+                    logging.warning(f"Batch {i//100 + 1} SQL failed: {e}")
+            
+            logging.info(f"Processed batch {i//100 + 1}")
 
         # 3. Fetch Offered Courses for active semesters
         target_semesters = [s.strip() for s in config.get("target_semesters", "Summer2026").split(",")]
@@ -305,6 +380,13 @@ def run_faculty_master_sync():
             # Call the sync handler (it will need update to handle full_name)
             # For now, let's just return success for the scraper part
             logging.info(f"Prepared {len(enriched_courses)} enriched courses for {sem_name}")
+
+            # [SNAPSHOT] Update PDF Archive with fresh faculty data
+            try:
+                from snapshot_utils import run_automated_snapshot
+                run_automated_snapshot(sem_name)
+            except Exception as e:
+                logging.warning(f"Snapshot trigger failed for {sem_name} during master sync: {e}")
 
         return {"status": "success", "message": "Faculty Sync Completed"}
 

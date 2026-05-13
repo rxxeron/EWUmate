@@ -15,6 +15,15 @@ def main(mytimer: func.TimerRequest) -> None:
 
     logging.info('Portal Sync Timer Triggered at %s', utc_timestamp)
     
+    # [NEW] Weekly Faculty Master Sync (Every Sunday)
+    if datetime.datetime.utcnow().weekday() == 6:
+        logging.info("Sunday detected: Running Weekly Faculty Master Sync...")
+        try:
+            from scraper_utils import run_faculty_master_sync
+            run_faculty_master_sync()
+        except Exception as e:
+            logging.error(f"Weekly Faculty Master Sync failed: {e}")
+
     # Run the sync process in full (non-preview mode)
     result = run_sync(is_preview=False)
     

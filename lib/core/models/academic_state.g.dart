@@ -37,6 +37,6 @@ Map<String, dynamic> _$$AcademicStateImplToJson(_$AcademicStateImpl instance) =>
       'advising_end_date': instance.advisingEndDate?.toIso8601String(),
       'classes_start_date': instance.classesStartDate?.toIso8601String(),
       'semester_switch_date': instance.semesterSwitchDate?.toIso8601String(),
-      'upcoming_classes_start_date': instance.upcomingClassesStartDate
-          ?.toIso8601String(),
+      'upcoming_classes_start_date':
+          instance.upcomingClassesStartDate?.toIso8601String(),
     };

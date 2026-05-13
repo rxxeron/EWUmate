@@ -15,23 +15,29 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
   
   try {
     final profile = await authRepo.getProfile(user.id).timeout(
-      const Duration(seconds: 10),
+      const Duration(seconds: 30),
       onTimeout: () => throw Exception("Connection timeout while fetching profile."),
     );
     
     if (profile == null) {
-      // PROVISIONAL SESSION:
-      // User is authenticated but profile record is pending (new registration).
-      // We allow the session to persist so they can complete onboarding.
       if (kDebugMode) print("DEBUG: Profile not found for ${user.id}. Onboarding required.");
       return null;
     }
 
-    // Fire-and-forget caching
+    // Update cache
     ref.read(cacheServiceProvider).cacheProfile(user.id, profile.toJson());
     return profile;
   } catch (e) {
-    if (kDebugMode) debugPrint("DEBUG: Profile fetch error: $e");
+    if (kDebugMode) debugPrint("DEBUG: Profile fetch error (trying cache): $e");
+    
+    // OFFLINE FALLBACK: Try to load from cache
+    final cachedData = ref.read(cacheServiceProvider).getCachedProfile(user.id);
+    if (cachedData != null) {
+      if (kDebugMode) debugPrint("DEBUG: Successfully loaded profile from cache for offline usage.");
+      return Profile.fromJson(cachedData);
+    }
+    
+    // If no cache and network fails, then we really have an error
     rethrow;
   }
 });
@@ -72,7 +78,8 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
         .eq('track', track)
         .limit(1)
         .maybeSingle()
-        .timeout(const Duration(seconds: 5));
+        .timeout(const Duration(seconds: 15))
+        .catchError((e) => null);
     
     if (activeSemRes == null) return false;
 
@@ -89,7 +96,8 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
         .neq('semester_code', activeCode) // Different from the current active one
         .isFilter('grade', null)
         .limit(1)
-        .timeout(const Duration(seconds: 5));
+        .timeout(const Duration(seconds: 15))
+        .catchError((e) => []);
 
     if (pastHangingRes.isNotEmpty) {
       return true;
@@ -109,7 +117,8 @@ final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
             .eq('semester_code', activeCode) // Specifically the current one
             .isFilter('grade', null)
             .limit(1)
-            .timeout(const Duration(seconds: 5));
+            .timeout(const Duration(seconds: 15))
+            .catchError((e) => []);
 
         return currentUnsubmittedRes.isNotEmpty;
       }

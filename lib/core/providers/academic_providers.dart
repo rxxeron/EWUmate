@@ -5,6 +5,7 @@ import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/active_semester_repository.dart';
 import 'package:ewumate/core/services/cache_service.dart';
 import 'package:ewumate/core/models/academic_state.dart';
+import 'package:ewumate/core/providers/supabase_provider.dart';
 
 final programDetailsProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, programCode) async {
   final repo = ref.watch(progressRepositoryProvider);
@@ -56,4 +57,24 @@ final currentSemesterCodeProvider = FutureProvider<String?>((ref) async {
 final nextSemesterCodeProvider = FutureProvider<String?>((ref) async {
   final state = await ref.watch(academicStateProvider.future);
   return state?.nextSemesterCode;
+});
+
+final semestersProvider = FutureProvider<List<dynamic>>((ref) async {
+  final repo = ref.watch(activeSemesterRepositoryProvider);
+  final data = await repo.getAllSemesters();
+  
+  // Use a Set to ensure unique titles
+  final titles = data.map((e) => e['title'].toString()).toSet().toList();
+  
+  return titles.map((t) => (title: t)).toList();
+});
+
+final facultySnapshotsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  final res = await supabase.from('app_config').select('value').eq('key', 'faculty_snapshots').single();
+  
+  if (res['value'] != null && res['value']['snapshots'] != null) {
+    return List<Map<String, dynamic>>.from(res['value']['snapshots']);
+  }
+  return [];
 });

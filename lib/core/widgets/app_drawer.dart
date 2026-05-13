@@ -119,7 +119,14 @@ class AppDrawer extends ConsumerWidget {
                   _buildDrawerItem(
                       context, Icons.next_plan_rounded, "Next Semester",
                       () => context.push('/next-semester'),
-                      color: Colors.cyanAccent),                    _buildDrawerItem(
+                      color: Colors.cyanAccent),                  _buildDrawerItem(
+                    context,
+                    Icons.apps_rounded,
+                    "App Services",
+                    () => context.push('/services'),
+                    color: Colors.amberAccent,
+                  ),
+                  _buildDrawerItem(
                         context, Icons.feedback_outlined, "Feedback & Support",
                         () => context.push('/feedback'),
                         color: Colors.lightGreenAccent),                  const Divider(color: Colors.white24),

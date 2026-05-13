@@ -12,8 +12,7 @@ part of 'schedule_exception.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 ScheduleException _$ScheduleExceptionFromJson(Map<String, dynamic> json) {
   return _ScheduleException.fromJson(json);
@@ -37,12 +36,8 @@ mixin _$ScheduleException {
   String? get room => throw _privateConstructorUsedError;
   Map<String, dynamic>? get metadata => throw _privateConstructorUsedError;
 
-  /// Serializes this ScheduleException to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of ScheduleException
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ScheduleExceptionCopyWith<ScheduleException> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -50,22 +45,20 @@ mixin _$ScheduleException {
 /// @nodoc
 abstract class $ScheduleExceptionCopyWith<$Res> {
   factory $ScheduleExceptionCopyWith(
-    ScheduleException value,
-    $Res Function(ScheduleException) then,
-  ) = _$ScheduleExceptionCopyWithImpl<$Res, ScheduleException>;
+          ScheduleException value, $Res Function(ScheduleException) then) =
+      _$ScheduleExceptionCopyWithImpl<$Res, ScheduleException>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String type,
-    DateTime date,
-    @JsonKey(name: 'course_code') String? courseCode,
-    @JsonKey(name: 'course_name') String? courseName,
-    @JsonKey(name: 'start_time') String? startTime,
-    @JsonKey(name: 'end_time') String? endTime,
-    String? room,
-    Map<String, dynamic>? metadata,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String type,
+      DateTime date,
+      @JsonKey(name: 'course_code') String? courseCode,
+      @JsonKey(name: 'course_name') String? courseName,
+      @JsonKey(name: 'start_time') String? startTime,
+      @JsonKey(name: 'end_time') String? endTime,
+      String? room,
+      Map<String, dynamic>? metadata});
 }
 
 /// @nodoc
@@ -78,8 +71,6 @@ class _$ScheduleExceptionCopyWithImpl<$Res, $Val extends ScheduleException>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ScheduleException
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -94,88 +85,80 @@ class _$ScheduleExceptionCopyWithImpl<$Res, $Val extends ScheduleException>
     Object? room = freezed,
     Object? metadata = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            date: null == date
-                ? _value.date
-                : date // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            courseCode: freezed == courseCode
-                ? _value.courseCode
-                : courseCode // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            courseName: freezed == courseName
-                ? _value.courseName
-                : courseName // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            startTime: freezed == startTime
-                ? _value.startTime
-                : startTime // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            endTime: freezed == endTime
-                ? _value.endTime
-                : endTime // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            room: freezed == room
-                ? _value.room
-                : room // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            metadata: freezed == metadata
-                ? _value.metadata
-                : metadata // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      date: null == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      courseCode: freezed == courseCode
+          ? _value.courseCode
+          : courseCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      courseName: freezed == courseName
+          ? _value.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      startTime: freezed == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      endTime: freezed == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      room: freezed == room
+          ? _value.room
+          : room // ignore: cast_nullable_to_non_nullable
+              as String?,
+      metadata: freezed == metadata
+          ? _value.metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$ScheduleExceptionImplCopyWith<$Res>
     implements $ScheduleExceptionCopyWith<$Res> {
-  factory _$$ScheduleExceptionImplCopyWith(
-    _$ScheduleExceptionImpl value,
-    $Res Function(_$ScheduleExceptionImpl) then,
-  ) = __$$ScheduleExceptionImplCopyWithImpl<$Res>;
+  factory _$$ScheduleExceptionImplCopyWith(_$ScheduleExceptionImpl value,
+          $Res Function(_$ScheduleExceptionImpl) then) =
+      __$$ScheduleExceptionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String type,
-    DateTime date,
-    @JsonKey(name: 'course_code') String? courseCode,
-    @JsonKey(name: 'course_name') String? courseName,
-    @JsonKey(name: 'start_time') String? startTime,
-    @JsonKey(name: 'end_time') String? endTime,
-    String? room,
-    Map<String, dynamic>? metadata,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String type,
+      DateTime date,
+      @JsonKey(name: 'course_code') String? courseCode,
+      @JsonKey(name: 'course_name') String? courseName,
+      @JsonKey(name: 'start_time') String? startTime,
+      @JsonKey(name: 'end_time') String? endTime,
+      String? room,
+      Map<String, dynamic>? metadata});
 }
 
 /// @nodoc
 class __$$ScheduleExceptionImplCopyWithImpl<$Res>
     extends _$ScheduleExceptionCopyWithImpl<$Res, _$ScheduleExceptionImpl>
     implements _$$ScheduleExceptionImplCopyWith<$Res> {
-  __$$ScheduleExceptionImplCopyWithImpl(
-    _$ScheduleExceptionImpl _value,
-    $Res Function(_$ScheduleExceptionImpl) _then,
-  ) : super(_value, _then);
+  __$$ScheduleExceptionImplCopyWithImpl(_$ScheduleExceptionImpl _value,
+      $Res Function(_$ScheduleExceptionImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of ScheduleException
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -190,68 +173,66 @@ class __$$ScheduleExceptionImplCopyWithImpl<$Res>
     Object? room = freezed,
     Object? metadata = freezed,
   }) {
-    return _then(
-      _$ScheduleExceptionImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as String,
-        date: null == date
-            ? _value.date
-            : date // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        courseCode: freezed == courseCode
-            ? _value.courseCode
-            : courseCode // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        courseName: freezed == courseName
-            ? _value.courseName
-            : courseName // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        startTime: freezed == startTime
-            ? _value.startTime
-            : startTime // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        endTime: freezed == endTime
-            ? _value.endTime
-            : endTime // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        room: freezed == room
-            ? _value.room
-            : room // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        metadata: freezed == metadata
-            ? _value._metadata
-            : metadata // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>?,
-      ),
-    );
+    return _then(_$ScheduleExceptionImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      date: null == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      courseCode: freezed == courseCode
+          ? _value.courseCode
+          : courseCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      courseName: freezed == courseName
+          ? _value.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      startTime: freezed == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      endTime: freezed == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+      room: freezed == room
+          ? _value.room
+          : room // ignore: cast_nullable_to_non_nullable
+              as String?,
+      metadata: freezed == metadata
+          ? _value._metadata
+          : metadata // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ScheduleExceptionImpl implements _ScheduleException {
-  const _$ScheduleExceptionImpl({
-    required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
-    required this.type,
-    required this.date,
-    @JsonKey(name: 'course_code') this.courseCode,
-    @JsonKey(name: 'course_name') this.courseName,
-    @JsonKey(name: 'start_time') this.startTime,
-    @JsonKey(name: 'end_time') this.endTime,
-    this.room,
-    final Map<String, dynamic>? metadata,
-  }) : _metadata = metadata;
+  const _$ScheduleExceptionImpl(
+      {required this.id,
+      @JsonKey(name: 'user_id') required this.userId,
+      required this.type,
+      required this.date,
+      @JsonKey(name: 'course_code') this.courseCode,
+      @JsonKey(name: 'course_name') this.courseName,
+      @JsonKey(name: 'start_time') this.startTime,
+      @JsonKey(name: 'end_time') this.endTime,
+      this.room,
+      final Map<String, dynamic>? metadata})
+      : _metadata = metadata;
 
   factory _$ScheduleExceptionImpl.fromJson(Map<String, dynamic> json) =>
       _$$ScheduleExceptionImplFromJson(json);
@@ -314,52 +295,48 @@ class _$ScheduleExceptionImpl implements _ScheduleException {
             const DeepCollectionEquality().equals(other._metadata, _metadata));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    type,
-    date,
-    courseCode,
-    courseName,
-    startTime,
-    endTime,
-    room,
-    const DeepCollectionEquality().hash(_metadata),
-  );
+      runtimeType,
+      id,
+      userId,
+      type,
+      date,
+      courseCode,
+      courseName,
+      startTime,
+      endTime,
+      room,
+      const DeepCollectionEquality().hash(_metadata));
 
-  /// Create a copy of ScheduleException
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ScheduleExceptionImplCopyWith<_$ScheduleExceptionImpl> get copyWith =>
       __$$ScheduleExceptionImplCopyWithImpl<_$ScheduleExceptionImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ScheduleExceptionImplToJson(this);
+    return _$$ScheduleExceptionImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _ScheduleException implements ScheduleException {
-  const factory _ScheduleException({
-    required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
-    required final String type,
-    required final DateTime date,
-    @JsonKey(name: 'course_code') final String? courseCode,
-    @JsonKey(name: 'course_name') final String? courseName,
-    @JsonKey(name: 'start_time') final String? startTime,
-    @JsonKey(name: 'end_time') final String? endTime,
-    final String? room,
-    final Map<String, dynamic>? metadata,
-  }) = _$ScheduleExceptionImpl;
+  const factory _ScheduleException(
+      {required final String id,
+      @JsonKey(name: 'user_id') required final String userId,
+      required final String type,
+      required final DateTime date,
+      @JsonKey(name: 'course_code') final String? courseCode,
+      @JsonKey(name: 'course_name') final String? courseName,
+      @JsonKey(name: 'start_time') final String? startTime,
+      @JsonKey(name: 'end_time') final String? endTime,
+      final String? room,
+      final Map<String, dynamic>? metadata}) = _$ScheduleExceptionImpl;
 
   factory _ScheduleException.fromJson(Map<String, dynamic> json) =
       _$ScheduleExceptionImpl.fromJson;
@@ -389,11 +366,8 @@ abstract class _ScheduleException implements ScheduleException {
   String? get room;
   @override
   Map<String, dynamic>? get metadata;
-
-  /// Create a copy of ScheduleException
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ScheduleExceptionImplCopyWith<_$ScheduleExceptionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

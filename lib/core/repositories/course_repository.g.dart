@@ -20,8 +20,6 @@ final courseRepositoryProvider = AutoDisposeProvider<CourseRepository>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef CourseRepositoryRef = AutoDisposeProviderRef<CourseRepository>;
 String _$allCoursesHash() => r'4c14015d3bce64dad346645c24c4315f1478e7ed';
 
@@ -29,17 +27,14 @@ String _$allCoursesHash() => r'4c14015d3bce64dad346645c24c4315f1478e7ed';
 @ProviderFor(allCourses)
 final allCoursesProvider =
     AutoDisposeFutureProvider<List<CourseMetadata>>.internal(
-      allCourses,
-      name: r'allCoursesProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$allCoursesHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  allCourses,
+  name: r'allCoursesProvider',
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$allCoursesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef AllCoursesRef = AutoDisposeFutureProviderRef<List<CourseMetadata>>;
 String _$semesterCoursesHash() => r'448914ab02c395ee60f307d51c85b9b10b9990d2';
 
@@ -74,15 +69,21 @@ class SemesterCoursesFamily extends Family<AsyncValue<List<CourseMetadata>>> {
   const SemesterCoursesFamily();
 
   /// See also [semesterCourses].
-  SemesterCoursesProvider call(String semesterCode) {
-    return SemesterCoursesProvider(semesterCode);
+  SemesterCoursesProvider call(
+    String semesterCode,
+  ) {
+    return SemesterCoursesProvider(
+      semesterCode,
+    );
   }
 
   @override
   SemesterCoursesProvider getProviderOverride(
     covariant SemesterCoursesProvider provider,
   ) {
-    return call(provider.semesterCode);
+    return call(
+      provider.semesterCode,
+    );
   }
 
   static const Iterable<ProviderOrFamily>? _dependencies = null;
@@ -104,19 +105,24 @@ class SemesterCoursesFamily extends Family<AsyncValue<List<CourseMetadata>>> {
 class SemesterCoursesProvider
     extends AutoDisposeFutureProvider<List<CourseMetadata>> {
   /// See also [semesterCourses].
-  SemesterCoursesProvider(String semesterCode)
-    : this._internal(
-        (ref) => semesterCourses(ref as SemesterCoursesRef, semesterCode),
-        from: semesterCoursesProvider,
-        name: r'semesterCoursesProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$semesterCoursesHash,
-        dependencies: SemesterCoursesFamily._dependencies,
-        allTransitiveDependencies:
-            SemesterCoursesFamily._allTransitiveDependencies,
-        semesterCode: semesterCode,
-      );
+  SemesterCoursesProvider(
+    String semesterCode,
+  ) : this._internal(
+          (ref) => semesterCourses(
+            ref as SemesterCoursesRef,
+            semesterCode,
+          ),
+          from: semesterCoursesProvider,
+          name: r'semesterCoursesProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$semesterCoursesHash,
+          dependencies: SemesterCoursesFamily._dependencies,
+          allTransitiveDependencies:
+              SemesterCoursesFamily._allTransitiveDependencies,
+          semesterCode: semesterCode,
+        );
 
   SemesterCoursesProvider._internal(
     super._createNotifier, {
@@ -168,8 +174,6 @@ class SemesterCoursesProvider
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 mixin SemesterCoursesRef on AutoDisposeFutureProviderRef<List<CourseMetadata>> {
   /// The parameter `semesterCode` of this provider.
   String get semesterCode;
@@ -239,22 +243,23 @@ class CourseSectionsProvider
     required String semesterCode,
     required String courseCode,
   }) : this._internal(
-         (ref) => courseSections(
-           ref as CourseSectionsRef,
-           semesterCode: semesterCode,
-           courseCode: courseCode,
-         ),
-         from: courseSectionsProvider,
-         name: r'courseSectionsProvider',
-         debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-             ? null
-             : _$courseSectionsHash,
-         dependencies: CourseSectionsFamily._dependencies,
-         allTransitiveDependencies:
-             CourseSectionsFamily._allTransitiveDependencies,
-         semesterCode: semesterCode,
-         courseCode: courseCode,
-       );
+          (ref) => courseSections(
+            ref as CourseSectionsRef,
+            semesterCode: semesterCode,
+            courseCode: courseCode,
+          ),
+          from: courseSectionsProvider,
+          name: r'courseSectionsProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$courseSectionsHash,
+          dependencies: CourseSectionsFamily._dependencies,
+          allTransitiveDependencies:
+              CourseSectionsFamily._allTransitiveDependencies,
+          semesterCode: semesterCode,
+          courseCode: courseCode,
+        );
 
   CourseSectionsProvider._internal(
     super._createNotifier, {
@@ -311,8 +316,6 @@ class CourseSectionsProvider
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 mixin CourseSectionsRef on AutoDisposeFutureProviderRef<List<CourseSection>> {
   /// The parameter `semesterCode` of this provider.
   String get semesterCode;
@@ -331,6 +334,5 @@ class _CourseSectionsProviderElement
   @override
   String get courseCode => (origin as CourseSectionsProvider).courseCode;
 }
-
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

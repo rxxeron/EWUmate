@@ -25,6 +25,9 @@ class MainLayoutScreen extends StatelessWidget {
             case 3:
               context.go('/tasks');
               break;
+            case 4:
+              context.go('/services');
+              break;
           }
         },
         selectedIndex: _calculateSelectedIndex(context),
@@ -49,6 +52,11 @@ class MainLayoutScreen extends StatelessWidget {
             selectedIcon: Icon(Icons.assignment),
             label: 'Tasks',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.apps_outlined),
+            selectedIcon: Icon(Icons.apps),
+            label: 'Services',
+          ),
         ],
       ),
     );
@@ -60,6 +68,7 @@ class MainLayoutScreen extends StatelessWidget {
     if (location.startsWith('/schedule')) return 1;
     if (location.startsWith('/progress')) return 2;
     if (location.startsWith('/tasks')) return 3;
+    if (location.startsWith('/services')) return 4;
     return 0;
   }
 }

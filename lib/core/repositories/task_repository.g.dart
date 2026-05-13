@@ -20,8 +20,6 @@ final taskRepositoryProvider = AutoDisposeProvider<TaskRepository>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef TaskRepositoryRef = AutoDisposeProviderRef<TaskRepository>;
 String _$activeTasksConfigHash() => r'2691d365e902c1ccf70840da36096b720fb621f3';
 
@@ -29,17 +27,15 @@ String _$activeTasksConfigHash() => r'2691d365e902c1ccf70840da36096b720fb621f3';
 @ProviderFor(activeTasksConfig)
 final activeTasksConfigProvider =
     AutoDisposeFutureProvider<List<Task>>.internal(
-      activeTasksConfig,
-      name: r'activeTasksConfigProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$activeTasksConfigHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  activeTasksConfig,
+  name: r'activeTasksConfigProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$activeTasksConfigHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef ActiveTasksConfigRef = AutoDisposeFutureProviderRef<List<Task>>;
 String _$allTasksStreamHash() => r'2445cae547f84d657cbe3950404a5fe071939f4f';
 
@@ -55,8 +51,6 @@ final allTasksStreamProvider = StreamProvider<List<Task>>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef AllTasksStreamRef = StreamProviderRef<List<Task>>;
 String _$userNotificationsHash() => r'0f5ac00b5c87baf692fe07e205028909638195ec';
 
@@ -72,8 +66,6 @@ final userNotificationsProvider = StreamProvider<List<Notification>>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef UserNotificationsRef = StreamProviderRef<List<Notification>>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

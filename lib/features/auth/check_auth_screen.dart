@@ -25,9 +25,9 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
 
   void _startStallTimer() {
     _stallTimer?.cancel();
-    _stallTimer = Timer(const Duration(seconds: 12), () {
+    _stallTimer = Timer(const Duration(seconds: 30), () {
       if (mounted) {
-        debugPrint("[CheckAuth] STALL DETECTED: Screen stuck for 12s. Forcing logout.");
+        debugPrint("[CheckAuth] STALL DETECTED: Screen stuck for 30s. Forcing logout.");
         ref.read(authRepositoryProvider).signOut();
         if (context.mounted) context.go('/login');
       }
@@ -52,14 +52,30 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
             child: authState.when(
               data: (state) {
                 final syncUser = Supabase.instance.client.auth.currentUser;
-                if (state.event == AuthChangeEvent.signedOut ||
-                    (state.session == null && syncUser == null)) {
-                  _stallTimer?.cancel(); // Success: moved to login
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    context.go('/login');
-                  });
+                
+                // If it's an explicit sign-out event, go to login immediately.
+                if (state.event == AuthChangeEvent.signedOut) {
+                  _stallTimer?.cancel();
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
                   return const CircularProgressBinding();
                 }
+
+                // If no session exists:
+                if (state.session == null && syncUser == null) {
+                  // If it's the initial event, don't redirect yet! 
+                  // Supabase might be refreshing the session in the background.
+                  // We wait for the stall timer to handle it if no session appears.
+                  if (state.event == AuthChangeEvent.initialSession) {
+                    return const CircularProgressBinding(text: 'Securing session...');
+                  }
+                  
+                  // Otherwise, if we're not signed in, go to login.
+                  _stallTimer?.cancel();
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
+                  return const CircularProgressBinding();
+                }
+
+                // Valid session exists, proceed.
                 return const _ProfileCheckWrapper();
               },
               error: (err, stack) {
@@ -110,10 +126,8 @@ class _ProfileCheckWrapper extends ConsumerWidget {
       },
       error: (err, stack) {
         if (err.toString().contains("timeout") || err.toString().contains("Profile not found")) {
-           WidgetsBinding.instance.addPostFrameCallback((_) {
-              ref.read(authRepositoryProvider).signOut();
-              context.go('/login');
-           });
+           // We NO LONGER force sign-out on timeout. 
+           // This prevents users from being logged out due to poor network.
         }
         return _ErrorView(
           message: 'Could not fetch profile: $err',

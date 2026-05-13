@@ -12,8 +12,7 @@ part of 'course_metadata.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 CourseMetadata _$CourseMetadataFromJson(Map<String, dynamic> json) {
   return _CourseMetadata.fromJson(json);
@@ -26,12 +25,8 @@ mixin _$CourseMetadata {
   @JsonKey(name: 'credit_val')
   double get creditVal => throw _privateConstructorUsedError;
 
-  /// Serializes this CourseMetadata to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CourseMetadata
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CourseMetadataCopyWith<CourseMetadata> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -39,15 +34,13 @@ mixin _$CourseMetadata {
 /// @nodoc
 abstract class $CourseMetadataCopyWith<$Res> {
   factory $CourseMetadataCopyWith(
-    CourseMetadata value,
-    $Res Function(CourseMetadata) then,
-  ) = _$CourseMetadataCopyWithImpl<$Res, CourseMetadata>;
+          CourseMetadata value, $Res Function(CourseMetadata) then) =
+      _$CourseMetadataCopyWithImpl<$Res, CourseMetadata>;
   @useResult
-  $Res call({
-    String code,
-    String name,
-    @JsonKey(name: 'credit_val') double creditVal,
-  });
+  $Res call(
+      {String code,
+      String name,
+      @JsonKey(name: 'credit_val') double creditVal});
 }
 
 /// @nodoc
@@ -60,8 +53,6 @@ class _$CourseMetadataCopyWithImpl<$Res, $Val extends CourseMetadata>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CourseMetadata
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -69,40 +60,35 @@ class _$CourseMetadataCopyWithImpl<$Res, $Val extends CourseMetadata>
     Object? name = null,
     Object? creditVal = null,
   }) {
-    return _then(
-      _value.copyWith(
-            code: null == code
-                ? _value.code
-                : code // ignore: cast_nullable_to_non_nullable
-                      as String,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            creditVal: null == creditVal
-                ? _value.creditVal
-                : creditVal // ignore: cast_nullable_to_non_nullable
-                      as double,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      creditVal: null == creditVal
+          ? _value.creditVal
+          : creditVal // ignore: cast_nullable_to_non_nullable
+              as double,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$CourseMetadataImplCopyWith<$Res>
     implements $CourseMetadataCopyWith<$Res> {
-  factory _$$CourseMetadataImplCopyWith(
-    _$CourseMetadataImpl value,
-    $Res Function(_$CourseMetadataImpl) then,
-  ) = __$$CourseMetadataImplCopyWithImpl<$Res>;
+  factory _$$CourseMetadataImplCopyWith(_$CourseMetadataImpl value,
+          $Res Function(_$CourseMetadataImpl) then) =
+      __$$CourseMetadataImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String code,
-    String name,
-    @JsonKey(name: 'credit_val') double creditVal,
-  });
+  $Res call(
+      {String code,
+      String name,
+      @JsonKey(name: 'credit_val') double creditVal});
 }
 
 /// @nodoc
@@ -110,12 +96,9 @@ class __$$CourseMetadataImplCopyWithImpl<$Res>
     extends _$CourseMetadataCopyWithImpl<$Res, _$CourseMetadataImpl>
     implements _$$CourseMetadataImplCopyWith<$Res> {
   __$$CourseMetadataImplCopyWithImpl(
-    _$CourseMetadataImpl _value,
-    $Res Function(_$CourseMetadataImpl) _then,
-  ) : super(_value, _then);
+      _$CourseMetadataImpl _value, $Res Function(_$CourseMetadataImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of CourseMetadata
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -123,33 +106,30 @@ class __$$CourseMetadataImplCopyWithImpl<$Res>
     Object? name = null,
     Object? creditVal = null,
   }) {
-    return _then(
-      _$CourseMetadataImpl(
-        code: null == code
-            ? _value.code
-            : code // ignore: cast_nullable_to_non_nullable
-                  as String,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        creditVal: null == creditVal
-            ? _value.creditVal
-            : creditVal // ignore: cast_nullable_to_non_nullable
-                  as double,
-      ),
-    );
+    return _then(_$CourseMetadataImpl(
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      creditVal: null == creditVal
+          ? _value.creditVal
+          : creditVal // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CourseMetadataImpl implements _CourseMetadata {
-  const _$CourseMetadataImpl({
-    required this.code,
-    required this.name,
-    @JsonKey(name: 'credit_val') required this.creditVal,
-  });
+  const _$CourseMetadataImpl(
+      {required this.code,
+      required this.name,
+      @JsonKey(name: 'credit_val') required this.creditVal});
 
   factory _$CourseMetadataImpl.fromJson(Map<String, dynamic> json) =>
       _$$CourseMetadataImplFromJson(json);
@@ -178,33 +158,31 @@ class _$CourseMetadataImpl implements _CourseMetadata {
                 other.creditVal == creditVal));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(runtimeType, code, name, creditVal);
 
-  /// Create a copy of CourseMetadata
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CourseMetadataImplCopyWith<_$CourseMetadataImpl> get copyWith =>
       __$$CourseMetadataImplCopyWithImpl<_$CourseMetadataImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CourseMetadataImplToJson(this);
+    return _$$CourseMetadataImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _CourseMetadata implements CourseMetadata {
-  const factory _CourseMetadata({
-    required final String code,
-    required final String name,
-    @JsonKey(name: 'credit_val') required final double creditVal,
-  }) = _$CourseMetadataImpl;
+  const factory _CourseMetadata(
+          {required final String code,
+          required final String name,
+          @JsonKey(name: 'credit_val') required final double creditVal}) =
+      _$CourseMetadataImpl;
 
   factory _CourseMetadata.fromJson(Map<String, dynamic> json) =
       _$CourseMetadataImpl.fromJson;
@@ -216,11 +194,8 @@ abstract class _CourseMetadata implements CourseMetadata {
   @override
   @JsonKey(name: 'credit_val')
   double get creditVal;
-
-  /// Create a copy of CourseMetadata
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CourseMetadataImplCopyWith<_$CourseMetadataImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

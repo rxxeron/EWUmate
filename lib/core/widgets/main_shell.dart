@@ -134,6 +134,9 @@ class _MainShellState extends ConsumerState<MainShell> {
       case 2:
         context.go('/semester-progress');
         break;
+      case 3:
+        context.go('/services');
+        break;
     }
   }
 }

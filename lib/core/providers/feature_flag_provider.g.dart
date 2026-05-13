@@ -20,8 +20,6 @@ final isAdvisingOpenProvider = AutoDisposeFutureProvider<bool>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef IsAdvisingOpenRef = AutoDisposeFutureProviderRef<bool>;
 String _$isNextSemesterOpenHash() =>
     r'da4f022d2862ace519fa5ceb7ca082daf064085a';
@@ -38,8 +36,6 @@ final isNextSemesterOpenProvider = AutoDisposeFutureProvider<bool>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef IsNextSemesterOpenRef = AutoDisposeFutureProviderRef<bool>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

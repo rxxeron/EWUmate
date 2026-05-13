@@ -1,0 +1,89 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+class ServicesScreen extends StatelessWidget {
+  const ServicesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Services'),
+        centerTitle: false,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Academic Utilities',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  _buildServiceCard(
+                    context,
+                    title: 'Cover Page Generator',
+                    icon: Icons.picture_as_pdf_outlined,
+                    color: Colors.blue.shade100,
+                    iconColor: Colors.blue.shade700,
+                    onTap: () {
+                      context.push('/services/cover-page');
+                    },
+                  ),
+                  _buildServiceCard(
+                    context,
+                    title: 'Faculty List',
+                    icon: Icons.people_outline,
+                    color: Colors.green.shade100,
+                    iconColor: Colors.green.shade700,
+                    onTap: () {
+                      context.push('/services/faculty-list');
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceCard(BuildContext context, {required String title, required IconData icon, required Color color, required Color iconColor, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: iconColor),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: iconColor.withOpacity(0.9),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

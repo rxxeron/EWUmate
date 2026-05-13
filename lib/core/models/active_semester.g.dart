@@ -47,22 +47,23 @@ _$ActiveSemesterImpl _$$ActiveSemesterImplFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$$ActiveSemesterImplToJson(
-  _$ActiveSemesterImpl instance,
-) => <String, dynamic>{
-  'track': instance.track,
-  'current_semester_code': instance.currentSemesterCode,
-  'next_semester_code': instance.nextSemesterCode,
-  'classes_start_date': instance.classesStartDate?.toIso8601String(),
-  'classes_end_date': instance.classesEndDate?.toIso8601String(),
-  'advising_start_date': instance.advisingStartDate?.toIso8601String(),
-  'advising_end_date': instance.advisingEndDate?.toIso8601String(),
-  'final_exam_start': instance.finalExamStart?.toIso8601String(),
-  'final_exam_end': instance.finalExamEnd?.toIso8601String(),
-  'grade_submission_start': instance.gradeSubmissionStart?.toIso8601String(),
-  'grade_submission_deadline': instance.gradeSubmissionDeadline
-      ?.toIso8601String(),
-  'semester_switch_date': instance.semesterSwitchDate?.toIso8601String(),
-  'upcoming_classes_start_date': instance.upcomingClassesStartDate
-      ?.toIso8601String(),
-  'updated_at': instance.updatedAt?.toIso8601String(),
-};
+        _$ActiveSemesterImpl instance) =>
+    <String, dynamic>{
+      'track': instance.track,
+      'current_semester_code': instance.currentSemesterCode,
+      'next_semester_code': instance.nextSemesterCode,
+      'classes_start_date': instance.classesStartDate?.toIso8601String(),
+      'classes_end_date': instance.classesEndDate?.toIso8601String(),
+      'advising_start_date': instance.advisingStartDate?.toIso8601String(),
+      'advising_end_date': instance.advisingEndDate?.toIso8601String(),
+      'final_exam_start': instance.finalExamStart?.toIso8601String(),
+      'final_exam_end': instance.finalExamEnd?.toIso8601String(),
+      'grade_submission_start':
+          instance.gradeSubmissionStart?.toIso8601String(),
+      'grade_submission_deadline':
+          instance.gradeSubmissionDeadline?.toIso8601String(),
+      'semester_switch_date': instance.semesterSwitchDate?.toIso8601String(),
+      'upcoming_classes_start_date':
+          instance.upcomingClassesStartDate?.toIso8601String(),
+      'updated_at': instance.updatedAt?.toIso8601String(),
+    };

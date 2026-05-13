@@ -12,8 +12,7 @@ part of 'course_section.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 CourseSession _$CourseSessionFromJson(Map<String, dynamic> json) {
   return _CourseSession.fromJson(json);
@@ -30,12 +29,8 @@ mixin _$CourseSession {
   String get room => throw _privateConstructorUsedError;
   String get faculty => throw _privateConstructorUsedError;
 
-  /// Serializes this CourseSession to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CourseSession
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CourseSessionCopyWith<CourseSession> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -43,18 +38,16 @@ mixin _$CourseSession {
 /// @nodoc
 abstract class $CourseSessionCopyWith<$Res> {
   factory $CourseSessionCopyWith(
-    CourseSession value,
-    $Res Function(CourseSession) then,
-  ) = _$CourseSessionCopyWithImpl<$Res, CourseSession>;
+          CourseSession value, $Res Function(CourseSession) then) =
+      _$CourseSessionCopyWithImpl<$Res, CourseSession>;
   @useResult
-  $Res call({
-    String type,
-    String day,
-    @JsonKey(name: 'start_time') String startTime,
-    @JsonKey(name: 'end_time') String endTime,
-    String room,
-    String faculty,
-  });
+  $Res call(
+      {String type,
+      String day,
+      @JsonKey(name: 'start_time') String startTime,
+      @JsonKey(name: 'end_time') String endTime,
+      String room,
+      String faculty});
 }
 
 /// @nodoc
@@ -67,8 +60,6 @@ class _$CourseSessionCopyWithImpl<$Res, $Val extends CourseSession>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CourseSession
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,35 +70,32 @@ class _$CourseSessionCopyWithImpl<$Res, $Val extends CourseSession>
     Object? room = null,
     Object? faculty = null,
   }) {
-    return _then(
-      _value.copyWith(
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            day: null == day
-                ? _value.day
-                : day // ignore: cast_nullable_to_non_nullable
-                      as String,
-            startTime: null == startTime
-                ? _value.startTime
-                : startTime // ignore: cast_nullable_to_non_nullable
-                      as String,
-            endTime: null == endTime
-                ? _value.endTime
-                : endTime // ignore: cast_nullable_to_non_nullable
-                      as String,
-            room: null == room
-                ? _value.room
-                : room // ignore: cast_nullable_to_non_nullable
-                      as String,
-            faculty: null == faculty
-                ? _value.faculty
-                : faculty // ignore: cast_nullable_to_non_nullable
-                      as String,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      day: null == day
+          ? _value.day
+          : day // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      room: null == room
+          ? _value.room
+          : room // ignore: cast_nullable_to_non_nullable
+              as String,
+      faculty: null == faculty
+          ? _value.faculty
+          : faculty // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
   }
 }
 
@@ -115,19 +103,17 @@ class _$CourseSessionCopyWithImpl<$Res, $Val extends CourseSession>
 abstract class _$$CourseSessionImplCopyWith<$Res>
     implements $CourseSessionCopyWith<$Res> {
   factory _$$CourseSessionImplCopyWith(
-    _$CourseSessionImpl value,
-    $Res Function(_$CourseSessionImpl) then,
-  ) = __$$CourseSessionImplCopyWithImpl<$Res>;
+          _$CourseSessionImpl value, $Res Function(_$CourseSessionImpl) then) =
+      __$$CourseSessionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String type,
-    String day,
-    @JsonKey(name: 'start_time') String startTime,
-    @JsonKey(name: 'end_time') String endTime,
-    String room,
-    String faculty,
-  });
+  $Res call(
+      {String type,
+      String day,
+      @JsonKey(name: 'start_time') String startTime,
+      @JsonKey(name: 'end_time') String endTime,
+      String room,
+      String faculty});
 }
 
 /// @nodoc
@@ -135,12 +121,9 @@ class __$$CourseSessionImplCopyWithImpl<$Res>
     extends _$CourseSessionCopyWithImpl<$Res, _$CourseSessionImpl>
     implements _$$CourseSessionImplCopyWith<$Res> {
   __$$CourseSessionImplCopyWithImpl(
-    _$CourseSessionImpl _value,
-    $Res Function(_$CourseSessionImpl) _then,
-  ) : super(_value, _then);
+      _$CourseSessionImpl _value, $Res Function(_$CourseSessionImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of CourseSession
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -151,48 +134,45 @@ class __$$CourseSessionImplCopyWithImpl<$Res>
     Object? room = null,
     Object? faculty = null,
   }) {
-    return _then(
-      _$CourseSessionImpl(
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as String,
-        day: null == day
-            ? _value.day
-            : day // ignore: cast_nullable_to_non_nullable
-                  as String,
-        startTime: null == startTime
-            ? _value.startTime
-            : startTime // ignore: cast_nullable_to_non_nullable
-                  as String,
-        endTime: null == endTime
-            ? _value.endTime
-            : endTime // ignore: cast_nullable_to_non_nullable
-                  as String,
-        room: null == room
-            ? _value.room
-            : room // ignore: cast_nullable_to_non_nullable
-                  as String,
-        faculty: null == faculty
-            ? _value.faculty
-            : faculty // ignore: cast_nullable_to_non_nullable
-                  as String,
-      ),
-    );
+    return _then(_$CourseSessionImpl(
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      day: null == day
+          ? _value.day
+          : day // ignore: cast_nullable_to_non_nullable
+              as String,
+      startTime: null == startTime
+          ? _value.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      endTime: null == endTime
+          ? _value.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
+              as String,
+      room: null == room
+          ? _value.room
+          : room // ignore: cast_nullable_to_non_nullable
+              as String,
+      faculty: null == faculty
+          ? _value.faculty
+          : faculty // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CourseSessionImpl implements _CourseSession {
-  const _$CourseSessionImpl({
-    this.type = 'Theory',
-    this.day = '',
-    @JsonKey(name: 'start_time') this.startTime = '',
-    @JsonKey(name: 'end_time') this.endTime = '',
-    this.room = '',
-    this.faculty = '',
-  });
+  const _$CourseSessionImpl(
+      {this.type = 'Theory',
+      this.day = '',
+      @JsonKey(name: 'start_time') this.startTime = '',
+      @JsonKey(name: 'end_time') this.endTime = '',
+      this.room = '',
+      this.faculty = ''});
 
   factory _$CourseSessionImpl.fromJson(Map<String, dynamic> json) =>
       _$$CourseSessionImplFromJson(json);
@@ -235,14 +215,12 @@ class _$CourseSessionImpl implements _CourseSession {
             (identical(other.faculty, faculty) || other.faculty == faculty));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, type, day, startTime, endTime, room, faculty);
 
-  /// Create a copy of CourseSession
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CourseSessionImplCopyWith<_$CourseSessionImpl> get copyWith =>
@@ -250,19 +228,20 @@ class _$CourseSessionImpl implements _CourseSession {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CourseSessionImplToJson(this);
+    return _$$CourseSessionImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _CourseSession implements CourseSession {
-  const factory _CourseSession({
-    final String type,
-    final String day,
-    @JsonKey(name: 'start_time') final String startTime,
-    @JsonKey(name: 'end_time') final String endTime,
-    final String room,
-    final String faculty,
-  }) = _$CourseSessionImpl;
+  const factory _CourseSession(
+      {final String type,
+      final String day,
+      @JsonKey(name: 'start_time') final String startTime,
+      @JsonKey(name: 'end_time') final String endTime,
+      final String room,
+      final String faculty}) = _$CourseSessionImpl;
 
   factory _CourseSession.fromJson(Map<String, dynamic> json) =
       _$CourseSessionImpl.fromJson;
@@ -281,11 +260,8 @@ abstract class _CourseSession implements CourseSession {
   String get room;
   @override
   String get faculty;
-
-  /// Create a copy of CourseSession
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CourseSessionImplCopyWith<_$CourseSessionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -310,12 +286,8 @@ mixin _$CourseSection {
   @JsonKey(name: 'doc_id')
   String get docId => throw _privateConstructorUsedError;
 
-  /// Serializes this CourseSection to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CourseSection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CourseSectionCopyWith<CourseSection> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -323,22 +295,20 @@ mixin _$CourseSection {
 /// @nodoc
 abstract class $CourseSectionCopyWith<$Res> {
   factory $CourseSectionCopyWith(
-    CourseSection value,
-    $Res Function(CourseSection) then,
-  ) = _$CourseSectionCopyWithImpl<$Res, CourseSection>;
+          CourseSection value, $Res Function(CourseSection) then) =
+      _$CourseSectionCopyWithImpl<$Res, CourseSection>;
   @useResult
-  $Res call({
-    String id,
-    String code,
-    @JsonKey(name: 'course_name') String courseName,
-    @JsonKey(name: 'faculty_initials') String facultyInitials,
-    String section,
-    String capacity,
-    String credits,
-    String semester,
-    List<CourseSession> sessions,
-    @JsonKey(name: 'doc_id') String docId,
-  });
+  $Res call(
+      {String id,
+      String code,
+      @JsonKey(name: 'course_name') String courseName,
+      @JsonKey(name: 'faculty_initials') String facultyInitials,
+      String section,
+      String capacity,
+      String credits,
+      String semester,
+      List<CourseSession> sessions,
+      @JsonKey(name: 'doc_id') String docId});
 }
 
 /// @nodoc
@@ -351,8 +321,6 @@ class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CourseSection
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -367,51 +335,48 @@ class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
     Object? sessions = null,
     Object? docId = null,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            code: null == code
-                ? _value.code
-                : code // ignore: cast_nullable_to_non_nullable
-                      as String,
-            courseName: null == courseName
-                ? _value.courseName
-                : courseName // ignore: cast_nullable_to_non_nullable
-                      as String,
-            facultyInitials: null == facultyInitials
-                ? _value.facultyInitials
-                : facultyInitials // ignore: cast_nullable_to_non_nullable
-                      as String,
-            section: null == section
-                ? _value.section
-                : section // ignore: cast_nullable_to_non_nullable
-                      as String,
-            capacity: null == capacity
-                ? _value.capacity
-                : capacity // ignore: cast_nullable_to_non_nullable
-                      as String,
-            credits: null == credits
-                ? _value.credits
-                : credits // ignore: cast_nullable_to_non_nullable
-                      as String,
-            semester: null == semester
-                ? _value.semester
-                : semester // ignore: cast_nullable_to_non_nullable
-                      as String,
-            sessions: null == sessions
-                ? _value.sessions
-                : sessions // ignore: cast_nullable_to_non_nullable
-                      as List<CourseSession>,
-            docId: null == docId
-                ? _value.docId
-                : docId // ignore: cast_nullable_to_non_nullable
-                      as String,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseName: null == courseName
+          ? _value.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String,
+      facultyInitials: null == facultyInitials
+          ? _value.facultyInitials
+          : facultyInitials // ignore: cast_nullable_to_non_nullable
+              as String,
+      section: null == section
+          ? _value.section
+          : section // ignore: cast_nullable_to_non_nullable
+              as String,
+      capacity: null == capacity
+          ? _value.capacity
+          : capacity // ignore: cast_nullable_to_non_nullable
+              as String,
+      credits: null == credits
+          ? _value.credits
+          : credits // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _value.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      sessions: null == sessions
+          ? _value.sessions
+          : sessions // ignore: cast_nullable_to_non_nullable
+              as List<CourseSession>,
+      docId: null == docId
+          ? _value.docId
+          : docId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ) as $Val);
   }
 }
 
@@ -419,23 +384,21 @@ class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
 abstract class _$$CourseSectionImplCopyWith<$Res>
     implements $CourseSectionCopyWith<$Res> {
   factory _$$CourseSectionImplCopyWith(
-    _$CourseSectionImpl value,
-    $Res Function(_$CourseSectionImpl) then,
-  ) = __$$CourseSectionImplCopyWithImpl<$Res>;
+          _$CourseSectionImpl value, $Res Function(_$CourseSectionImpl) then) =
+      __$$CourseSectionImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String code,
-    @JsonKey(name: 'course_name') String courseName,
-    @JsonKey(name: 'faculty_initials') String facultyInitials,
-    String section,
-    String capacity,
-    String credits,
-    String semester,
-    List<CourseSession> sessions,
-    @JsonKey(name: 'doc_id') String docId,
-  });
+  $Res call(
+      {String id,
+      String code,
+      @JsonKey(name: 'course_name') String courseName,
+      @JsonKey(name: 'faculty_initials') String facultyInitials,
+      String section,
+      String capacity,
+      String credits,
+      String semester,
+      List<CourseSession> sessions,
+      @JsonKey(name: 'doc_id') String docId});
 }
 
 /// @nodoc
@@ -443,12 +406,9 @@ class __$$CourseSectionImplCopyWithImpl<$Res>
     extends _$CourseSectionCopyWithImpl<$Res, _$CourseSectionImpl>
     implements _$$CourseSectionImplCopyWith<$Res> {
   __$$CourseSectionImplCopyWithImpl(
-    _$CourseSectionImpl _value,
-    $Res Function(_$CourseSectionImpl) _then,
-  ) : super(_value, _then);
+      _$CourseSectionImpl _value, $Res Function(_$CourseSectionImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of CourseSection
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -463,68 +423,66 @@ class __$$CourseSectionImplCopyWithImpl<$Res>
     Object? sessions = null,
     Object? docId = null,
   }) {
-    return _then(
-      _$CourseSectionImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        code: null == code
-            ? _value.code
-            : code // ignore: cast_nullable_to_non_nullable
-                  as String,
-        courseName: null == courseName
-            ? _value.courseName
-            : courseName // ignore: cast_nullable_to_non_nullable
-                  as String,
-        facultyInitials: null == facultyInitials
-            ? _value.facultyInitials
-            : facultyInitials // ignore: cast_nullable_to_non_nullable
-                  as String,
-        section: null == section
-            ? _value.section
-            : section // ignore: cast_nullable_to_non_nullable
-                  as String,
-        capacity: null == capacity
-            ? _value.capacity
-            : capacity // ignore: cast_nullable_to_non_nullable
-                  as String,
-        credits: null == credits
-            ? _value.credits
-            : credits // ignore: cast_nullable_to_non_nullable
-                  as String,
-        semester: null == semester
-            ? _value.semester
-            : semester // ignore: cast_nullable_to_non_nullable
-                  as String,
-        sessions: null == sessions
-            ? _value._sessions
-            : sessions // ignore: cast_nullable_to_non_nullable
-                  as List<CourseSession>,
-        docId: null == docId
-            ? _value.docId
-            : docId // ignore: cast_nullable_to_non_nullable
-                  as String,
-      ),
-    );
+    return _then(_$CourseSectionImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      code: null == code
+          ? _value.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseName: null == courseName
+          ? _value.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String,
+      facultyInitials: null == facultyInitials
+          ? _value.facultyInitials
+          : facultyInitials // ignore: cast_nullable_to_non_nullable
+              as String,
+      section: null == section
+          ? _value.section
+          : section // ignore: cast_nullable_to_non_nullable
+              as String,
+      capacity: null == capacity
+          ? _value.capacity
+          : capacity // ignore: cast_nullable_to_non_nullable
+              as String,
+      credits: null == credits
+          ? _value.credits
+          : credits // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _value.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      sessions: null == sessions
+          ? _value._sessions
+          : sessions // ignore: cast_nullable_to_non_nullable
+              as List<CourseSession>,
+      docId: null == docId
+          ? _value.docId
+          : docId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CourseSectionImpl implements _CourseSection {
-  const _$CourseSectionImpl({
-    required this.id,
-    this.code = '',
-    @JsonKey(name: 'course_name') this.courseName = '',
-    @JsonKey(name: 'faculty_initials') this.facultyInitials = '',
-    this.section = '',
-    this.capacity = '',
-    this.credits = '3.0',
-    this.semester = '',
-    final List<CourseSession> sessions = const [],
-    @JsonKey(name: 'doc_id') this.docId = '',
-  }) : _sessions = sessions;
+  const _$CourseSectionImpl(
+      {required this.id,
+      this.code = '',
+      @JsonKey(name: 'course_name') this.courseName = '',
+      @JsonKey(name: 'faculty_initials') this.facultyInitials = '',
+      this.section = '',
+      this.capacity = '',
+      this.credits = '3.0',
+      this.semester = '',
+      final List<CourseSession> sessions = const [],
+      @JsonKey(name: 'doc_id') this.docId = ''})
+      : _sessions = sessions;
 
   factory _$CourseSectionImpl.fromJson(Map<String, dynamic> json) =>
       _$$CourseSectionImplFromJson(json);
@@ -591,25 +549,22 @@ class _$CourseSectionImpl implements _CourseSection {
             (identical(other.docId, docId) || other.docId == docId));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    code,
-    courseName,
-    facultyInitials,
-    section,
-    capacity,
-    credits,
-    semester,
-    const DeepCollectionEquality().hash(_sessions),
-    docId,
-  );
+      runtimeType,
+      id,
+      code,
+      courseName,
+      facultyInitials,
+      section,
+      capacity,
+      credits,
+      semester,
+      const DeepCollectionEquality().hash(_sessions),
+      docId);
 
-  /// Create a copy of CourseSection
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CourseSectionImplCopyWith<_$CourseSectionImpl> get copyWith =>
@@ -617,23 +572,24 @@ class _$CourseSectionImpl implements _CourseSection {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CourseSectionImplToJson(this);
+    return _$$CourseSectionImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _CourseSection implements CourseSection {
-  const factory _CourseSection({
-    required final String id,
-    final String code,
-    @JsonKey(name: 'course_name') final String courseName,
-    @JsonKey(name: 'faculty_initials') final String facultyInitials,
-    final String section,
-    final String capacity,
-    final String credits,
-    final String semester,
-    final List<CourseSession> sessions,
-    @JsonKey(name: 'doc_id') final String docId,
-  }) = _$CourseSectionImpl;
+  const factory _CourseSection(
+      {required final String id,
+      final String code,
+      @JsonKey(name: 'course_name') final String courseName,
+      @JsonKey(name: 'faculty_initials') final String facultyInitials,
+      final String section,
+      final String capacity,
+      final String credits,
+      final String semester,
+      final List<CourseSession> sessions,
+      @JsonKey(name: 'doc_id') final String docId}) = _$CourseSectionImpl;
 
   factory _CourseSection.fromJson(Map<String, dynamic> json) =
       _$CourseSectionImpl.fromJson;
@@ -661,11 +617,8 @@ abstract class _CourseSection implements CourseSection {
   @override
   @JsonKey(name: 'doc_id')
   String get docId;
-
-  /// Create a copy of CourseSection
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CourseSectionImplCopyWith<_$CourseSectionImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

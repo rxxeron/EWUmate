@@ -7,27 +7,27 @@ part of 'task.dart';
 // **************************************************************************
 
 _$TaskImpl _$$TaskImplFromJson(Map<String, dynamic> json) => _$TaskImpl(
-  id: json['id'] as String,
-  userId: json['user_id'] as String,
-  title: json['title'] as String,
-  courseCode: json['course_code'] as String?,
-  courseName: json['course_name'] as String?,
-  assignDate: json['assign_date'] == null
-      ? null
-      : DateTime.parse(json['assign_date'] as String),
-  dueDate: json['due_date'] == null
-      ? null
-      : DateTime.parse(json['due_date'] as String),
-  submissionType: json['submission_type'] as String?,
-  type: json['type'] as String?,
-  isCompleted: json['is_completed'] as bool? ?? false,
-  isMissed: json['is_missed'] as bool? ?? false,
-  semesterCode: json['semester_code'] as String?,
-  track: json['track'] as String?,
-  createdAt: json['created_at'] == null
-      ? null
-      : DateTime.parse(json['created_at'] as String),
-);
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      title: json['title'] as String,
+      courseCode: json['course_code'] as String?,
+      courseName: json['course_name'] as String?,
+      assignDate: json['assign_date'] == null
+          ? null
+          : DateTime.parse(json['assign_date'] as String),
+      dueDate: json['due_date'] == null
+          ? null
+          : DateTime.parse(json['due_date'] as String),
+      submissionType: json['submission_type'] as String?,
+      type: json['type'] as String?,
+      isCompleted: json['is_completed'] as bool? ?? false,
+      isMissed: json['is_missed'] as bool? ?? false,
+      semesterCode: json['semester_code'] as String?,
+      track: json['track'] as String?,
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
+    );
 
 Map<String, dynamic> _$$TaskImplToJson(_$TaskImpl instance) =>
     <String, dynamic>{

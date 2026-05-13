@@ -12,8 +12,7 @@ part of 'calendar_event.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 CalendarEvent _$CalendarEventFromJson(Map<String, dynamic> json) {
   return _CalendarEvent.fromJson(json);
@@ -29,12 +28,8 @@ mixin _$CalendarEvent {
   @JsonKey(name: 'target_track')
   String? get targetTrack => throw _privateConstructorUsedError;
 
-  /// Serializes this CalendarEvent to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of CalendarEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CalendarEventCopyWith<CalendarEvent> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -42,17 +37,15 @@ mixin _$CalendarEvent {
 /// @nodoc
 abstract class $CalendarEventCopyWith<$Res> {
   factory $CalendarEventCopyWith(
-    CalendarEvent value,
-    $Res Function(CalendarEvent) then,
-  ) = _$CalendarEventCopyWithImpl<$Res, CalendarEvent>;
+          CalendarEvent value, $Res Function(CalendarEvent) then) =
+      _$CalendarEventCopyWithImpl<$Res, CalendarEvent>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'event_date') DateTime eventDate,
-    String title,
-    String type,
-    @JsonKey(name: 'target_track') String? targetTrack,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'event_date') DateTime eventDate,
+      String title,
+      String type,
+      @JsonKey(name: 'target_track') String? targetTrack});
 }
 
 /// @nodoc
@@ -65,8 +58,6 @@ class _$CalendarEventCopyWithImpl<$Res, $Val extends CalendarEvent>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CalendarEvent
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -76,31 +67,28 @@ class _$CalendarEventCopyWithImpl<$Res, $Val extends CalendarEvent>
     Object? type = null,
     Object? targetTrack = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            eventDate: null == eventDate
-                ? _value.eventDate
-                : eventDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            title: null == title
-                ? _value.title
-                : title // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            targetTrack: freezed == targetTrack
-                ? _value.targetTrack
-                : targetTrack // ignore: cast_nullable_to_non_nullable
-                      as String?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      eventDate: null == eventDate
+          ? _value.eventDate
+          : eventDate // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      targetTrack: freezed == targetTrack
+          ? _value.targetTrack
+          : targetTrack // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
   }
 }
 
@@ -108,18 +96,16 @@ class _$CalendarEventCopyWithImpl<$Res, $Val extends CalendarEvent>
 abstract class _$$CalendarEventImplCopyWith<$Res>
     implements $CalendarEventCopyWith<$Res> {
   factory _$$CalendarEventImplCopyWith(
-    _$CalendarEventImpl value,
-    $Res Function(_$CalendarEventImpl) then,
-  ) = __$$CalendarEventImplCopyWithImpl<$Res>;
+          _$CalendarEventImpl value, $Res Function(_$CalendarEventImpl) then) =
+      __$$CalendarEventImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'event_date') DateTime eventDate,
-    String title,
-    String type,
-    @JsonKey(name: 'target_track') String? targetTrack,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'event_date') DateTime eventDate,
+      String title,
+      String type,
+      @JsonKey(name: 'target_track') String? targetTrack});
 }
 
 /// @nodoc
@@ -127,12 +113,9 @@ class __$$CalendarEventImplCopyWithImpl<$Res>
     extends _$CalendarEventCopyWithImpl<$Res, _$CalendarEventImpl>
     implements _$$CalendarEventImplCopyWith<$Res> {
   __$$CalendarEventImplCopyWithImpl(
-    _$CalendarEventImpl _value,
-    $Res Function(_$CalendarEventImpl) _then,
-  ) : super(_value, _then);
+      _$CalendarEventImpl _value, $Res Function(_$CalendarEventImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of CalendarEvent
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -142,43 +125,40 @@ class __$$CalendarEventImplCopyWithImpl<$Res>
     Object? type = null,
     Object? targetTrack = freezed,
   }) {
-    return _then(
-      _$CalendarEventImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        eventDate: null == eventDate
-            ? _value.eventDate
-            : eventDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        title: null == title
-            ? _value.title
-            : title // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as String,
-        targetTrack: freezed == targetTrack
-            ? _value.targetTrack
-            : targetTrack // ignore: cast_nullable_to_non_nullable
-                  as String?,
-      ),
-    );
+    return _then(_$CalendarEventImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      eventDate: null == eventDate
+          ? _value.eventDate
+          : eventDate // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      targetTrack: freezed == targetTrack
+          ? _value.targetTrack
+          : targetTrack // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CalendarEventImpl implements _CalendarEvent {
-  const _$CalendarEventImpl({
-    required this.id,
-    @JsonKey(name: 'event_date') required this.eventDate,
-    required this.title,
-    required this.type,
-    @JsonKey(name: 'target_track') this.targetTrack,
-  });
+  const _$CalendarEventImpl(
+      {required this.id,
+      @JsonKey(name: 'event_date') required this.eventDate,
+      required this.title,
+      required this.type,
+      @JsonKey(name: 'target_track') this.targetTrack});
 
   factory _$CalendarEventImpl.fromJson(Map<String, dynamic> json) =>
       _$$CalendarEventImplFromJson(json);
@@ -215,14 +195,12 @@ class _$CalendarEventImpl implements _CalendarEvent {
                 other.targetTrack == targetTrack));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode =>
       Object.hash(runtimeType, id, eventDate, title, type, targetTrack);
 
-  /// Create a copy of CalendarEvent
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CalendarEventImplCopyWith<_$CalendarEventImpl> get copyWith =>
@@ -230,18 +208,20 @@ class _$CalendarEventImpl implements _CalendarEvent {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CalendarEventImplToJson(this);
+    return _$$CalendarEventImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _CalendarEvent implements CalendarEvent {
-  const factory _CalendarEvent({
-    required final String id,
-    @JsonKey(name: 'event_date') required final DateTime eventDate,
-    required final String title,
-    required final String type,
-    @JsonKey(name: 'target_track') final String? targetTrack,
-  }) = _$CalendarEventImpl;
+  const factory _CalendarEvent(
+          {required final String id,
+          @JsonKey(name: 'event_date') required final DateTime eventDate,
+          required final String title,
+          required final String type,
+          @JsonKey(name: 'target_track') final String? targetTrack}) =
+      _$CalendarEventImpl;
 
   factory _CalendarEvent.fromJson(Map<String, dynamic> json) =
       _$CalendarEventImpl.fromJson;
@@ -258,11 +238,8 @@ abstract class _CalendarEvent implements CalendarEvent {
   @override
   @JsonKey(name: 'target_track')
   String? get targetTrack;
-
-  /// Create a copy of CalendarEvent
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CalendarEventImplCopyWith<_$CalendarEventImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

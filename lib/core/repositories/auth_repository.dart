@@ -89,11 +89,38 @@ class AuthRepository {
 
     if (idToken == null) throw 'No ID Token found.';
 
-    return await _supabase.auth.signInWithIdToken(
+    final response = await _supabase.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
       accessToken: accessToken,
     );
+
+    // Ensure profile exists immediately after login
+    final user = response.user;
+    if (user != null) {
+      final existingProfile = await _supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (existingProfile == null) {
+        final fullName = user.userMetadata?['full_name'] ?? 
+                         user.userMetadata?['name'] ?? 
+                         user.userMetadata?['displayName'] ?? 
+                         'New Student';
+        
+        await _supabase.from('profiles').upsert({
+          'id': user.id,
+          'full_name': fullName,
+          'nickname': fullName.toString().split(' ').first,
+          'photo_url': user.userMetadata?['avatar_url'] ?? user.userMetadata?['picture'],
+          'onboarding_status': 'registered',
+        });
+      }
+    }
+
+    return response;
   }
 
 }

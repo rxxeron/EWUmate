@@ -20,8 +20,6 @@ final authRepositoryProvider = AutoDisposeProvider<AuthRepository>.internal(
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef AuthRepositoryRef = AutoDisposeProviderRef<AuthRepository>;
 String _$authStateHash() => r'e1959fc84434a7e53214cf37c5c1bf023fcba752';
 
@@ -30,15 +28,12 @@ String _$authStateHash() => r'e1959fc84434a7e53214cf37c5c1bf023fcba752';
 final authStateProvider = AutoDisposeStreamProvider<AuthState>.internal(
   authState,
   name: r'authStateProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$authStateHash,
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$authStateHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef AuthStateRef = AutoDisposeStreamProviderRef<AuthState>;
 String _$currentUserHash() => r'1d8d2de12d98bac18e6861e227eb39570f30b2fd';
 
@@ -47,15 +42,12 @@ String _$currentUserHash() => r'1d8d2de12d98bac18e6861e227eb39570f30b2fd';
 final currentUserProvider = AutoDisposeProvider<User?>.internal(
   currentUser,
   name: r'currentUserProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentUserHash,
+  debugGetCreateSourceHash:
+      const bool.fromEnvironment('dart.vm.product') ? null : _$currentUserHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef CurrentUserRef = AutoDisposeProviderRef<User?>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

@@ -355,8 +355,8 @@ export function Dashboard() {
             </div>
           </div>
           
-          <div className="flex-1 min-h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="flex-1 h-[280px] w-full">
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={registrationTrend}>
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
@@ -416,8 +416,8 @@ export function Dashboard() {
             </div>
           </div>
           
-          <div className="flex-1 min-h-[280px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="flex-1 h-[280px] w-full">
+            <ResponsiveContainer width="100%" height={280}>
               <AreaChart data={activityTrend}>
                 <defs>
                   <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">

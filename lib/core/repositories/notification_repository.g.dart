@@ -13,36 +13,32 @@ String _$notificationRepositoryHash() =>
 @ProviderFor(notificationRepository)
 final notificationRepositoryProvider =
     AutoDisposeProvider<NotificationRepository>.internal(
-      notificationRepository,
-      name: r'notificationRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$notificationRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  notificationRepository,
+  name: r'notificationRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$notificationRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef NotificationRepositoryRef =
-    AutoDisposeProviderRef<NotificationRepository>;
+typedef NotificationRepositoryRef
+    = AutoDisposeProviderRef<NotificationRepository>;
 String _$userNotificationsHash() => r'7316a30aac64b523a2a88d1b393c46cd89403e86';
 
 /// See also [userNotifications].
 @ProviderFor(userNotifications)
 final userNotificationsProvider =
     StreamProvider<List<model.Notification>>.internal(
-      userNotifications,
-      name: r'userNotificationsProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$userNotificationsHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  userNotifications,
+  name: r'userNotificationsProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$userNotificationsHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 typedef UserNotificationsRef = StreamProviderRef<List<model.Notification>>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

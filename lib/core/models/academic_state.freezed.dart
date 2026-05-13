@@ -12,8 +12,7 @@ part of 'academic_state.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 AcademicState _$AcademicStateFromJson(Map<String, dynamic> json) {
   return _AcademicState.fromJson(json);
@@ -37,12 +36,8 @@ mixin _$AcademicState {
   @JsonKey(name: 'upcoming_classes_start_date')
   DateTime? get upcomingClassesStartDate => throw _privateConstructorUsedError;
 
-  /// Serializes this AcademicState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of AcademicState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $AcademicStateCopyWith<AcademicState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -50,21 +45,19 @@ mixin _$AcademicState {
 /// @nodoc
 abstract class $AcademicStateCopyWith<$Res> {
   factory $AcademicStateCopyWith(
-    AcademicState value,
-    $Res Function(AcademicState) then,
-  ) = _$AcademicStateCopyWithImpl<$Res, AcademicState>;
+          AcademicState value, $Res Function(AcademicState) then) =
+      _$AcademicStateCopyWithImpl<$Res, AcademicState>;
   @useResult
-  $Res call({
-    String track,
-    @JsonKey(name: 'current_semester_code') String currentSemesterCode,
-    @JsonKey(name: 'next_semester_code') String nextSemesterCode,
-    @JsonKey(name: 'advising_start_date') DateTime? advisingStartDate,
-    @JsonKey(name: 'advising_end_date') DateTime? advisingEndDate,
-    @JsonKey(name: 'classes_start_date') DateTime? classesStartDate,
-    @JsonKey(name: 'semester_switch_date') DateTime? semesterSwitchDate,
-    @JsonKey(name: 'upcoming_classes_start_date')
-    DateTime? upcomingClassesStartDate,
-  });
+  $Res call(
+      {String track,
+      @JsonKey(name: 'current_semester_code') String currentSemesterCode,
+      @JsonKey(name: 'next_semester_code') String nextSemesterCode,
+      @JsonKey(name: 'advising_start_date') DateTime? advisingStartDate,
+      @JsonKey(name: 'advising_end_date') DateTime? advisingEndDate,
+      @JsonKey(name: 'classes_start_date') DateTime? classesStartDate,
+      @JsonKey(name: 'semester_switch_date') DateTime? semesterSwitchDate,
+      @JsonKey(name: 'upcoming_classes_start_date')
+      DateTime? upcomingClassesStartDate});
 }
 
 /// @nodoc
@@ -77,8 +70,6 @@ class _$AcademicStateCopyWithImpl<$Res, $Val extends AcademicState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of AcademicState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,43 +82,40 @@ class _$AcademicStateCopyWithImpl<$Res, $Val extends AcademicState>
     Object? semesterSwitchDate = freezed,
     Object? upcomingClassesStartDate = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            track: null == track
-                ? _value.track
-                : track // ignore: cast_nullable_to_non_nullable
-                      as String,
-            currentSemesterCode: null == currentSemesterCode
-                ? _value.currentSemesterCode
-                : currentSemesterCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            nextSemesterCode: null == nextSemesterCode
-                ? _value.nextSemesterCode
-                : nextSemesterCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            advisingStartDate: freezed == advisingStartDate
-                ? _value.advisingStartDate
-                : advisingStartDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            advisingEndDate: freezed == advisingEndDate
-                ? _value.advisingEndDate
-                : advisingEndDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            classesStartDate: freezed == classesStartDate
-                ? _value.classesStartDate
-                : classesStartDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            semesterSwitchDate: freezed == semesterSwitchDate
-                ? _value.semesterSwitchDate
-                : semesterSwitchDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            upcomingClassesStartDate: freezed == upcomingClassesStartDate
-                ? _value.upcomingClassesStartDate
-                : upcomingClassesStartDate // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      track: null == track
+          ? _value.track
+          : track // ignore: cast_nullable_to_non_nullable
+              as String,
+      currentSemesterCode: null == currentSemesterCode
+          ? _value.currentSemesterCode
+          : currentSemesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      nextSemesterCode: null == nextSemesterCode
+          ? _value.nextSemesterCode
+          : nextSemesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      advisingStartDate: freezed == advisingStartDate
+          ? _value.advisingStartDate
+          : advisingStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      advisingEndDate: freezed == advisingEndDate
+          ? _value.advisingEndDate
+          : advisingEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      classesStartDate: freezed == classesStartDate
+          ? _value.classesStartDate
+          : classesStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      semesterSwitchDate: freezed == semesterSwitchDate
+          ? _value.semesterSwitchDate
+          : semesterSwitchDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      upcomingClassesStartDate: freezed == upcomingClassesStartDate
+          ? _value.upcomingClassesStartDate
+          : upcomingClassesStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
@@ -135,22 +123,20 @@ class _$AcademicStateCopyWithImpl<$Res, $Val extends AcademicState>
 abstract class _$$AcademicStateImplCopyWith<$Res>
     implements $AcademicStateCopyWith<$Res> {
   factory _$$AcademicStateImplCopyWith(
-    _$AcademicStateImpl value,
-    $Res Function(_$AcademicStateImpl) then,
-  ) = __$$AcademicStateImplCopyWithImpl<$Res>;
+          _$AcademicStateImpl value, $Res Function(_$AcademicStateImpl) then) =
+      __$$AcademicStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String track,
-    @JsonKey(name: 'current_semester_code') String currentSemesterCode,
-    @JsonKey(name: 'next_semester_code') String nextSemesterCode,
-    @JsonKey(name: 'advising_start_date') DateTime? advisingStartDate,
-    @JsonKey(name: 'advising_end_date') DateTime? advisingEndDate,
-    @JsonKey(name: 'classes_start_date') DateTime? classesStartDate,
-    @JsonKey(name: 'semester_switch_date') DateTime? semesterSwitchDate,
-    @JsonKey(name: 'upcoming_classes_start_date')
-    DateTime? upcomingClassesStartDate,
-  });
+  $Res call(
+      {String track,
+      @JsonKey(name: 'current_semester_code') String currentSemesterCode,
+      @JsonKey(name: 'next_semester_code') String nextSemesterCode,
+      @JsonKey(name: 'advising_start_date') DateTime? advisingStartDate,
+      @JsonKey(name: 'advising_end_date') DateTime? advisingEndDate,
+      @JsonKey(name: 'classes_start_date') DateTime? classesStartDate,
+      @JsonKey(name: 'semester_switch_date') DateTime? semesterSwitchDate,
+      @JsonKey(name: 'upcoming_classes_start_date')
+      DateTime? upcomingClassesStartDate});
 }
 
 /// @nodoc
@@ -158,12 +144,9 @@ class __$$AcademicStateImplCopyWithImpl<$Res>
     extends _$AcademicStateCopyWithImpl<$Res, _$AcademicStateImpl>
     implements _$$AcademicStateImplCopyWith<$Res> {
   __$$AcademicStateImplCopyWithImpl(
-    _$AcademicStateImpl _value,
-    $Res Function(_$AcademicStateImpl) _then,
-  ) : super(_value, _then);
+      _$AcademicStateImpl _value, $Res Function(_$AcademicStateImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of AcademicState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -176,58 +159,56 @@ class __$$AcademicStateImplCopyWithImpl<$Res>
     Object? semesterSwitchDate = freezed,
     Object? upcomingClassesStartDate = freezed,
   }) {
-    return _then(
-      _$AcademicStateImpl(
-        track: null == track
-            ? _value.track
-            : track // ignore: cast_nullable_to_non_nullable
-                  as String,
-        currentSemesterCode: null == currentSemesterCode
-            ? _value.currentSemesterCode
-            : currentSemesterCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        nextSemesterCode: null == nextSemesterCode
-            ? _value.nextSemesterCode
-            : nextSemesterCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        advisingStartDate: freezed == advisingStartDate
-            ? _value.advisingStartDate
-            : advisingStartDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        advisingEndDate: freezed == advisingEndDate
-            ? _value.advisingEndDate
-            : advisingEndDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        classesStartDate: freezed == classesStartDate
-            ? _value.classesStartDate
-            : classesStartDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        semesterSwitchDate: freezed == semesterSwitchDate
-            ? _value.semesterSwitchDate
-            : semesterSwitchDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        upcomingClassesStartDate: freezed == upcomingClassesStartDate
-            ? _value.upcomingClassesStartDate
-            : upcomingClassesStartDate // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$AcademicStateImpl(
+      track: null == track
+          ? _value.track
+          : track // ignore: cast_nullable_to_non_nullable
+              as String,
+      currentSemesterCode: null == currentSemesterCode
+          ? _value.currentSemesterCode
+          : currentSemesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      nextSemesterCode: null == nextSemesterCode
+          ? _value.nextSemesterCode
+          : nextSemesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      advisingStartDate: freezed == advisingStartDate
+          ? _value.advisingStartDate
+          : advisingStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      advisingEndDate: freezed == advisingEndDate
+          ? _value.advisingEndDate
+          : advisingEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      classesStartDate: freezed == classesStartDate
+          ? _value.classesStartDate
+          : classesStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      semesterSwitchDate: freezed == semesterSwitchDate
+          ? _value.semesterSwitchDate
+          : semesterSwitchDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      upcomingClassesStartDate: freezed == upcomingClassesStartDate
+          ? _value.upcomingClassesStartDate
+          : upcomingClassesStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$AcademicStateImpl implements _AcademicState {
-  const _$AcademicStateImpl({
-    required this.track,
-    @JsonKey(name: 'current_semester_code') required this.currentSemesterCode,
-    @JsonKey(name: 'next_semester_code') required this.nextSemesterCode,
-    @JsonKey(name: 'advising_start_date') this.advisingStartDate,
-    @JsonKey(name: 'advising_end_date') this.advisingEndDate,
-    @JsonKey(name: 'classes_start_date') this.classesStartDate,
-    @JsonKey(name: 'semester_switch_date') this.semesterSwitchDate,
-    @JsonKey(name: 'upcoming_classes_start_date') this.upcomingClassesStartDate,
-  });
+  const _$AcademicStateImpl(
+      {required this.track,
+      @JsonKey(name: 'current_semester_code') required this.currentSemesterCode,
+      @JsonKey(name: 'next_semester_code') required this.nextSemesterCode,
+      @JsonKey(name: 'advising_start_date') this.advisingStartDate,
+      @JsonKey(name: 'advising_end_date') this.advisingEndDate,
+      @JsonKey(name: 'classes_start_date') this.classesStartDate,
+      @JsonKey(name: 'semester_switch_date') this.semesterSwitchDate,
+      @JsonKey(name: 'upcoming_classes_start_date')
+      this.upcomingClassesStartDate});
 
   factory _$AcademicStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$AcademicStateImplFromJson(json);
@@ -280,29 +261,24 @@ class _$AcademicStateImpl implements _AcademicState {
             (identical(other.semesterSwitchDate, semesterSwitchDate) ||
                 other.semesterSwitchDate == semesterSwitchDate) &&
             (identical(
-                  other.upcomingClassesStartDate,
-                  upcomingClassesStartDate,
-                ) ||
+                    other.upcomingClassesStartDate, upcomingClassesStartDate) ||
                 other.upcomingClassesStartDate == upcomingClassesStartDate));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    track,
-    currentSemesterCode,
-    nextSemesterCode,
-    advisingStartDate,
-    advisingEndDate,
-    classesStartDate,
-    semesterSwitchDate,
-    upcomingClassesStartDate,
-  );
+      runtimeType,
+      track,
+      currentSemesterCode,
+      nextSemesterCode,
+      advisingStartDate,
+      advisingEndDate,
+      classesStartDate,
+      semesterSwitchDate,
+      upcomingClassesStartDate);
 
-  /// Create a copy of AcademicState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$AcademicStateImplCopyWith<_$AcademicStateImpl> get copyWith =>
@@ -310,23 +286,25 @@ class _$AcademicStateImpl implements _AcademicState {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$AcademicStateImplToJson(this);
+    return _$$AcademicStateImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _AcademicState implements AcademicState {
-  const factory _AcademicState({
-    required final String track,
-    @JsonKey(name: 'current_semester_code')
-    required final String currentSemesterCode,
-    @JsonKey(name: 'next_semester_code') required final String nextSemesterCode,
-    @JsonKey(name: 'advising_start_date') final DateTime? advisingStartDate,
-    @JsonKey(name: 'advising_end_date') final DateTime? advisingEndDate,
-    @JsonKey(name: 'classes_start_date') final DateTime? classesStartDate,
-    @JsonKey(name: 'semester_switch_date') final DateTime? semesterSwitchDate,
-    @JsonKey(name: 'upcoming_classes_start_date')
-    final DateTime? upcomingClassesStartDate,
-  }) = _$AcademicStateImpl;
+  const factory _AcademicState(
+      {required final String track,
+      @JsonKey(name: 'current_semester_code')
+      required final String currentSemesterCode,
+      @JsonKey(name: 'next_semester_code')
+      required final String nextSemesterCode,
+      @JsonKey(name: 'advising_start_date') final DateTime? advisingStartDate,
+      @JsonKey(name: 'advising_end_date') final DateTime? advisingEndDate,
+      @JsonKey(name: 'classes_start_date') final DateTime? classesStartDate,
+      @JsonKey(name: 'semester_switch_date') final DateTime? semesterSwitchDate,
+      @JsonKey(name: 'upcoming_classes_start_date')
+      final DateTime? upcomingClassesStartDate}) = _$AcademicStateImpl;
 
   factory _AcademicState.fromJson(Map<String, dynamic> json) =
       _$AcademicStateImpl.fromJson;
@@ -354,11 +332,8 @@ abstract class _AcademicState implements AcademicState {
   @override
   @JsonKey(name: 'upcoming_classes_start_date')
   DateTime? get upcomingClassesStartDate;
-
-  /// Create a copy of AcademicState
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$AcademicStateImplCopyWith<_$AcademicStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

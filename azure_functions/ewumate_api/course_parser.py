@@ -199,7 +199,12 @@ def parse_course_pdf(pdf_file, semester_id, course_titles=None):
                     # Build Session Object
                     session_type = "Theory"
                     if startTime and endTime:
-                        session_type = detect_session_type(startTime, endTime)
+                        # EXCEPTION: MBA and EMBA departments are ALWAYS theory
+                        is_mba_emba = any(x in str(code).upper() for x in ["MBA", "EMBA"])
+                        if is_mba_emba:
+                            session_type = "Theory"
+                        else:
+                            session_type = detect_session_type(startTime, endTime)
 
                     session = {
                         "type": session_type, "day": day_str, "startTime": startTime,

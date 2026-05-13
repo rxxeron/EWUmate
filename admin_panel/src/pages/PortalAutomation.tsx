@@ -85,7 +85,7 @@ export function PortalAutomation() {
     setIsAzureLive('checking');
     try {
       const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
-      const res = await fetch(`${baseUrl}/api/portal_sync_trigger?code=${import.meta.env.VITE_AZURE_FUNCTION_KEY}&preview=true&semester=PING`);
+      const res = await fetch(`${baseUrl}/api/scraper/portal_sync?code=${import.meta.env.VITE_AZURE_FUNCTION_KEY}&preview=true&semester=PING`);
       if (res.status === 200) setIsAzureLive('live');
       else setIsAzureLive('down');
     } catch {
@@ -105,7 +105,7 @@ export function PortalAutomation() {
     try {
       const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
       const key = import.meta.env.VITE_AZURE_FUNCTION_KEY;
-      const url = `${baseUrl}/api/portal_sync_trigger?code=${key}&preview=true&semester=${semester}`;
+      const url = `${baseUrl}/api/scraper/portal_sync?code=${key}&preview=true&semester=${semester}`;
       
       const response = await fetch(url);
       

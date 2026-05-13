@@ -25,6 +25,7 @@ from . import calendar_parser
 from . import course_parser
 from . import exam_parser
 from . import advising_parser
+from . import pdf_handler # We will create this
 
 # ─── Supabase Config ───────────────────────────────────────────────
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://jwygjihrbwxhehijldiz.supabase.co")
@@ -53,6 +54,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "parse_exam": handle_parse_exam,
         "parse_advising": handle_parse_advising,
         "parse_faculty_webhook": handle_parse_webhook,
+        "sync_api_courses": handle_sync_api_courses,
+        "generate_pdf": handle_generate_pdf, # NEW
     }
 
     handler = handlers.get(action)
@@ -64,6 +67,18 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         result = handler(body)
+        
+        # If result is bytes, it's a direct PDF response
+        if isinstance(result, bytes):
+            return func.HttpResponse(
+                result,
+                mimetype="application/pdf",
+                headers={
+                    "Content-Disposition": 'attachment; filename="academic_report.pdf"',
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+
         return func.HttpResponse(
             json.dumps(result, default=str),
             status_code=200, mimetype="application/json"
@@ -448,6 +463,187 @@ def handle_parse_advising(body: dict) -> dict:
     if not file_path: raise ValueError("file_path is required")
     return _do_parse_advising(file_path)
 
+# ─── NEW: Direct API Scraper → DB (No PDF / No Storage needed) ──────
+
+def handle_sync_api_courses(body: dict) -> dict:
+    """
+    Accepts pre-scraped course data directly from the Admin Panel scraper.
+
+    Request body:
+    {
+        "semester": "Summer2026",   <- semester code (normalized, no spaces)
+        "courses": [                <- array from scraper_server.py output
+            {
+                "code":        "CSE101",
+                "section":     "1",
+                "faculty":     "BCR",
+                "capacity":    "15/30",
+                "course_name": "Data Structures",
+                "credits":     3.0,
+                "sessions": [{
+                    "type":      "Theory",
+                    "day":       "MW",
+                    "startTime": "08:30 AM",
+                    "endTime":   "10:00 AM",
+                    "room":      "220",
+                    "faculty":   "BCR"
+                }]
+            },
+            ...
+        ]
+    }
+    """
+    semester = body.get("semester", "").strip()
+    courses   = body.get("courses", [])
+
+    if not semester:
+        raise ValueError("'semester' is required (e.g. 'Summer2026')")
+    if not courses:
+        raise ValueError("'courses' array is empty")
+
+    # Normalize semester code: remove spaces/dashes → lowercase for table name
+    import re
+    clean_sem  = re.sub(r'[\s\-_]+', '', semester)          # "Summer2026"
+    table_name = f"courses_{clean_sem.lower()}"             # "courses_summer2026"
+
+    logging.info(f"[sync_api_courses] semester={semester}, table={table_name}, count={len(courses)}")
+
+    sb = _get_supabase()
+
+    # 1. Normalize course code (strip 7/8 prefix digits, same as _do_parse_faculty)
+    def normalize_code(code):
+        if not code: return ""
+        # Remove spaces and hyphens
+        clean = code.upper().replace(" ", "").replace("-", "")
+        # If there are 4 digits at the end, remove the first one
+        import re
+        return re.sub(r'^([A-Z]+)\d(\d{3})$', r'\1\2', clean)
+
+    # 1.5 Fetch master metadata for enrichment
+    meta_res = sb.table("course_metadata").select("code, name, credit_val").execute()
+    meta_map = { (r.get("code") or "").upper().replace(" ", ""): r for r in (meta_res.data or []) }
+
+    # 2. Map scraper output → live DB schema (mirrors _do_parse_faculty lines 489-498)
+    mapped_courses = []
+    unique_seen = set()
+    for c in courses:
+        raw_code = (c.get("code") or "").strip()
+        sec      = str(c.get("section") or "").strip()
+
+        if not raw_code or not sec:
+            continue
+
+        clean_code = normalize_code(raw_code)
+        key = (clean_code, sec)
+        if key in unique_seen:
+            continue
+        unique_seen.add(key)
+
+        # Enrichment from master catalog
+        master = meta_map.get(clean_code)
+        final_name = (master.get("name") if master else "") or c.get("course_name") or ""
+        final_cred = float((master.get("credit_val") if master else None) or c.get("credits") or 3.0)
+
+        mapped_courses.append({
+            "course_code":      clean_code,
+            "original_code":    raw_code,
+            "section_number":   sec,
+            "faculty_initials":  c.get("faculty") or "TBA",
+            "faculty_full_name": c.get("faculty_full_name") or "",
+            "faculty_designation": c.get("faculty_designation") or "",
+            "dedicated_department": c.get("dedicated_department") or "",
+            "capacity":          c.get("capacity") or "0/0",
+            "schedule_data":     c.get("sessions") or [],
+            "course_name":       final_name,
+            "credit_val":        final_cred,
+        })
+
+    if not mapped_courses:
+        return {"status": "warning", "message": "No valid courses after normalization."}
+
+    # 3. Create table if it doesn't exist (idempotent RPC)
+    sb.rpc("create_course_table", {"p_semester_code": clean_sem.lower()}).execute()
+
+    import time
+    # 4. Smart upsert: fetch existing → update matched, insert new, delete removed
+    existing_courses = []
+    for retry in range(6):
+        try:
+            time.sleep(1.5)
+            all_existing = []
+            offset = 0
+            while True:
+                chunk = sb.table(table_name).select("id, course_code, section_number").range(offset, offset + 999).execute()
+                all_existing.extend(chunk.data or [])
+                if len(chunk.data or []) < 1000:
+                    break
+                offset += 1000
+            existing_courses = all_existing
+            break
+        except Exception as e:
+            if retry == 5:
+                raise e
+
+    existing_map = {}
+    for ec in existing_courses:
+        cc  = (ec.get("course_code") or "").upper().replace(" ", "")
+        sec = (ec.get("section_number") or "").upper().replace(" ", "")
+        if cc and sec:
+            existing_map[(cc, sec)] = ec.get("id")
+
+    # Tag records that already exist with their DB id
+    seen_ids = set()
+    for mc in mapped_courses:
+        cc  = (mc["course_code"] or "").upper().replace(" ", "")
+        sec = (mc["section_number"] or "").upper().replace(" ", "")
+        key = (cc, sec)
+        if key in existing_map:
+            mc["id"] = existing_map[key]
+            seen_ids.add(existing_map[key])
+
+    # Delete records that are no longer in the new data
+    ids_to_delete = [uid for uid in existing_map.values() if uid not in seen_ids]
+    for i in range(0, len(ids_to_delete), 100):
+        sb.table(table_name).delete().in_("id", ids_to_delete[i:i+100]).execute()
+
+    new_courses     = [mc for mc in mapped_courses if "id" not in mc]
+    updated_courses = [mc for mc in mapped_courses if "id" in mc]
+
+    # Insert new
+    for i in range(0, len(new_courses), 100):
+        sb.table(table_name).insert(new_courses[i:i+100]).execute()
+
+    # Upsert updated (with UUID)
+    for i in range(0, len(updated_courses), 100):
+        sb.table(table_name).upsert(updated_courses[i:i+100]).execute()
+
+    # Log the sync event for tracking
+    try:
+        sb.table("scraper_logs").insert({
+            "semester": semester,
+            "added": len(new_courses),
+            "updated": len(updated_courses),
+            "deleted": len(ids_to_delete),
+            "status": "success",
+            "report": {
+                "message": "Sync complete",
+                "total": len(mapped_courses)
+            }
+        }).execute()
+    except: pass # Don't fail the sync if logging fails
+
+    return {
+        "status":    "ok",
+        "message": f"Sync Complete for {semester}",
+        "semester":  semester,
+        "table":     table_name,
+        "total":     len(mapped_courses),
+        "inserted":  len(new_courses),
+        "updated":   len(updated_courses),
+        "deleted":   len(ids_to_delete),
+    }
+
+
 # ─── Logic: Faculty List (Course Schedule) ───────────────────────────
 
 def _do_parse_faculty(file_path: str) -> dict:
@@ -470,10 +666,11 @@ def _do_parse_faculty(file_path: str) -> dict:
         # Map to new database schema
         def normalize(code):
             if not code: return ""
-            clean = code.upper().replace(" ", "")
-            # Optional: Strip 7/8 here if needed, but the DB Trigger will also handle it
+            # Remove spaces and hyphens
+            clean = code.upper().replace(" ", "").replace("-", "")
+            # If there are 4 digits at the end, remove the first one
             import re
-            return re.sub(r'^([A-Z]{2,4})[78](\d{3})$', r'\1\2', clean)
+            return re.sub(r'^([A-Z]+)\d(\d{3})$', r'\1\2', clean)
 
         mapped_courses = []
         unique_seen = set()
@@ -763,3 +960,5 @@ def _do_parse_advising(file_path: str) -> dict:
     except Exception as e:
         logging.exception("_do_parse_advising failed")
         return {"error": str(e)}
+def handle_generate_pdf(body):
+    return pdf_handler.handle(body)

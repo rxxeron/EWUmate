@@ -239,8 +239,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final message = e is Exception ? e.toString().replaceAll('Exception: ', '') : AuthErrorUtils.getFriendlyMessage(e);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     } finally {

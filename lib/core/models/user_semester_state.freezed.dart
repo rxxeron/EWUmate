@@ -12,8 +12,7 @@ part of 'user_semester_state.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 UserSemesterState _$UserSemesterStateFromJson(Map<String, dynamic> json) {
   return _UserSemesterState.fromJson(json);
@@ -34,12 +33,8 @@ mixin _$UserSemesterState {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this UserSemesterState to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of UserSemesterState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $UserSemesterStateCopyWith<UserSemesterState> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -47,17 +42,15 @@ mixin _$UserSemesterState {
 /// @nodoc
 abstract class $UserSemesterStateCopyWith<$Res> {
   factory $UserSemesterStateCopyWith(
-    UserSemesterState value,
-    $Res Function(UserSemesterState) then,
-  ) = _$UserSemesterStateCopyWithImpl<$Res, UserSemesterState>;
+          UserSemesterState value, $Res Function(UserSemesterState) then) =
+      _$UserSemesterStateCopyWithImpl<$Res, UserSemesterState>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    @JsonKey(name: 'weekly_grid_cache') Map<String, dynamic>? weeklyGridCache,
-    @JsonKey(name: 'progress_summary') Map<String, dynamic>? progressSummary,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {@JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      @JsonKey(name: 'weekly_grid_cache') Map<String, dynamic>? weeklyGridCache,
+      @JsonKey(name: 'progress_summary') Map<String, dynamic>? progressSummary,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -70,8 +63,6 @@ class _$UserSemesterStateCopyWithImpl<$Res, $Val extends UserSemesterState>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of UserSemesterState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -81,63 +72,55 @@ class _$UserSemesterStateCopyWithImpl<$Res, $Val extends UserSemesterState>
     Object? progressSummary = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            semesterCode: null == semesterCode
-                ? _value.semesterCode
-                : semesterCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            weeklyGridCache: freezed == weeklyGridCache
-                ? _value.weeklyGridCache
-                : weeklyGridCache // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>?,
-            progressSummary: freezed == progressSummary
-                ? _value.progressSummary
-                : progressSummary // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>?,
-            updatedAt: freezed == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      weeklyGridCache: freezed == weeklyGridCache
+          ? _value.weeklyGridCache
+          : weeklyGridCache // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      progressSummary: freezed == progressSummary
+          ? _value.progressSummary
+          : progressSummary // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$UserSemesterStateImplCopyWith<$Res>
     implements $UserSemesterStateCopyWith<$Res> {
-  factory _$$UserSemesterStateImplCopyWith(
-    _$UserSemesterStateImpl value,
-    $Res Function(_$UserSemesterStateImpl) then,
-  ) = __$$UserSemesterStateImplCopyWithImpl<$Res>;
+  factory _$$UserSemesterStateImplCopyWith(_$UserSemesterStateImpl value,
+          $Res Function(_$UserSemesterStateImpl) then) =
+      __$$UserSemesterStateImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    @JsonKey(name: 'weekly_grid_cache') Map<String, dynamic>? weeklyGridCache,
-    @JsonKey(name: 'progress_summary') Map<String, dynamic>? progressSummary,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {@JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      @JsonKey(name: 'weekly_grid_cache') Map<String, dynamic>? weeklyGridCache,
+      @JsonKey(name: 'progress_summary') Map<String, dynamic>? progressSummary,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
 class __$$UserSemesterStateImplCopyWithImpl<$Res>
     extends _$UserSemesterStateCopyWithImpl<$Res, _$UserSemesterStateImpl>
     implements _$$UserSemesterStateImplCopyWith<$Res> {
-  __$$UserSemesterStateImplCopyWithImpl(
-    _$UserSemesterStateImpl _value,
-    $Res Function(_$UserSemesterStateImpl) _then,
-  ) : super(_value, _then);
+  __$$UserSemesterStateImplCopyWithImpl(_$UserSemesterStateImpl _value,
+      $Res Function(_$UserSemesterStateImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of UserSemesterState
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -147,46 +130,44 @@ class __$$UserSemesterStateImplCopyWithImpl<$Res>
     Object? progressSummary = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _$UserSemesterStateImpl(
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        semesterCode: null == semesterCode
-            ? _value.semesterCode
-            : semesterCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        weeklyGridCache: freezed == weeklyGridCache
-            ? _value._weeklyGridCache
-            : weeklyGridCache // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>?,
-        progressSummary: freezed == progressSummary
-            ? _value._progressSummary
-            : progressSummary // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>?,
-        updatedAt: freezed == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$UserSemesterStateImpl(
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      weeklyGridCache: freezed == weeklyGridCache
+          ? _value._weeklyGridCache
+          : weeklyGridCache // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      progressSummary: freezed == progressSummary
+          ? _value._progressSummary
+          : progressSummary // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$UserSemesterStateImpl implements _UserSemesterState {
-  const _$UserSemesterStateImpl({
-    @JsonKey(name: 'user_id') required this.userId,
-    @JsonKey(name: 'semester_code') required this.semesterCode,
-    @JsonKey(name: 'weekly_grid_cache')
-    final Map<String, dynamic>? weeklyGridCache,
-    @JsonKey(name: 'progress_summary')
-    final Map<String, dynamic>? progressSummary,
-    @JsonKey(name: 'updated_at') this.updatedAt,
-  }) : _weeklyGridCache = weeklyGridCache,
-       _progressSummary = progressSummary;
+  const _$UserSemesterStateImpl(
+      {@JsonKey(name: 'user_id') required this.userId,
+      @JsonKey(name: 'semester_code') required this.semesterCode,
+      @JsonKey(name: 'weekly_grid_cache')
+      final Map<String, dynamic>? weeklyGridCache,
+      @JsonKey(name: 'progress_summary')
+      final Map<String, dynamic>? progressSummary,
+      @JsonKey(name: 'updated_at') this.updatedAt})
+      : _weeklyGridCache = weeklyGridCache,
+        _progressSummary = progressSummary;
 
   factory _$UserSemesterStateImpl.fromJson(Map<String, dynamic> json) =>
       _$$UserSemesterStateImplFromJson(json);
@@ -236,56 +217,49 @@ class _$UserSemesterStateImpl implements _UserSemesterState {
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.semesterCode, semesterCode) ||
                 other.semesterCode == semesterCode) &&
-            const DeepCollectionEquality().equals(
-              other._weeklyGridCache,
-              _weeklyGridCache,
-            ) &&
-            const DeepCollectionEquality().equals(
-              other._progressSummary,
-              _progressSummary,
-            ) &&
+            const DeepCollectionEquality()
+                .equals(other._weeklyGridCache, _weeklyGridCache) &&
+            const DeepCollectionEquality()
+                .equals(other._progressSummary, _progressSummary) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    userId,
-    semesterCode,
-    const DeepCollectionEquality().hash(_weeklyGridCache),
-    const DeepCollectionEquality().hash(_progressSummary),
-    updatedAt,
-  );
+      runtimeType,
+      userId,
+      semesterCode,
+      const DeepCollectionEquality().hash(_weeklyGridCache),
+      const DeepCollectionEquality().hash(_progressSummary),
+      updatedAt);
 
-  /// Create a copy of UserSemesterState
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$UserSemesterStateImplCopyWith<_$UserSemesterStateImpl> get copyWith =>
       __$$UserSemesterStateImplCopyWithImpl<_$UserSemesterStateImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$UserSemesterStateImplToJson(this);
+    return _$$UserSemesterStateImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _UserSemesterState implements UserSemesterState {
-  const factory _UserSemesterState({
-    @JsonKey(name: 'user_id') required final String userId,
-    @JsonKey(name: 'semester_code') required final String semesterCode,
-    @JsonKey(name: 'weekly_grid_cache')
-    final Map<String, dynamic>? weeklyGridCache,
-    @JsonKey(name: 'progress_summary')
-    final Map<String, dynamic>? progressSummary,
-    @JsonKey(name: 'updated_at') final DateTime? updatedAt,
-  }) = _$UserSemesterStateImpl;
+  const factory _UserSemesterState(
+          {@JsonKey(name: 'user_id') required final String userId,
+          @JsonKey(name: 'semester_code') required final String semesterCode,
+          @JsonKey(name: 'weekly_grid_cache')
+          final Map<String, dynamic>? weeklyGridCache,
+          @JsonKey(name: 'progress_summary')
+          final Map<String, dynamic>? progressSummary,
+          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
+      _$UserSemesterStateImpl;
 
   factory _UserSemesterState.fromJson(Map<String, dynamic> json) =
       _$UserSemesterStateImpl.fromJson;
@@ -305,11 +279,8 @@ abstract class _UserSemesterState implements UserSemesterState {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of UserSemesterState
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$UserSemesterStateImplCopyWith<_$UserSemesterStateImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

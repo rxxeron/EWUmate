@@ -12,8 +12,7 @@ part of 'program.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Program _$ProgramFromJson(Map<String, dynamic> json) {
   return _Program.fromJson(json);
@@ -30,12 +29,8 @@ mixin _$Program {
   @JsonKey(name: 'department_name')
   String? get departmentName => throw _privateConstructorUsedError;
 
-  /// Serializes this Program to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Program
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ProgramCopyWith<Program> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -44,13 +39,12 @@ abstract class $ProgramCopyWith<$Res> {
   factory $ProgramCopyWith(Program value, $Res Function(Program) then) =
       _$ProgramCopyWithImpl<$Res, Program>;
   @useResult
-  $Res call({
-    @JsonKey(name: 'program_code') String programCode,
-    String name,
-    String track,
-    @JsonKey(name: 'total_degree_credits') double totalDegreeCredits,
-    @JsonKey(name: 'department_name') String? departmentName,
-  });
+  $Res call(
+      {@JsonKey(name: 'program_code') String programCode,
+      String name,
+      String track,
+      @JsonKey(name: 'total_degree_credits') double totalDegreeCredits,
+      @JsonKey(name: 'department_name') String? departmentName});
 }
 
 /// @nodoc
@@ -63,8 +57,6 @@ class _$ProgramCopyWithImpl<$Res, $Val extends Program>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Program
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -74,49 +66,44 @@ class _$ProgramCopyWithImpl<$Res, $Val extends Program>
     Object? totalDegreeCredits = null,
     Object? departmentName = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            programCode: null == programCode
-                ? _value.programCode
-                : programCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            track: null == track
-                ? _value.track
-                : track // ignore: cast_nullable_to_non_nullable
-                      as String,
-            totalDegreeCredits: null == totalDegreeCredits
-                ? _value.totalDegreeCredits
-                : totalDegreeCredits // ignore: cast_nullable_to_non_nullable
-                      as double,
-            departmentName: freezed == departmentName
-                ? _value.departmentName
-                : departmentName // ignore: cast_nullable_to_non_nullable
-                      as String?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      programCode: null == programCode
+          ? _value.programCode
+          : programCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      track: null == track
+          ? _value.track
+          : track // ignore: cast_nullable_to_non_nullable
+              as String,
+      totalDegreeCredits: null == totalDegreeCredits
+          ? _value.totalDegreeCredits
+          : totalDegreeCredits // ignore: cast_nullable_to_non_nullable
+              as double,
+      departmentName: freezed == departmentName
+          ? _value.departmentName
+          : departmentName // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$ProgramImplCopyWith<$Res> implements $ProgramCopyWith<$Res> {
   factory _$$ProgramImplCopyWith(
-    _$ProgramImpl value,
-    $Res Function(_$ProgramImpl) then,
-  ) = __$$ProgramImplCopyWithImpl<$Res>;
+          _$ProgramImpl value, $Res Function(_$ProgramImpl) then) =
+      __$$ProgramImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    @JsonKey(name: 'program_code') String programCode,
-    String name,
-    String track,
-    @JsonKey(name: 'total_degree_credits') double totalDegreeCredits,
-    @JsonKey(name: 'department_name') String? departmentName,
-  });
+  $Res call(
+      {@JsonKey(name: 'program_code') String programCode,
+      String name,
+      String track,
+      @JsonKey(name: 'total_degree_credits') double totalDegreeCredits,
+      @JsonKey(name: 'department_name') String? departmentName});
 }
 
 /// @nodoc
@@ -124,12 +111,9 @@ class __$$ProgramImplCopyWithImpl<$Res>
     extends _$ProgramCopyWithImpl<$Res, _$ProgramImpl>
     implements _$$ProgramImplCopyWith<$Res> {
   __$$ProgramImplCopyWithImpl(
-    _$ProgramImpl _value,
-    $Res Function(_$ProgramImpl) _then,
-  ) : super(_value, _then);
+      _$ProgramImpl _value, $Res Function(_$ProgramImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of Program
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -139,43 +123,40 @@ class __$$ProgramImplCopyWithImpl<$Res>
     Object? totalDegreeCredits = null,
     Object? departmentName = freezed,
   }) {
-    return _then(
-      _$ProgramImpl(
-        programCode: null == programCode
-            ? _value.programCode
-            : programCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        track: null == track
-            ? _value.track
-            : track // ignore: cast_nullable_to_non_nullable
-                  as String,
-        totalDegreeCredits: null == totalDegreeCredits
-            ? _value.totalDegreeCredits
-            : totalDegreeCredits // ignore: cast_nullable_to_non_nullable
-                  as double,
-        departmentName: freezed == departmentName
-            ? _value.departmentName
-            : departmentName // ignore: cast_nullable_to_non_nullable
-                  as String?,
-      ),
-    );
+    return _then(_$ProgramImpl(
+      programCode: null == programCode
+          ? _value.programCode
+          : programCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      track: null == track
+          ? _value.track
+          : track // ignore: cast_nullable_to_non_nullable
+              as String,
+      totalDegreeCredits: null == totalDegreeCredits
+          ? _value.totalDegreeCredits
+          : totalDegreeCredits // ignore: cast_nullable_to_non_nullable
+              as double,
+      departmentName: freezed == departmentName
+          ? _value.departmentName
+          : departmentName // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ProgramImpl implements _Program {
-  const _$ProgramImpl({
-    @JsonKey(name: 'program_code') required this.programCode,
-    required this.name,
-    required this.track,
-    @JsonKey(name: 'total_degree_credits') this.totalDegreeCredits = 130.0,
-    @JsonKey(name: 'department_name') this.departmentName,
-  });
+  const _$ProgramImpl(
+      {@JsonKey(name: 'program_code') required this.programCode,
+      required this.name,
+      required this.track,
+      @JsonKey(name: 'total_degree_credits') this.totalDegreeCredits = 130.0,
+      @JsonKey(name: 'department_name') this.departmentName});
 
   factory _$ProgramImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProgramImplFromJson(json);
@@ -214,20 +195,12 @@ class _$ProgramImpl implements _Program {
                 other.departmentName == departmentName));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    programCode,
-    name,
-    track,
-    totalDegreeCredits,
-    departmentName,
-  );
+  int get hashCode => Object.hash(runtimeType, programCode, name, track,
+      totalDegreeCredits, departmentName);
 
-  /// Create a copy of Program
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ProgramImplCopyWith<_$ProgramImpl> get copyWith =>
@@ -235,18 +208,20 @@ class _$ProgramImpl implements _Program {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ProgramImplToJson(this);
+    return _$$ProgramImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _Program implements Program {
-  const factory _Program({
-    @JsonKey(name: 'program_code') required final String programCode,
-    required final String name,
-    required final String track,
-    @JsonKey(name: 'total_degree_credits') final double totalDegreeCredits,
-    @JsonKey(name: 'department_name') final String? departmentName,
-  }) = _$ProgramImpl;
+  const factory _Program(
+      {@JsonKey(name: 'program_code') required final String programCode,
+      required final String name,
+      required final String track,
+      @JsonKey(name: 'total_degree_credits') final double totalDegreeCredits,
+      @JsonKey(name: 'department_name')
+      final String? departmentName}) = _$ProgramImpl;
 
   factory _Program.fromJson(Map<String, dynamic> json) = _$ProgramImpl.fromJson;
 
@@ -263,11 +238,8 @@ abstract class _Program implements Program {
   @override
   @JsonKey(name: 'department_name')
   String? get departmentName;
-
-  /// Create a copy of Program
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ProgramImplCopyWith<_$ProgramImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

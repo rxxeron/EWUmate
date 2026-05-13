@@ -36,8 +36,7 @@ _$CourseSectionImpl _$$CourseSectionImplFromJson(Map<String, dynamic> json) =>
       capacity: json['capacity'] as String? ?? '',
       credits: json['credits'] as String? ?? '3.0',
       semester: json['semester'] as String? ?? '',
-      sessions:
-          (json['sessions'] as List<dynamic>?)
+      sessions: (json['sessions'] as List<dynamic>?)
               ?.map((e) => CourseSession.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

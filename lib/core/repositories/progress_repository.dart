@@ -61,9 +61,19 @@ class ProgressRepository {
       data.remove('id');
     }
 
-    await _supabase
-        .from('semester_course_marks')
-        .upsert(data, onConflict: 'user_id,semester_code,course_code');
+    try {
+      await _supabase
+          .from('semester_course_marks')
+          .upsert(data, onConflict: 'user_id,semester_code,course_code');
+    } catch (e) {
+      if (kDebugMode) debugPrint('[ProgressRepo] Offline detected. Enqueuing update: $e');
+      // ENQUEUE FOR SYNC
+      await _cache.enqueueMutation(marks.userId, {
+        'type': 'progress_update',
+        'data': data,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
 
     // Update Cache to prevent "All data gone" flicker
     final cacheKey = 'marks_${marks.userId}_${marks.semesterCode}';
@@ -78,7 +88,8 @@ class ProgressRepository {
       list.add(data);
     }
     _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
-    // Trigger background credit recalculation
+    
+    // Trigger background credit recalculation (only if online)
     _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
   }
 

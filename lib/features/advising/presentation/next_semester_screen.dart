@@ -811,13 +811,28 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                             ),
                                           ],
                                         ),
-                                        trailing: Icon(
-                                          isAnySelected
-                                              ? Icons.check_circle
-                                              : Icons.add_circle_outline,
-                                          color: isAnySelected
-                                              ? Colors.cyan
-                                              : Colors.white24,
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (_activeTab == 1) // Selected Tab
+                                              IconButton(
+                                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    _selectedCourses.removeWhere((c) => c['code'] == course.code);
+                                                    _selectedSections.removeWhere((_, v) => v.code == course.code);
+                                                  });
+                                                },
+                                              ),
+                                            Icon(
+                                              isAnySelected
+                                                  ? Icons.check_circle
+                                                  : Icons.add_circle_outline,
+                                              color: isAnySelected
+                                                  ? Colors.cyan
+                                                  : Colors.white24,
+                                            ),
+                                          ],
                                         ),
                                         children: [
                                           const Divider(
@@ -969,34 +984,30 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (_selectedCourses.isNotEmpty)
                         Row(
                           children: [
                             Text(
-                              ' Courses Selected',
+                              _selectedCourses.isEmpty 
+                                ? 'No Courses Selected'
+                                : '${_selectedCourses.length} Courses Selected',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const Spacer(),
-                            TextButton(
-                              onPressed: () =>
-                                  setState(() => _selectedCourses.clear()),
-                              child: const Text(
-                                'Clear All',
-                                style: TextStyle(color: Colors.redAccent),
+                            if (_selectedCourses.isNotEmpty)
+                              TextButton(
+                                onPressed: () =>
+                                    setState(() => _selectedCourses.clear()),
+                                child: const Text(
+                                  'Clear All',
+                                  style: TextStyle(color: Colors.redAccent),
+                                ),
                               ),
-                            ),
                           ],
                         ),
-                      if (_selectedCourses.isEmpty)
-                        const Text(
-                          'No courses selected yet.',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                      const SizedBox(height: 12),
-                      if (_selectedCourses.isNotEmpty)
+                      if (_isManualMode || _selectedCourses.isNotEmpty)
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton(
@@ -1014,9 +1025,11 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                 ? const CircularProgressIndicator(
                                     color: Colors.black,
                                   )
-                                : const Text(
-                                    'Confirm & Save Strategy',
-                                    style: TextStyle(
+                                : Text(
+                                    _selectedCourses.isEmpty 
+                                      ? 'Clear & Save Empty Strategy'
+                                      : 'Confirm & Save Strategy',
+                                    style: const TextStyle(
                                       color: Colors.black,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,

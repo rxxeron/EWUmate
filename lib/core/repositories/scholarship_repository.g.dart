@@ -13,19 +13,17 @@ String _$scholarshipRepositoryHash() =>
 @ProviderFor(scholarshipRepository)
 final scholarshipRepositoryProvider =
     AutoDisposeProvider<ScholarshipRepository>.internal(
-      scholarshipRepository,
-      name: r'scholarshipRepositoryProvider',
-      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-          ? null
-          : _$scholarshipRepositoryHash,
-      dependencies: null,
-      allTransitiveDependencies: null,
-    );
+  scholarshipRepository,
+  name: r'scholarshipRepositoryProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$scholarshipRepositoryHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef ScholarshipRepositoryRef =
-    AutoDisposeProviderRef<ScholarshipRepository>;
+typedef ScholarshipRepositoryRef
+    = AutoDisposeProviderRef<ScholarshipRepository>;
 String _$scholarshipPolicyHash() => r'351afecc1a62d636233a3c27ad663a727866e7f2';
 
 /// Copied from Dart SDK
@@ -59,7 +57,10 @@ class ScholarshipPolicyFamily extends Family<AsyncValue<ScholarshipRule?>> {
   const ScholarshipPolicyFamily();
 
   /// See also [scholarshipPolicy].
-  ScholarshipPolicyProvider call(String programId, {String? admittedSemester}) {
+  ScholarshipPolicyProvider call(
+    String programId, {
+    String? admittedSemester,
+  }) {
     return ScholarshipPolicyProvider(
       programId,
       admittedSemester: admittedSemester,
@@ -95,24 +96,27 @@ class ScholarshipPolicyFamily extends Family<AsyncValue<ScholarshipRule?>> {
 class ScholarshipPolicyProvider
     extends AutoDisposeFutureProvider<ScholarshipRule?> {
   /// See also [scholarshipPolicy].
-  ScholarshipPolicyProvider(String programId, {String? admittedSemester})
-    : this._internal(
-        (ref) => scholarshipPolicy(
-          ref as ScholarshipPolicyRef,
-          programId,
+  ScholarshipPolicyProvider(
+    String programId, {
+    String? admittedSemester,
+  }) : this._internal(
+          (ref) => scholarshipPolicy(
+            ref as ScholarshipPolicyRef,
+            programId,
+            admittedSemester: admittedSemester,
+          ),
+          from: scholarshipPolicyProvider,
+          name: r'scholarshipPolicyProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$scholarshipPolicyHash,
+          dependencies: ScholarshipPolicyFamily._dependencies,
+          allTransitiveDependencies:
+              ScholarshipPolicyFamily._allTransitiveDependencies,
+          programId: programId,
           admittedSemester: admittedSemester,
-        ),
-        from: scholarshipPolicyProvider,
-        name: r'scholarshipPolicyProvider',
-        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-            ? null
-            : _$scholarshipPolicyHash,
-        dependencies: ScholarshipPolicyFamily._dependencies,
-        allTransitiveDependencies:
-            ScholarshipPolicyFamily._allTransitiveDependencies,
-        programId: programId,
-        admittedSemester: admittedSemester,
-      );
+        );
 
   ScholarshipPolicyProvider._internal(
     super._createNotifier, {
@@ -169,8 +173,6 @@ class ScholarshipPolicyProvider
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
 mixin ScholarshipPolicyRef on AutoDisposeFutureProviderRef<ScholarshipRule?> {
   /// The parameter `programId` of this provider.
   String get programId;
@@ -190,6 +192,5 @@ class _ScholarshipPolicyProviderElement
   String? get admittedSemester =>
       (origin as ScholarshipPolicyProvider).admittedSemester;
 }
-
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

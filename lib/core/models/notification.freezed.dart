@@ -12,8 +12,7 @@ part of 'notification.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 Notification _$NotificationFromJson(Map<String, dynamic> json) {
   return _Notification.fromJson(json);
@@ -39,12 +38,8 @@ mixin _$Notification {
   @JsonKey(name: 'created_at')
   DateTime? get createdAt => throw _privateConstructorUsedError;
 
-  /// Serializes this Notification to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $NotificationCopyWith<Notification> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -52,23 +47,21 @@ mixin _$Notification {
 /// @nodoc
 abstract class $NotificationCopyWith<$Res> {
   factory $NotificationCopyWith(
-    Notification value,
-    $Res Function(Notification) then,
-  ) = _$NotificationCopyWithImpl<$Res, Notification>;
+          Notification value, $Res Function(Notification) then) =
+      _$NotificationCopyWithImpl<$Res, Notification>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String type,
-    String title,
-    String body,
-    @JsonKey(name: 'trigger_at') DateTime? triggerAt,
-    @JsonKey(name: 'is_dispatched') bool isDispatched,
-    @JsonKey(name: 'is_read') bool isRead,
-    Map<String, dynamic>? payload,
-    @JsonKey(name: 'alert_key') String? alertKey,
-    @JsonKey(name: 'created_at') DateTime? createdAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String type,
+      String title,
+      String body,
+      @JsonKey(name: 'trigger_at') DateTime? triggerAt,
+      @JsonKey(name: 'is_dispatched') bool isDispatched,
+      @JsonKey(name: 'is_read') bool isRead,
+      Map<String, dynamic>? payload,
+      @JsonKey(name: 'alert_key') String? alertKey,
+      @JsonKey(name: 'created_at') DateTime? createdAt});
 }
 
 /// @nodoc
@@ -81,8 +74,6 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -98,55 +89,52 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
     Object? alertKey = freezed,
     Object? createdAt = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            type: null == type
-                ? _value.type
-                : type // ignore: cast_nullable_to_non_nullable
-                      as String,
-            title: null == title
-                ? _value.title
-                : title // ignore: cast_nullable_to_non_nullable
-                      as String,
-            body: null == body
-                ? _value.body
-                : body // ignore: cast_nullable_to_non_nullable
-                      as String,
-            triggerAt: freezed == triggerAt
-                ? _value.triggerAt
-                : triggerAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            isDispatched: null == isDispatched
-                ? _value.isDispatched
-                : isDispatched // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            isRead: null == isRead
-                ? _value.isRead
-                : isRead // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            payload: freezed == payload
-                ? _value.payload
-                : payload // ignore: cast_nullable_to_non_nullable
-                      as Map<String, dynamic>?,
-            alertKey: freezed == alertKey
-                ? _value.alertKey
-                : alertKey // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            createdAt: freezed == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      body: null == body
+          ? _value.body
+          : body // ignore: cast_nullable_to_non_nullable
+              as String,
+      triggerAt: freezed == triggerAt
+          ? _value.triggerAt
+          : triggerAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      isDispatched: null == isDispatched
+          ? _value.isDispatched
+          : isDispatched // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isRead: null == isRead
+          ? _value.isRead
+          : isRead // ignore: cast_nullable_to_non_nullable
+              as bool,
+      payload: freezed == payload
+          ? _value.payload
+          : payload // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      alertKey: freezed == alertKey
+          ? _value.alertKey
+          : alertKey // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
@@ -154,24 +142,22 @@ class _$NotificationCopyWithImpl<$Res, $Val extends Notification>
 abstract class _$$NotificationImplCopyWith<$Res>
     implements $NotificationCopyWith<$Res> {
   factory _$$NotificationImplCopyWith(
-    _$NotificationImpl value,
-    $Res Function(_$NotificationImpl) then,
-  ) = __$$NotificationImplCopyWithImpl<$Res>;
+          _$NotificationImpl value, $Res Function(_$NotificationImpl) then) =
+      __$$NotificationImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String type,
-    String title,
-    String body,
-    @JsonKey(name: 'trigger_at') DateTime? triggerAt,
-    @JsonKey(name: 'is_dispatched') bool isDispatched,
-    @JsonKey(name: 'is_read') bool isRead,
-    Map<String, dynamic>? payload,
-    @JsonKey(name: 'alert_key') String? alertKey,
-    @JsonKey(name: 'created_at') DateTime? createdAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String type,
+      String title,
+      String body,
+      @JsonKey(name: 'trigger_at') DateTime? triggerAt,
+      @JsonKey(name: 'is_dispatched') bool isDispatched,
+      @JsonKey(name: 'is_read') bool isRead,
+      Map<String, dynamic>? payload,
+      @JsonKey(name: 'alert_key') String? alertKey,
+      @JsonKey(name: 'created_at') DateTime? createdAt});
 }
 
 /// @nodoc
@@ -179,12 +165,9 @@ class __$$NotificationImplCopyWithImpl<$Res>
     extends _$NotificationCopyWithImpl<$Res, _$NotificationImpl>
     implements _$$NotificationImplCopyWith<$Res> {
   __$$NotificationImplCopyWithImpl(
-    _$NotificationImpl _value,
-    $Res Function(_$NotificationImpl) _then,
-  ) : super(_value, _then);
+      _$NotificationImpl _value, $Res Function(_$NotificationImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -200,73 +183,71 @@ class __$$NotificationImplCopyWithImpl<$Res>
     Object? alertKey = freezed,
     Object? createdAt = freezed,
   }) {
-    return _then(
-      _$NotificationImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        type: null == type
-            ? _value.type
-            : type // ignore: cast_nullable_to_non_nullable
-                  as String,
-        title: null == title
-            ? _value.title
-            : title // ignore: cast_nullable_to_non_nullable
-                  as String,
-        body: null == body
-            ? _value.body
-            : body // ignore: cast_nullable_to_non_nullable
-                  as String,
-        triggerAt: freezed == triggerAt
-            ? _value.triggerAt
-            : triggerAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        isDispatched: null == isDispatched
-            ? _value.isDispatched
-            : isDispatched // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        isRead: null == isRead
-            ? _value.isRead
-            : isRead // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        payload: freezed == payload
-            ? _value._payload
-            : payload // ignore: cast_nullable_to_non_nullable
-                  as Map<String, dynamic>?,
-        alertKey: freezed == alertKey
-            ? _value.alertKey
-            : alertKey // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        createdAt: freezed == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$NotificationImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as String,
+      title: null == title
+          ? _value.title
+          : title // ignore: cast_nullable_to_non_nullable
+              as String,
+      body: null == body
+          ? _value.body
+          : body // ignore: cast_nullable_to_non_nullable
+              as String,
+      triggerAt: freezed == triggerAt
+          ? _value.triggerAt
+          : triggerAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      isDispatched: null == isDispatched
+          ? _value.isDispatched
+          : isDispatched // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isRead: null == isRead
+          ? _value.isRead
+          : isRead // ignore: cast_nullable_to_non_nullable
+              as bool,
+      payload: freezed == payload
+          ? _value._payload
+          : payload // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      alertKey: freezed == alertKey
+          ? _value.alertKey
+          : alertKey // ignore: cast_nullable_to_non_nullable
+              as String?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$NotificationImpl implements _Notification {
-  const _$NotificationImpl({
-    required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
-    this.type = 'system',
-    required this.title,
-    required this.body,
-    @JsonKey(name: 'trigger_at') this.triggerAt,
-    @JsonKey(name: 'is_dispatched') this.isDispatched = true,
-    @JsonKey(name: 'is_read') this.isRead = false,
-    final Map<String, dynamic>? payload,
-    @JsonKey(name: 'alert_key') this.alertKey,
-    @JsonKey(name: 'created_at') this.createdAt,
-  }) : _payload = payload;
+  const _$NotificationImpl(
+      {required this.id,
+      @JsonKey(name: 'user_id') required this.userId,
+      this.type = 'system',
+      required this.title,
+      required this.body,
+      @JsonKey(name: 'trigger_at') this.triggerAt,
+      @JsonKey(name: 'is_dispatched') this.isDispatched = true,
+      @JsonKey(name: 'is_read') this.isRead = false,
+      final Map<String, dynamic>? payload,
+      @JsonKey(name: 'alert_key') this.alertKey,
+      @JsonKey(name: 'created_at') this.createdAt})
+      : _payload = payload;
 
   factory _$NotificationImpl.fromJson(Map<String, dynamic> json) =>
       _$$NotificationImplFromJson(json);
@@ -336,26 +317,23 @@ class _$NotificationImpl implements _Notification {
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    type,
-    title,
-    body,
-    triggerAt,
-    isDispatched,
-    isRead,
-    const DeepCollectionEquality().hash(_payload),
-    alertKey,
-    createdAt,
-  );
+      runtimeType,
+      id,
+      userId,
+      type,
+      title,
+      body,
+      triggerAt,
+      isDispatched,
+      isRead,
+      const DeepCollectionEquality().hash(_payload),
+      alertKey,
+      createdAt);
 
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
@@ -363,24 +341,26 @@ class _$NotificationImpl implements _Notification {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$NotificationImplToJson(this);
+    return _$$NotificationImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _Notification implements Notification {
-  const factory _Notification({
-    required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
-    final String type,
-    required final String title,
-    required final String body,
-    @JsonKey(name: 'trigger_at') final DateTime? triggerAt,
-    @JsonKey(name: 'is_dispatched') final bool isDispatched,
-    @JsonKey(name: 'is_read') final bool isRead,
-    final Map<String, dynamic>? payload,
-    @JsonKey(name: 'alert_key') final String? alertKey,
-    @JsonKey(name: 'created_at') final DateTime? createdAt,
-  }) = _$NotificationImpl;
+  const factory _Notification(
+          {required final String id,
+          @JsonKey(name: 'user_id') required final String userId,
+          final String type,
+          required final String title,
+          required final String body,
+          @JsonKey(name: 'trigger_at') final DateTime? triggerAt,
+          @JsonKey(name: 'is_dispatched') final bool isDispatched,
+          @JsonKey(name: 'is_read') final bool isRead,
+          final Map<String, dynamic>? payload,
+          @JsonKey(name: 'alert_key') final String? alertKey,
+          @JsonKey(name: 'created_at') final DateTime? createdAt}) =
+      _$NotificationImpl;
 
   factory _Notification.fromJson(Map<String, dynamic> json) =
       _$NotificationImpl.fromJson;
@@ -413,11 +393,8 @@ abstract class _Notification implements Notification {
   @override
   @JsonKey(name: 'created_at')
   DateTime? get createdAt;
-
-  /// Create a copy of Notification
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$NotificationImplCopyWith<_$NotificationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

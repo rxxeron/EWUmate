@@ -12,8 +12,7 @@ part of 'semester_course_stats.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 SemesterCourseStats _$SemesterCourseStatsFromJson(Map<String, dynamic> json) {
   return _SemesterCourseStats.fromJson(json);
@@ -36,12 +35,8 @@ mixin _$SemesterCourseStats {
   @JsonKey(name: 'last_updated')
   DateTime? get lastUpdated => throw _privateConstructorUsedError;
 
-  /// Serializes this SemesterCourseStats to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SemesterCourseStats
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SemesterCourseStatsCopyWith<SemesterCourseStats> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -49,20 +44,18 @@ mixin _$SemesterCourseStats {
 /// @nodoc
 abstract class $SemesterCourseStatsCopyWith<$Res> {
   factory $SemesterCourseStatsCopyWith(
-    SemesterCourseStats value,
-    $Res Function(SemesterCourseStats) then,
-  ) = _$SemesterCourseStatsCopyWithImpl<$Res, SemesterCourseStats>;
+          SemesterCourseStats value, $Res Function(SemesterCourseStats) then) =
+      _$SemesterCourseStatsCopyWithImpl<$Res, SemesterCourseStats>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String semester,
-    @JsonKey(name: 'course_code') String courseCode,
-    @JsonKey(name: 'marks_obtained') double? marksObtained,
-    @JsonKey(name: 'total_possible') double totalPossible,
-    @JsonKey(name: 'grade_goal') String? gradeGoal,
-    @JsonKey(name: 'last_updated') DateTime? lastUpdated,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String semester,
+      @JsonKey(name: 'course_code') String courseCode,
+      @JsonKey(name: 'marks_obtained') double? marksObtained,
+      @JsonKey(name: 'total_possible') double totalPossible,
+      @JsonKey(name: 'grade_goal') String? gradeGoal,
+      @JsonKey(name: 'last_updated') DateTime? lastUpdated});
 }
 
 /// @nodoc
@@ -75,8 +68,6 @@ class _$SemesterCourseStatsCopyWithImpl<$Res, $Val extends SemesterCourseStats>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SemesterCourseStats
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -89,78 +80,70 @@ class _$SemesterCourseStatsCopyWithImpl<$Res, $Val extends SemesterCourseStats>
     Object? gradeGoal = freezed,
     Object? lastUpdated = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            semester: null == semester
-                ? _value.semester
-                : semester // ignore: cast_nullable_to_non_nullable
-                      as String,
-            courseCode: null == courseCode
-                ? _value.courseCode
-                : courseCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            marksObtained: freezed == marksObtained
-                ? _value.marksObtained
-                : marksObtained // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            totalPossible: null == totalPossible
-                ? _value.totalPossible
-                : totalPossible // ignore: cast_nullable_to_non_nullable
-                      as double,
-            gradeGoal: freezed == gradeGoal
-                ? _value.gradeGoal
-                : gradeGoal // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            lastUpdated: freezed == lastUpdated
-                ? _value.lastUpdated
-                : lastUpdated // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _value.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseCode: null == courseCode
+          ? _value.courseCode
+          : courseCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      marksObtained: freezed == marksObtained
+          ? _value.marksObtained
+          : marksObtained // ignore: cast_nullable_to_non_nullable
+              as double?,
+      totalPossible: null == totalPossible
+          ? _value.totalPossible
+          : totalPossible // ignore: cast_nullable_to_non_nullable
+              as double,
+      gradeGoal: freezed == gradeGoal
+          ? _value.gradeGoal
+          : gradeGoal // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastUpdated: freezed == lastUpdated
+          ? _value.lastUpdated
+          : lastUpdated // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$SemesterCourseStatsImplCopyWith<$Res>
     implements $SemesterCourseStatsCopyWith<$Res> {
-  factory _$$SemesterCourseStatsImplCopyWith(
-    _$SemesterCourseStatsImpl value,
-    $Res Function(_$SemesterCourseStatsImpl) then,
-  ) = __$$SemesterCourseStatsImplCopyWithImpl<$Res>;
+  factory _$$SemesterCourseStatsImplCopyWith(_$SemesterCourseStatsImpl value,
+          $Res Function(_$SemesterCourseStatsImpl) then) =
+      __$$SemesterCourseStatsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    String semester,
-    @JsonKey(name: 'course_code') String courseCode,
-    @JsonKey(name: 'marks_obtained') double? marksObtained,
-    @JsonKey(name: 'total_possible') double totalPossible,
-    @JsonKey(name: 'grade_goal') String? gradeGoal,
-    @JsonKey(name: 'last_updated') DateTime? lastUpdated,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      String semester,
+      @JsonKey(name: 'course_code') String courseCode,
+      @JsonKey(name: 'marks_obtained') double? marksObtained,
+      @JsonKey(name: 'total_possible') double totalPossible,
+      @JsonKey(name: 'grade_goal') String? gradeGoal,
+      @JsonKey(name: 'last_updated') DateTime? lastUpdated});
 }
 
 /// @nodoc
 class __$$SemesterCourseStatsImplCopyWithImpl<$Res>
     extends _$SemesterCourseStatsCopyWithImpl<$Res, _$SemesterCourseStatsImpl>
     implements _$$SemesterCourseStatsImplCopyWith<$Res> {
-  __$$SemesterCourseStatsImplCopyWithImpl(
-    _$SemesterCourseStatsImpl _value,
-    $Res Function(_$SemesterCourseStatsImpl) _then,
-  ) : super(_value, _then);
+  __$$SemesterCourseStatsImplCopyWithImpl(_$SemesterCourseStatsImpl _value,
+      $Res Function(_$SemesterCourseStatsImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of SemesterCourseStats
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -173,58 +156,55 @@ class __$$SemesterCourseStatsImplCopyWithImpl<$Res>
     Object? gradeGoal = freezed,
     Object? lastUpdated = freezed,
   }) {
-    return _then(
-      _$SemesterCourseStatsImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        semester: null == semester
-            ? _value.semester
-            : semester // ignore: cast_nullable_to_non_nullable
-                  as String,
-        courseCode: null == courseCode
-            ? _value.courseCode
-            : courseCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        marksObtained: freezed == marksObtained
-            ? _value.marksObtained
-            : marksObtained // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        totalPossible: null == totalPossible
-            ? _value.totalPossible
-            : totalPossible // ignore: cast_nullable_to_non_nullable
-                  as double,
-        gradeGoal: freezed == gradeGoal
-            ? _value.gradeGoal
-            : gradeGoal // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        lastUpdated: freezed == lastUpdated
-            ? _value.lastUpdated
-            : lastUpdated // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$SemesterCourseStatsImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _value.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseCode: null == courseCode
+          ? _value.courseCode
+          : courseCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      marksObtained: freezed == marksObtained
+          ? _value.marksObtained
+          : marksObtained // ignore: cast_nullable_to_non_nullable
+              as double?,
+      totalPossible: null == totalPossible
+          ? _value.totalPossible
+          : totalPossible // ignore: cast_nullable_to_non_nullable
+              as double,
+      gradeGoal: freezed == gradeGoal
+          ? _value.gradeGoal
+          : gradeGoal // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastUpdated: freezed == lastUpdated
+          ? _value.lastUpdated
+          : lastUpdated // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$SemesterCourseStatsImpl implements _SemesterCourseStats {
-  const _$SemesterCourseStatsImpl({
-    required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
-    required this.semester,
-    @JsonKey(name: 'course_code') required this.courseCode,
-    @JsonKey(name: 'marks_obtained') this.marksObtained,
-    @JsonKey(name: 'total_possible') this.totalPossible = 100.0,
-    @JsonKey(name: 'grade_goal') this.gradeGoal,
-    @JsonKey(name: 'last_updated') this.lastUpdated,
-  });
+  const _$SemesterCourseStatsImpl(
+      {required this.id,
+      @JsonKey(name: 'user_id') required this.userId,
+      required this.semester,
+      @JsonKey(name: 'course_code') required this.courseCode,
+      @JsonKey(name: 'marks_obtained') this.marksObtained,
+      @JsonKey(name: 'total_possible') this.totalPossible = 100.0,
+      @JsonKey(name: 'grade_goal') this.gradeGoal,
+      @JsonKey(name: 'last_updated') this.lastUpdated});
 
   factory _$SemesterCourseStatsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SemesterCourseStatsImplFromJson(json);
@@ -278,48 +258,37 @@ class _$SemesterCourseStatsImpl implements _SemesterCourseStats {
                 other.lastUpdated == lastUpdated));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    semester,
-    courseCode,
-    marksObtained,
-    totalPossible,
-    gradeGoal,
-    lastUpdated,
-  );
+  int get hashCode => Object.hash(runtimeType, id, userId, semester, courseCode,
+      marksObtained, totalPossible, gradeGoal, lastUpdated);
 
-  /// Create a copy of SemesterCourseStats
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SemesterCourseStatsImplCopyWith<_$SemesterCourseStatsImpl> get copyWith =>
       __$$SemesterCourseStatsImplCopyWithImpl<_$SemesterCourseStatsImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SemesterCourseStatsImplToJson(this);
+    return _$$SemesterCourseStatsImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _SemesterCourseStats implements SemesterCourseStats {
-  const factory _SemesterCourseStats({
-    required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
-    required final String semester,
-    @JsonKey(name: 'course_code') required final String courseCode,
-    @JsonKey(name: 'marks_obtained') final double? marksObtained,
-    @JsonKey(name: 'total_possible') final double totalPossible,
-    @JsonKey(name: 'grade_goal') final String? gradeGoal,
-    @JsonKey(name: 'last_updated') final DateTime? lastUpdated,
-  }) = _$SemesterCourseStatsImpl;
+  const factory _SemesterCourseStats(
+          {required final String id,
+          @JsonKey(name: 'user_id') required final String userId,
+          required final String semester,
+          @JsonKey(name: 'course_code') required final String courseCode,
+          @JsonKey(name: 'marks_obtained') final double? marksObtained,
+          @JsonKey(name: 'total_possible') final double totalPossible,
+          @JsonKey(name: 'grade_goal') final String? gradeGoal,
+          @JsonKey(name: 'last_updated') final DateTime? lastUpdated}) =
+      _$SemesterCourseStatsImpl;
 
   factory _SemesterCourseStats.fromJson(Map<String, dynamic> json) =
       _$SemesterCourseStatsImpl.fromJson;
@@ -346,11 +315,8 @@ abstract class _SemesterCourseStats implements SemesterCourseStats {
   @override
   @JsonKey(name: 'last_updated')
   DateTime? get lastUpdated;
-
-  /// Create a copy of SemesterCourseStats
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SemesterCourseStatsImplCopyWith<_$SemesterCourseStatsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

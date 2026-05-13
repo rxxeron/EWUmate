@@ -12,8 +12,7 @@ part of 'semester_analytics.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 SemesterAnalytics _$SemesterAnalyticsFromJson(Map<String, dynamic> json) {
   return _SemesterAnalytics.fromJson(json);
@@ -44,12 +43,8 @@ mixin _$SemesterAnalytics {
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
 
-  /// Serializes this SemesterAnalytics to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of SemesterAnalytics
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SemesterAnalyticsCopyWith<SemesterAnalytics> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -57,24 +52,22 @@ mixin _$SemesterAnalytics {
 /// @nodoc
 abstract class $SemesterAnalyticsCopyWith<$Res> {
   factory $SemesterAnalyticsCopyWith(
-    SemesterAnalytics value,
-    $Res Function(SemesterAnalytics) then,
-  ) = _$SemesterAnalyticsCopyWithImpl<$Res, SemesterAnalytics>;
+          SemesterAnalytics value, $Res Function(SemesterAnalytics) then) =
+      _$SemesterAnalyticsCopyWithImpl<$Res, SemesterAnalytics>;
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    @JsonKey(name: 'live_sgpa') double? liveSgpa,
-    @JsonKey(name: 'live_cgpa') double? liveCgpa,
-    double? target,
-    @JsonKey(name: 'required_credit') double? requiredCredit,
-    @JsonKey(name: 'completed_credit') double? completedCredit,
-    @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
-    @JsonKey(name: 'credits_left') double? creditsLeft,
-    @JsonKey(name: 'created_at') DateTime? createdAt,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      @JsonKey(name: 'live_sgpa') double? liveSgpa,
+      @JsonKey(name: 'live_cgpa') double? liveCgpa,
+      double? target,
+      @JsonKey(name: 'required_credit') double? requiredCredit,
+      @JsonKey(name: 'completed_credit') double? completedCredit,
+      @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+      @JsonKey(name: 'credits_left') double? creditsLeft,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
@@ -87,8 +80,6 @@ class _$SemesterAnalyticsCopyWithImpl<$Res, $Val extends SemesterAnalytics>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SemesterAnalytics
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -105,98 +96,90 @@ class _$SemesterAnalyticsCopyWithImpl<$Res, $Val extends SemesterAnalytics>
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            semesterCode: null == semesterCode
-                ? _value.semesterCode
-                : semesterCode // ignore: cast_nullable_to_non_nullable
-                      as String,
-            liveSgpa: freezed == liveSgpa
-                ? _value.liveSgpa
-                : liveSgpa // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            liveCgpa: freezed == liveCgpa
-                ? _value.liveCgpa
-                : liveCgpa // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            target: freezed == target
-                ? _value.target
-                : target // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            requiredCredit: freezed == requiredCredit
-                ? _value.requiredCredit
-                : requiredCredit // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            completedCredit: freezed == completedCredit
-                ? _value.completedCredit
-                : completedCredit // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            takenInThisSem: freezed == takenInThisSem
-                ? _value.takenInThisSem
-                : takenInThisSem // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            creditsLeft: freezed == creditsLeft
-                ? _value.creditsLeft
-                : creditsLeft // ignore: cast_nullable_to_non_nullable
-                      as double?,
-            createdAt: freezed == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-            updatedAt: freezed == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime?,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      liveSgpa: freezed == liveSgpa
+          ? _value.liveSgpa
+          : liveSgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      liveCgpa: freezed == liveCgpa
+          ? _value.liveCgpa
+          : liveCgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      target: freezed == target
+          ? _value.target
+          : target // ignore: cast_nullable_to_non_nullable
+              as double?,
+      requiredCredit: freezed == requiredCredit
+          ? _value.requiredCredit
+          : requiredCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      completedCredit: freezed == completedCredit
+          ? _value.completedCredit
+          : completedCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      takenInThisSem: freezed == takenInThisSem
+          ? _value.takenInThisSem
+          : takenInThisSem // ignore: cast_nullable_to_non_nullable
+              as double?,
+      creditsLeft: freezed == creditsLeft
+          ? _value.creditsLeft
+          : creditsLeft // ignore: cast_nullable_to_non_nullable
+              as double?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$SemesterAnalyticsImplCopyWith<$Res>
     implements $SemesterAnalyticsCopyWith<$Res> {
-  factory _$$SemesterAnalyticsImplCopyWith(
-    _$SemesterAnalyticsImpl value,
-    $Res Function(_$SemesterAnalyticsImpl) then,
-  ) = __$$SemesterAnalyticsImplCopyWithImpl<$Res>;
+  factory _$$SemesterAnalyticsImplCopyWith(_$SemesterAnalyticsImpl value,
+          $Res Function(_$SemesterAnalyticsImpl) then) =
+      __$$SemesterAnalyticsImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    @JsonKey(name: 'user_id') String userId,
-    @JsonKey(name: 'semester_code') String semesterCode,
-    @JsonKey(name: 'live_sgpa') double? liveSgpa,
-    @JsonKey(name: 'live_cgpa') double? liveCgpa,
-    double? target,
-    @JsonKey(name: 'required_credit') double? requiredCredit,
-    @JsonKey(name: 'completed_credit') double? completedCredit,
-    @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
-    @JsonKey(name: 'credits_left') double? creditsLeft,
-    @JsonKey(name: 'created_at') DateTime? createdAt,
-    @JsonKey(name: 'updated_at') DateTime? updatedAt,
-  });
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      @JsonKey(name: 'live_sgpa') double? liveSgpa,
+      @JsonKey(name: 'live_cgpa') double? liveCgpa,
+      double? target,
+      @JsonKey(name: 'required_credit') double? requiredCredit,
+      @JsonKey(name: 'completed_credit') double? completedCredit,
+      @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+      @JsonKey(name: 'credits_left') double? creditsLeft,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
 
 /// @nodoc
 class __$$SemesterAnalyticsImplCopyWithImpl<$Res>
     extends _$SemesterAnalyticsCopyWithImpl<$Res, _$SemesterAnalyticsImpl>
     implements _$$SemesterAnalyticsImplCopyWith<$Res> {
-  __$$SemesterAnalyticsImplCopyWithImpl(
-    _$SemesterAnalyticsImpl _value,
-    $Res Function(_$SemesterAnalyticsImpl) _then,
-  ) : super(_value, _then);
+  __$$SemesterAnalyticsImplCopyWithImpl(_$SemesterAnalyticsImpl _value,
+      $Res Function(_$SemesterAnalyticsImpl) _then)
+      : super(_value, _then);
 
-  /// Create a copy of SemesterAnalytics
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -213,78 +196,75 @@ class __$$SemesterAnalyticsImplCopyWithImpl<$Res>
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(
-      _$SemesterAnalyticsImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        semesterCode: null == semesterCode
-            ? _value.semesterCode
-            : semesterCode // ignore: cast_nullable_to_non_nullable
-                  as String,
-        liveSgpa: freezed == liveSgpa
-            ? _value.liveSgpa
-            : liveSgpa // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        liveCgpa: freezed == liveCgpa
-            ? _value.liveCgpa
-            : liveCgpa // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        target: freezed == target
-            ? _value.target
-            : target // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        requiredCredit: freezed == requiredCredit
-            ? _value.requiredCredit
-            : requiredCredit // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        completedCredit: freezed == completedCredit
-            ? _value.completedCredit
-            : completedCredit // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        takenInThisSem: freezed == takenInThisSem
-            ? _value.takenInThisSem
-            : takenInThisSem // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        creditsLeft: freezed == creditsLeft
-            ? _value.creditsLeft
-            : creditsLeft // ignore: cast_nullable_to_non_nullable
-                  as double?,
-        createdAt: freezed == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-        updatedAt: freezed == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime?,
-      ),
-    );
+    return _then(_$SemesterAnalyticsImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _value.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      liveSgpa: freezed == liveSgpa
+          ? _value.liveSgpa
+          : liveSgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      liveCgpa: freezed == liveCgpa
+          ? _value.liveCgpa
+          : liveCgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      target: freezed == target
+          ? _value.target
+          : target // ignore: cast_nullable_to_non_nullable
+              as double?,
+      requiredCredit: freezed == requiredCredit
+          ? _value.requiredCredit
+          : requiredCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      completedCredit: freezed == completedCredit
+          ? _value.completedCredit
+          : completedCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      takenInThisSem: freezed == takenInThisSem
+          ? _value.takenInThisSem
+          : takenInThisSem // ignore: cast_nullable_to_non_nullable
+              as double?,
+      creditsLeft: freezed == creditsLeft
+          ? _value.creditsLeft
+          : creditsLeft // ignore: cast_nullable_to_non_nullable
+              as double?,
+      createdAt: freezed == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updatedAt: freezed == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
-  const _$SemesterAnalyticsImpl({
-    required this.id,
-    @JsonKey(name: 'user_id') required this.userId,
-    @JsonKey(name: 'semester_code') required this.semesterCode,
-    @JsonKey(name: 'live_sgpa') this.liveSgpa,
-    @JsonKey(name: 'live_cgpa') this.liveCgpa,
-    this.target,
-    @JsonKey(name: 'required_credit') this.requiredCredit,
-    @JsonKey(name: 'completed_credit') this.completedCredit,
-    @JsonKey(name: 'taken_in_this_sem') this.takenInThisSem,
-    @JsonKey(name: 'credits_left') this.creditsLeft,
-    @JsonKey(name: 'created_at') this.createdAt,
-    @JsonKey(name: 'updated_at') this.updatedAt,
-  });
+  const _$SemesterAnalyticsImpl(
+      {required this.id,
+      @JsonKey(name: 'user_id') required this.userId,
+      @JsonKey(name: 'semester_code') required this.semesterCode,
+      @JsonKey(name: 'live_sgpa') this.liveSgpa,
+      @JsonKey(name: 'live_cgpa') this.liveCgpa,
+      this.target,
+      @JsonKey(name: 'required_credit') this.requiredCredit,
+      @JsonKey(name: 'completed_credit') this.completedCredit,
+      @JsonKey(name: 'taken_in_this_sem') this.takenInThisSem,
+      @JsonKey(name: 'credits_left') this.creditsLeft,
+      @JsonKey(name: 'created_at') this.createdAt,
+      @JsonKey(name: 'updated_at') this.updatedAt});
 
   factory _$SemesterAnalyticsImpl.fromJson(Map<String, dynamic> json) =>
       _$$SemesterAnalyticsImplFromJson(json);
@@ -357,56 +337,53 @@ class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    semesterCode,
-    liveSgpa,
-    liveCgpa,
-    target,
-    requiredCredit,
-    completedCredit,
-    takenInThisSem,
-    creditsLeft,
-    createdAt,
-    updatedAt,
-  );
+      runtimeType,
+      id,
+      userId,
+      semesterCode,
+      liveSgpa,
+      liveCgpa,
+      target,
+      requiredCredit,
+      completedCredit,
+      takenInThisSem,
+      creditsLeft,
+      createdAt,
+      updatedAt);
 
-  /// Create a copy of SemesterAnalytics
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SemesterAnalyticsImplCopyWith<_$SemesterAnalyticsImpl> get copyWith =>
       __$$SemesterAnalyticsImplCopyWithImpl<_$SemesterAnalyticsImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$SemesterAnalyticsImplToJson(this);
+    return _$$SemesterAnalyticsImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _SemesterAnalytics implements SemesterAnalytics {
-  const factory _SemesterAnalytics({
-    required final String id,
-    @JsonKey(name: 'user_id') required final String userId,
-    @JsonKey(name: 'semester_code') required final String semesterCode,
-    @JsonKey(name: 'live_sgpa') final double? liveSgpa,
-    @JsonKey(name: 'live_cgpa') final double? liveCgpa,
-    final double? target,
-    @JsonKey(name: 'required_credit') final double? requiredCredit,
-    @JsonKey(name: 'completed_credit') final double? completedCredit,
-    @JsonKey(name: 'taken_in_this_sem') final double? takenInThisSem,
-    @JsonKey(name: 'credits_left') final double? creditsLeft,
-    @JsonKey(name: 'created_at') final DateTime? createdAt,
-    @JsonKey(name: 'updated_at') final DateTime? updatedAt,
-  }) = _$SemesterAnalyticsImpl;
+  const factory _SemesterAnalytics(
+          {required final String id,
+          @JsonKey(name: 'user_id') required final String userId,
+          @JsonKey(name: 'semester_code') required final String semesterCode,
+          @JsonKey(name: 'live_sgpa') final double? liveSgpa,
+          @JsonKey(name: 'live_cgpa') final double? liveCgpa,
+          final double? target,
+          @JsonKey(name: 'required_credit') final double? requiredCredit,
+          @JsonKey(name: 'completed_credit') final double? completedCredit,
+          @JsonKey(name: 'taken_in_this_sem') final double? takenInThisSem,
+          @JsonKey(name: 'credits_left') final double? creditsLeft,
+          @JsonKey(name: 'created_at') final DateTime? createdAt,
+          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
+      _$SemesterAnalyticsImpl;
 
   factory _SemesterAnalytics.fromJson(Map<String, dynamic> json) =
       _$SemesterAnalyticsImpl.fromJson;
@@ -445,11 +422,8 @@ abstract class _SemesterAnalytics implements SemesterAnalytics {
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;
-
-  /// Create a copy of SemesterAnalytics
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SemesterAnalyticsImplCopyWith<_$SemesterAnalyticsImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

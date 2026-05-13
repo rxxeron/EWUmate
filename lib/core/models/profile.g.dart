@@ -23,13 +23,11 @@ _$ProfileImpl _$$ProfileImplFromJson(Map<String, dynamic> json) =>
       scholarshipStatus: json['scholarship_status'] as String?,
       programName: json['program_name'] as String?,
       track: json['track'] as String?,
-      enrolledSections:
-          (json['enrolled_sections'] as List<dynamic>?)
+      enrolledSections: (json['enrolled_sections'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
-      enrolledSectionsNext:
-          (json['enrolled_sections_next'] as List<dynamic>?)
+      enrolledSectionsNext: (json['enrolled_sections_next'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],

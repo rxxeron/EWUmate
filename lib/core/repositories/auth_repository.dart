@@ -33,10 +33,14 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signInWithPassword(
+    final res = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
+    if (res.user != null) {
+      await _cache.saveLastUserId(res.user!.id);
+    }
+    return res;
   }
 
   // Alias for compatibility
@@ -118,6 +122,8 @@ class AuthRepository {
           'onboarding_status': 'registered',
         });
       }
+      // Persistence: Save identity to local cache for Zero-Wait entry
+      await _cache.saveLastUserId(user.id);
     }
 
     return response;

@@ -8,36 +8,53 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 final profileProvider = FutureProvider<Profile?>((ref) async {
   final authRepo = ref.watch(authRepositoryProvider);
   final user = authRepo.currentUser;
+  final cacheService = ref.read(cacheServiceProvider);
 
-  if (user == null) {
-    return null;
+  String? effectiveUserId = user?.id;
+  if (effectiveUserId == null) {
+    // Offline-First: If Supabase hasn't loaded yet, use the last known identity
+    effectiveUserId = cacheService.getLastUserId();
+    if (effectiveUserId == null) return null;
   }
   
+  final userId = effectiveUserId;
+  debugPrint("[ProfileProvider] Fetching profile for: $userId");
+
+  final cachedData = cacheService.getCachedProfile(userId);
+  
+  // Fast Path: If we have cache, serve it immediately but try to refresh in the background
+  if (cachedData != null) {
+    debugPrint("[ProfileProvider] Serving from cache: $userId");
+    // Background refresh with a short timeout
+    authRepo.getProfile(userId).timeout(
+      const Duration(seconds: 5),
+      onTimeout: () => null,
+    ).then((fresh) {
+      if (fresh != null) {
+        cacheService.cacheProfile(userId, fresh.toJson());
+      }
+    }).catchError((_) => null);
+
+    return Profile.fromJson(cachedData);
+  }
+  
+  // COLD START: No cache, must wait for network.
+  debugPrint("[ProfileProvider] Cold start. Waiting for network: $userId");
   try {
-    final profile = await authRepo.getProfile(user.id).timeout(
-      const Duration(seconds: 30),
-      onTimeout: () => throw Exception("Connection timeout while fetching profile."),
+    final profile = await authRepo.getProfile(userId).timeout(
+      const Duration(seconds: 15), // Reduced to 15s to beat the stall timer
+      onTimeout: () {
+        debugPrint("[ProfileProvider] Network Timeout for: $userId");
+        throw Exception("Connection slow. Please try again.");
+      },
     );
     
-    if (profile == null) {
-      if (kDebugMode) print("DEBUG: Profile not found for ${user.id}. Onboarding required.");
-      return null;
+    if (profile != null) {
+      cacheService.cacheProfile(userId, profile.toJson());
     }
-
-    // Update cache
-    ref.read(cacheServiceProvider).cacheProfile(user.id, profile.toJson());
     return profile;
   } catch (e) {
-    if (kDebugMode) debugPrint("DEBUG: Profile fetch error (trying cache): $e");
-    
-    // OFFLINE FALLBACK: Try to load from cache
-    final cachedData = ref.read(cacheServiceProvider).getCachedProfile(user.id);
-    if (cachedData != null) {
-      if (kDebugMode) debugPrint("DEBUG: Successfully loaded profile from cache for offline usage.");
-      return Profile.fromJson(cachedData);
-    }
-    
-    // If no cache and network fails, then we really have an error
+    debugPrint("[ProfileProvider] Fetch error for $userId: $e");
     rethrow;
   }
 });

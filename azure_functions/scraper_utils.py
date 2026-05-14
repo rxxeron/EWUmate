@@ -39,6 +39,9 @@ class EWUAutomationEngine:
             return False
 
 def run_sync(custom_semester=None, is_preview=False):
+    if custom_semester == 'PING':
+        return {"status": "live"}
+
     logging.info('Portal Sync Started.')
     
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -48,10 +51,9 @@ def run_sync(custom_semester=None, is_preview=False):
         logging.error("Scraper Sync failed: Missing Supabase Configuration")
         return {"status": "error", "error": "Missing Supabase Configuration"}
 
-    sb = create_client(SUPABASE_URL, SUPABASE_KEY)
     config_id = None
-    
     try:
+        sb = create_client(SUPABASE_URL, SUPABASE_KEY)
         config_res = sb.table("scraper_config").select("*").execute()
         if not config_res.data:
             return {"status": "error", "error": "No scraper configuration found."}
@@ -60,9 +62,6 @@ def run_sync(custom_semester=None, is_preview=False):
         config_id = config.get("id")
         student_id = config.get("student_id")
         password = config.get("password")
-        
-        if custom_semester == 'PING':
-            return {"status": "live"}
 
         if custom_semester:
             target_semesters = [custom_semester]

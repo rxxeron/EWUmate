@@ -97,8 +97,9 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         logging.exception(f"Error in {action}")
         return func.HttpResponse(
-            json.dumps({"error": str(e)}),
-            status_code=500, mimetype="application/json"
+            json.dumps({"error": str(e), "action": action}),
+            status_code=500, mimetype="application/json",
+            headers={"Access-Control-Allow-Origin": "*"}
         )
 
 
@@ -553,7 +554,13 @@ def handle_sync_api_courses(body: dict) -> dict:
         # Enrichment from master catalog
         master = meta_map.get(clean_code)
         final_name = (master.get("name") if master else "") or c.get("course_name") or ""
-        final_cred = float((master.get("credit_val") if master else None) or c.get("credits") or 3.0)
+        
+        # Safe credit conversion
+        try:
+            raw_cred = (master.get("credit_val") if master else None) or c.get("credits")
+            final_cred = float(raw_cred) if raw_cred not in (None, "", " ") else 3.0
+        except:
+            final_cred = 3.0
 
         mapped_courses.append({
             "course_code":      clean_code,
@@ -580,7 +587,9 @@ def handle_sync_api_courses(body: dict) -> dict:
     existing_courses = []
     for retry in range(6):
         try:
-            time.sleep(1.5)
+            if retry > 0:
+                time.sleep(2.0) # Only sleep on retries
+            
             all_existing = []
             offset = 0
             while True:

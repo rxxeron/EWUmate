@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/profile.dart';
@@ -6,8 +7,8 @@ import '../../core/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final profileProvider = FutureProvider<Profile?>((ref) async {
+  final user = ref.watch(currentUserProvider);
   final authRepo = ref.watch(authRepositoryProvider);
-  final user = authRepo.currentUser;
   final cacheService = ref.read(cacheServiceProvider);
 
   String? effectiveUserId = user?.id;
@@ -18,45 +19,43 @@ final profileProvider = FutureProvider<Profile?>((ref) async {
   }
   
   final userId = effectiveUserId;
-  debugPrint("[ProfileProvider] Fetching profile for: $userId");
+  debugPrint("[ProfileProvider] Online-First Strategy for: $userId");
 
-  final cachedData = cacheService.getCachedProfile(userId);
-  
-  // Fast Path: If we have cache, serve it immediately but try to refresh in the background
-  if (cachedData != null) {
-    debugPrint("[ProfileProvider] Serving from cache: $userId");
-    // Background refresh with a short timeout
-    authRepo.getProfile(userId).timeout(
-      const Duration(seconds: 5),
-      onTimeout: () => null,
-    ).then((fresh) {
-      if (fresh != null) {
-        cacheService.cacheProfile(userId, fresh.toJson());
-      }
-    }).catchError((_) => null);
-
-    return Profile.fromJson(cachedData);
-  }
-  
-  // COLD START: No cache, must wait for network.
-  debugPrint("[ProfileProvider] Cold start. Waiting for network: $userId");
   try {
-    final profile = await authRepo.getProfile(userId).timeout(
-      const Duration(seconds: 15), // Reduced to 15s to beat the stall timer
+    // 1. ATTEMPT LIVE FETCH (Source of Truth)
+    final liveProfile = await authRepo.getProfile(userId).timeout(
+      const Duration(seconds: 10),
       onTimeout: () {
-        debugPrint("[ProfileProvider] Network Timeout for: $userId");
-        throw Exception("Connection slow. Please try again.");
+        debugPrint("[ProfileProvider] Network Timeout (10s) for: $userId. Falling back to cache.");
+        throw TimeoutException("Network timeout");
       },
     );
-    
-    if (profile != null) {
-      cacheService.cacheProfile(userId, profile.toJson());
+
+    if (liveProfile != null) {
+      debugPrint("[ProfileProvider] Live Fetch SUCCESS for: $userId");
+      cacheService.cacheProfile(userId, liveProfile.toJson());
+      return liveProfile;
     }
-    return profile;
   } catch (e) {
-    debugPrint("[ProfileProvider] Fetch error for $userId: $e");
+    debugPrint("[ProfileProvider] Live Fetch FAILED or TIMEOUT: $e");
+    
+    // 2. FALLBACK TO CACHE
+    final cachedData = cacheService.getCachedProfile(userId);
+    if (cachedData != null) {
+      debugPrint("[ProfileProvider] Serving FALLBACK cache for: $userId");
+      return Profile.fromJson(cachedData);
+    }
+    
+    // 3. NO CACHE AND NO LIVE? Rethrow error
+    debugPrint("[ProfileProvider] No live data and no cache found for: $userId");
+    if (e is TimeoutException) {
+       throw Exception("Unable to reach EWUmate. Please check your internet connection.");
+    }
     rethrow;
   }
+  
+  // If we reach here, live fetch returned null (no profile record)
+  return null;
 });
 
 final authStateProvider = StreamProvider<AuthState>((ref) async* {

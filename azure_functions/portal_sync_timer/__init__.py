@@ -35,10 +35,9 @@ def main(mytimer: func.TimerRequest) -> None:
             from snapshot_utils import run_automated_snapshot
             # We assume the last semester in the report is the one to snapshot
             # or we can pull it from scraper_config.
-            from supabase import create_client
-            import os
-            
-            sb = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
+            sb_url = os.environ.get("SUPABASE_URL")
+            sb_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
+            sb = create_client(sb_url, sb_key)
             config = sb.table("scraper_config").select("target_semesters").execute()
             if config.data:
                 sems = [s.strip() for s in config.data[0].get("target_semesters", "").split(",")]

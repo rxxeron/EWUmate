@@ -45,15 +45,19 @@ def run_sync(custom_semester=None, is_preview=False):
     SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
     
     if not SUPABASE_URL or not SUPABASE_KEY:
+        logging.error("Scraper Sync failed: Missing Supabase Configuration")
         return {"status": "error", "error": "Missing Supabase Configuration"}
 
+    sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+    config_id = None
+    
     try:
-        sb = create_client(SUPABASE_URL, SUPABASE_KEY)
         config_res = sb.table("scraper_config").select("*").execute()
         if not config_res.data:
             return {"status": "error", "error": "No scraper configuration found."}
         
         config = config_res.data[0]
+        config_id = config.get("id")
         student_id = config.get("student_id")
         password = config.get("password")
         
@@ -67,7 +71,17 @@ def run_sync(custom_semester=None, is_preview=False):
         
         engine = EWUAutomationEngine()
         if not engine.login(student_id, password):
-            return {"status": "error", "error": "Portal Login Failed. Please check scraper_config credentials."}
+            err_msg = "Portal Login Failed. Please check scraper_config credentials."
+            # Log the login failure to the database for visibility
+            for sem in target_semesters:
+                try:
+                    sb.table("scraper_logs").insert({
+                        "semester": sem,
+                        "status": "error",
+                        "report": {"error": err_msg}
+                    }).execute()
+                except: pass
+            return {"status": "error", "error": err_msg}
 
         equiv_map = {}
         try:
@@ -227,9 +241,22 @@ def run_sync(custom_semester=None, is_preview=False):
                     run_automated_snapshot(sem_name)
                 except Exception as e:
                     logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
+            
+            except Exception as sem_e:
+                logging.error(f"Error syncing semester {sem_name}: {sem_e}")
+                report.append(f"Error for {sem_name}: {str(sem_e)}")
+                # Log the error for this specific semester
+                try:
+                    sb.table("scraper_logs").insert({
+                        "semester": sem_name,
+                        "status": "error",
+                        "report": {"error": str(sem_e)}
+                    }).execute()
+                except: pass
+                continue
 
-        if not is_preview:
-            sb.table("scraper_config").update({"last_run": "now()"}).eq("id", config["id"]).execute()
+        if not is_preview and config_id:
+            sb.table("scraper_config").update({"last_run": "now()"}).eq("id", config_id).execute()
         
         return {
             "status": "success", 

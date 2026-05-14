@@ -97,6 +97,7 @@ def run_sync(custom_semester=None, is_preview=False):
         sync_stats = []
         
         def normalize_sem(s): return "".join(c for c in str(s or "").lower() if c.isalnum())
+        def clean_initials(s): return "".join(c for c in str(s or "").upper() if c.isalnum())
 
         # [ENRICHMENT] Fetch Faculty Master mapping once for the entire session
         faculty_enrichment_map = {}
@@ -104,9 +105,10 @@ def run_sync(custom_semester=None, is_preview=False):
             logging.info("Loading Faculty Master Phonebook for enrichment...")
             fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
             for f in (fac_res.data or []):
-                s_name = (f.get('short_name') or "").strip().upper()
-                if s_name:
-                    faculty_enrichment_map[s_name] = {
+                raw_s_name = (f.get('short_name') or "").strip()
+                s_name_clean = clean_initials(raw_s_name)
+                if s_name_clean:
+                    faculty_enrichment_map[s_name_clean] = {
                         "full_name": f.get('full_name') or "",
                         "designation": f.get('designation_name') or ""
                     }
@@ -168,8 +170,9 @@ def run_sync(custom_semester=None, is_preview=False):
 
                     course_key = f"{code}_{section}"
                     if course_key not in course_map:
-                        # Enrich with full name if available
-                        enrich = faculty_enrichment_map.get(faculty.upper(), {})
+                        # Enrich with full name if available (Fuzzy Match)
+                        faculty_clean = clean_initials(faculty)
+                        enrich = faculty_enrichment_map.get(faculty_clean, {})
                         
                         course_map[course_key] = {
                             "course_code":      code,

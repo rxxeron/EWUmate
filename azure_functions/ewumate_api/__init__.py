@@ -505,6 +505,8 @@ def handle_sync_api_courses(body: dict) -> dict:
     }
     """
     try:
+        semester = body.get("semester", "").strip()
+        courses   = body.get("courses", [])
         if not semester:
             return {"status": "error", "error": "semester is required"}
         if not courses:

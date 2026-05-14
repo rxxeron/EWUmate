@@ -12,6 +12,8 @@ import { UserDetails } from './pages/UserDetails';
 import { AcademicData } from './pages/AcademicData';
 import { FileParser } from './pages/FileParser';
 import { Feedbacks } from './pages/Feedbacks';
+import { FacultyMaster } from './pages/FacultyMaster';
+import { Analytics } from './pages/Analytics';
 
 import { CalendarEditor } from './pages/CalendarEditor';
 import { DataQuality } from './pages/DataQuality';
@@ -26,6 +28,7 @@ function App() {
         <Route element={<AuthGuard />}>
           <Route element={<Layout />}>
             <Route path='/' element={<Dashboard />} />
+            <Route path='/analytics' element={<Analytics />} />
             <Route path='/active-semester' element={<ActiveSemester />} />
             <Route path='/notifications' element={<Notifications />} />
             <Route path='/users' element={<UsersList />} />
@@ -39,6 +42,7 @@ function App() {
             <Route path='/settings' element={<Settings />} />
             <Route path='/feedbacks' element={<Feedbacks />} />
             <Route path='/data-quality' element={<DataQuality />} />
+            <Route path='/faculty' element={<FacultyMaster />} />
           </Route>
         </Route>
       </Routes>

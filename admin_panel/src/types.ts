@@ -27,6 +27,18 @@ export interface Profile {
   updated_at: string | null;
 }
 
+export interface Faculty {
+  id: string;
+  short_name: string;
+  full_name: string | null;
+  designation_name: string | null;
+  email: string | null;
+  photo_url: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // --- Course / Section ---
 export interface CourseSection {
   id: string;

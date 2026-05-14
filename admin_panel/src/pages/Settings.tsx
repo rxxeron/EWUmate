@@ -8,8 +8,6 @@ export function Settings() {
   const [versionStats, setVersionStats] = useState<Record<string, { count: number, students: any[] }>>({});
   const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set());
   const [updateConfig, setUpdateConfig] = useState<any>(null);
-  const [advisingConfig, setAdvisingConfig] = useState<any>(null);
-  const [nextSemConfig, setNextSemConfig] = useState<any>(null);
 
   useEffect(() => {
     fetchConfigs();
@@ -54,12 +52,6 @@ export function Settings() {
     if (!error && data) {
       const updateInfo = data.find(c => c.key === 'update_info');
       if (updateInfo) setUpdateConfig(updateInfo);
-
-      const advInfo = data.find(c => c.key === 'advising_status');
-      if (advInfo) setAdvisingConfig(advInfo);
-
-      const nextInfo = data.find(c => c.key === 'next_semester_status');
-      if (nextInfo) setNextSemConfig(nextInfo);
     }
     setLoading(false);
   }
@@ -143,43 +135,6 @@ export function Settings() {
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${updateConfig?.value?.update_available ? 'bg-indigo-600' : 'bg-gray-200'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${updateConfig?.value?.update_available ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature Access Locks */}
-          <div className="bg-white rounded-2xl shadow-sm border border-indigo-100 overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-emerald-50 to-white border-b border-emerald-100">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-emerald-500" />
-                Screen Visibility & Feature Locks
-              </h3>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                <div>
-                  <h4 className="font-bold text-gray-900">Open Pre-Advising Screen</h4>
-                  <p className="text-xs text-gray-500">Enable/Disable the Pre-Advising section for all students.</p>
-                </div>
-                <button
-                  onClick={() => handleUpdate('advising_status', { value: { is_open: !advisingConfig?.value?.is_open } })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${advisingConfig?.value?.is_open ? 'bg-emerald-600' : 'bg-gray-200'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${advisingConfig?.value?.is_open ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-emerald-50/50 rounded-xl border border-emerald-100">
-                <div>
-                  <h4 className="font-bold text-gray-900">Open Next Semester Screen</h4>
-                  <p className="text-xs text-gray-500">Enable/Disable the Next Semester planning section.</p>
-                </div>
-                <button
-                  onClick={() => handleUpdate('next_semester_status', { value: { is_open: !nextSemConfig?.value?.is_open } })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${nextSemConfig?.value?.is_open ? 'bg-emerald-600' : 'bg-gray-200'}`}
-                >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${nextSemConfig?.value?.is_open ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
             </div>

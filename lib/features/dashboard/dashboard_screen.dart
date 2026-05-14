@@ -131,10 +131,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
-      // Force a fresh profile fetch to get the latest 'updatedAt' timestamp
-      // This ensures the Smart Cache knows if the DB has changed.
-      final profile = await ref.refresh(profileProvider.future);
-      
+      final profile = ref.read(profileProvider).value;
+
       // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
       final results = await Future.wait<dynamic>([
         ref.read(dashboardRepositoryProvider).getSimplifiedDashboardData(
@@ -222,10 +220,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (e.code == '401' || e.message.contains('JWT expired')) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+            SnackBar(content: Text("Session refresh delayed. Please check your connection and try again.")),
           );
-          _supabase.auth.signOut();
-          context.go('/login');
         }
       }
       if (mounted) setState(() => _loadingInit = false);

@@ -23,6 +23,7 @@ class CacheService {
       await Hive.openBox(_syncQueueBox);
       await Hive.openBox(_semesterProgressBox);
       await Hive.openBox(_notificationsBox);
+      await Hive.openBox(_authBox);
       await Hive.openBox('faculty');
       if (kDebugMode) debugPrint('[CacheService] Successfully initialized Hive boxes.');
     } catch (e) {
@@ -100,6 +101,9 @@ class CacheService {
     await Hive.box(_scheduleBox).clear();
     await Hive.box(_syncQueueBox).clear();
     await Hive.box(_semesterProgressBox).clear();
+    await Hive.box(_notificationsBox).clear();
+    if (Hive.isBoxOpen(_authBox)) await Hive.box(_authBox).clear();
+    // Note: We keep global data like 'course_catalog' and 'faculty' intact
   }
 
   // --- Offline Sync Queue ---
@@ -159,6 +163,18 @@ class CacheService {
   void clearEnrollmentCache(String userId, String semesterCode) {
     Hive.box(_dashboardBox).delete('enrollment_codes_${userId}_$semesterCode');
     Hive.box(_dashboardBox).delete('available_courses_$semesterCode');
+  }
+
+  // --- Auth Persistence for Zero-Wait Entry ---
+  static const String _authBox = 'auth_box';
+  Future<void> saveLastUserId(String userId) async {
+    final box = await Hive.openBox(_authBox);
+    await box.put('last_user_id', userId);
+  }
+
+  String? getLastUserId() {
+    if (!Hive.isBoxOpen(_authBox)) return null;
+    return Hive.box(_authBox).get('last_user_id') as String?;
   }
 }
 

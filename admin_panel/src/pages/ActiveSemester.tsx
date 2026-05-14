@@ -8,6 +8,8 @@ interface SemesterTrack {
   track: string;
   current_semester_code: string;
   next_semester_code: string;
+  is_advising_open: boolean;
+  is_next_semester_open: boolean;
 }
 
 export function ActiveSemester() {
@@ -15,7 +17,12 @@ export function ActiveSemester() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
 
-  const [localValues, setLocalValues] = useState<Record<string, { current: string; next: string }>>({});
+  const [localValues, setLocalValues] = useState<Record<string, { 
+    current: string; 
+    next: string;
+    isAdvisingOpen: boolean;
+    isNextSemesterOpen: boolean;
+  }>>({});
 
   useEffect(() => {
     fetchSemesters();
@@ -25,15 +32,25 @@ export function ActiveSemester() {
     setLoading(true);
     const { data, error } = await supabase
       .from('active_semester')
-      .select('track, current_semester_code, next_semester_code');
+      .select('track, current_semester_code, next_semester_code, is_advising_open, is_next_semester_open');
     
     if (error) {
       toast.error('Failed to load semesters: ' + error.message);
     } else if (data) {
       setTracks(data);
-      const initial: Record<string, { current: string; next: string }> = {};
+      const initial: Record<string, { 
+        current: string; 
+        next: string;
+        isAdvisingOpen: boolean;
+        isNextSemesterOpen: boolean;
+      }> = {};
       data.forEach(t => {
-        initial[t.track] = { current: t.current_semester_code, next: t.next_semester_code };
+        initial[t.track] = { 
+          current: t.current_semester_code, 
+          next: t.next_semester_code,
+          isAdvisingOpen: t.is_advising_open || false,
+          isNextSemesterOpen: t.is_next_semester_open || false
+        };
       });
       setLocalValues(initial);
     }
@@ -44,12 +61,16 @@ export function ActiveSemester() {
     const values = localValues[track];
     if (!values) return;
 
+    const normalize = (val: string) => val.toLowerCase().replace(/[\s\-_]+/g, '');
+    
     setSaving(track);
     const { error } = await supabase
       .from('active_semester')
       .update({ 
-        current_semester_code: values.current,
-        next_semester_code: values.next 
+        current_semester_code: normalize(values.current),
+        next_semester_code: normalize(values.next),
+        is_advising_open: values.isAdvisingOpen,
+        is_next_semester_open: values.isNextSemesterOpen
       })
       .eq('track', track);
 
@@ -121,31 +142,91 @@ export function ActiveSemester() {
               </div>
               
               <div className="space-y-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Semester Code</label>
-                  <input
-                    type="text"
-                    value={localValues[t.track]?.current || ''}
-                    onChange={(e) => setLocalValues(prev => ({
-                      ...prev,
-                      [t.track]: { ...prev[t.track], current: e.target.value }
-                    }))}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
-                    placeholder="e.g. Spring 2026"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Semester</label>
+                    <input
+                      type="text"
+                      value={localValues[t.track]?.current || ''}
+                      onChange={(e) => setLocalValues(prev => ({
+                        ...prev,
+                        [t.track]: { ...prev[t.track], current: e.target.value }
+                      }))}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
+                      placeholder="e.g. Spring 2026"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Next Semester</label>
+                    <input
+                      type="text"
+                      value={localValues[t.track]?.next || ''}
+                      onChange={(e) => setLocalValues(prev => ({
+                        ...prev,
+                        [t.track]: { ...prev[t.track], next: e.target.value }
+                      }))}
+                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
+                      placeholder="e.g. Summer 2026"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Next Semester Code</label>
-                  <input
-                    type="text"
-                    value={localValues[t.track]?.next || ''}
-                    onChange={(e) => setLocalValues(prev => ({
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div 
+                    onClick={() => setLocalValues(prev => ({
                       ...prev,
-                      [t.track]: { ...prev[t.track], next: e.target.value }
+                      [t.track]: { ...prev[t.track], isAdvisingOpen: !prev[t.track].isAdvisingOpen }
                     }))}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
-                    placeholder="e.g. Summer 2026"
-                  />
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      localValues[t.track]?.isAdvisingOpen 
+                        ? 'bg-emerald-50 border-emerald-100' 
+                        : 'bg-slate-50 border-slate-100'
+                    }`}
+                   >
+                      <div>
+                        <div className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${
+                          localValues[t.track]?.isAdvisingOpen ? 'text-emerald-600' : 'text-slate-400'
+                        }`}>Advising</div>
+                        <div className="text-xs font-bold text-slate-900">
+                          {localValues[t.track]?.isAdvisingOpen ? 'OPEN' : 'CLOSED'}
+                        </div>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors ${
+                        localValues[t.track]?.isAdvisingOpen ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`}>
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                          localValues[t.track]?.isAdvisingOpen ? 'left-6' : 'left-1'
+                        }`} />
+                      </div>
+                   </div>
+
+                   <div 
+                    onClick={() => setLocalValues(prev => ({
+                      ...prev,
+                      [t.track]: { ...prev[t.track], isNextSemesterOpen: !prev[t.track].isNextSemesterOpen }
+                    }))}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                      localValues[t.track]?.isNextSemesterOpen 
+                        ? 'bg-blue-50 border-blue-100' 
+                        : 'bg-slate-50 border-slate-100'
+                    }`}
+                   >
+                      <div>
+                        <div className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${
+                          localValues[t.track]?.isNextSemesterOpen ? 'text-blue-600' : 'text-slate-400'
+                        }`}>Next Semester</div>
+                        <div className="text-xs font-bold text-slate-900">
+                          {localValues[t.track]?.isNextSemesterOpen ? 'VISIBLE' : 'HIDDEN'}
+                        </div>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full relative transition-colors ${
+                        localValues[t.track]?.isNextSemesterOpen ? 'bg-blue-500' : 'bg-slate-200'
+                      }`}>
+                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                          localValues[t.track]?.isNextSemesterOpen ? 'left-6' : 'left-1'
+                        }`} />
+                      </div>
+                   </div>
                 </div>
                 
                 <button
@@ -154,7 +235,7 @@ export function ActiveSemester() {
                   className="w-full mt-4 flex items-center justify-center gap-3 bg-indigo-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100"
                 >
                   {saving === t.track ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {saving === t.track ? 'Saving Matrix...' : 'Sync Track'}
+                  {saving === t.track ? 'Saving Track...' : 'Sync Configuration'}
                 </button>
               </div>
             </motion.div>

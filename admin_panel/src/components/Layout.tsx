@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -82,6 +82,14 @@ export function Layout() {
             )}
           </Link>
 
+          <Link to="/analytics" className={getLinkClass('/analytics')} onClick={() => setIsMobileMenuOpen(false)}>
+            <TrendingUp className="w-5 h-5" />
+            <span>Advanced Analytics</span>
+            {location.pathname === '/analytics' && (
+              <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
+            )}
+          </Link>
+
           <div className="pt-6 pb-2 px-4">
             <p className="text-[10px] font-black text-indigo-400/50 uppercase tracking-[0.2em]">Core Database</p>
           </div>
@@ -114,6 +122,14 @@ export function Layout() {
             <BookOpen className="w-5 h-5" />
             <span>Course Catalog</span>
             {location.pathname === '/courses' && (
+              <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
+            )}
+          </Link>
+
+          <Link to="/faculty" className={getLinkClass('/faculty')} onClick={() => setIsMobileMenuOpen(false)}>
+            <Users className="w-5 h-5" />
+            <span>Faculty Master</span>
+            {location.pathname === '/faculty' && (
               <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
             )}
           </Link>

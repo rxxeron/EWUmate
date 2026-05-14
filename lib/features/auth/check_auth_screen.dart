@@ -16,6 +16,7 @@ class CheckAuthScreen extends ConsumerStatefulWidget {
 
 class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
   Timer? _stallTimer;
+  bool _showRetry = false;
 
   @override
   void initState() {
@@ -24,12 +25,12 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
   }
 
   void _startStallTimer() {
+    setState(() => _showRetry = false);
     _stallTimer?.cancel();
-    _stallTimer = Timer(const Duration(seconds: 30), () {
+    _stallTimer = Timer(const Duration(seconds: 45), () {
       if (mounted) {
-        debugPrint("[CheckAuth] STALL DETECTED: Screen stuck for 30s. Forcing logout.");
-        ref.read(authRepositoryProvider).signOut();
-        if (context.mounted) context.go('/login');
+        debugPrint("[CheckAuth] STALL DETECTED: Screen stuck for 45s. Showing retry option.");
+        setState(() => _showRetry = true);
       }
     });
   }
@@ -42,53 +43,59 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
+    final profileAsync = ref.watch(profileProvider);
 
     return Scaffold(
       body: Stack(
         children: [
           const Positioned.fill(child: SkyAnimationWidget()),
           Center(
-            child: authState.when(
-              data: (state) {
+            child: profileAsync.when(
+              data: (profile) {
                 final syncUser = Supabase.instance.client.auth.currentUser;
-                
-                // If it's an explicit sign-out event, go to login immediately.
-                if (state.event == AuthChangeEvent.signedOut) {
-                  _stallTimer?.cancel();
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
-                  return const CircularProgressBinding();
-                }
 
-                // If no session exists:
-                if (state.session == null && syncUser == null) {
-                  // If it's the initial event, don't redirect yet! 
-                  // Supabase might be refreshing the session in the background.
-                  // We wait for the stall timer to handle it if no session appears.
-                  if (state.event == AuthChangeEvent.initialSession) {
-                    return const CircularProgressBinding(text: 'Securing session...');
+                if (profile == null) {
+                  // If we have a Supabase user but no profile record yet, they are a NEW student.
+                  if (syncUser != null) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
+                    return const CircularProgressBinding(text: 'Setting up your profile...');
                   }
-                  
-                  // Otherwise, if we're not signed in, go to login.
-                  _stallTimer?.cancel();
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
-                  return const CircularProgressBinding();
+
+                  // Truly no identity found? Wait briefly for Supabase to be 100% sure.
+                  Future.delayed(const Duration(seconds: 3), () {
+                    if (mounted && Supabase.instance.client.auth.currentUser == null) {
+                      context.go('/login');
+                    }
+                  });
+                  return const CircularProgressBinding(text: 'Searching for you...');
                 }
 
-                // Valid session exists, proceed.
-                return const _ProfileCheckWrapper();
+                // WE HAVE A PROFILE (Cached or Live)
+                // Proceed to Dashboard/Onboarding immediately!
+                _stallTimer?.cancel();
+                if (profile.onboardingStatus == 'pending' ||
+                    profile.onboardingStatus == 'registered' ||
+                    profile.programCode == null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
+                } else if (profile.onboardingStatus == 'course_history') {
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/course-history'));
+                } else {
+                  // Final check for grade entry, then Dashboard
+                  return const _GradeBlockerWrapper();
+                }
+                return const CircularProgressBinding(text: 'Restoring session...');
               },
               error: (err, stack) {
                 _stallTimer?.cancel();
                 return _ErrorView(
-                  message: 'Auth Error: $err',
+                  message: 'Connection issue: $err',
                   onRetry: () {
                     _startStallTimer();
-                    ref.refresh(authStateProvider);
+                    ref.refresh(profileProvider);
                   },
                 );
               },
-              loading: () => const CircularProgressBinding(),
+              loading: () => const CircularProgressBinding(text: 'Securing universe...'),
             ),
           ),
         ],
@@ -97,47 +104,7 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
   }
 }
 
-class _ProfileCheckWrapper extends ConsumerWidget {
-  const _ProfileCheckWrapper();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final profileAsync = ref.watch(profileProvider);
-    debugPrint("[CheckAuth] Phase: Profile Verification (${profileAsync.isLoading ? 'WAITING' : 'READY'})");
-
-    return profileAsync.when(
-      data: (profile) {
-        if (profile == null ||
-            profile.onboardingStatus == 'pending' ||
-            profile.onboardingStatus == 'registered' ||
-            profile.programCode == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.go('/onboarding/program');
-          });
-          return const CircularProgressBinding(text: 'Initializing experience...');
-        } else if (profile.onboardingStatus == 'course_history') {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.go('/onboarding/course-history');
-          });
-          return const CircularProgressBinding(text: 'Loading Course History...');
-        } else {
-          return const _GradeBlockerWrapper();
-        }
-      },
-      error: (err, stack) {
-        if (err.toString().contains("timeout") || err.toString().contains("Profile not found")) {
-           // We NO LONGER force sign-out on timeout. 
-           // This prevents users from being logged out due to poor network.
-        }
-        return _ErrorView(
-          message: 'Could not fetch profile: $err',
-          onRetry: () => ref.refresh(profileProvider),
-        );
-      },
-      loading: () => const CircularProgressBinding(),
-    );
-  }
-}
+// Removed _ProfileCheckWrapper as its logic is now integrated into CheckAuthScreen for Zero-Wait Entry
 
 class _GradeBlockerWrapper extends ConsumerWidget {
   const _GradeBlockerWrapper();

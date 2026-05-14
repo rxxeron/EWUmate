@@ -20,6 +20,8 @@ export function UserDetails() {
   const [user, setUser] = useState<Profile | null>(null);
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([]);
   const [currentEnrollments, setCurrentEnrollments] = useState<Enrollment[]>([]);
+  const [nextEnrollments, setNextEnrollments] = useState<Enrollment[]>([]);
+  const [activeSemesterInfo, setActiveSemesterInfo] = useState<{ current: string | null; next: string | null }>({ current: null, next: null });
   const [tasks, setTasks] = useState<Task[]>([]);
   const [marks, setMarks] = useState<CourseMark[]>([]);
   const [semesterState, setSemesterState] = useState<UserSemesterState | null>(null);
@@ -43,7 +45,7 @@ export function UserDetails() {
 
   async function fetchPrograms() {
     try {
-      const { data } = await supabase.from('programs').select('program_code, name, department_name, track');
+      const { data } = await supabase.from('programs').select('program_code, name, department_name, track, total_degree_credits');
       if (data) setAvailablePrograms(data);
     } catch (e) {
       console.error('Failed to fetch programs:', e);
@@ -201,11 +203,13 @@ export function UserDetails() {
       const track = userData.track || 'tri_semester';
       const { data: activeSem } = await supabase
         .from('active_semester')
-        .select('current_semester_code')
+        .select('current_semester_code, next_semester_code')
         .eq('track', track)
         .maybeSingle();
 
       const semesterCode = activeSem?.current_semester_code;
+      const nextSemesterCode = activeSem?.next_semester_code;
+      setActiveSemesterInfo({ current: semesterCode || null, next: nextSemesterCode || null });
 
       // 3. Fetch Semester State (Schedule Cache)
       if (semesterCode) {
@@ -223,37 +227,35 @@ export function UserDetails() {
         }
       }
 
-      // 4. Fetch Enrollments
+      // 4. Fetch Enrollments for both current and next
       try {
-        let enrollmentsQuery = supabase
+        const { data: enrollmentsData } = await supabase
           .from('enrollments')
           .select('*')
-          .eq('user_id', userId);
-          
-        if (semesterCode) {
-          enrollmentsQuery = enrollmentsQuery.eq('semester_code', semesterCode);
-        }
-        
-        const { data: enrollmentsData } = await enrollmentsQuery;
+          .eq('user_id', userId)
+          .in('semester_code', [semesterCode, nextSemesterCode].filter(Boolean));
 
         if (enrollmentsData) {
-          const sectionIds = enrollmentsData.map((e: Enrollment) => e.section_id).filter(Boolean);
-          if (sectionIds.length > 0 && semesterCode) {
-            const cleanSem = semesterCode.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
-            const courseTable = `courses_${cleanSem}`;
-            
-            const sectionsMap: Record<string, { id: string; section_number: number | null; course_name: string | null }> = {};
-            const { data: semCourses } = await supabase.from(courseTable).select('id, section_number, course_name').in('id', sectionIds);
-            
-            if (semCourses) semCourses.forEach((s: any) => sectionsMap[s.id] = s);
+          const current = enrollmentsData.filter(e => e.semester_code === semesterCode);
+          const next = enrollmentsData.filter(e => e.semester_code === nextSemesterCode);
 
-            enrollmentsData.forEach((e: any) => {
-               if (e.section_id && sectionsMap[e.section_id]) { 
-                 e._sectionDetails = sectionsMap[e.section_id]; 
-               }
-            });
-          }
-          setCurrentEnrollments(enrollmentsData as Enrollment[]);
+          const processEnrollments = async (list: any[], sem: string) => {
+            const sectionIds = list.map(e => e.section_id).filter(Boolean);
+            if (sectionIds.length > 0) {
+              const cleanSem = sem.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
+              const courseTable = `courses_${cleanSem}`;
+              const sectionsMap: Record<string, any> = {};
+              const { data: semCourses } = await supabase.from(courseTable).select('id, section_number, course_name').in('id', sectionIds);
+              if (semCourses) semCourses.forEach((s: any) => sectionsMap[s.id] = s);
+              list.forEach((e: any) => {
+                if (e.section_id && sectionsMap[e.section_id]) e._sectionDetails = sectionsMap[e.section_id];
+              });
+            }
+            return list;
+          };
+
+          if (semesterCode) setCurrentEnrollments(await processEnrollments(current, semesterCode));
+          if (nextSemesterCode) setNextEnrollments(await processEnrollments(next, nextSemesterCode));
         }
       } catch (e) {
         console.error('Failed to fetch enrollments:', e);
@@ -392,6 +394,11 @@ export function UserDetails() {
               <div className="flex items-center gap-2 mt-1">
                 <span className='text-[10px] font-black bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.student_id || 'N/A'}</span>
                 <span className='text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.track?.replace('_', ' ') || 'Tri-Semester'}</span>
+                {(user as any).app_version && (
+                  <span className='text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1'>
+                    <Zap className="w-3 h-3" /> v{(user as any).app_version}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -462,27 +469,62 @@ export function UserDetails() {
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
             <div className="lg:col-span-2 space-y-8">
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-indigo-50 rounded-2xl">
-                      <Shield className="w-6 h-6 text-indigo-600" />
+                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col'>
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-indigo-50 rounded-2xl">
+                        <GraduationCap className="w-6 h-6 text-indigo-600" />
+                      </div>
+                      <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic Progress</h3>
                     </div>
-                    <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic Standing</h3>
+                    {(() => {
+                      const program = availablePrograms.find(p => p.program_code === user.program_code);
+                      const targetCredits = program?.total_degree_credits || 124;
+                      const progress = Math.round(((user.total_credits_earned || 0) / targetCredits) * 100);
+                      
+                      return (
+                        <>
+                          <div className="text-right">
+                            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                                {progress}% Complete
+                            </span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                  <dl className='space-y-6'>
+                  
+                  {(() => {
+                    const program = availablePrograms.find(p => p.program_code === user.program_code);
+                    const targetCredits = program?.total_degree_credits || 124;
+                    const progress = Math.min(((user.total_credits_earned || 0) / targetCredits) * 100, 100);
+                    
+                    return (
+                      <div className="mb-8">
+                        <div className="flex justify-between items-end mb-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Path to Graduation</span>
+                            <span className="text-xs font-black text-slate-900">{user.total_credits_earned || 0} / {targetCredits} Credits</span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${progress}%` }}
+                              transition={{ duration: 1.5, ease: "easeOut" }}
+                              className="h-full bg-indigo-600 rounded-full shadow-lg shadow-indigo-100"
+                            />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <dl className='grid grid-cols-2 gap-6 mt-auto'>
                     <div>
                       <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Selected Program</dt>
-                      <dd className='text-sm font-bold text-slate-900'>{user.program_name || user.program_code || 'N/A'}</dd>
+                      <dd className='text-xs font-bold text-slate-900 line-clamp-1'>{user.program_name || user.program_code || 'N/A'}</dd>
                     </div>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8'>
-                      <div>
-                        <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Current CGPA</dt>
-                        <dd className='text-2xl sm:text-3xl font-black text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd>
-                      </div>
-                      <div>
-                        <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Credits Earned</dt>
-                        <dd className='text-2xl sm:text-3xl font-black text-slate-900'>{user.total_credits_earned || 0}</dd>
-                      </div>
+                    <div className="text-right">
+                      <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Current CGPA</dt>
+                      <dd className='text-2xl font-black text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd>
                     </div>
                   </dl>
                 </motion.div>
@@ -640,45 +682,106 @@ export function UserDetails() {
         )}
 
         {activeTab === 'enrollments' && (
-          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
-            <div className="flex items-center justify-between mb-8">
-              <h3 className='text-xl font-black text-slate-900 tracking-tight'>Current Semester Enrollments</h3>
-              <div className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">Live Session</div>
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-              {currentEnrollments.length > 0 ? currentEnrollments.map((enr, i) => (
-                <motion.div 
-                  key={i} 
-                  whileHover={{ y: -2 }}
-                  className='border border-slate-100 rounded-[2rem] p-6 flex justify-between items-center bg-slate-50/50 hover:bg-white hover:border-indigo-100 hover:shadow-md transition-all group'
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-black text-indigo-500 border border-slate-100">
-                       {i + 1}
+          <div className='space-y-8'>
+            {/* Current Semester Section */}
+            <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className='text-xl font-black text-slate-900 tracking-tight'>Active Academic Load</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{activeSemesterInfo.current || 'N/A'}</p>
+                </div>
+                <div className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Session
+                </div>
+              </div>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {currentEnrollments.length > 0 ? currentEnrollments.map((enr, i) => (
+                  <motion.div 
+                    key={i} 
+                    whileHover={{ y: -2 }}
+                    className='border border-slate-100 rounded-[2rem] p-6 flex justify-between items-center bg-slate-50/50 hover:bg-white hover:border-indigo-100 hover:shadow-md transition-all group'
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-black text-indigo-500 border border-slate-100 uppercase text-xs">
+                         {enr.course_code?.substring(0, 2)}
+                      </div>
+                      <div>
+                        <h4 className='font-black text-slate-900'>{enr.course_code} <span className="text-indigo-500 text-xs ml-1">Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</span></h4>
+                        <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 truncate max-w-[200px]'>{enr._sectionDetails?.course_name || 'Generic Enrollment'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className='font-black text-slate-900'>{enr.course_code} <span className="text-indigo-500 text-xs ml-1">Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</span></h4>
-                      <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1'>{enr._sectionDetails?.course_name || 'Generic Enrollment Record'}</p>
-                    </div>
-                  </div>
-                  <div className='flex items-center gap-3'>
                     <button 
                       onClick={() => handleDeleteEnrollment(enr.id)}
-                      className='p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all'
-                      title='Remove enrollment'
+                      className='p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all opacity-0 group-hover:opacity-100'
                     >
                       <Trash2 className='w-5 h-5' />
                     </button>
+                  </motion.div>
+                )) : (
+                  <div className="md:col-span-2 py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                     <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-4" />
+                     <p className='text-slate-400 font-bold text-xs uppercase tracking-widest'>No current enrollments detected</p>
                   </div>
-                </motion.div>
-              )) : (
-                <div className="md:col-span-2 py-12 text-center">
-                   <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <BookOpen className="w-8 h-8 text-slate-300" />
-                   </div>
-                   <p className='text-slate-400 font-bold text-sm uppercase tracking-widest'>No active enrollments found</p>
+                )}
+              </div>
+            </div>
+
+            {/* Next Semester Section */}
+            <div className='bg-slate-900 p-8 rounded-[2rem] shadow-xl text-white overflow-hidden relative'>
+              <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+                 <CalendarClock className="w-64 h-64" />
+              </div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <h3 className='text-xl font-black tracking-tight'>Pre-Advising & Future Planning</h3>
+                    <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest mt-1">{activeSemesterInfo.next || 'N/A'}</p>
+                  </div>
+                  <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md text-white rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                    <Clock className="w-3 h-3" />
+                    Upcoming
+                  </div>
                 </div>
-              )}
+                
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  {nextEnrollments.length > 0 ? nextEnrollments.map((enr, i) => (
+                    <motion.div 
+                      key={i} 
+                      whileHover={{ scale: 1.02 }}
+                      className='bg-white/5 border border-white/10 rounded-[2rem] p-6 flex justify-between items-center backdrop-blur-sm hover:bg-white/10 transition-all'
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center font-black text-indigo-300 border border-white/5 uppercase text-xs">
+                           {enr.course_code?.substring(0, 2)}
+                        </div>
+                        <div>
+                          <h4 className='font-black text-white'>{enr.course_code} <span className="text-indigo-300 text-xs ml-1">Section {enr._sectionDetails?.section_number || 'N/A'}</span></h4>
+                          <p className='text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1 truncate max-w-[200px]'>{enr._sectionDetails?.course_name || 'Upcoming Course'}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteEnrollment(enr.id)}
+                        className='p-3 text-white/20 hover:text-rose-400 hover:bg-white/5 rounded-2xl transition-all'
+                      >
+                        <Trash2 className='w-5 h-5' />
+                      </button>
+                    </motion.div>
+                  )) : (
+                    <div className="md:col-span-2 py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                       <Clock className="w-8 h-8 text-white/20 mx-auto mb-4" />
+                       <p className='text-white/40 font-bold text-xs uppercase tracking-widest'>No future planning records found</p>
+                    </div>
+                  )}
+                </div>
+                
+                {nextEnrollments.length > 0 && (
+                  <div className="mt-8 pt-8 border-t border-white/5 flex items-center justify-between">
+                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Enrollment Readiness</p>
+                     <p className="text-sm font-black text-indigo-300">{nextEnrollments.length} Courses Selected</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

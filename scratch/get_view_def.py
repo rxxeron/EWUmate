@@ -1,10 +1,24 @@
-import os
-from supabase import create_client
-from dotenv import load_dotenv
+import psycopg2
 
-load_dotenv(r'd:\EWUmate\EWUmate_Clean\ewumate_v2\.env')
-sb = create_client(os.environ.get('SUPABASE_URL'), os.environ.get('SUPABASE_SERVICE_ROLE_KEY'))
+db_url = "postgresql://postgres.jwygjihrbwxhehijldiz:EWUmaterh12@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
 
-sql = "SELECT definition FROM pg_views WHERE viewname = 'faculty_directory';"
-res = sb.rpc('exec_sql', {'sql_query': sql}).execute()
-print(res.data)
+def get_view_def():
+    try:
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        
+        cur.execute("SELECT view_definition FROM information_schema.views WHERE table_name = 'v_semester_progress';")
+        row = cur.fetchone()
+        if row:
+            print("View Definition for v_semester_progress:")
+            print(row[0])
+        else:
+            print("View not found.")
+            
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    get_view_def()

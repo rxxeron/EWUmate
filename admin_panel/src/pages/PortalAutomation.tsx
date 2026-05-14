@@ -150,8 +150,6 @@ export function PortalAutomation() {
           code: c.course_code,
           section: c.section_number,
           faculty: c.faculty_initials,
-          faculty_full_name: c.faculty_full_name || '',
-          faculty_designation: c.faculty_designation || '',
           capacity: c.capacity,
           course_name: c.course_name,
           credits: c.credit_val,

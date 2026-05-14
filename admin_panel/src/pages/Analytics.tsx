@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-  TrendingUp, Activity, Calendar, 
-  ChevronRight, RefreshCcw, Users, 
-  ArrowUpRight, ArrowDownRight, Clock
+  TrendingUp, Activity, 
+  RefreshCcw, Users, 
+  ArrowUpRight, Clock
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, AreaChart, Area,
   BarChart, Bar
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 
 type TimeRange = '15D' | '1M' | '3M' | '6M';
 
 export function Analytics() {
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [growthData, setGrowthData] = useState<any[]>([]);
   const [activityData, setActivityData] = useState<any[]>([]);
@@ -43,7 +43,6 @@ export function Analytics() {
       const days = timeWindows[timeRange];
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - days);
-      const startDateIso = startDate.toISOString();
 
       // Fetch all profiles for growth (we need creation dates)
       // For large datasets, this should be an RPC or edge function

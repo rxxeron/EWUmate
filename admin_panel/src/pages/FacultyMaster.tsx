@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Users, Search, ChevronLeft, ChevronRight, Mail, Phone, RefreshCw, Filter, User } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Users, Search, Mail, Phone, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { Faculty } from '../types';
 import { Skeleton } from '../components/Skeleton';
 

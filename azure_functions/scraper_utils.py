@@ -99,146 +99,147 @@ def run_sync(custom_semester=None, is_preview=False):
         def normalize_sem(s): return "".join(c for c in str(s or "").lower() if c.isalnum())
 
         for sem_name in target_semesters:
-            target_norm = normalize_sem(sem_name)
-            match = next((s for s in sems_data if target_norm in normalize_sem(s.get('SemesterName' if 'SemesterName' in s else 'Title'))), None)
-            
-            if not match:
-                report.append(f"Semester {sem_name} not found.")
-                continue
-                
-            sem_id = match.get('SemesterId' if 'SemesterId' in match else 'ID')
-            logging.info(f"Scraping {sem_name} using Master Fetch...")
-            
-            master_url = f"{engine.base_url}/api/utility/GetAllOfferedCourses?deptid=0&semesterid={sem_id}"
             try:
-                all_raw_data = engine.session.get(master_url, timeout=30).json()
-            except Exception as e:
-                logging.error(f"Master Fetch failed for {sem_name}: {e}")
-                report.append(f"Failed to fetch {sem_name}: {e}")
-                continue
-
-            course_map = {}
+                target_norm = normalize_sem(sem_name)
+                match = next((s for s in sems_data if target_norm in normalize_sem(s.get('SemesterName' if 'SemesterName' in s else 'Title'))), None)
             
-            # [ENRICHMENT] Fetch Faculty Master mapping for on-the-fly enrichment
-            faculty_enrichment_map = {}
-            try:
-                fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
-                for f in fac_res.data:
-                    faculty_enrichment_map[f['short_name'].upper()] = {
-                        "full_name": f['full_name'],
-                        "designation": f['designation_name']
-                    }
-            except Exception as e:
-                logging.warning(f"Enrichment lookup failed: {e}")
-
-            for item in all_raw_data:
-                raw_code = (item.get("CourseCode") or "").strip()
-                code = equiv_map.get(raw_code, raw_code)
+                if not match:
+                    report.append(f"Semester {sem_name} not found.")
+                    continue
+                    
+                sem_id = match.get('SemesterId' if 'SemesterId' in match else 'ID')
+                logging.info(f"Scraping {sem_name} using Master Fetch...")
                 
-                section = str(item.get("SectionName") or "").strip()
-                faculty = (item.get("ShortName") or "TBA").strip()
-                room    = (item.get("RoomCode") or "TBA").strip()
-                timing  = item.get("TimeSlotName") or ""
-                day_str = timing.split(' ')[0] if timing else "TBA"
+                master_url = f"{engine.base_url}/api/utility/GetAllOfferedCourses?deptid=0&semesterid={sem_id}"
+                try:
+                    all_raw_data = engine.session.get(master_url, timeout=30).json()
+                except Exception as e:
+                    logging.error(f"Master Fetch failed for {sem_name}: {e}")
+                    report.append(f"Failed to fetch {sem_name}: {e}")
+                    continue
 
-                if not code or not section: continue
+                course_map = {}
+                
+                # [ENRICHMENT] Fetch Faculty Master mapping for on-the-fly enrichment
+                faculty_enrichment_map = {}
+                try:
+                    fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
+                    for f in fac_res.data:
+                        faculty_enrichment_map[f['short_name'].upper()] = {
+                            "full_name": f['full_name'],
+                            "designation": f['designation_name']
+                        }
+                except Exception as e:
+                    logging.warning(f"Enrichment lookup failed: {e}")
 
-                def fmt_time(t):
-                    if not t: return ""
+                for item in all_raw_data:
+                    raw_code = (item.get("CourseCode") or "").strip()
+                    code = equiv_map.get(raw_code, raw_code)
+                    
+                    section = str(item.get("SectionName") or "").strip()
+                    faculty = (item.get("ShortName") or "TBA").strip()
+                    room    = (item.get("RoomCode") or "TBA").strip()
+                    timing  = item.get("TimeSlotName") or ""
+                    day_str = timing.split(' ')[0] if timing else "TBA"
+
+                    if not code or not section: continue
+
+                    def fmt_time(t):
+                        if not t: return ""
+                        try:
+                            from datetime import datetime
+                            return datetime.strptime(t, "%H:%M:%S").strftime("%I:%M %p").lstrip("0")
+                        except: return t
+
+                    start_12 = fmt_time(item.get("SlotStartTime"))
+                    end_12   = fmt_time(item.get("SlotEndTime"))
+
+                    session_type = "Theory"
                     try:
                         from datetime import datetime
-                        return datetime.strptime(t, "%H:%M:%S").strftime("%I:%M %p").lstrip("0")
-                    except: return t
+                        s = datetime.strptime(item.get("SlotStartTime", ""), "%H:%M:%S")
+                        e = datetime.strptime(item.get("SlotEndTime",   ""), "%H:%M:%S")
+                        if (e.hour * 60 + e.minute) - (s.hour * 60 + s.minute) >= 110: session_type = "Lab"
+                    except: pass
 
-                start_12 = fmt_time(item.get("SlotStartTime"))
-                end_12   = fmt_time(item.get("SlotEndTime"))
+                    course_key = f"{code}_{section}"
+                    if course_key not in course_map:
+                        # Enrich with full name if available
+                        enrich = faculty_enrichment_map.get(faculty.upper(), {})
+                        
+                        course_map[course_key] = {
+                            "course_code":      code,
+                            "section_number":   section,
+                            "faculty_initials": faculty,
+                            "faculty_full_name": enrich.get("full_name") or "",
+                            "faculty_designation": enrich.get("designation") or "",
+                            "capacity":         f"{item.get('SeatTaken', 0)}/{item.get('SeatCapacity', 0)}",
+                            "course_name":      item.get("CourseName") or "",
+                            "credit_val":       3.0,
+                            "dedicated_department": (item.get("DedicateDepartmentName") or "").strip(),
+                            "schedule_data":    []
+                        }
 
-                session_type = "Theory"
-                try:
-                    from datetime import datetime
-                    s = datetime.strptime(item.get("SlotStartTime", ""), "%H:%M:%S")
-                    e = datetime.strptime(item.get("SlotEndTime",   ""), "%H:%M:%S")
-                    if (e.hour * 60 + e.minute) - (s.hour * 60 + s.minute) >= 110: session_type = "Lab"
-                except: pass
-
-                course_key = f"{code}_{section}"
-                if course_key not in course_map:
-                    # Enrich with full name if available
-                    enrich = faculty_enrichment_map.get(faculty.upper(), {})
-                    
-                    course_map[course_key] = {
-                        "course_code":      code,
-                        "section_number":   section,
-                        "faculty_initials": faculty,
-                        "faculty_full_name": enrich.get("full_name") or "",
-                        "faculty_designation": enrich.get("designation") or "",
-                        "capacity":         f"{item.get('SeatTaken', 0)}/{item.get('SeatCapacity', 0)}",
-                        "course_name":      item.get("CourseName") or "",
-                        "credit_val":       3.0,
-                        "dedicated_department": (item.get("DedicateDepartmentName") or "").strip(),
-                        "schedule_data":    []
+                    new_session = {
+                        "type": session_type, 
+                        "day": day_str, 
+                        "startTime": start_12, 
+                        "endTime": end_12, 
+                        "room": room, 
+                        "faculty": faculty
                     }
+                    
+                    if not any(s['day'] == new_session['day'] and s['startTime'] == new_session['startTime'] for s in course_map[course_key]["schedule_data"]):
+                        course_map[course_key]["schedule_data"].append(new_session)
 
-                new_session = {
-                    "type": session_type, 
-                    "day": day_str, 
-                    "startTime": start_12, 
-                    "endTime": end_12, 
-                    "room": room, 
-                    "faculty": faculty
-                }
+                all_scraped_courses = list(course_map.values())
                 
-                if not any(s['day'] == new_session['day'] and s['startTime'] == new_session['startTime'] for s in course_map[course_key]["schedule_data"]):
-                    course_map[course_key]["schedule_data"].append(new_session)
-
-            all_scraped_courses = list(course_map.values())
-            
-            if is_preview:
-                results.extend(all_scraped_courses)
-                report.append(f"Scraped {len(all_scraped_courses)} courses for {sem_name} (Preview)")
-            else:
-                sync_payload = {
-                    "semester": sem_name,
-                    "courses": [
-                        {
-                            "code": c["course_code"],
-                            "section": c["section_number"],
-                            "faculty": c["faculty_initials"],
-                            "capacity": c["capacity"],
-                            "course_name": c["course_name"],
-                            "credits": c["credit_val"],
-                            "dedicated_department": c["dedicated_department"],
-                            "faculty_full_name": c["faculty_full_name"],
-                            "faculty_designation": c["faculty_designation"],
-                            "sessions": c["schedule_data"]
-                        } for c in all_scraped_courses
-                    ]
-                }
-                # Import handle_sync_api_courses from ewumate_api
-                try:
-                    from ewumate_api import handle_sync_api_courses
-                except ImportError:
-                    # Fallback if the path is different in Azure environment
+                if is_preview:
+                    results.extend(all_scraped_courses)
+                    report.append(f"Scraped {len(all_scraped_courses)} courses for {sem_name} (Preview)")
+                else:
+                    sync_payload = {
+                        "semester": sem_name,
+                        "courses": [
+                            {
+                                "code": c["course_code"],
+                                "section": c["section_number"],
+                                "faculty": c["faculty_initials"],
+                                "capacity": c["capacity"],
+                                "course_name": c["course_name"],
+                                "credits": c["credit_val"],
+                                "dedicated_department": c["dedicated_department"],
+                                "faculty_full_name": c["faculty_full_name"],
+                                "faculty_designation": c["faculty_designation"],
+                                "sessions": c["schedule_data"]
+                            } for c in all_scraped_courses
+                        ]
+                    }
+                    # Import handle_sync_api_courses from ewumate_api
                     try:
-                        from .ewumate_api import handle_sync_api_courses
+                        from ewumate_api import handle_sync_api_courses
                     except ImportError:
-                        def handle_sync_api_courses(_): return {"message": "Could not import sync handler"}
+                        # Fallback if the path is different in Azure environment
+                        try:
+                            from .ewumate_api import handle_sync_api_courses
+                        except ImportError:
+                            def handle_sync_api_courses(_): return {"message": "Could not import sync handler"}
 
-                sync_res = handle_sync_api_courses(sync_payload)
-                report.append(f"Sync complete for {sem_name}: {sync_res.get('message', 'Success')}")
-                sync_stats.append({
-                    "semester": sem_name,
-                    "added": sync_res.get("inserted", 0),
-                    "updated": sync_res.get("updated", 0),
-                    "deleted": sync_res.get("deleted", 0)
-                })
+                    sync_res = handle_sync_api_courses(sync_payload)
+                    report.append(f"Sync complete for {sem_name}: {sync_res.get('message', 'Success')}")
+                    sync_stats.append({
+                        "semester": sem_name,
+                        "added": sync_res.get("inserted", 0),
+                        "updated": sync_res.get("updated", 0),
+                        "deleted": sync_res.get("deleted", 0)
+                    })
 
-                # [SNAPSHOT] Trigger PDF generation and archival
-                try:
-                    from snapshot_utils import run_automated_snapshot
-                    run_automated_snapshot(sem_name)
-                except Exception as e:
-                    logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
+                    # [SNAPSHOT] Trigger PDF generation and archival
+                    try:
+                        from snapshot_utils import run_automated_snapshot
+                        run_automated_snapshot(sem_name)
+                    except Exception as e:
+                        logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
             
             except Exception as sem_e:
                 logging.error(f"Error syncing semester {sem_name}: {sem_e}")

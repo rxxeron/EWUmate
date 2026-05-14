@@ -20,6 +20,8 @@ interface Course {
   section_number: string;
   course_name: string;
   faculty_initials: string;
+  faculty_full_name?: string;
+  faculty_designation?: string;
   capacity: string;
   dedicated_department: string;
   credit_val?: string;
@@ -148,6 +150,8 @@ export function PortalAutomation() {
           code: c.course_code,
           section: c.section_number,
           faculty: c.faculty_initials,
+          faculty_full_name: c.faculty_full_name || '',
+          faculty_designation: c.faculty_designation || '',
           capacity: c.capacity,
           course_name: c.course_name,
           credits: c.credit_val,
@@ -576,7 +580,14 @@ export function PortalAutomation() {
                           <td className="px-4 py-4">
                             <div className="w-8 h-8 mx-auto flex items-center justify-center bg-slate-50 dark:bg-white/5 rounded-lg font-black border border-slate-100 dark:border-white/10 text-slate-900 dark:text-white">{item.section_number}</div>
                           </td>
-                          <td className="px-4 py-4 font-black text-indigo-600 dark:text-indigo-400 uppercase">{item.faculty_initials || 'TBA'}</td>
+                          <td className="px-4 py-4">
+                            <div className="font-black text-indigo-600 dark:text-indigo-400 uppercase">{item.faculty_initials || 'TBA'}</div>
+                            {item.faculty_full_name && (
+                              <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold truncate max-w-[120px]" title={`${item.faculty_full_name} (${item.faculty_designation})`}>
+                                {item.faculty_full_name}
+                              </div>
+                            )}
+                          </td>
                           <td className="px-4 py-4">
                             <div className="font-black text-slate-700 dark:text-slate-300 mb-1">{item.capacity}</div>
                             <div className="w-16 bg-slate-100 dark:bg-white/10 h-1 rounded-full overflow-hidden">

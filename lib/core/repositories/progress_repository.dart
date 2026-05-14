@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -164,30 +165,79 @@ ProgressRepository progressRepository(ProgressRepositoryRef ref) {
 }
 
 @riverpod
-Future<List<SemesterCourseMarks>> currentSemesterMarks(
+Stream<List<SemesterCourseMarks>> currentSemesterMarks(
   CurrentSemesterMarksRef ref,
-) async {
+) async* {
   final user = ref.watch(currentUserProvider);
-  if (user == null) return [];
+  if (user == null) {
+    yield [];
+    return;
+  }
   
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
-  
-  final marks = await ref
-      .watch(progressRepositoryProvider)
-      .getCourseMarks(user.id, semCode);
-      
-  // Hide corrupted rows (e.g., long UUIDs accidentally saved as course_code)
-  return marks.where((m) => m.courseCode.length <= 15).toList();
+  final repo = ref.watch(progressRepositoryProvider);
+  final cacheKey = 'marks_${user.id}_$semCode';
+  bool yieldedCache = false;
+
+  while (true) {
+    try {
+      final marks = await repo.getCourseMarks(user.id, semCode).timeout(const Duration(seconds: 12));
+      if (marks.isNotEmpty) {
+        yield marks.where((m) => m.courseCode.length <= 15).toList();
+        break;
+      }
+    } catch (e) {
+      if (!yieldedCache) {
+        final cached = ref.read(cacheServiceProvider).getMapData('semester_progress_box', cacheKey);
+        if (cached != null && cached['data'] != null) {
+          final list = (cached['data'] as List)
+              .map((e) => SemesterCourseMarks.fromJson(Map<String, dynamic>.from(e)))
+              .where((m) => m.courseCode.length <= 15)
+              .toList();
+          yield list;
+          yieldedCache = true;
+        }
+      }
+      await Future.delayed(const Duration(seconds: 10));
+    }
+  }
 }
 
 @riverpod
-Future<List<SemesterSummary>> allSemesterSummaries(
+Stream<List<SemesterSummary>> allSemesterSummaries(
   AllSemesterSummariesRef ref,
-) async {
+) async* {
   final user = ref.watch(currentUserProvider);
-  if (user == null) return [];
+  if (user == null) {
+    yield [];
+    return;
+  }
   
-  return ref.watch(progressRepositoryProvider).getSemesterSummaries(user.id);
+  final repo = ref.watch(progressRepositoryProvider);
+  final cacheKey = 'summaries_${user.id}';
+  bool yieldedCache = false;
+
+  while (true) {
+    try {
+      final summaries = await repo.getSemesterSummaries(user.id).timeout(const Duration(seconds: 12));
+      if (summaries.isNotEmpty) {
+        yield summaries;
+        break;
+      }
+    } catch (e) {
+      if (!yieldedCache) {
+        final cached = ref.read(cacheServiceProvider).getMapData('dashboard_box', cacheKey);
+        if (cached != null && cached['data'] != null) {
+          final list = (cached['data'] as List)
+              .map((e) => SemesterSummary.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+          yield list;
+          yieldedCache = true;
+        }
+      }
+      await Future.delayed(const Duration(seconds: 15));
+    }
+  }
 }
 
 // Providers for programDetails are now moved to core/providers/academic_providers.dart

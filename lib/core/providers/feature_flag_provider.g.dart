@@ -6,7 +6,7 @@ part of 'feature_flag_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$isAdvisingOpenHash() => r'1280b72a84c8f9e348a9a932dbeb48524ad4b08a';
+String _$isAdvisingOpenHash() => r'ce15698a430bba28084311269ee1af6cd3b3af7a';
 
 /// See also [isAdvisingOpen].
 @ProviderFor(isAdvisingOpen)
@@ -22,7 +22,7 @@ final isAdvisingOpenProvider = AutoDisposeFutureProvider<bool>.internal(
 
 typedef IsAdvisingOpenRef = AutoDisposeFutureProviderRef<bool>;
 String _$isNextSemesterOpenHash() =>
-    r'da4f022d2862ace519fa5ceb7ca082daf064085a';
+    r'b1d9e35b4bae823b26e4488088d0fee5f94d4d65';
 
 /// See also [isNextSemesterOpen].
 @ProviderFor(isNextSemesterOpen)

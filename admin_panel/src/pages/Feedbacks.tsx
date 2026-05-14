@@ -81,7 +81,7 @@ export function Feedbacks() {
     try {
       const { data: commentData, error: commentError } = await supabase
         .from('feedback_comments')
-        .insert([{ feedback_id: feedbackId, comment }])
+        .insert([{ feedback_id: feedbackId, comment, is_admin: true }])
         .select()
         .single();
 
@@ -92,7 +92,7 @@ export function Feedbacks() {
         user_id: userId,
         title: 'Feedback Update',
         body: `An admin commented on your feedback: "${comment.substring(0, 50)}${comment.length > 50 ? '...' : ''}"`,
-        type: 'system',
+        type: 'push_alert',
         alert_key: 'feedback_update'
       }]);
 
@@ -168,10 +168,10 @@ export function Feedbacks() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center px-2">
-        <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">User Feedback & Issues</h2>
+        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">User Feedback & Issues</h2>
         
         <select 
-          className="border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium p-2"
+          className="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm font-medium p-2 dark:bg-slate-900 dark:text-white"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
@@ -188,46 +188,46 @@ export function Feedbacks() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : filteredFeedbacks.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
-          <Mail className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">No feedbacks found</h3>
-          <p className="mt-1 text-gray-500 text-sm">No feedbacks match the current filter.</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-white/5 p-12 text-center">
+          <Mail className="mx-auto h-12 w-12 text-gray-300 dark:text-slate-700 mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">No feedbacks found</h3>
+          <p className="mt-1 text-gray-500 dark:text-slate-500 text-sm">No feedbacks match the current filter.</p>
         </div>
       ) : (
         <div className="grid gap-6 gap-y-8">
           {filteredFeedbacks.map((feedback) => (
-            <div key={feedback.id} className="bg-white/80 backdrop-blur-md rounded-2xl shadow-sm border border-indigo-100 p-6 flex flex-col md:flex-row gap-6 transition-all hover:shadow-md">
+            <div key={feedback.id} className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-indigo-100 dark:border-white/5 p-6 flex flex-col md:flex-row gap-6 transition-all hover:shadow-md">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
                   <span className={`px-2.5 py-1 text-xs font-bold rounded-full border ${getStatusColor(feedback.status)} uppercase tracking-wide`}>
                     {feedback.status.replace('_', ' ')}
                   </span>
-                  <span className="text-sm font-medium text-gray-400">
+                  <span className="text-sm font-medium text-gray-400 dark:text-slate-500">
                     {new Date(feedback.created_at).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-gray-800 text-lg font-medium mb-4 whitespace-pre-wrap">{feedback.message}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg w-fit">
+                <p className="text-gray-800 dark:text-slate-200 text-lg font-medium mb-4 whitespace-pre-wrap">{feedback.message}</p>
+                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900/50 p-3 rounded-lg w-fit">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-indigo-400" />
-                    <span className="font-bold text-gray-900">{feedback.profiles?.full_name || 'Anonymous User'}</span>
+                    <span className="font-bold text-gray-900 dark:text-white">{feedback.profiles?.full_name || 'Anonymous User'}</span>
                   </div>
-                  <div className="text-xs border-l border-gray-200 pl-4 font-medium text-gray-500">
-                    ID: <span className="text-indigo-600 font-bold">{feedback.profiles?.student_id || 'N/A'}</span>
+                  <div className="text-xs border-l border-gray-200 dark:border-white/10 pl-4 font-medium text-gray-500 dark:text-slate-500">
+                    ID: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{feedback.profiles?.student_id || 'N/A'}</span>
                   </div>
-                  <div className="text-xs border-l border-gray-200 pl-4 font-medium text-gray-500 italic">
+                  <div className="text-xs border-l border-gray-200 dark:border-white/10 pl-4 font-medium text-gray-500 dark:text-slate-500 italic">
                     {feedback.profiles?.program_code || ''}
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-col gap-4 min-w-[300px] border-l md:border-l-2 border-gray-100 pl-6">
+              <div className="flex flex-col gap-4 min-w-[300px] border-l md:border-l-2 border-gray-100 dark:border-white/5 pl-6">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                  <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Status</p>
                   <select
                     value={feedback.status}
                     onChange={(e) => updateStatus(feedback.id, e.target.value)}
-                    className="w-full border-gray-200 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 font-medium py-2 bg-white"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 font-medium py-2 bg-white dark:bg-slate-900 dark:text-white"
                   >
                     <option value="pending">Pending</option>
                     <option value="in_progress">In Progress</option>
@@ -237,10 +237,10 @@ export function Feedbacks() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto max-h-[300px] space-y-3 pr-2 scrollbar-thin">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Comment History</p>
+                  <p className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-1">Comment History</p>
                   
                   {feedback.comments?.map((comment) => (
-                    <div key={comment.id} className="bg-gray-50/50 p-3 rounded-lg border border-gray-100 relative group">
+                    <div key={comment.id} className="bg-gray-50/50 dark:bg-slate-900/50 p-3 rounded-lg border border-gray-100 dark:border-white/10 relative group">
                       <textarea
                         defaultValue={comment.comment}
                         onBlur={(e) => {
@@ -248,11 +248,11 @@ export function Feedbacks() {
                             updateComment(feedback.id, comment.id, e.target.value);
                           }
                         }}
-                        className="w-full bg-transparent border-none p-0 text-sm text-gray-700 resize-none focus:ring-0"
+                        className="w-full bg-transparent border-none p-0 text-sm text-gray-700 dark:text-slate-300 resize-none focus:ring-0"
                       />
                       <div className="flex justify-between items-center mt-1">
-                        <span className="text-[10px] text-gray-400">
-                          {new Date(comment.created_at).toLocaleDateString()}
+                        <span className="text-[10px] text-gray-400 font-bold uppercase">
+                          {comment.is_admin ? 'Admin' : 'User'} • {new Date(comment.created_at).toLocaleDateString()}
                         </span>
                         <button 
                           onClick={() => deleteComment(feedback.id, comment.id)}
@@ -267,7 +267,7 @@ export function Feedbacks() {
                   <div className="pt-2">
                     <textarea
                       placeholder="Add a comment and notify user..."
-                      className="w-full h-20 border-indigo-100 bg-indigo-50/30 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 font-medium p-3 resize-none"
+                      className="w-full h-20 border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/30 dark:bg-indigo-500/5 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500 font-medium p-3 resize-none dark:text-white"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
@@ -276,7 +276,7 @@ export function Feedbacks() {
                         }
                       }}
                     />
-                    <p className="text-[10px] text-indigo-400 mt-1 italic">Press Enter to send notification</p>
+                    <p className="text-[10px] text-indigo-400 dark:text-indigo-500 mt-1 italic">Press Enter to send notification</p>
                   </div>
                 </div>
               </div>

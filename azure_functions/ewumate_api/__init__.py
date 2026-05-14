@@ -534,6 +534,11 @@ def handle_sync_api_courses(body: dict) -> dict:
         meta_res = sb.table("course_metadata").select("code, name, credit_val").execute()
         meta_map = { (r.get("code") or "").upper().replace(" ", ""): r for r in (meta_res.data or []) }
 
+        # 1.6 Fetch faculty master for silent backend enrichment
+        def clean_initials(s): return "".join(c for c in str(s or "").upper() if c.isalnum())
+        fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").limit(5000).execute()
+        fac_map = { clean_initials(f.get('short_name')): f for f in (fac_res.data or []) }
+
         # 2. Map scraper output → live DB schema (mirrors _do_parse_faculty lines 489-498)
         mapped_courses = []
         unique_seen = set()
@@ -554,6 +559,13 @@ def handle_sync_api_courses(body: dict) -> dict:
             master = meta_map.get(clean_code)
             final_name = (master.get("name") if master else "") or c.get("course_name") or ""
             
+            # Enrichment from faculty master
+            raw_fac = c.get("faculty") or "TBA"
+            fac_info = fac_map.get(clean_initials(raw_fac))
+
+            f_full = (fac_info.get("full_name") if fac_info else "") or ""
+            f_desig = (fac_info.get("designation_name") if fac_info else "") or ""
+
             # Safe credit conversion
             try:
                 raw_cred = (master.get("credit_val") if master else None) or c.get("credits")
@@ -565,14 +577,14 @@ def handle_sync_api_courses(body: dict) -> dict:
                 "course_code":      clean_code,
                 "original_code":    raw_code,
                 "section_number":   sec,
-                "faculty_initials":  c.get("faculty") or "TBA",
+                "faculty_initials":  raw_fac,
                 "dedicated_department": c.get("dedicated_department") or "",
                 "capacity":          c.get("capacity") or "0/0",
                 "schedule_data":     c.get("sessions") or [],
                 "course_name":       final_name,
                 "credit_val":        final_cred,
-                "faculty_full_name": re.sub(r'^(Mr|Ms|Mrs)\.?\s+', '', c.get("faculty_full_name") or "", flags=re.IGNORECASE).title(),
-                "faculty_designation": c.get("faculty_designation") or "",
+                "faculty_full_name": re.sub(r'^(Mr|Ms|Mrs)\.?\s+', '', f_full, flags=re.IGNORECASE).title(),
+                "faculty_designation": f_desig,
             })
 
         if not mapped_courses:

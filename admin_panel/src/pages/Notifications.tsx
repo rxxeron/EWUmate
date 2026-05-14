@@ -233,31 +233,28 @@ export function Notifications() {
           { id: 'version', label: 'Version Wise', icon: Package, color: 'bg-blue-600', sub: 'Target Specific App' },
           { id: 'user', label: 'User Specific', icon: Users, color: 'bg-rose-600', sub: 'Individual UUID' },
         ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id as any); resetForm(); }}
             className={`p-5 rounded-2xl border-2 text-left transition-all relative overflow-hidden group ${
               activeTab === tab.id 
               ? `border-transparent ring-2 ring-offset-2 ${tab.id === 'global' ? 'ring-indigo-500' : tab.id === 'department' ? 'ring-amber-500' : tab.id === 'status' ? 'ring-emerald-500' : tab.id === 'version' ? 'ring-blue-500' : 'ring-rose-500'}` 
-              : 'border-gray-200 bg-white hover:border-gray-300'
+              : 'border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 hover:border-gray-300 dark:hover:border-white/20'
             }`}
           >
             {activeTab === tab.id && (
-              <div className={`absolute inset-0 opacity-10 ${tab.color}`} />
+              <div className={`absolute inset-0 opacity-10 dark:opacity-20 ${tab.color}`} />
             )}
-            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : tab.id === 'status' ? 'text-emerald-600' : tab.id === 'version' ? 'text-blue-600' : 'text-rose-600') : 'text-gray-400 group-hover:text-gray-600'}`} />
-            <p className={`font-bold block ${activeTab === tab.id ? 'text-gray-900' : 'text-gray-500'}`}>{tab.label}</p>
-            <p className="text-xs text-gray-400 font-medium">{tab.sub}</p>
+            <tab.icon className={`w-8 h-8 mb-3 transition-colors ${activeTab === tab.id ? (tab.id === 'global' ? 'text-indigo-600' : tab.id === 'department' ? 'text-amber-600' : tab.id === 'status' ? 'text-emerald-600' : tab.id === 'version' ? 'text-blue-600' : 'text-rose-600') : 'text-gray-400 dark:text-slate-500 group-hover:text-gray-600 dark:group-hover:text-slate-300'}`} />
+            <p className={`font-bold block ${activeTab === tab.id ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-slate-400'}`}>{tab.label}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 font-medium">{tab.sub}</p>
           </button>
         ))}
       </div>
 
       {/* Dynamic Form Area */}
-      <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100/50 border border-indigo-50 overflow-hidden transition-all">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-indigo-100/50 dark:shadow-none border border-indigo-50 dark:border-white/5 overflow-hidden transition-all">
         <div className={`h-1.5 w-full ${activeTab === 'global' ? 'bg-indigo-600' : activeTab === 'department' ? 'bg-amber-600' : activeTab === 'status' ? 'bg-emerald-600' : activeTab === 'version' ? 'bg-blue-600' : 'bg-rose-600'}`} />
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-bold text-gray-900">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white">
               {activeTab === 'global' && '🌍 Global Announcement'}
               {activeTab === 'department' && '🏢 Departmental Circular'}
               {activeTab === 'status' && '🛡️ Status Targeted Alert'}
@@ -265,7 +262,7 @@ export function Notifications() {
               {activeTab === 'user' && '👤 Direct Personal Message'}
             </h3>
             <div className="flex gap-2">
-              <button onClick={() => setShowTemplates(!showTemplates)} className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">
+              <button onClick={() => setShowTemplates(!showTemplates)} className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-white/5 px-3 py-1.5 rounded-lg transition-colors">
                 {showTemplates ? 'CLOSE TEMPLATES' : 'USE TEMPLATE'}
               </button>
             </div>
@@ -278,10 +275,10 @@ export function Notifications() {
                   <button 
                     key={t.id} 
                     onClick={() => handleLoadTemplate(t)}
-                    className="p-3 bg-white border border-gray-200 rounded-xl text-left hover:border-indigo-400 hover:shadow-sm transition-all"
+                    className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl text-left hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-sm transition-all"
                   >
-                    <p className="font-bold text-gray-800 text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{t.title}</p>
+                    <p className="font-bold text-gray-800 dark:text-slate-200 text-sm truncate">{t.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-500 truncate">{t.title}</p>
                   </button>
                 ))}
               </div>
@@ -292,107 +289,107 @@ export function Notifications() {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Notification Title</label>
+                <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Notification Title</label>
                 <input
                   type="text"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  className="w-full border-gray-200 rounded-xl bg-gray-50 p-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-semibold"
+                  className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-slate-900 p-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all font-semibold text-slate-900 dark:text-white"
                   placeholder="e.g. System Maintenance"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Message Content</label>
+                <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Message Content</label>
                 <textarea
                   rows={4}
                   value={message}
                   onChange={e => setMessage(e.target.value)}
-                  className="w-full border-gray-200 rounded-xl bg-gray-50 p-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                  className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-slate-900 p-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all text-slate-900 dark:text-white"
                   placeholder="Write your message here..."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Attached Link (URL)</label>
+                <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Attached Link (URL)</label>
                 <div className="relative">
                   <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="url"
                     value={url}
                     onChange={e => setUrl(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-gray-50 p-4 pl-12 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-slate-900 p-4 pl-12 text-sm focus:ring-2 focus:ring-indigo-500 transition-all text-slate-900 dark:text-white"
                     placeholder="https://ewumate.app/..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Schedule Deployment (Optional)</label>
+                <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Schedule Deployment (Optional)</label>
                 <div className="relative">
                   <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="datetime-local"
                     value={scheduledAt}
                     onChange={e => setScheduledAt(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-gray-50 p-4 pl-12 text-sm focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-gray-50 dark:bg-slate-900 p-4 pl-12 text-sm focus:ring-2 focus:ring-indigo-500 transition-all text-slate-900 dark:text-white"
                   />
                 </div>
               </div>
 
               {activeTab === 'department' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target Department</label>
+                  <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Target Department</label>
                   <select
                     value={targetDepartment}
                     onChange={e => setTargetDepartment(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-amber-50 p-4 text-sm font-bold focus:ring-2 focus:ring-amber-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-amber-50 dark:bg-amber-500/5 p-4 text-sm font-bold focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 dark:text-white"
                   >
-                    <option value="">Select Department...</option>
-                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                    <option value="" className="dark:bg-slate-900">Select Department...</option>
+                    {departments.map(d => <option key={d} value={d} className="dark:bg-slate-900">{d}</option>)}
                   </select>
                 </div>
               )}
 
               {activeTab === 'status' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target User Status</label>
+                  <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Target User Status</label>
                   <select
                     value={targetStatus}
                     onChange={e => setTargetStatus(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-emerald-50 p-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-emerald-50 dark:bg-emerald-500/5 p-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all text-slate-900 dark:text-white"
                   >
-                    <option value="">Select Status...</option>
-                    {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="" className="dark:bg-slate-900">Select Status...</option>
+                    {statuses.map(s => <option key={s} value={s} className="dark:bg-slate-900">{s}</option>)}
                   </select>
-                  <p className="mt-2 text-[10px] text-gray-400 font-medium">Tip: Use 'registered' or 'course_history' to target users who haven't finished setup.</p>
+                  <p className="mt-2 text-[10px] text-gray-400 dark:text-slate-500 font-medium">Tip: Use 'registered' or 'course_history' to target users who haven't finished setup.</p>
                 </div>
               )}
 
               {activeTab === 'version' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target App Version</label>
+                  <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Target App Version</label>
                   <select
                     value={targetVersion}
                     onChange={e => setTargetVersion(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-blue-50 p-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-blue-50 dark:bg-blue-500/5 p-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all text-slate-900 dark:text-white"
                   >
-                    <option value="">Select Version...</option>
-                    <option value="legacy">Legacy Users (No Version Info)</option>
-                    {availableVersions.map(v => <option key={v} value={v}>{v}</option>)}
+                    <option value="" className="dark:bg-slate-900">Select Version...</option>
+                    <option value="legacy" className="dark:bg-slate-900">Legacy Users (No Version Info)</option>
+                    {availableVersions.map(v => <option key={v} value={v} className="dark:bg-slate-900">{v}</option>)}
                   </select>
-                  <p className="mt-2 text-[10px] text-gray-400 font-medium">Tip: Target 'Legacy Users' for anyone on versions older than v1.0.10.</p>
+                  <p className="mt-2 text-[10px] text-gray-400 dark:text-slate-500 font-medium">Tip: Target 'Legacy Users' for anyone on versions older than v1.0.10.</p>
                 </div>
               )}
 
               {activeTab === 'user' && (
                 <div className="md:col-span-2 animate-in fade-in slide-in-from-left-4">
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Target User UUID</label>
+                  <label className="block text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-2">Target User UUID</label>
                   <input
                     type="text"
                     value={targetUserId}
                     onChange={e => setTargetUserId(e.target.value)}
-                    className="w-full border-gray-200 rounded-xl bg-rose-50 p-4 text-sm font-mono focus:ring-2 focus:ring-rose-500 transition-all"
+                    className="w-full border-gray-200 dark:border-white/10 rounded-xl bg-rose-50 dark:bg-rose-500/5 p-4 text-sm font-mono focus:ring-2 focus:ring-rose-500 transition-all text-slate-900 dark:text-white"
                     placeholder="00000000-0000-0000-0000-000000000000"
                   />
                 </div>
@@ -416,7 +413,7 @@ export function Notifications() {
               </button>
               <button
                 onClick={handleSaveTemplate}
-                className="bg-gray-100 text-gray-600 p-4 rounded-2xl hover:bg-gray-200 transition-colors"
+                className="bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 p-4 rounded-2xl hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
                 title="Save as Template"
               >
                 <BookmarkPlus className="w-6 h-6" />
@@ -427,34 +424,34 @@ export function Notifications() {
       </div>
 
       {/* History Section */}
-      <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl border border-gray-200 dark:border-white/5 overflow-hidden">
         <button
           onClick={() => { setShowHistory(!showHistory); if (!showHistory) fetchHistory(); }}
-          className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          className="w-full p-6 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
               <History className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900">Deployment History</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Deployment History</h3>
           </div>
           <span className={`text-gray-400 transition-transform ${showHistory ? 'rotate-180' : ''}`}>▼</span>
         </button>
 
         {showHistory && (
-          <div className="border-t border-gray-100 animate-in fade-in slide-in-from-top-2">
-            <div className="divide-y divide-gray-100">
+          <div className="border-t border-gray-100 dark:border-white/5 animate-in fade-in slide-in-from-top-2">
+            <div className="divide-y divide-gray-100 dark:divide-white/5">
               {historyLoading ? (
                 <div className="p-12 text-center text-gray-400 italic">Fetching records...</div>
               ) : history.length === 0 ? (
                 <div className="p-12 text-center text-gray-400 italic">No recent deployments found.</div>
               ) : (
                 history.map(n => (
-                  <div key={n.id} className="p-6 flex items-start justify-between group hover:bg-slate-50/50 transition-colors">
+                  <div key={n.id} className="p-6 flex items-start justify-between group hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <div className={`w-2 h-2 rounded-full ${n.is_dispatched ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        <span className="font-bold text-gray-900">{n.title}</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{n.title}</span>
                       </div>
                       <p className="text-sm text-gray-500 line-clamp-1">{n.body}</p>
                       <div className="flex items-center gap-3 mt-2">

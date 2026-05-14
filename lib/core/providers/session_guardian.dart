@@ -31,7 +31,12 @@ class SessionGuardian {
       final Session? session = data.session;
 
       if (kDebugMode) {
-        print('[SessionGuardian] Auth Event: ${event.name}');
+        print('[SessionGuardian] 🛡️ Auth Event: ${event.name}');
+        print('[SessionGuardian] 🔑 Session Status: ${session != null ? 'Active' : 'Missing'}');
+        if (session != null) {
+          print('[SessionGuardian] 👤 User: ${session.user.id}');
+          print('[SessionGuardian] ⏳ Expires: ${DateTime.fromMillisecondsSinceEpoch(session.expiresAt! * 1000)}');
+        }
       }
 
       if (session?.user != null) {
@@ -45,20 +50,34 @@ class SessionGuardian {
 
       switch (event) {
         case AuthChangeEvent.signedIn:
-          if (kDebugMode) print('[SessionGuardian] User signed in. Session secured.');
+          if (kDebugMode) print('[SessionGuardian] ✅ User signed in. Session secured.');
           break;
         case AuthChangeEvent.tokenRefreshed:
-          if (kDebugMode) print('[SessionGuardian] Token refreshed successfully.');
+          if (kDebugMode) print('[SessionGuardian] 🔄 Token refreshed successfully.');
           break;
         case AuthChangeEvent.signedOut:
-          if (kDebugMode) print('[SessionGuardian] User signed out.');
+          if (kDebugMode) print('[SessionGuardian] ⚠️ User signed out event detected.');
           break;
         case AuthChangeEvent.userUpdated:
-          if (kDebugMode) print('[SessionGuardian] Profile/User data updated.');
+          if (kDebugMode) print('[SessionGuardian] 👤 Profile/User data updated.');
+          break;
+        case AuthChangeEvent.passwordRecovery:
+          if (kDebugMode) print('[SessionGuardian] 🔑 Password recovery initiated.');
+          break;
+        case AuthChangeEvent.initialSession:
+          if (kDebugMode) print('[SessionGuardian] 🏁 Initial session loaded: ${session != null}');
+          break;
+        case AuthChangeEvent.userDeleted:
+          if (kDebugMode) print('[SessionGuardian] 🗑️ User deleted.');
+          break;
+        case AuthChangeEvent.mfaChallengeVerified:
+          if (kDebugMode) print('[SessionGuardian] 🔐 MFA Challenge Verified.');
           break;
         default:
           break;
       }
+    }, onError: (error) {
+      if (kDebugMode) print('[SessionGuardian] ❌ Auth Stream Error: $error');
     });
   }
 

@@ -6,56 +6,52 @@ import '../../core/services/cache_service.dart';
 import '../../core/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final profileProvider = FutureProvider<Profile?>((ref) async {
-  final user = ref.watch(currentUserProvider);
+final profileProvider = StreamProvider<Profile?>((ref) async* {
   final authRepo = ref.watch(authRepositoryProvider);
+  final user = authRepo.currentUser;
   final cacheService = ref.read(cacheServiceProvider);
 
   String? effectiveUserId = user?.id;
   if (effectiveUserId == null) {
-    // Offline-First: If Supabase hasn't loaded yet, use the last known identity
     effectiveUserId = cacheService.getLastUserId();
-    if (effectiveUserId == null) return null;
+    if (effectiveUserId == null) {
+      yield null;
+      return;
+    }
   }
   
   final userId = effectiveUserId;
-  debugPrint("[ProfileProvider] Online-First Strategy for: $userId");
+  bool yieldedCache = false;
 
-  try {
-    // 1. ATTEMPT LIVE FETCH (Source of Truth)
-    final liveProfile = await authRepo.getProfile(userId).timeout(
-      const Duration(seconds: 10),
-      onTimeout: () {
-        debugPrint("[ProfileProvider] Network Timeout (10s) for: $userId. Falling back to cache.");
-        throw TimeoutException("Network timeout");
-      },
-    );
-
-    if (liveProfile != null) {
-      debugPrint("[ProfileProvider] Live Fetch SUCCESS for: $userId");
-      cacheService.cacheProfile(userId, liveProfile.toJson());
-      return liveProfile;
+  // Background retry loop
+  while (true) {
+    try {
+      debugPrint("[ProfileProvider] Attempting Online Fetch for: $userId");
+      final profile = await authRepo.getProfile(userId).timeout(
+        const Duration(seconds: 10),
+      );
+      
+      if (profile != null) {
+        cacheService.cacheProfile(userId, profile.toJson());
+        yield profile;
+        break; 
+      }
+    } catch (e) {
+      debugPrint("[ProfileProvider] Online failed: $e");
+      
+      if (!yieldedCache) {
+        final cachedData = cacheService.getCachedProfile(userId);
+        if (cachedData != null) {
+          debugPrint("[ProfileProvider] Serving Cache silently...");
+          yield Profile.fromJson(cachedData);
+          yieldedCache = true;
+        }
+      }
+      
+      // Retry every 5 seconds until success
+      await Future.delayed(const Duration(seconds: 5));
     }
-  } catch (e) {
-    debugPrint("[ProfileProvider] Live Fetch FAILED or TIMEOUT: $e");
-    
-    // 2. FALLBACK TO CACHE
-    final cachedData = cacheService.getCachedProfile(userId);
-    if (cachedData != null) {
-      debugPrint("[ProfileProvider] Serving FALLBACK cache for: $userId");
-      return Profile.fromJson(cachedData);
-    }
-    
-    // 3. NO CACHE AND NO LIVE? Rethrow error
-    debugPrint("[ProfileProvider] No live data and no cache found for: $userId");
-    if (e is TimeoutException) {
-       throw Exception("Unable to reach EWUmate. Please check your internet connection.");
-    }
-    rethrow;
   }
-  
-  // If we reach here, live fetch returned null (no profile record)
-  return null;
 });
 
 final authStateProvider = StreamProvider<AuthState>((ref) async* {

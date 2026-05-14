@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabaseAdmin as supabase } from '../lib/supabase';
-import { Users, Search, ChevronLeft, ChevronRight, Download, Loader2, Filter, X, Zap } from 'lucide-react';
+import { Users, Search, ChevronLeft, ChevronRight, Download, Loader2, Filter, X, Zap, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import type { Profile } from '../types';
@@ -302,6 +302,7 @@ export function UsersList() {
                 <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Profile</th>
                 <th className="hidden lg:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Departmental Hub</th>
                 <th className="hidden sm:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Vitals</th>
+                <th className="hidden xl:table-cell px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Version</th>
                 <th className="hidden xl:table-cell px-8 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Activity</th>
                 <th className="px-6 sm:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Access</th>
               </tr>
@@ -364,6 +365,16 @@ export function UsersList() {
                            <span className="text-sm font-black text-slate-900 dark:text-white">{user.total_credits_earned || '0'}</span>
                         </div>
                       </div>
+                    </td>
+                    <td className="hidden xl:table-cell px-8 py-6 text-center">
+                      {(user as any).app_version ? (
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
+                           <Package className="w-3 h-3" />
+                           <span className="text-[10px] font-black uppercase tracking-widest">v{(user as any).app_version}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest">Legacy</span>
+                      )}
                     </td>
                     <td className="hidden xl:table-cell px-8 py-6 text-center">
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm">

@@ -44,6 +44,7 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileProvider);
+    final user = ref.watch(currentUserProvider); // Reactive user source
 
     return Scaffold(
       body: Stack(
@@ -52,40 +53,49 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
           Center(
             child: profileAsync.when(
               data: (profile) {
-                final syncUser = Supabase.instance.client.auth.currentUser;
+                _stallTimer?.cancel();
 
+                // 1. If we have NO profile data
                 if (profile == null) {
-                  // If we have a Supabase user but no profile record yet, they are a NEW student.
-                  if (syncUser != null) {
+                  debugPrint("[CheckAuth] Profile is NULL. User is: ${user?.id}");
+                  
+                  if (user != null) {
+                    // Logged in but no record in DB yet
+                    debugPrint("[CheckAuth] Redirecting to Onboarding (No Profile Record)");
                     WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
                     return const CircularProgressBinding(text: 'Setting up your profile...');
                   }
 
-                  // Truly no identity found? Wait briefly for Supabase to be 100% sure.
+                  // Not logged in -> Login
+                  debugPrint("[CheckAuth] Waiting for identity...");
                   Future.delayed(const Duration(seconds: 3), () {
-                    if (mounted && Supabase.instance.client.auth.currentUser == null) {
+                    if (mounted && user == null && Supabase.instance.client.auth.currentUser == null) {
+                      debugPrint("[CheckAuth] Still no user after 3s. Redirecting to Login.");
                       context.go('/login');
                     }
                   });
                   return const CircularProgressBinding(text: 'Searching for you...');
                 }
 
-                // WE HAVE A PROFILE (Cached or Live)
-                // Proceed to Dashboard/Onboarding immediately!
-                _stallTimer?.cancel();
+                // 2. We HAVE profile data
+                debugPrint("[CheckAuth] Profile Found: ${profile.id}, Status: ${profile.onboardingStatus}, Program: ${profile.programCode}");
+
                 if (profile.onboardingStatus == 'pending' ||
                     profile.onboardingStatus == 'registered' ||
                     profile.programCode == null) {
+                  debugPrint("[CheckAuth] Redirecting to Onboarding Flow (Incomplete Profile)");
                   WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
                 } else if (profile.onboardingStatus == 'course_history') {
+                  debugPrint("[CheckAuth] Redirecting to Course History (Partial Completion)");
                   WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/course-history'));
                 } else {
-                  // Final check for grade entry, then Dashboard
+                  debugPrint("[CheckAuth] Onboarding Complete. Checking Grade Blocker.");
                   return const _GradeBlockerWrapper();
                 }
                 return const CircularProgressBinding(text: 'Restoring session...');
               },
               error: (err, stack) {
+                debugPrint("[CheckAuth] ERROR: $err\n$stack");
                 _stallTimer?.cancel();
                 return _ErrorView(
                   message: 'Connection issue: $err',
@@ -95,7 +105,10 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                   },
                 );
               },
-              loading: () => const CircularProgressBinding(text: 'Securing universe...'),
+              loading: () {
+                debugPrint("[CheckAuth] Loading state...");
+                return const CircularProgressBinding(text: 'Securing universe...');
+              },
             ),
           ),
         ],

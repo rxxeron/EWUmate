@@ -12,11 +12,13 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import type { Profile, DashboardStats, SemesterTrackStats } from '../types';
+import { useTheme } from '../components/ThemeContext';
 import { CardSkeleton, Skeleton } from '../components/Skeleton';
 import { cn } from '../lib/utils';
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [stats, setStats] = useState<DashboardStats>({
     users: 0,
     activeUsers24h: 0,
@@ -247,11 +249,11 @@ export function Dashboard() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between gap-6 items-start md:items-center">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
             Platform Insights
             {isRefreshing && <RefreshCcw className="w-5 h-5 text-indigo-500 animate-spin" />}
           </h2>
-          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-1">Live Statistics & Global Overview</p>
+          <p className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest mt-1">Live Statistics & Global Overview</p>
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -259,7 +261,7 @@ export function Dashboard() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none transition-all placeholder:text-slate-400 shadow-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 shadow-sm"
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -268,15 +270,15 @@ export function Dashboard() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="absolute z-50 mt-2 w-full bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                className="absolute z-50 mt-2 w-full bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-100 dark:border-white/5 overflow-hidden"
               >
                 {searchResults.map((user) => (
                   <button
                     key={user.id}
-                    className="w-full text-left p-4 hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors"
+                    className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-50 dark:border-white/5 last:border-0 transition-colors"
                     onClick={() => navigate(`/users/${user.id}`)}
                   >
-                    <div className="font-black text-slate-900">{user.full_name}</div>
+                    <div className="font-black text-slate-900 dark:text-white">{user.full_name}</div>
                     <div className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">{user.student_id} • {user.program_code}</div>
                   </button>
                 ))}
@@ -285,7 +287,7 @@ export function Dashboard() {
           </div>
           <button 
             onClick={() => fetchDashboardData(true)}
-            className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
+            className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-all shadow-sm"
           >
             <RefreshCcw className={cn("w-5 h-5", isRefreshing && "animate-spin")} />
           </button>
@@ -294,13 +296,13 @@ export function Dashboard() {
       
       {/* Top Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">    
-        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
-          <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 shadow-inner">
+        <motion.div whileHover={{ y: -4 }} className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shadow-inner">
             <Users className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Users</p>
-            <p className="text-2xl font-black text-slate-900">{stats.users.toLocaleString()}</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Users</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.users.toLocaleString()}</p>
           </div>
         </motion.div>
 
@@ -314,23 +316,23 @@ export function Dashboard() {
           </div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
-          <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600 shadow-inner">
+        <motion.div whileHover={{ y: -4 }} className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-inner">
             <BookOpen className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Programs</p>
-            <p className="text-2xl font-black text-slate-900">{stats.programs}</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Programs</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.programs}</p>
           </div>
         </motion.div>
 
-        <motion.div whileHover={{ y: -4 }} className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex items-center gap-5 transition-all">
-          <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 shadow-inner">
+        <motion.div whileHover={{ y: -4 }} className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/5 flex items-center gap-5 transition-all">
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-inner">
             <GraduationCap className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Courses</p>
-            <p className="text-2xl font-black text-slate-900">{stats.courses.toLocaleString()}</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Live Courses</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{stats.courses.toLocaleString()}</p>
           </div>
         </motion.div>
       </div>
@@ -338,18 +340,18 @@ export function Dashboard() {
       {/* Main Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Registration Chart */}
-        <div className="lg:col-span-2 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-xl">
-                <TrendingUp className="w-5 h-5 text-indigo-600" />
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl">
+                <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Growth Trend</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">New users per day (Last 14 days)</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Growth Trend</h3>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">New users per day (Last 14 days)</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase">
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-[10px] font-black uppercase">
               <ArrowUpRight className="w-3 h-3" />
               Rising
             </div>
@@ -364,7 +366,7 @@ export function Dashboard() {
                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#334155' : '#f1f5f9'} />
                 <XAxis 
                   dataKey="date" 
                   axisLine={false} 
@@ -400,18 +402,18 @@ export function Dashboard() {
         </div>
 
         {/* Activity Trend Chart */}
-        <div className="lg:col-span-2 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 flex flex-col overflow-hidden">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-xl">
-                <Activity className="w-5 h-5 text-emerald-600" />
+              <div className="p-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl">
+                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Activity Heatmap</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active users per day (Last 7 days)</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Activity Heatmap</h3>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active users per day (Last 7 days)</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase">
+            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase">
               7D Window
             </div>
           </div>
@@ -425,7 +427,7 @@ export function Dashboard() {
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#334155' : '#f1f5f9'} />
                 <XAxis 
                   dataKey="date" 
                   axisLine={false} 
@@ -462,10 +464,10 @@ export function Dashboard() {
 
         {/* System Health / Status */}
         <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-           <div className="md:col-span-3 bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col">
+           <div className="md:col-span-3 bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col">
               <div className="flex items-center justify-between mb-8">
-                 <h3 className="text-lg font-black text-slate-900 tracking-tight">System Infrastructure</h3>
-                 <span className="text-[10px] font-black px-3 py-1 bg-slate-100 text-slate-400 rounded-full uppercase">Operational</span>
+                 <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">System Infrastructure</h3>
+                 <span className="text-[10px] font-black px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-full uppercase">Operational</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
@@ -474,14 +476,14 @@ export function Dashboard() {
                   { label: 'Cloud DB', status: 'Optimized', icon: Clock, color: 'bg-indigo-500' },
                   { label: 'Broadcaster', status: 'Idle', icon: Mail, color: 'bg-slate-400' }
                 ].map((sys, i) => (
-                  <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:bg-white hover:border-indigo-100 transition-all">
+                  <div key={i} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:bg-white dark:hover:bg-slate-700 hover:border-indigo-100 dark:hover:border-indigo-500/20 transition-all">
                     <div className="flex items-center gap-4">
-                      <div className={cn("p-2 rounded-xl bg-white shadow-sm group-hover:scale-110 transition-transform")}>
-                        <sys.icon className="w-5 h-5 text-slate-900" />
+                      <div className={cn("p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm group-hover:scale-110 transition-transform")}>
+                        <sys.icon className="w-5 h-5 text-slate-900 dark:text-white" />
                       </div>
                       <div>
-                        <h4 className="text-xs font-black text-slate-900">{sys.label}</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{sys.status}</p>
+                        <h4 className="text-xs font-black text-slate-900 dark:text-white">{sys.label}</h4>
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{sys.status}</p>
                       </div>
                     </div>
                     <div className={cn("w-2 h-2 rounded-full", sys.color)} />
@@ -490,9 +492,9 @@ export function Dashboard() {
               </div>
            </div>
            
-           <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 flex flex-col justify-center">
+           <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col justify-center">
               <button 
-                className="w-full py-6 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
+                className="w-full py-6 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
                 onClick={() => navigate('/scraper')}
               >
                 <span>Launch Scraper</span>
@@ -508,43 +510,43 @@ export function Dashboard() {
           <motion.div 
             key={track} 
             whileHover={{ y: -4 }}
-            className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col"
+            className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden flex flex-col"
           >
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+            <div className="px-8 py-6 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
               <div className="flex items-center gap-3">
-                <CalendarClock className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-lg font-black text-slate-900 capitalize tracking-tight">{track.replace('_', ' ')}</h3>
+                <CalendarClock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h3 className="text-lg font-black text-slate-900 dark:text-white capitalize tracking-tight">{track.replace('_', ' ')}</h3>
               </div>
-              <div className="px-3 py-1 bg-white rounded-full border border-slate-200 text-[9px] font-black text-slate-400 uppercase tracking-widest">Active Track</div>
+              <div className="px-3 py-1 bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-white/10 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Active Track</div>
             </div>
             
-            <div className="grid grid-cols-2 divide-x divide-slate-50 flex-1">
+            <div className="grid grid-cols-2 divide-x divide-slate-50 dark:divide-white/5 flex-1">
               <div className="p-8 text-center">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Current</p>
-                <h4 className="text-xl font-black text-indigo-600 mb-4">{data.current || 'N/A'}</h4>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Current</p>
+                <h4 className="text-xl font-black text-indigo-600 dark:text-indigo-400 mb-4">{data.current || 'N/A'}</h4>
                 <div className="flex justify-center gap-3">
-                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 flex flex-col">
-                    <span className="text-sm font-black text-slate-900">{data.current_courses}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Courses</span>
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 flex flex-col">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{data.current_courses}</span>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">Courses</span>
                   </div>
-                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 flex flex-col">
-                    <span className="text-sm font-black text-slate-900">{data.current_sections}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Sec</span>
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5 flex flex-col">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{data.current_sections}</span>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">Sec</span>
                   </div>
                 </div>
               </div>
               
-              <div className="p-8 text-center bg-slate-50/30">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Upcoming</p>
-                <h4 className="text-xl font-black text-emerald-500 mb-4">{data.next || 'N/A'}</h4>
+              <div className="p-8 text-center bg-slate-50/30 dark:bg-black/10">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Upcoming</p>
+                <h4 className="text-xl font-black text-emerald-500 dark:text-emerald-400 mb-4">{data.next || 'N/A'}</h4>
                 <div className="flex justify-center gap-3">
-                  <div className="px-3 py-2 bg-white rounded-xl border border-slate-100 flex flex-col shadow-sm">
-                    <span className="text-sm font-black text-slate-900">{data.next_courses}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Courses</span>
+                  <div className="px-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-white/5 flex flex-col shadow-sm">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{data.next_courses}</span>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">Courses</span>
                   </div>
-                  <div className="px-3 py-2 bg-white rounded-xl border border-slate-100 flex flex-col shadow-sm">
-                    <span className="text-sm font-black text-slate-900">{data.next_sections}</span>
-                    <span className="text-[8px] font-bold text-slate-400 uppercase">Sec</span>
+                  <div className="px-3 py-2 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-white/5 flex flex-col shadow-sm">
+                    <span className="text-sm font-black text-slate-900 dark:text-white">{data.next_sections}</span>
+                    <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">Sec</span>
                   </div>
                 </div>
               </div>
@@ -556,41 +558,41 @@ export function Dashboard() {
       {/* Tables Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Registrations */}
-        <div className="bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-50 flex items-center justify-between">
-            <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-3 tracking-tight">
+        <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+          <div className="px-6 sm:px-8 py-5 sm:py-6 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
               <div className="w-2 h-2 rounded-full bg-indigo-500" />
               New Students
             </h3>
-            <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View All</button>
+            <button className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View All</button>
           </div>
           <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full min-w-[500px] sm:min-w-0">
-              <thead className="bg-slate-50/50">
+              <thead className="bg-slate-50/50 dark:bg-white/5">
                 <tr>
-                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Info</th>
-                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Join Date</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Student Info</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Join Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {recentUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
+                  <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all uppercase text-xs">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center font-black text-slate-400 dark:text-slate-500 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 group-hover:text-indigo-500 transition-all uppercase text-xs">
                           {user.full_name?.substring(0, 2)}
                         </div>
                         <div>
-                          <div className="text-sm font-black text-slate-900">{user.full_name || 'Unknown'}</div>
+                          <div className="text-sm font-black text-slate-900 dark:text-white">{user.full_name || 'Unknown'}</div>
                           <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{user.student_id || '-'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-5">
-                      <div className="text-xs font-bold text-slate-700">
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
                         {new Date(user.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
-                      <div className="text-[9px] text-slate-400 font-bold">
+                      <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold">
                         {new Date(user.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
                       </div>
                     </td>
@@ -602,40 +604,40 @@ export function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-3 tracking-tight">
+        <div className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+          <div className="px-8 py-6 border-b border-slate-50 dark:border-white/5 flex items-center justify-between">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
               Recent Activity
             </h3>
-            <button className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View Trends</button>
+            <button className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:underline" onClick={() => navigate('/users')}>View Trends</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50/50">
+              <thead className="bg-slate-50/50 dark:bg-white/5">
                 <tr>
-                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">User</th>
-                  <th className="px-8 py-4 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Sessions</th>
-                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Active</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">User</th>
+                  <th className="px-8 py-4 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sessions</th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Last Active</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {activeUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-slate-50 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
+                  <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer transition-colors group" onClick={() => navigate(`/users/${user.id}`)}>
                     <td className="px-8 py-5">
-                      <div className="text-sm font-black text-slate-900 truncate max-w-[150px]">{user.full_name || 'Unknown'}</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white truncate max-w-[150px]">{user.full_name || 'Unknown'}</div>
                       <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{user.student_id || '-'}</div>
                     </td>
                     <td className="px-8 py-5 text-center">
-                      <span className="px-3 py-1 bg-slate-100 rounded-lg text-xs font-black text-slate-700 border border-slate-200">
+                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-xs font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
                         {user.app_open_count || 0}
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <div className="text-xs font-bold text-slate-700">
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
                         {user.last_active_at ? new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Never'}
                       </div>
-                      <div className="text-[9px] text-slate-400 font-bold">
+                      <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold">
                         {user.last_active_at ? new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' }) : '-'}
                       </div>
                     </td>

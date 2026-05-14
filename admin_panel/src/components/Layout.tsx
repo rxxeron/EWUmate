@@ -1,14 +1,16 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp, Sun, Moon } from 'lucide-react';
+import { useTheme } from './ThemeContext';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link, Outlet } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { CommandPalette } from './CommandPalette';
 
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [userProfile, setUserProfile] = useState<{ name: string; role: string } | null>(null);
@@ -55,7 +57,7 @@ export function Layout() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] font-sans overflow-hidden relative">
+    <div className="flex h-screen bg-[#F8FAFC] dark:bg-[#0F172A] font-sans overflow-hidden relative transition-colors duration-300">
       <CommandPalette />
       {/* Glassmorphic Sidebar */}
       <aside className={cn(
@@ -205,26 +207,39 @@ export function Layout() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto relative custom-scrollbar flex flex-col">
         {/* Header with Glassmorphism */}
-        <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-200/60 px-4 sm:px-8 py-4 flex items-center justify-between">
+        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl sticky top-0 z-40 border-b border-slate-200/60 dark:border-white/5 px-4 sm:px-8 py-4 flex items-center justify-between transition-colors duration-300">
           <div className="flex items-center gap-4">
             <button 
-              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+              className="lg:hidden p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X /> : <Menu />}
             </button>
             <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">Admin Console</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Management Terminal</p>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Admin Console</h1>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Management Terminal</p>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
+             {/* Theme Toggle */}
+             <button
+               onClick={toggleTheme}
+               className="p-3 bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all shadow-sm border border-slate-200/50 dark:border-white/5 group"
+               title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+             >
+               {theme === 'light' ? (
+                 <Moon className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+               ) : (
+                 <Sun className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+               )}
+             </button>
+
              <div className="hidden sm:flex flex-col items-end mr-2">
-               <span className="text-xs font-black text-slate-900">{userProfile?.name || 'Loading...'}</span>
+               <span className="text-xs font-black text-slate-900 dark:text-white">{userProfile?.name || 'Loading...'}</span>
                <span className="text-[9px] font-bold text-indigo-500 uppercase">{userProfile?.role || 'Staff'}</span>
              </div>
-             <div className="w-10 h-10 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+             <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 flex items-center justify-center overflow-hidden shadow-sm shrink-0">
                 <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-blue-400 opacity-80 flex items-center justify-center text-white font-black">
                   {userProfile?.name?.charAt(0) || 'A'}
                 </div>

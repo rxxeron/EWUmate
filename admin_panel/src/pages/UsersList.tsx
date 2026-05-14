@@ -191,19 +191,19 @@ export function UsersList() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-4">
+             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20">
                <Users className="w-6 h-6" />
              </div>
              User Directory
           </h2>
-          <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em] mt-2 ml-1">Managing EWUmate Student Ecosystem</p>
+          <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-[0.2em] mt-2 ml-1">Managing EWUmate Student Ecosystem</p>
         </div>
 
         <button
           onClick={handleExportCSV}
           disabled={exporting}
-          className="w-full md:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-slate-900 text-white rounded-2xl hover:bg-slate-800 disabled:opacity-50 transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200"
+          className="w-full md:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl hover:bg-slate-800 dark:hover:bg-indigo-700 disabled:opacity-50 transition-all text-xs font-black uppercase tracking-widest shadow-xl shadow-slate-200 dark:shadow-none"
         >
           {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
           {exporting ? 'Preparing File...' : 'Export Intelligence'}
@@ -211,8 +211,8 @@ export function UsersList() {
       </div>
 
       {/* Modern Filter Bar */}
-      <div className="bg-white/70 backdrop-blur-xl p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 shadow-sm space-y-6">
-        <div className="flex items-center gap-3 text-slate-900 mb-2">
+      <div className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl p-4 sm:p-6 rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-6 transition-colors duration-300">
+        <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-2">
            <Filter className="w-4 h-4" />
            <span className="text-[10px] font-black uppercase tracking-widest">Advanced Search & Filtering</span>
         </div>
@@ -226,7 +226,7 @@ export function UsersList() {
               type="text"
               defaultValue={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+              className="block w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
               placeholder="Search name or ID..."
             />
           </div>
@@ -235,10 +235,10 @@ export function UsersList() {
             <select
               value={filterDept}
               onChange={(e) => setFilter('dept', e.target.value)}
-              className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 appearance-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+              className="block w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white appearance-none focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
             >
               <option value="">Departments</option>
-              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+              {departments.map(d => <option key={d} value={d} className="dark:bg-slate-800">{d}</option>)}
             </select>
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
                <ChevronRight className="w-4 h-4 rotate-90" />
@@ -249,10 +249,10 @@ export function UsersList() {
             <select
               value={filterProg}
               onChange={(e) => setFilter('prog', e.target.value)}
-              className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 appearance-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+              className="block w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white appearance-none focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
             >
               <option value="">Programs</option>
-              {programs.map(p => <option key={p} value={p}>{p}</option>)}
+              {programs.map(p => <option key={p} value={p} className="dark:bg-slate-800">{p}</option>)}
             </select>
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
                <ChevronRight className="w-4 h-4 rotate-90" />
@@ -263,10 +263,10 @@ export function UsersList() {
             <select
               value={filterSem}
               onChange={(e) => setFilter('sem', e.target.value)}
-              className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 appearance-none focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all outline-none"
+              className="block w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white appearance-none focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 transition-all outline-none"
             >
               <option value="">Admission Batch</option>
-              {semesters.map(s => <option key={s.code} value={s.code}>{s.title}</option>)}
+              {semesters.map(s => <option key={s.code} value={s.code} className="dark:bg-slate-800">{s.title}</option>)}
             </select>
             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
                <ChevronRight className="w-4 h-4 rotate-90" />
@@ -284,7 +284,7 @@ export function UsersList() {
             >
               <button 
                 onClick={() => setSearchParams({})}
-                className="flex items-center gap-2 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:text-indigo-800 transition-colors"
+                className="flex items-center gap-2 text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest hover:text-indigo-800 transition-colors"
               >
                 <X className="w-3 h-3" /> Reset Intelligent Filters
               </button>
@@ -294,10 +294,10 @@ export function UsersList() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden flex flex-col transition-colors duration-300">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-slate-50/50 border-b border-slate-100">
+            <thead className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5">
               <tr>
                 <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Student Profile</th>
                 <th className="hidden lg:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Departmental Hub</th>
@@ -306,7 +306,7 @@ export function UsersList() {
                 <th className="px-6 sm:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Access</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-white/5">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
@@ -320,11 +320,11 @@ export function UsersList() {
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-8 py-24 text-center">
-                    <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                       <Search className="w-10 h-10 text-slate-200" />
+                    <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                       <Search className="w-10 h-10 text-slate-200 dark:text-slate-700" />
                     </div>
-                    <h3 className="text-lg font-black text-slate-900">No Intelligence Found</h3>
-                    <p className="text-slate-400 text-sm font-medium mt-2">Adjust your filters to scan different quadrants of the ecosystem.</p>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">No Intelligence Found</h3>
+                    <p className="text-slate-400 dark:text-slate-500 text-sm font-medium mt-2">Adjust your filters to scan different quadrants of the ecosystem.</p>
                   </td>
                 </tr>
               ) : (
@@ -334,39 +334,39 @@ export function UsersList() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className="hover:bg-slate-50/50 cursor-pointer transition-all group" 
+                    className="hover:bg-slate-50/50 dark:hover:bg-white/5 cursor-pointer transition-all group" 
                     onClick={() => navigate(`/users/${user.id}`)}
                   >
                     <td className="px-6 sm:px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-500 shadow-sm transition-transform group-hover:scale-110 shrink-0">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center font-black text-indigo-500 shadow-sm transition-transform group-hover:scale-110 shrink-0">
                            {user.full_name?.substring(0, 1) || 'U'}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-black text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors truncate">{user.full_name || 'Anonymous User'}</div>
-                          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5 truncate">{user.student_id || 'Identity Pending'}</div>
+                          <div className="text-sm font-black text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 transition-colors truncate">{user.full_name || 'Anonymous User'}</div>
+                          <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 truncate">{user.student_id || 'Identity Pending'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="hidden lg:table-cell px-8 py-6">
-                      <div className="text-sm font-black text-slate-900">{user.program_code || 'N/A'}</div>
-                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">{user.department_name || 'Unassigned'}</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white">{user.program_code || 'N/A'}</div>
+                      <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight mt-0.5">{user.department_name || 'Unassigned'}</div>
                     </td>
                     <td className="hidden sm:table-cell px-8 py-6">
                       <div className="flex items-center gap-2">
                         <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CGPA</span>
-                           <span className="text-sm font-black text-indigo-600">{user.cgpa?.toFixed(2) || '0.00'}</span>
+                           <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">CGPA</span>
+                           <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{user.cgpa?.toFixed(2) || '0.00'}</span>
                         </div>
-                        <div className="h-8 w-px bg-slate-100 mx-2" />
+                        <div className="h-8 w-px bg-slate-100 dark:bg-white/5 mx-2" />
                         <div className="flex flex-col">
-                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">CREDITS</span>
-                           <span className="text-sm font-black text-slate-900">{user.total_credits_earned || '0'}</span>
+                           <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">CREDITS</span>
+                           <span className="text-sm font-black text-slate-900 dark:text-white">{user.total_credits_earned || '0'}</span>
                         </div>
                       </div>
                     </td>
                     <td className="hidden xl:table-cell px-8 py-6 text-center">
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-sm">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shadow-sm">
                          <Zap className="w-3 h-3" />
                          <span className="text-[10px] font-black uppercase tracking-widest">{user.app_open_count || 0}</span>
                       </div>
@@ -374,11 +374,11 @@ export function UsersList() {
                     <td className="px-6 sm:px-8 py-6 text-right">
                       {user.last_active_at ? (
                         <div className="flex flex-col items-end">
-                          <div className="text-xs font-black text-slate-900 tracking-tight whitespace-nowrap">{new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
-                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 whitespace-nowrap">{new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</div>
+                          <div className="text-xs font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap">{new Date(user.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+                          <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5 whitespace-nowrap">{new Date(user.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}</div>
                         </div>
                       ) : (
-                        <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest">No Log History</span>
+                        <span className="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest">No Log History</span>
                       )}
                     </td>
                   </motion.tr>
@@ -389,28 +389,28 @@ export function UsersList() {
         </div>
 
         {!loading && (
-          <div className="px-8 py-6 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              Scanning Phase <span className="text-slate-900">{page + 1}</span> of Global User Database
+          <div className="px-8 py-6 bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              Scanning Phase <span className="text-slate-900 dark:text-white">{page + 1}</span> of Global User Database
             </div>
             
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setPage(p => Math.max(0, p - 1))}
                 disabled={page === 0}
-                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 hover:shadow-md disabled:opacity-30 transition-all"
+                className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:shadow-md disabled:opacity-30 transition-all"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               
-              <div className="px-6 py-3 bg-white border border-slate-200 rounded-2xl text-xs font-black text-slate-900 shadow-sm">
+              <div className="px-6 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-black text-slate-900 dark:text-white shadow-sm">
                 {page + 1}
               </div>
 
               <button
                 onClick={() => setPage(p => p + 1)}
                 disabled={users.length < pageSize}
-                className="p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 hover:shadow-md disabled:opacity-30 transition-all"
+                className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:shadow-md disabled:opacity-30 transition-all"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>

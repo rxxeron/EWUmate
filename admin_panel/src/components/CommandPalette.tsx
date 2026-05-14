@@ -90,13 +90,13 @@ export function CommandPalette() {
         initial={{ opacity: 0, scale: 0.95, y: -20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: -20 }}
-        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden"
+        className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
       >
-        <div className="p-6 border-b border-slate-100 flex items-center gap-4">
-          <Search className="w-6 h-6 text-slate-400" />
+        <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center gap-4">
+          <Search className="w-6 h-6 text-slate-400 dark:text-slate-500" />
           <input
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-slate-900 placeholder:text-slate-300"
+            className="flex-1 bg-transparent border-none outline-none text-lg font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
             placeholder="Search command or student..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -106,7 +106,7 @@ export function CommandPalette() {
               if (e.key === 'Enter') onSelect(results[selectedIndex].path);
             }}
           />
-          <div className="px-2 py-1 bg-slate-100 rounded-md text-[10px] font-black text-slate-400 uppercase tracking-widest">ESC</div>
+          <div className="px-2 py-1 bg-slate-100 dark:bg-white/5 rounded-md text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">ESC</div>
         </div>
 
         <div className="max-h-[400px] overflow-y-auto p-2">
@@ -116,21 +116,21 @@ export function CommandPalette() {
                 key={i}
                 className={cn(
                   "w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left",
-                  selectedIndex === i ? "bg-indigo-50 border-indigo-100" : "hover:bg-slate-50 border-transparent",
+                  selectedIndex === i ? "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" : "hover:bg-slate-50 dark:hover:bg-white/5 border-transparent",
                   "border"
                 )}
                 onMouseEnter={() => setSelectedIndex(i)}
                 onClick={() => onSelect(item.path)}
               >
                 <div className={cn(
-                  "p-2 rounded-xl bg-white shadow-sm",
-                  selectedIndex === i ? "text-indigo-600" : "text-slate-400"
+                  "p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm",
+                  selectedIndex === i ? "text-indigo-600 dark:text-indigo-400" : "text-slate-400 dark:text-slate-500"
                 )}>
                   <item.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="font-black text-slate-900 text-sm">{item.name}</div>
-                  {item.sub && <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">{item.sub}</div>}
+                  <div className="font-black text-slate-900 dark:text-white text-sm">{item.name}</div>
+                  {item.sub && <div className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{item.sub}</div>}
                 </div>
               </button>
             ))
@@ -141,18 +141,18 @@ export function CommandPalette() {
           )}
         </div>
 
-        <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <div className="p-4 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
            <div className="flex gap-4 items-center">
              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded shadow-sm text-[10px] font-black">↑↓</kbd>
-                <span className="text-[10px] font-bold text-slate-400">Navigate</span>
+                <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded shadow-sm text-[10px] font-black text-slate-900 dark:text-white">↑↓</kbd>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Navigate</span>
              </div>
              <div className="flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded shadow-sm text-[10px] font-black">Enter</kbd>
-                <span className="text-[10px] font-bold text-slate-400">Select</span>
+                <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded shadow-sm text-[10px] font-black text-slate-900 dark:text-white">Enter</kbd>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Select</span>
              </div>
            </div>
-           <div className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">EWUmate Terminal</div>
+           <div className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">EWUmate Terminal</div>
         </div>
       </motion.div>
     </div>

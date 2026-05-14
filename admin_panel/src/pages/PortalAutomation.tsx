@@ -403,49 +403,49 @@ export function PortalAutomation() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8 font-sans animate-in fade-in duration-500">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-4 md:p-8 font-sans animate-in fade-in duration-500 transition-colors duration-300">
       <div className="max-w-[1400px] mx-auto space-y-6">
         
         {/* Header */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-white/5 flex items-center justify-between transition-colors">
           <div className="flex items-center gap-6">
             <div className="p-4 bg-indigo-600 rounded-2xl shadow-lg">
               <Globe className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Portal Scraper <span className="text-indigo-600 font-black">Pro</span></h1>
-              <p className="text-slate-500 text-sm font-medium mt-1">v2.5 Automated Extraction System</p>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Portal Scraper <span className="text-indigo-600 dark:text-indigo-400 font-black">Pro</span></h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">v2.5 Automated Extraction System</p>
             </div>
           </div>
           <div className="flex gap-4">
-            <div className="px-6 py-3 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-              <div className="text-xl font-black text-slate-900">{scrapedData.length}</div>
-              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Records Found</div>
+            <div className="px-6 py-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 text-center">
+              <div className="text-xl font-black text-slate-900 dark:text-white">{scrapedData.length}</div>
+              <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Records Found</div>
             </div>
           </div>
         </div>
 
         {/* Top Systems Row (Horizontal Layout) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-indigo-600" /> QA Protocol</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/5 transition-colors">
+            <h3 className="font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-3"><ShieldCheck className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> QA Protocol</h3>
             <div className="flex items-center justify-between gap-4">
               {[
                 { t: 'Faculty', d: 'Initials Ok', c: 'bg-indigo-600' },
                 { t: 'Timing', d: 'Slots Ok', c: 'bg-blue-600' },
                 { t: 'Conflict', d: 'Checked', c: 'bg-emerald-500' }
               ].map((item, i) => (
-                <div key={i} className="flex-1 flex gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <div key={i} className="flex-1 flex gap-3 bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
                   <div className={`w-1 h-full rounded-full ${item.c}`} />
                   <div>
-                    <h4 className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{item.t}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold">{item.d}</p>
+                    <h4 className="text-[9px] font-black text-slate-900 dark:text-white uppercase tracking-widest">{item.t}</h4>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold">{item.d}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className={`rounded-3xl p-6 text-white shadow-xl flex items-center justify-between transition-colors ${isAzureLive === 'live' ? 'bg-slate-900' : isAzureLive === 'checking' ? 'bg-slate-800' : 'bg-rose-900'}`}>
+          <div className={`rounded-3xl p-6 text-white shadow-xl flex items-center justify-between transition-colors ${isAzureLive === 'live' ? 'bg-slate-900 dark:bg-indigo-900' : isAzureLive === 'checking' ? 'bg-slate-800' : 'bg-rose-900'}`}>
             <div className="flex items-center gap-4">
               <div className={`w-3 h-3 rounded-full animate-pulse ${isAzureLive === 'live' ? 'bg-emerald-500' : isAzureLive === 'checking' ? 'bg-amber-500' : 'bg-rose-500'}`} />
               <div>
@@ -458,32 +458,32 @@ export function PortalAutomation() {
         </div>
 
         {/* Mission Configuration */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-white/5 transition-colors">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-1 h-6 bg-indigo-600 rounded-full" />
-            <h2 className="text-lg font-bold text-slate-900">Mission Configuration</h2>
+            <div className="w-1 h-6 bg-indigo-600 dark:bg-indigo-400 rounded-full" />
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Mission Configuration</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="space-y-2 opacity-60 pointer-events-none">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Student ID (Auto)</label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                <input type="text" value={id} disabled className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 py-3 text-sm font-bold text-slate-900" />
+                <input type="text" value={id} disabled className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white" />
               </div>
             </div>
             <div className="space-y-2 opacity-60 pointer-events-none">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Portal Password (Auto)</label>
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Portal Password (Auto)</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                <input type="password" value="********" disabled className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-4 py-3 text-sm font-bold text-slate-900" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 dark:text-slate-600" />
+                <input type="password" value="********" disabled className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-xl pl-11 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white" />
               </div>
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Target Semester</label>
+              <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Target Semester</label>
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                <select value={semester} onChange={(e) => setSemester(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl pl-11 pr-10 py-3 text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-100 outline-none appearance-none transition-all cursor-pointer">
-                  {availableSemesters.map((s, idx) => <option key={`${s}-${idx}`} value={s}>{s}</option>)}
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 dark:text-slate-600" />
+                <select value={semester} onChange={(e) => setSemester(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-xl pl-11 pr-10 py-3 text-sm font-bold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-500/10 outline-none appearance-none transition-all cursor-pointer">
+                  {availableSemesters.map((s, idx) => <option key={`${s}-${idx}`} value={s} className="dark:bg-slate-800">{s}</option>)}
                 </select>
               </div>
             </div>
@@ -491,7 +491,7 @@ export function PortalAutomation() {
           <button 
             onClick={handleStartScrape}
             disabled={status === 'running' || isAzureLive !== 'live'}
-            className="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-lg active:scale-[0.98]"
+            className="w-full py-4 rounded-2xl bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-lg dark:shadow-none active:scale-[0.98]"
           >
             {status === 'running' ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Processing Catalog...</span></> : <><Play className="w-4 h-4 fill-current" /><span>Execute Extraction</span></>}
           </button>
@@ -500,7 +500,7 @@ export function PortalAutomation() {
         {/* Logs Console */}
         {logs.length > 0 && (
           <div className="bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-800 animate-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center gap-3 mb-4 text-indigo-400">
+            <div className="flex items-center gap-3 mb-4 text-indigo-400 dark:text-indigo-300">
               <Terminal className="w-5 h-5" />
               <h3 className="text-xs font-black uppercase tracking-widest">Extraction Logs</h3>
             </div>
@@ -517,11 +517,11 @@ export function PortalAutomation() {
 
         {/* Extraction Results */}
         {scrapedData.length > 0 && (
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-white/5 transition-colors">
+            <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-indigo-600 rounded-xl shadow-lg"><TableIcon className="w-5 h-5 text-white" /></div>
-                <h3 className="text-xl font-black text-slate-900">Extraction Results</h3>
+                <div className="p-3 bg-indigo-600 dark:bg-indigo-500 rounded-xl shadow-lg"><TableIcon className="w-5 h-5 text-white" /></div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">Extraction Results</h3>
               </div>
               
               <div className="flex-1 max-w-md mx-4">
@@ -532,7 +532,7 @@ export function PortalAutomation() {
                     placeholder="Search by course code, name, or faculty..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm font-medium text-slate-900 focus:ring-2 focus:ring-indigo-100 outline-none transition-all shadow-sm"
+                    className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl pl-11 pr-4 py-3 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-500/10 outline-none transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -548,7 +548,7 @@ export function PortalAutomation() {
             </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                  <thead className="bg-white sticky top-0 z-20 border-b-2 border-slate-50 shadow-sm text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                  <thead className="bg-white dark:bg-slate-800 sticky top-0 z-20 border-b-2 border-slate-50 dark:border-white/5 shadow-sm text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                     <tr>
                       <th className="px-4 py-5 w-20">Prog</th>
                       <th className="px-4 py-5">Description</th>
@@ -559,27 +559,27 @@ export function PortalAutomation() {
                       <th className="px-4 py-5 text-center w-24">Type</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                     {filteredData.map((item, idx) => {
                       const distinctTypes = Array.from(new Set(item.schedule_data?.map((s) => s.type || 'Theory')));
                       return (
-                        <tr key={idx} className="hover:bg-slate-50 transition-colors group text-[11px]">
+                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group text-[11px]">
                           <td className="px-4 py-4">
-                            <span className="font-black bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg uppercase border border-indigo-100">
+                            <span className="font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-1 rounded-lg uppercase border border-indigo-100 dark:border-indigo-500/20">
                               {item.dedicated_department || '—'}
                             </span>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="font-black text-slate-900">{item.course_code}</div>
-                            <div className="text-[10px] text-slate-400 font-bold truncate max-w-[150px]" title={item.course_name}>{item.course_name}</div>
+                            <div className="font-black text-slate-900 dark:text-white">{item.course_code}</div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold truncate max-w-[150px]" title={item.course_name}>{item.course_name}</div>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="w-8 h-8 mx-auto flex items-center justify-center bg-slate-50 rounded-lg font-black border border-slate-100">{item.section_number}</div>
+                            <div className="w-8 h-8 mx-auto flex items-center justify-center bg-slate-50 dark:bg-white/5 rounded-lg font-black border border-slate-100 dark:border-white/10 text-slate-900 dark:text-white">{item.section_number}</div>
                           </td>
-                          <td className="px-4 py-4 font-black text-indigo-600 uppercase">{item.faculty_initials || 'TBA'}</td>
+                          <td className="px-4 py-4 font-black text-indigo-600 dark:text-indigo-400 uppercase">{item.faculty_initials || 'TBA'}</td>
                           <td className="px-4 py-4">
-                            <div className="font-black text-slate-700 mb-1">{item.capacity}</div>
-                            <div className="w-16 bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div className="font-black text-slate-700 dark:text-slate-300 mb-1">{item.capacity}</div>
+                            <div className="w-16 bg-slate-100 dark:bg-white/10 h-1 rounded-full overflow-hidden">
                               {(() => {
                                 const [curr, tot] = (item.capacity || '0/0').split('/').map(Number);
                                 const perc = tot > 0 ? (curr / tot) * 100 : 0;
@@ -590,15 +590,15 @@ export function PortalAutomation() {
                           <td className="px-4 py-4">
                             <div className="space-y-1.5">
                               {item.schedule_data?.map((s, sIdx: number) => (
-                                <div key={sIdx} className="flex items-center gap-4 py-1 border-b border-slate-50 last:border-0">
-                                  <div className="w-[120px] font-bold text-slate-500">{s.day} {s.startTime}-{s.endTime}</div>
-                                  <div className="font-black text-indigo-400">{s.room}</div>
+                                <div key={sIdx} className="flex items-center gap-4 py-1 border-b border-slate-50 dark:border-white/5 last:border-0">
+                                  <div className="w-[120px] font-bold text-slate-500 dark:text-slate-400">{s.day} {s.startTime}-{s.endTime}</div>
+                                  <div className="font-black text-indigo-400 dark:text-indigo-300">{s.room}</div>
                                 </div>
                               ))}
                             </div>
                           </td>
                           <td className="px-4 py-4">
-                            <div className="font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 text-center uppercase text-[9px]">
+                            <div className="font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/20 text-center uppercase text-[9px]">
                               {distinctTypes.join(' / ')}
                             </div>
                           </td>
@@ -612,66 +612,66 @@ export function PortalAutomation() {
         )}
 
         {/* Sync History */}
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 shadow-sm border border-slate-100 dark:border-white/5 transition-colors">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-lg">
-                <History className="w-5 h-5 text-indigo-600" />
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
+                <History className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Activity Feed</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Recent Portal Syncs</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Activity Feed</h2>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Recent Portal Syncs</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <button 
                 onClick={refreshHistory}
-                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-xl transition-all"
                 title="Refresh History"
               >
                 <History className="w-4 h-4" />
               </button>
               {syncHistory.length > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 rounded-full border border-emerald-100">
+                <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-100 dark:border-emerald-500/20">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  <span className="text-[10px] font-black text-emerald-600 uppercase">Live Audit</span>
+                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">Live Audit</span>
                 </div>
               )}
             </div>
           </div>
           <div className="space-y-3">
             {syncHistory.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <History className="w-8 h-8 text-slate-300 mb-2" />
-                <p className="text-slate-400 text-sm font-medium">No sync records found yet.</p>
-                <p className="text-[10px] text-slate-300 uppercase font-black mt-1 tracking-tighter">History will appear after your first sync</p>
+              <div className="flex flex-col items-center justify-center py-12 bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
+                <History className="w-8 h-8 text-slate-300 dark:text-slate-700 mb-2" />
+                <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">No sync records found yet.</p>
+                <p className="text-[10px] text-slate-300 dark:text-slate-700 uppercase font-black mt-1 tracking-tighter">History will appear after your first sync</p>
               </div>
             ) : (
               syncHistory.map((h, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all group">
+                <div key={i} className="flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-white/5 hover:border-indigo-200 dark:hover:border-indigo-500/20 hover:shadow-md transition-all group">
                   <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 flex items-center justify-center bg-slate-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
-                      <Database className="w-6 h-6 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                    <div className="w-12 h-12 flex items-center justify-center bg-slate-50 dark:bg-white/5 rounded-xl group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors">
+                      <Database className="w-6 h-6 text-slate-400 dark:text-slate-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
                     </div>
                     <div>
-                      <h4 className="font-black text-slate-900 text-sm flex items-center gap-2">
+                      <h4 className="font-black text-slate-900 dark:text-white text-sm flex items-center gap-2">
                         {h.semester}
-                        <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 rounded text-slate-400 font-bold">STABLE</span>
+                        <span className="text-[9px] px-1.5 py-0.5 bg-slate-100 dark:bg-white/10 rounded text-slate-400 dark:text-slate-500 font-bold">STABLE</span>
                       </h4>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
                         {new Date(h.created_at).toLocaleDateString()} @ {new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="flex gap-4 border-r border-slate-100 pr-6">
+                    <div className="flex gap-4 border-r border-slate-100 dark:border-white/5 pr-6">
                       <div className="text-center">
-                        <div className="text-emerald-500 font-black text-xs">+{h.added}</div>
-                        <div className="text-[8px] font-black text-slate-300 uppercase">New</div>
+                        <div className="text-emerald-500 dark:text-emerald-400 font-black text-xs">+{h.added}</div>
+                        <div className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase">New</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-amber-500 font-black text-xs">~{h.updated}</div>
-                        <div className="text-[8px] font-black text-slate-300 uppercase">Mods</div>
+                        <div className="text-amber-500 dark:text-amber-400 font-black text-xs">~{h.updated}</div>
+                        <div className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase">Mods</div>
                       </div>
                     </div>
                     <button 

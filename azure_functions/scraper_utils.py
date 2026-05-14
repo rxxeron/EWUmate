@@ -98,6 +98,22 @@ def run_sync(custom_semester=None, is_preview=False):
         
         def normalize_sem(s): return "".join(c for c in str(s or "").lower() if c.isalnum())
 
+        # [ENRICHMENT] Fetch Faculty Master mapping once for the entire session
+        faculty_enrichment_map = {}
+        try:
+            logging.info("Loading Faculty Master Phonebook for enrichment...")
+            fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
+            for f in (fac_res.data or []):
+                s_name = (f.get('short_name') or "").strip().upper()
+                if s_name:
+                    faculty_enrichment_map[s_name] = {
+                        "full_name": f.get('full_name') or "",
+                        "designation": f.get('designation_name') or ""
+                    }
+            logging.info(f"Loaded {len(faculty_enrichment_map)} faculty mappings.")
+        except Exception as e:
+            logging.warning(f"Enrichment lookup failed (will continue without full names): {e}")
+
         for sem_name in target_semesters:
             try:
                 target_norm = normalize_sem(sem_name)
@@ -120,18 +136,6 @@ def run_sync(custom_semester=None, is_preview=False):
 
                 course_map = {}
                 
-                # [ENRICHMENT] Fetch Faculty Master mapping for on-the-fly enrichment
-                faculty_enrichment_map = {}
-                try:
-                    fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
-                    for f in fac_res.data:
-                        faculty_enrichment_map[f['short_name'].upper()] = {
-                            "full_name": f['full_name'],
-                            "designation": f['designation_name']
-                        }
-                except Exception as e:
-                    logging.warning(f"Enrichment lookup failed: {e}")
-
                 for item in all_raw_data:
                     raw_code = (item.get("CourseCode") or "").strip()
                     code = equiv_map.get(raw_code, raw_code)

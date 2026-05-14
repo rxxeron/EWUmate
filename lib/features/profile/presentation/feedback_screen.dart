@@ -241,88 +241,159 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
           color: const Color(0xFF1E293B).withOpacity(0.7),
+          clipBehavior: Clip.antiAlias,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: statusColor.withOpacity(0.3), width: 1),
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: statusColor.withOpacity(0.2), width: 1),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              backgroundColor: Colors.white.withOpacity(0.02),
+              collapsedBackgroundColor: Colors.transparent,
+              tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              leading: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  rawStatus == 'resolved' ? Icons.check_circle_outline : Icons.pending_outlined,
+                  color: statusColor,
+                ),
+              ),
+              title: Text(
+                item['message'] ?? '',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.top(4.0),
+                child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        displayStatus,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Text(
+                      displayStatus,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.black,
+                        letterSpacing: 0.5,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    const Text('•', style: TextStyle(color: Colors.white24)),
+                    const SizedBox(width: 8),
                     Text(
                       DateTime.parse(item['created_at']).toLocal().toString().split(' ')[0],
-                      style: const TextStyle(color: Colors.white38, fontSize: 10),
+                      style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  item['message'] ?? '',
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
+              ),
+              iconColor: Colors.white38,
+              collapsedIconColor: Colors.white38,
+              children: [
+                const Divider(color: Colors.white10, height: 1),
+                const SizedBox(height: 20),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Full Message:',
+                    style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    item['message'] ?? '',
+                    style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                  ),
                 ),
                 if (comments.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  const Divider(color: Colors.white10),
-                  const SizedBox(height: 8),
-                  const Text('Responses:', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  ...comments.map((c) => Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 24),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'CONVERSATION HISTORY',
+                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1.2),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          c['comment'] ?? '',
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  ...comments.map((c) {
+                    final bool isAdmin = c['is_admin'] == true;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: isAdmin ? Colors.blueAccent.withOpacity(0.05) : Colors.white.withOpacity(0.03),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isAdmin ? Colors.blueAccent.withOpacity(0.1) : Colors.white10,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          DateTime.parse(c['created_at']).toLocal().toString().split('.')[0],
-                          style: const TextStyle(color: Colors.white24, fontSize: 9),
-                        ),
-                      ],
-                    ),
-                  )),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isAdmin ? 'SUPPORT TEAM' : 'YOU',
+                                style: TextStyle(
+                                  color: isAdmin ? Colors.blueAccent : Colors.white38,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.black,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              Text(
+                                DateTime.parse(c['created_at']).toLocal().toString().split('.')[0].substring(11, 16),
+                                style: const TextStyle(color: Colors.white24, fontSize: 9),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            c['comment'] ?? '',
+                            style: TextStyle(
+                              color: isAdmin ? Colors.white : Colors.white70,
+                              fontSize: 13,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
                       child: TextField(
                         style: const TextStyle(color: Colors.white, fontSize: 13),
                         decoration: InputDecoration(
-                          hintText: 'Type a response...',
+                          hintText: 'Type a follow-up...',
                           hintStyle: const TextStyle(color: Colors.white24),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.03),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white10),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white10),
                           ),
                         ),
                         onSubmitted: (val) {
@@ -333,12 +404,17 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                       ),
                     ),
                     const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.send_rounded, color: Colors.blueAccent, size: 20),
-                      onPressed: () {
-                        // In a real app we'd need a controller per item, but for simplicity
-                        // we can just use the onSubmitted logic or a dedicated reply modal
-                      },
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.send_rounded, color: Colors.blueAccent, size: 20),
+                        onPressed: () {
+                          // Note: In a real app we'd need a controller per item
+                        },
+                      ),
                     ),
                   ],
                 ),

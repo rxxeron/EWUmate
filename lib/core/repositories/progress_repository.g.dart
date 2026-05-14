@@ -24,12 +24,12 @@ final progressRepositoryProvider =
 
 typedef ProgressRepositoryRef = AutoDisposeProviderRef<ProgressRepository>;
 String _$currentSemesterMarksHash() =>
-    r'430f97bfcc472a52846b3d9cb62f72186ae03b20';
+    r'c20991002fbf8d17a36cca3c7c682673ff2b09b2';
 
 /// See also [currentSemesterMarks].
 @ProviderFor(currentSemesterMarks)
 final currentSemesterMarksProvider =
-    AutoDisposeFutureProvider<List<SemesterCourseMarks>>.internal(
+    AutoDisposeStreamProvider<List<SemesterCourseMarks>>.internal(
   currentSemesterMarks,
   name: r'currentSemesterMarksProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -40,14 +40,14 @@ final currentSemesterMarksProvider =
 );
 
 typedef CurrentSemesterMarksRef
-    = AutoDisposeFutureProviderRef<List<SemesterCourseMarks>>;
+    = AutoDisposeStreamProviderRef<List<SemesterCourseMarks>>;
 String _$allSemesterSummariesHash() =>
-    r'92b094541d78a1f0af5577ca4d21254403d9c1d5';
+    r'4ebee86b775d97077db7f5f155608c1343861dfe';
 
 /// See also [allSemesterSummaries].
 @ProviderFor(allSemesterSummaries)
 final allSemesterSummariesProvider =
-    AutoDisposeFutureProvider<List<SemesterSummary>>.internal(
+    AutoDisposeStreamProvider<List<SemesterSummary>>.internal(
   allSemesterSummaries,
   name: r'allSemesterSummariesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -58,6 +58,6 @@ final allSemesterSummariesProvider =
 );
 
 typedef AllSemesterSummariesRef
-    = AutoDisposeFutureProviderRef<List<SemesterSummary>>;
+    = AutoDisposeStreamProviderRef<List<SemesterSummary>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

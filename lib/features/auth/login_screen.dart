@@ -57,6 +57,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _loading = true);
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
+      ref.invalidate(profileProvider);
       if (mounted) {
         context.go('/');
       }

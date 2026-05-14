@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/profile.dart';
@@ -5,57 +6,51 @@ import '../../core/services/cache_service.dart';
 import '../../core/repositories/auth_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final profileProvider = FutureProvider<Profile?>((ref) async {
+final profileProvider = StreamProvider<Profile?>((ref) async* {
   final authRepo = ref.watch(authRepositoryProvider);
   final user = authRepo.currentUser;
   final cacheService = ref.read(cacheServiceProvider);
 
   String? effectiveUserId = user?.id;
   if (effectiveUserId == null) {
-    // Offline-First: If Supabase hasn't loaded yet, use the last known identity
     effectiveUserId = cacheService.getLastUserId();
-    if (effectiveUserId == null) return null;
+    if (effectiveUserId == null) {
+      yield null;
+      return;
+    }
   }
   
   final userId = effectiveUserId;
-  debugPrint("[ProfileProvider] Fetching profile for: $userId");
+  bool yieldedCache = false;
 
-  final cachedData = cacheService.getCachedProfile(userId);
-  
-  // Fast Path: If we have cache, serve it immediately but try to refresh in the background
-  if (cachedData != null) {
-    debugPrint("[ProfileProvider] Serving from cache: $userId");
-    // Background refresh with a short timeout
-    authRepo.getProfile(userId).timeout(
-      const Duration(seconds: 5),
-      onTimeout: () => null,
-    ).then((fresh) {
-      if (fresh != null) {
-        cacheService.cacheProfile(userId, fresh.toJson());
+  // Background retry loop
+  while (true) {
+    try {
+      debugPrint("[ProfileProvider] Attempting Online Fetch for: $userId");
+      final profile = await authRepo.getProfile(userId).timeout(
+        const Duration(seconds: 10),
+      );
+      
+      if (profile != null) {
+        cacheService.cacheProfile(userId, profile.toJson());
+        yield profile;
+        break; 
       }
-    }).catchError((_) => null);
-
-    return Profile.fromJson(cachedData);
-  }
-  
-  // COLD START: No cache, must wait for network.
-  debugPrint("[ProfileProvider] Cold start. Waiting for network: $userId");
-  try {
-    final profile = await authRepo.getProfile(userId).timeout(
-      const Duration(seconds: 15), // Reduced to 15s to beat the stall timer
-      onTimeout: () {
-        debugPrint("[ProfileProvider] Network Timeout for: $userId");
-        throw Exception("Connection slow. Please try again.");
-      },
-    );
-    
-    if (profile != null) {
-      cacheService.cacheProfile(userId, profile.toJson());
+    } catch (e) {
+      debugPrint("[ProfileProvider] Online failed: $e");
+      
+      if (!yieldedCache) {
+        final cachedData = cacheService.getCachedProfile(userId);
+        if (cachedData != null) {
+          debugPrint("[ProfileProvider] Serving Cache silently...");
+          yield Profile.fromJson(cachedData);
+          yieldedCache = true;
+        }
+      }
+      
+      // Retry every 5 seconds until success
+      await Future.delayed(const Duration(seconds: 5));
     }
-    return profile;
-  } catch (e) {
-    debugPrint("[ProfileProvider] Fetch error for $userId: $e");
-    rethrow;
   }
 });
 

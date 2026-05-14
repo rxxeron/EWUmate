@@ -103,18 +103,22 @@ def run_sync(custom_semester=None, is_preview=False):
         faculty_enrichment_map = {}
         try:
             logging.info("Loading Faculty Master Phonebook for enrichment...")
-            fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").execute()
-            for f in (fac_res.data or []):
-                raw_s_name = (f.get('short_name') or "").strip()
-                s_name_clean = clean_initials(raw_s_name)
-                if s_name_clean:
-                    faculty_enrichment_map[s_name_clean] = {
-                        "full_name": f.get('full_name') or "",
-                        "designation": f.get('designation_name') or ""
-                    }
-            logging.info(f"Loaded {len(faculty_enrichment_map)} faculty mappings.")
+            # Increased limit to ensure we get all records (default is 1000)
+            fac_res = sb.table("faculty_master").select("short_name, full_name, designation_name").limit(5000).execute()
+            if fac_res.data:
+                for f in fac_res.data:
+                    raw_s_name = (f.get('short_name') or "").strip()
+                    s_name_clean = clean_initials(raw_s_name)
+                    if s_name_clean:
+                        faculty_enrichment_map[s_name_clean] = {
+                            "full_name": f.get('full_name') or "",
+                            "designation": f.get('designation_name') or ""
+                        }
+                logging.info(f"Successfully loaded {len(faculty_enrichment_map)} faculty mappings.")
+            else:
+                logging.warning("Faculty Master table returned no data!")
         except Exception as e:
-            logging.warning(f"Enrichment lookup failed (will continue without full names): {e}")
+            logging.error(f"CRITICAL: Enrichment lookup failed: {e}")
 
         for sem_name in target_semesters:
             try:
@@ -172,7 +176,21 @@ def run_sync(custom_semester=None, is_preview=False):
                     if course_key not in course_map:
                         # Enrich with full name if available (Fuzzy Match)
                         faculty_clean = clean_initials(faculty)
-                        enrich = faculty_enrichment_map.get(faculty_clean, {})
+                        enrich = faculty_enrichment_map.get(faculty_clean)
+                        
+                        # Fallback: Direct lookup if not in map (e.g. if map fetch hit a limit)
+                        if not enrich and faculty_clean:
+                            try:
+                                fallback_res = sb.table("faculty_master").select("full_name, designation_name").ilike("short_name", faculty).execute()
+                                if fallback_res.data:
+                                    f = fallback_res.data[0]
+                                    enrich = {
+                                        "full_name": f.get('full_name') or "",
+                                        "designation": f.get('designation_name') or ""
+                                    }
+                            except: pass
+
+                        if not enrich: enrich = {}
                         
                         course_map[course_key] = {
                             "course_code":      code,

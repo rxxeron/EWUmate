@@ -130,6 +130,7 @@ class OnboardingRepository {
       'department_name': department,
       'admitted_semester': admittedSemester,
       'semester_type': semType,
+      'track': semType,
       'onboarding_status': 'course_history',
     };
 
@@ -165,11 +166,11 @@ class OnboardingRepository {
     // 1. Get the user's track from their profile
     final profile = await _client
         .from('profiles')
-        .select('semester_type')
+        .select('semester_type, track')
         .eq('id', user.id)
         .maybeSingle();
     
-    String track = profile?['semester_type'] ?? 'tri_semester';
+    String track = profile?['track'] ?? profile?['semester_type'] ?? 'tri_semester';
     
     // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
     if (track == 'tri') track = 'tri_semester';

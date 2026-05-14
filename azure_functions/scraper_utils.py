@@ -5,8 +5,6 @@ from bs4 import BeautifulSoup
 import json
 import os
 import traceback
-import azure.functions as func
-from supabase import create_client
 import tempfile
 import uuid
 from datetime import datetime, timedelta
@@ -53,6 +51,7 @@ def run_sync(custom_semester=None, is_preview=False):
 
     config_id = None
     try:
+        from supabase import create_client
         sb = create_client(SUPABASE_URL, SUPABASE_KEY)
         config_res = sb.table("scraper_config").select("*").execute()
         if not config_res.data:
@@ -283,6 +282,7 @@ def run_faculty_master_sync():
         return {"status": "error", "error": "Missing Supabase Configuration"}
 
     try:
+        from supabase import create_client
         sb = create_client(SUPABASE_URL, SUPABASE_KEY)
         config_res = sb.table("scraper_config").select("*").execute()
         if not config_res.data:

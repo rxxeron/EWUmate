@@ -11,7 +11,6 @@ export function FileParser() {
   const [parseType, setParseType] = useState<string>('exam');
   const [status, setStatus] = useState<'idle' | 'parsing' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string>('');
-  const [results, _setResults] = useState<Record<string, unknown> | null>(null);
   
   const [activeSemesters, setActiveSemesters] = useState<any[]>([]);
   const [selectedTrack, setSelectedTrack] = useState('tri_semester');

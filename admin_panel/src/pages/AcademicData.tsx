@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { BookOpen, GraduationCap, Award, Plus, Edit2, Trash2, X, Check, Search, CalendarClock } from 'lucide-react';
+import { BookOpen, GraduationCap, Award, Plus, Edit2, Trash2, X, Check, Search, CalendarClock, Database, Loader2 } from 'lucide-react';
+import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';
 
 type Tab = 'course_metadata' | 'scholarship_policies' | 'grade_scale' | 'active_semester';

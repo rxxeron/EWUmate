@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import { RefreshCw, Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck, Package } from 'lucide-react'; 
 import toast from 'react-hot-toast';
-import type { Notification, NotificationTemplate } from '../types';
+import type { NotificationTemplate } from '../types';
 
 const TEMPLATES_KEY = 'ewumate_notification_templates';
 

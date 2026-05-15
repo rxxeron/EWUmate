@@ -61,6 +61,12 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                   debugPrint("[CheckAuth] Profile is NULL. User is: ${user?.id}");
                   
                   if (user != null) {
+                    // SAFETY: Wait for the profile provider to finish its first fetch after login.
+                    // If it's still null after being authenticated, then we can assume it's a new user.
+                    if (profileAsync.isLoading || profileAsync.isRefreshing) {
+                       return const CircularProgressBinding(text: 'Loading identity...');
+                    }
+                    
                     // Logged in but no record in DB yet
                     debugPrint("[CheckAuth] Redirecting to Onboarding (No Profile Record)");
                     WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));

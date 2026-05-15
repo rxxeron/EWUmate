@@ -139,9 +139,11 @@ class FCMService {
         await _supabase.from('fcm_tokens').upsert({
           'user_id': user.id,
           'token': token,
-          'last_updated': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
         });
-      } catch (_) {}
+      } catch (e) {
+        debugPrint("[FCM] Token Registration Failed: $e");
+      }
     }
   }
 

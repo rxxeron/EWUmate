@@ -370,7 +370,7 @@ export function UserDetails() {
     );
   }
 
-  if (!user) return <div className='text-center py-24'><h3 className='text-lg font-black text-slate-900'>User not found</h3></div>;
+  if (!user) return <div className='text-center py-24'><h3 className='text-lg font-black text-slate-900 dark:text-white'>User not found</h3></div>;
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -381,21 +381,21 @@ export function UserDetails() {
         <div className='flex items-center gap-5'>
           <button 
             onClick={() => navigate('/users')} 
-            className='p-3 bg-white border border-slate-200 rounded-2xl text-slate-600 hover:bg-slate-50 hover:shadow-md transition-all'
+            className='p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 hover:shadow-md transition-all'
           >
             <ArrowLeft className='h-5 w-5' />
           </button>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-100 flex items-center justify-center font-black text-2xl text-indigo-500 shadow-inner">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-100 dark:bg-indigo-500/10 flex items-center justify-center font-black text-2xl text-indigo-500 dark:text-indigo-400 shadow-inner border border-indigo-200 dark:border-indigo-500/20">
                {user.full_name?.substring(0, 1)}
             </div>
             <div>
-              <h1 className='text-3xl font-black text-slate-900 tracking-tight'>{user.full_name || 'Unknown User'}</h1>
+              <h1 className='text-3xl font-black text-slate-900 dark:text-white tracking-tight'>{user.full_name || 'Unknown User'}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className='text-[10px] font-black bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.student_id || 'N/A'}</span>
-                <span className='text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.track?.replace('_', ' ') || 'Tri-Semester'}</span>
+                <span className='text-[10px] font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.student_id || 'N/A'}</span>
+                <span className='text-[10px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.track?.replace('_', ' ') || 'Tri-Semester'}</span>
                 {(user as any).app_version && (
-                  <span className='text-[10px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1'>
+                  <span className='text-[10px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1'>
                     <Zap className="w-3 h-3" /> v{(user as any).app_version}
                   </span>
                 )}
@@ -407,14 +407,14 @@ export function UserDetails() {
         <div className='flex flex-wrap sm:flex-nowrap gap-2 w-full md:w-auto'>
           <button 
             onClick={startEditing} 
-            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-slate-200 text-slate-700 rounded-2xl hover:bg-slate-50 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
           >
             <Edit className='h-4 w-4' />
             Edit Profile
           </button>
           <button 
             onClick={handleDeleteUser} 
-            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white border border-rose-100 text-rose-500 rounded-2xl hover:bg-rose-50 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-slate-800 border border-rose-100 dark:border-rose-500/20 text-rose-500 dark:text-rose-400 rounded-2xl hover:bg-rose-50 dark:hover:bg-rose-500/10 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all'
           >
             <Trash2 className='h-4 w-4' />
             Delete Account
@@ -422,7 +422,7 @@ export function UserDetails() {
           <button 
             onClick={handleSyncData} 
             disabled={syncing} 
-            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all'
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none transition-all'
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing...' : 'Sync Portal'}
@@ -430,7 +430,7 @@ export function UserDetails() {
           <button 
             onClick={handleRebuildSchedule} 
             disabled={rebuilding} 
-            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 transition-all'
+            className='flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 dark:shadow-none transition-all'
           >
             <CalendarClock className={`h-4 w-4 ${rebuilding ? 'animate-spin' : ''}`} />
             {rebuilding ? 'Rebuilding...' : 'Fix Schedule'}
@@ -440,7 +440,7 @@ export function UserDetails() {
 
       {/* Navigation Tabs - Scrollable on Mobile */}
       <div className='w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0'>
-        <div className='bg-white/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-slate-200/60 inline-flex gap-1 min-w-full sm:min-w-0'>
+        <div className='bg-white/50 dark:bg-slate-800/50 backdrop-blur-md p-1.5 rounded-[1.5rem] border border-slate-200/60 dark:border-white/5 inline-flex gap-1 min-w-full sm:min-w-0'>
           {['overview', 'enrollments', 'schedule', 'history', 'tasks', 'marks'].map(tab => (
             <button 
               key={tab} 
@@ -448,8 +448,8 @@ export function UserDetails() {
               className={cn(
                 'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap',
                 activeTab === tab 
-                ? 'bg-slate-900 text-white shadow-xl shadow-slate-200' 
-                : 'text-slate-500 hover:text-slate-900 hover:bg-white'
+                ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-slate-200 dark:shadow-none' 
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-white dark:hover:text-white hover:bg-white dark:hover:bg-white/5'
               )}
             >
               {tab}
@@ -469,13 +469,13 @@ export function UserDetails() {
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
             <div className="lg:col-span-2 space-y-8">
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col'>
+                <motion.div whileHover={{ y: -4 }} className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 flex flex-col'>
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 bg-indigo-50 rounded-2xl">
-                        <GraduationCap className="w-6 h-6 text-indigo-600" />
+                      <div className="p-3 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl">
+                        <GraduationCap className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
                       </div>
-                      <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic Progress</h3>
+                      <h3 className='text-lg font-black text-slate-900 dark:text-white tracking-tight'>Academic Progress</h3>
                     </div>
                     {(() => {
                       const program = availablePrograms.find(p => p.program_code === user.program_code);
@@ -485,7 +485,7 @@ export function UserDetails() {
                       return (
                         <>
                           <div className="text-right">
-                            <span className="text-[10px] font-black text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <span className="text-[10px] font-black text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full uppercase tracking-widest">
                                 {progress}% Complete
                             </span>
                           </div>
@@ -502,10 +502,10 @@ export function UserDetails() {
                     return (
                       <div className="mb-8">
                         <div className="flex justify-between items-end mb-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Path to Graduation</span>
-                            <span className="text-xs font-black text-slate-900">{user.total_credits_earned || 0} / {targetCredits} Credits</span>
+                            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Path to Graduation</span>
+                            <span className="text-xs font-black text-slate-900 dark:text-white">{user.total_credits_earned || 0} / {targetCredits} Credits</span>
                         </div>
-                        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-50">
+                        <div className="w-full h-3 bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden border border-slate-50 dark:border-white/5">
                             <motion.div 
                               initial={{ width: 0 }}
                               animate={{ width: `${progress}%` }}
@@ -519,26 +519,26 @@ export function UserDetails() {
 
                   <dl className='grid grid-cols-2 gap-6 mt-auto'>
                     <div>
-                      <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Selected Program</dt>
-                      <dd className='text-xs font-bold text-slate-900 line-clamp-1'>{user.program_name || user.program_code || 'N/A'}</dd>
+                      <dt className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-1'>Selected Program</dt>
+                      <dd className='text-xs font-bold text-slate-900 dark:text-white line-clamp-1'>{user.program_name || user.program_code || 'N/A'}</dd>
                     </div>
                     <div className="text-right">
-                      <dt className='text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1'>Current CGPA</dt>
-                      <dd className='text-2xl font-black text-indigo-600'>{user.cgpa?.toFixed(2) || '0.00'}</dd>
+                      <dt className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.15em] mb-1'>Current CGPA</dt>
+                      <dd className='text-2xl font-black text-indigo-600 dark:text-indigo-400'>{user.cgpa?.toFixed(2) || '0.00'}</dd>
                     </div>
                   </dl>
                 </motion.div>
                 
-                <motion.div whileHover={{ y: -4 }} className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+                <motion.div whileHover={{ y: -4 }} className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5'>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="p-3 bg-emerald-50 rounded-2xl">
-                      <Activity className="w-6 h-6 text-emerald-600" />
+                    <div className="p-3 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl">
+                      <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <h3 className='text-lg font-black text-slate-900 tracking-tight'>System Diagnostics</h3>
+                    <h3 className='text-lg font-black text-slate-900 dark:text-white tracking-tight'>System Diagnostics</h3>
                   </div>
                   <div className='space-y-5'>
-                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
-                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Onboarding</span>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-white/5'>
+                      <span className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Onboarding</span>
                       <span className={cn(
                         'text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm',
                         user.onboarding_status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
@@ -546,13 +546,13 @@ export function UserDetails() {
                         {user.onboarding_status?.replace('_', ' ') || 'Unknown'}
                       </span>
                     </div>
-                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
-                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Engagement</span>
-                      <span className='text-sm font-black text-slate-900'>{user.app_open_count || 0} Sessions</span>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-white/5'>
+                      <span className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Engagement</span>
+                      <span className='text-sm font-black text-slate-900 dark:text-white'>{user.app_open_count || 0} Sessions</span>
                     </div>
-                    <div className='flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100'>
-                      <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest'>Last Sync</span>
-                      <span className='text-xs font-bold text-slate-900'>{user.last_active_at ? new Date(user.last_active_at).toLocaleDateString() : 'Never'}</span>
+                    <div className='flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-white/5'>
+                      <span className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Last Sync</span>
+                      <span className='text-xs font-bold text-slate-900 dark:text-white'>{user.last_active_at ? new Date(user.last_active_at).toLocaleDateString() : 'Never'}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -567,7 +567,7 @@ export function UserDetails() {
                   <h3 className='text-xl font-black tracking-tight mb-2'>Fast Recovery</h3>
                   <p className='text-indigo-200/70 text-xs font-medium mb-6 max-w-md'>If the user is reporting missing schedules or incorrect CGPA, use these force-recovery tools to rebuild their data state.</p>
                   <div className="flex flex-wrap gap-4">
-                     <button onClick={handleSyncData} className="px-6 py-3 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-2">
+                     <button onClick={handleSyncData} className="px-6 py-3 bg-white text-slate-900 dark:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-2">
                         <RefreshCw className="w-3 h-3" /> Force Data Sync
                      </button>
                      <button onClick={handleRebuildSchedule} className="px-6 py-3 bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 transition-all flex items-center gap-2">
@@ -580,12 +580,12 @@ export function UserDetails() {
 
             {/* Sidebar / Timeline */}
             <div className="space-y-8">
-              <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
-                <h3 className='text-lg font-black text-slate-900 tracking-tight mb-6 flex items-center gap-3'>
+              <div className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5'>
+                <h3 className='text-lg font-black text-slate-900 dark:text-white tracking-tight mb-6 flex items-center gap-3'>
                   <div className="w-2 h-2 rounded-full bg-indigo-500" />
                   Activity Timeline
                 </h3>
-                <div className='space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100'>
+                <div className='space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-white/5'>
                   {[
                     { label: 'Last App Session', date: user.last_active_at, icon: Clock, color: 'bg-indigo-500' },
                     { label: 'Account Registered', date: user.created_at, icon: Users, color: 'bg-emerald-500' }
@@ -595,8 +595,8 @@ export function UserDetails() {
                         <event.icon className="w-3 h-3" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{event.label}</span>
-                        <span className="text-[10px] font-bold text-slate-400 mt-1">
+                        <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">{event.label}</span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
                           {event.date ? new Date(event.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'Pending...'}
                         </span>
                       </div>
@@ -644,9 +644,9 @@ export function UserDetails() {
                     <motion.div 
                       key={day} 
                       whileHover={{ y: -4 }}
-                      className='bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden flex flex-col'
+                      className='bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden flex flex-col'
                     >
-                      <div className='px-6 py-4 bg-slate-50/50 border-b border-slate-50 font-black text-[10px] text-slate-400 uppercase tracking-widest'>{day}</div>
+                      <div className='px-6 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-50 dark:border-white/5 font-black text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest'>{day}</div>
                       <div className='p-6 space-y-4 min-h-[200px]'>
                         {dailyClasses.length === 0 ? (
                           <div className='h-full flex flex-col items-center justify-center text-[10px] text-slate-300 font-bold uppercase tracking-widest py-8'>
@@ -655,18 +655,18 @@ export function UserDetails() {
                           </div>
                         ) : (
                           dailyClasses.map((cls, idx) => (
-                            <div key={idx} className='p-4 bg-slate-50 border border-slate-100 rounded-2xl group hover:bg-white hover:border-indigo-100 transition-all'>
+                            <div key={idx} className='p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-white/5 rounded-2xl group hover:bg-white dark:hover:bg-slate-700 hover:border-indigo-100 dark:hover:border-indigo-500/30 transition-all'>
                               <div className='flex justify-between items-start mb-2'>
-                                <span className='text-xs font-black text-slate-900'>{cls.courseCode}</span>
-                                <span className='text-[8px] bg-white px-2 py-0.5 rounded-full border border-slate-200 text-slate-400 font-black uppercase tracking-widest'>{cls.type}</span>
+                                <span className='text-xs font-black text-slate-900 dark:text-white'>{cls.courseCode}</span>
+                                <span className='text-[8px] bg-white dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest'>{cls.type}</span>
                               </div>
                               <p className='text-[10px] font-bold text-slate-500 line-clamp-1 mb-3'>{cls.courseName}</p>
                               <div className='flex items-center gap-2 text-[10px] text-indigo-500 font-black mb-3'>
                                 <Clock className='w-3 h-3' />
                                 {cls.startTime} - {cls.endTime}
                               </div>
-                              <div className='flex items-center justify-between mt-auto pt-2 border-t border-slate-100'>
-                                <span className='text-[9px] font-black text-slate-900 bg-white px-2 py-1 rounded-lg border border-slate-100'>{cls.room}</span>
+                              <div className='flex items-center justify-between mt-auto pt-2 border-t border-slate-100 dark:border-white/5'>
+                                <span className='text-[9px] font-black text-slate-900 dark:text-white bg-white dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-100 dark:border-white/10'>{cls.room}</span>
                                 <span className='text-[9px] text-indigo-400 font-black uppercase tracking-tighter'>{cls.faculty}</span>
                               </div>
                             </div>
@@ -684,11 +684,11 @@ export function UserDetails() {
         {activeTab === 'enrollments' && (
           <div className='space-y-8'>
             {/* Current Semester Section */}
-            <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+            <div className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5'>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className='text-xl font-black text-slate-900 tracking-tight'>Active Academic Load</h3>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{activeSemesterInfo.current || 'N/A'}</p>
+                  <h3 className='text-xl font-black text-slate-900 dark:text-white tracking-tight'>Active Academic Load</h3>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{activeSemesterInfo.current || 'N/A'}</p>
                 </div>
                 <div className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -700,28 +700,28 @@ export function UserDetails() {
                   <motion.div 
                     key={i} 
                     whileHover={{ y: -2 }}
-                    className='border border-slate-100 rounded-[2rem] p-6 flex justify-between items-center bg-slate-50/50 hover:bg-white hover:border-indigo-100 hover:shadow-md transition-all group'
+                    className='border border-slate-100 dark:border-white/5 rounded-[2rem] p-6 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-700 hover:border-indigo-100 dark:hover:border-indigo-500/30 hover:shadow-md transition-all group'
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center font-black text-indigo-500 border border-slate-100 uppercase text-xs">
                          {enr.course_code?.substring(0, 2)}
                       </div>
                       <div>
-                        <h4 className='font-black text-slate-900'>{enr.course_code} <span className="text-indigo-500 text-xs ml-1">Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</span></h4>
+                        <h4 className='font-black text-slate-900 dark:text-white'>{enr.course_code} <span className="text-indigo-500 text-xs ml-1">Section {enr._sectionDetails?.section_number || (enr as any).section || 'N/A'}</span></h4>
                         <p className='text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 truncate max-w-[200px]'>{enr._sectionDetails?.course_name || 'Generic Enrollment'}</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => handleDeleteEnrollment(enr.id)}
-                      className='p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all opacity-0 group-hover:opacity-100'
+                      className='p-3 text-slate-300 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl transition-all opacity-0 group-hover:opacity-100'
                     >
                       <Trash2 className='w-5 h-5' />
                     </button>
                   </motion.div>
                 )) : (
-                  <div className="md:col-span-2 py-12 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
-                     <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-4" />
-                     <p className='text-slate-400 font-bold text-xs uppercase tracking-widest'>No current enrollments detected</p>
+                  <div className="md:col-span-2 py-12 text-center bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border border-dashed border-slate-200 dark:border-white/5">
+                     <BookOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+                     <p className='text-slate-400 dark:text-slate-500 font-bold text-xs uppercase tracking-widest'>No current enrollments detected</p>
                   </div>
                 )}
               </div>
@@ -787,11 +787,11 @@ export function UserDetails() {
         )}
 
         {activeTab === 'history' && (
-          <div className='bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden'>
-            <div className='px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/30'>
+          <div className='bg-white dark:bg-slate-800 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden'>
+            <div className='px-8 py-6 border-b border-slate-50 dark:border-white/5 flex items-center justify-between bg-slate-50/30 dark:bg-slate-900/30'>
               <div>
-                <h3 className='text-lg font-black text-slate-900 tracking-tight'>Academic History</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Complete course records from previous semesters</p>
+                <h3 className='text-lg font-black text-slate-900 dark:text-white tracking-tight'>Academic History</h3>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Complete course records from previous semesters</p>
               </div>
               <button 
                 onClick={startAddingCourse}
@@ -803,23 +803,23 @@ export function UserDetails() {
             </div>
             <div className='overflow-x-auto'>
               <table className='w-full'>
-                <thead className="bg-slate-50/50">
+                <thead className="bg-slate-50/50 dark:bg-slate-900/50">
                   <tr>
-                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Semester</th>
-                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Course Info</th>
-                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Grade</th>
-                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center'>Credits</th>
-                    <th className='text-right px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest'>Actions</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Semester</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Course Info</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Grade</th>
+                    <th className='text-left px-8 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center'>Credits</th>
+                    <th className='text-right px-8 py-4 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Actions</th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-slate-50'>
+                <tbody className='divide-y divide-slate-50 dark:divide-white/5'>
                   {completedCourses.map((c, i) => (
-                    <tr key={i} className='hover:bg-slate-50/50 group transition-colors'>
+                    <tr key={i} className='hover:bg-slate-50/50 dark:hover:bg-white/5 group transition-colors'>
                       <td className='px-8 py-5'>
-                        <span className="text-xs font-black text-slate-900">{c.semester_code}</span>
+                        <span className="text-xs font-black text-slate-900 dark:text-white">{c.semester_code}</span>
                       </td>
                       <td className='px-8 py-5'>
-                        <div className="font-black text-sm text-slate-900">{c.course_code}</div>
+                        <div className="font-black text-sm text-slate-900 dark:text-white">{c.course_code}</div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <div className={cn(
                             "text-[9px] font-bold uppercase tracking-widest",
@@ -837,16 +837,16 @@ export function UserDetails() {
                       <td className='px-8 py-5'>
                         <span className={cn(
                           'px-3 py-1 rounded-lg font-black text-xs border',
-                          c.grade === 'F' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                          c.grade === 'F' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-100 dark:border-rose-500/20' : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'
                         )}>{c.grade}</span>
                       </td>
                       <td className='px-8 py-5 text-center'>
-                        <span className="text-sm font-black text-slate-700">{c.credits}</span>
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-300">{c.credits}</span>
                       </td>
                       <td className='px-8 py-5 text-right'>
                         <button 
                           onClick={() => handleDeleteCourse(c.id)}
-                          className='p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-colors'
+                          className='p-2 text-slate-300 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-colors'
                         >
                           <Trash2 className='w-4 h-4' />
                         </button>
@@ -867,11 +867,11 @@ export function UserDetails() {
         )}
 
         {activeTab === 'tasks' && (
-          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
-            <h3 className='text-lg font-black text-slate-900 tracking-tight mb-8'>Student Task Ledger</h3>
+          <div className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5'>
+            <h3 className='text-lg font-black text-slate-900 dark:text-white tracking-tight mb-8'>Student Task Ledger</h3>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               {tasks.length > 0 ? tasks.map((t, i) => (
-                <div key={i} className='flex items-center justify-between p-5 border border-slate-100 rounded-[1.5rem] bg-slate-50/50 hover:bg-white hover:shadow-md transition-all'>
+                <div key={i} className='flex items-center justify-between p-5 border border-slate-100 dark:border-white/5 rounded-[1.5rem] bg-slate-50/50 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all'>
                   <div className='flex items-center gap-4'>
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center shadow-sm",
@@ -880,8 +880,8 @@ export function UserDetails() {
                       {t.is_completed ? <CheckCircle2 className='h-5 w-5' /> : t.is_missed ? <AlertTriangle className='h-5 w-5' /> : <Clipboard className='h-5 w-5' />}
                     </div>
                     <div>
-                      <p className='font-black text-slate-900 text-sm'>{t.title}</p>
-                      <p className='text-[10px] font-bold text-indigo-500 uppercase tracking-widest'>{t.course_code}</p>
+                      <p className='font-black text-slate-900 dark:text-white text-sm'>{t.title}</p>
+                      <p className='text-[10px] font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest'>{t.course_code}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -898,10 +898,10 @@ export function UserDetails() {
         )}
 
         {activeTab === 'marks' && (
-          <div className='bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100'>
+          <div className='bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-white/5'>
             <div className="flex items-center justify-between mb-8">
-              <h3 className='text-xl font-black text-slate-900 tracking-tight'>Portal Performance Data</h3>
-              <div className="px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest">Live Grade Report</div>
+              <h3 className='text-xl font-black text-slate-900 dark:text-white tracking-tight'>Portal Performance Data</h3>
+              <div className="px-4 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest">Live Grade Report</div>
             </div>
             
             <div className='grid grid-cols-1 xl:grid-cols-2 gap-8'>
@@ -925,40 +925,40 @@ export function UserDetails() {
                   <motion.div 
                     key={i} 
                     whileHover={{ scale: 1.01 }}
-                    className='border border-slate-100 rounded-[2.5rem] overflow-hidden bg-slate-50/50 shadow-sm'
+                    className='border border-slate-100 dark:border-white/5 rounded-[2.5rem] overflow-hidden bg-slate-50/50 dark:bg-slate-900/50 shadow-sm'
                   >
-                    <div className='px-8 py-6 bg-white border-b border-slate-100 flex items-center justify-between'>
+                    <div className='px-8 py-6 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-white/5 flex items-center justify-between'>
                       <div>
-                        <h4 className='font-black text-slate-900 text-lg'>{m.course_code}</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Graded Component Breakdown</p>
+                        <h4 className='font-black text-slate-900 dark:text-white text-lg'>{m.course_code}</h4>
+                        <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Graded Component Breakdown</p>
                       </div>
-                      <span className='text-[10px] font-black px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 uppercase tracking-widest'>{m.semester_code}</span>
+                      <span className='text-[10px] font-black px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-full border border-indigo-100 dark:border-indigo-500/20 uppercase tracking-widest'>{m.semester_code}</span>
                     </div>
                     
                     <div className='p-8 space-y-3'>
                       {m.dist_quiz && m.dist_quiz > 0 && (
-                        <div className='bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group hover:border-indigo-100 transition-all'>
+                        <div className='bg-white dark:bg-slate-800 p-5 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm group hover:border-indigo-100 dark:hover:border-indigo-500/30 transition-all'>
                           <div className='flex justify-between items-center'>
                             <div>
-                               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Quizzes ({m.quiz_strategy === 'best_n' ? `Best ${m.quiz_n}` : m.quiz_strategy === 'average_n' ? `Avg of ${m.quiz_n}` : 'All'})</span>
+                               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1">Quizzes ({m.quiz_strategy === 'best_n' ? `Best ${m.quiz_n}` : m.quiz_strategy === 'average_n' ? `Avg of ${m.quiz_n}` : 'All'})</span>
                                <div className="flex gap-1">
                                   {m.obt_quizzes?.map((q: any, qi: number) => (
-                                     <span key={qi} className="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[10px] font-black text-slate-900">{q}</span>
+                                     <span key={qi} className="px-2 py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded text-[10px] font-black text-slate-900 dark:text-white">{q}</span>
                                   ))}
                                </div>
                             </div>
-                            <span className='text-lg font-black text-indigo-600'>{(m.obt_quizzes?.reduce((a:number,b:number)=>a+b,0)/ (m.obt_quizzes?.length || 1)).toFixed(1)} <span className="text-slate-300 text-xs font-bold">/ {m.dist_quiz}</span></span>
+                            <span className='text-lg font-black text-indigo-600 dark:text-indigo-400'>{(m.obt_quizzes?.reduce((a:number,b:number)=>a+b,0)/ (m.obt_quizzes?.length || 1)).toFixed(1)} <span className="text-slate-300 dark:text-slate-600 text-xs font-bold">/ {m.dist_quiz}</span></span>
                           </div>
                         </div>
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {activeComponents.map((comp, idx) => (
-                          <div key={idx} className='bg-white p-4 rounded-2xl border border-slate-100 flex flex-col justify-center shadow-sm group hover:border-indigo-100 transition-all'>
-                            <span className='text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1'>{comp.label}</span>
+                          <div key={idx} className='bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-white/5 flex flex-col justify-center shadow-sm group hover:border-indigo-100 dark:hover:border-indigo-500/30 transition-all'>
+                            <span className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block mb-1'>{comp.label}</span>
                             <div className="flex items-baseline gap-1">
-                               <span className='text-lg font-black text-slate-900'>{comp.obt ?? '-'}</span>
-                               <span className="text-xs font-bold text-slate-300">/ {comp.dist}</span>
+                               <span className='text-lg font-black text-slate-900 dark:text-white'>{comp.obt ?? '-'}</span>
+                               <span className="text-xs font-bold text-slate-300 dark:text-slate-600">/ {comp.dist}</span>
                             </div>
                           </div>
                         ))}
@@ -980,32 +980,32 @@ export function UserDetails() {
       </motion.div>
 
       {isEditingProfile && (
-        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
-          <div className='bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden'>
-            <div className='px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50'>
-              <h3 className='text-lg font-bold text-gray-900'>Edit Student Profile</h3>
-              <button onClick={() => setIsEditingProfile(false)} className='p-2 hover:bg-gray-200 rounded-full transition-colors'>
-                <X className='h-5 w-5 text-gray-500' />
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in'>
+          <div className='bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-white/5'>
+            <div className='px-8 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50'>
+              <h3 className='text-xl font-black text-slate-900 dark:text-white tracking-tight'>Edit Student Profile</h3>
+              <button onClick={() => setIsEditingProfile(false)} className='p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors'>
+                <X className='h-5 w-5 text-slate-500' />
               </button>
             </div>
-            <div className='p-6 space-y-4 max-h-[70vh] overflow-y-auto'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div className='space-y-1'>
-                  <label className='text-xs font-bold text-gray-500 uppercase'>Full Name</label>
+            <div className='p-8 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar'>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <div className='space-y-1.5'>
+                  <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Full Name</label>
                   <input 
                     type='text' 
                     value={editForm.full_name || ''} 
                     onChange={e => setEditForm({...editForm, full_name: e.target.value})}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                    className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                   />
                 </div>
-                <div className='space-y-1'>
-                  <label className='text-xs font-bold text-gray-500 uppercase'>Student ID</label>
+                <div className='space-y-1.5'>
+                  <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Student ID</label>
                   <input 
                     type='text' 
                     value={editForm.student_id || ''} 
                     onChange={e => setEditForm({...editForm, student_id: e.target.value})}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                    className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                   />
                 </div>
                 <div className='space-y-1'>
@@ -1105,17 +1105,17 @@ export function UserDetails() {
                 </div>
               </div>
             </div>
-            <div className='px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50'>
+            <div className='px-8 py-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-3 bg-slate-50 dark:bg-slate-900/50'>
               <button 
                 onClick={() => setIsEditingProfile(false)}
-                className='px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors'
+                className='px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl transition-all'
               >
                 Cancel
               </button>
               <button 
                 onClick={handleUpdateProfile}
                 disabled={saving}
-                className='flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-bold shadow-md shadow-indigo-200 transition-all'
+                className='flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none transition-all'
               >
                 {saving ? <RefreshCw className='h-4 w-4 animate-spin' /> : <Save className='h-4 w-4' />}
                 {saving ? 'Saving...' : 'Save Changes'}
@@ -1126,71 +1126,71 @@ export function UserDetails() {
       )}
 
       {isAddingCourse && (
-        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
-          <div className='bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden'>
-            <div className='px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50'>
-              <h3 className='text-lg font-bold text-gray-900'>Add Course Record</h3>
-              <button onClick={() => setIsAddingCourse(false)} className='p-2 hover:bg-gray-200 rounded-full transition-colors'>
-                <X className='h-5 w-5 text-gray-500' />
+        <div className='fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in'>
+          <div className='bg-white dark:bg-slate-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/5'>
+            <div className='px-8 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between bg-slate-50 dark:bg-slate-900/50'>
+              <h3 className='text-xl font-black text-slate-900 dark:text-white tracking-tight'>Add Course Record</h3>
+              <button onClick={() => setIsAddingCourse(false)} className='p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors'>
+                <X className='h-5 w-5 text-slate-500' />
               </button>
             </div>
-            <div className='p-6 space-y-4'>
-              <div className='space-y-1'>
-                <label className='text-xs font-bold text-gray-500 uppercase'>Semester Code</label>
+            <div className='p-8 space-y-6'>
+              <div className='space-y-1.5'>
+                <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Semester Code</label>
                 <input 
                   type='text' 
                   placeholder='e.g. Summer 2026'
                   value={courseForm.semester_code || ''} 
                   onChange={e => setCourseForm({...courseForm, semester_code: e.target.value})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                  className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                 />
               </div>
-              <div className='space-y-1'>
-                <label className='text-xs font-bold text-gray-500 uppercase'>Course Code</label>
+              <div className='space-y-1.5'>
+                <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Course Code</label>
                 <input 
                   type='text' 
                   placeholder='e.g. CSE103'
                   value={courseForm.course_code || ''} 
                   onChange={e => setCourseForm({...courseForm, course_code: e.target.value.toUpperCase()})}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                  className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                 />
               </div>
-              <div className='grid grid-cols-2 gap-4'>
-                <div className='space-y-1'>
-                  <label className='text-xs font-bold text-gray-500 uppercase'>Grade</label>
+              <div className='grid grid-cols-2 gap-6'>
+                <div className='space-y-1.5'>
+                  <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Grade</label>
                   <select 
                     value={courseForm.grade || 'A'} 
                     onChange={e => setCourseForm({...courseForm, grade: e.target.value})}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                    className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                   >
                     {['A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F', 'I', 'W'].map(g => (
-                      <option key={g} value={g}>{g}</option>
+                      <option key={g} value={g} className="dark:bg-slate-900">{g}</option>
                     ))}
                   </select>
                 </div>
-                <div className='space-y-1'>
-                  <label className='text-xs font-bold text-gray-500 uppercase'>Credits</label>
+                <div className='space-y-1.5'>
+                  <label className='text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest'>Credits</label>
                   <input 
                     type='number' 
                     step='0.5'
                     value={courseForm.credits || 3.0} 
                     onChange={e => setCourseForm({...courseForm, credits: parseFloat(e.target.value)})}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
+                    className='w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all'
                   />
                 </div>
               </div>
             </div>
-            <div className='px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50'>
+            <div className='px-8 py-6 border-t border-slate-100 dark:border-white/5 flex items-center justify-end gap-3 bg-slate-50 dark:bg-slate-900/50'>
               <button 
                 onClick={() => setIsAddingCourse(false)}
-                className='px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors'
+                className='px-6 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl transition-all'
               >
                 Cancel
               </button>
               <button 
                 onClick={handleAddCourse}
                 disabled={saving || !courseForm.course_code || !courseForm.semester_code}
-                className='flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-bold shadow-md'
+                className='flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none transition-all'
               >
                 {saving ? <RefreshCw className='h-4 w-4 animate-spin' /> : <Plus className='h-4 w-4' />}
                 {saving ? 'Adding...' : 'Add Record'}

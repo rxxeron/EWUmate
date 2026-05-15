@@ -166,62 +166,65 @@ export function DataQuality() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Course Data Quality</h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            Auditing <span className="font-semibold text-indigo-600">{activeSemester || '...'}</span> course data for completeness
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+            <ShieldCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            Data Integrity Guard
+          </h1>
+          <p className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest mt-1">
+            Auditing <span className="text-indigo-600 dark:text-indigo-400">{activeSemester || '...'}</span> for structural anomalies
           </p>
         </div>
         <button
           onClick={runAudit}
           disabled={loading || !activeSemester}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 text-gray-700 font-medium transition-colors disabled:opacity-50"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-black text-[10px] uppercase tracking-widest transition-all disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Re-run Audit
+          Execute Audit
         </button>
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Sections</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalSections}</p>
-            <p className="text-xs text-gray-500 mt-1">{stats.totalUniqueCourses} unique courses</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 p-6">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Total Sections</p>
+            <p className="text-3xl font-black text-slate-900 dark:text-white mt-1">{stats.totalSections}</p>
+            <p className="text-[10px] text-indigo-500 font-black uppercase tracking-wider mt-2">{stats.totalUniqueCourses} Unique Courses</p>
           </div>
-          <div className={`rounded-xl shadow-sm border p-5 ${stats.completePercent >= 95 ? 'bg-emerald-50 border-emerald-200' : stats.completePercent >= 80 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200'}`}>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Data Completeness</p>
-            <p className={`text-3xl font-bold mt-1 ${stats.completePercent >= 95 ? 'text-emerald-700' : stats.completePercent >= 80 ? 'text-yellow-700' : 'text-red-700'}`}>{stats.completePercent}%</p>
-            <p className="text-xs text-gray-500 mt-1">{issues.length} sections with issues</p>
+          <div className={`rounded-3xl shadow-sm border p-6 ${stats.completePercent >= 95 ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20' : stats.completePercent >= 80 ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20'}`}>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Completeness Score</p>
+            <p className={`text-3xl font-black mt-1 ${stats.completePercent >= 95 ? 'text-emerald-600 dark:text-emerald-400' : stats.completePercent >= 80 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>{stats.completePercent}%</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-2">{issues.length} Flagged Sections</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Missing Faculty</p>
-            <p className={`text-3xl font-bold mt-1 ${stats.missingFaculty > 0 ? 'text-amber-600' : 'text-green-600'}`}>{stats.missingFaculty}</p>
-            <p className="text-xs text-gray-500 mt-1">{stats.missingName} missing names, {stats.missingCredits} missing credits</p>
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 p-6">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Identity Gaps</p>
+            <p className={`text-3xl font-black mt-1 ${stats.missingFaculty > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>{stats.missingFaculty}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider mt-2">Missing Faculty Initials</p>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Duplicates</p>
-            <p className={`text-3xl font-bold mt-1 ${stats.duplicates > 0 ? 'text-red-600' : 'text-green-600'}`}>{stats.duplicates}</p>
-            <p className="text-xs text-gray-500 mt-1">Same code + section</p>
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 p-6">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Duplicates</p>
+            <p className={`text-3xl font-black mt-1 ${stats.duplicates > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{stats.duplicates}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider mt-2">Section Overlaps</p>
           </div>
         </div>
       )}
 
       {/* Duplicates */}
       {duplicates.length > 0 && (
-        <div className="bg-red-50 rounded-xl shadow-sm border border-red-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-red-200 flex items-center gap-2">
-            <Copy className="w-5 h-5 text-red-600" />
-            <h3 className="text-lg font-bold text-red-800">Duplicate Sections ({duplicates.length})</h3>
+        <div className="bg-rose-50 dark:bg-rose-500/10 rounded-3xl shadow-sm border border-rose-100 dark:border-rose-500/20 overflow-hidden animate-in slide-in-from-top-4">
+          <div className="px-8 py-5 border-b border-rose-100 dark:border-rose-500/20 flex items-center gap-3">
+            <Copy className="w-5 h-5 text-rose-500" />
+            <h3 className="text-lg font-black text-rose-900 dark:text-white tracking-tight">Duplication Matrix ({duplicates.length})</h3>
           </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {duplicates.map(d => (
-              <div key={d.key} className="bg-white p-3 rounded-lg border border-red-100 flex justify-between items-center">
-                <span className="font-mono font-bold text-sm text-gray-900">{d.key}</span>
-                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full">{d.count}x</span>
+              <div key={d.key} className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-rose-100 dark:border-white/5 flex justify-between items-center shadow-sm">
+                <span className="font-black text-sm text-slate-900 dark:text-white tracking-tight">{d.key}</span>
+                <span className="bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase">{d.count}x</span>
               </div>
             ))}
           </div>
@@ -229,57 +232,65 @@ export function DataQuality() {
       )}
 
       {/* Issues Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <h3 className="text-lg font-bold text-gray-800">Data Issues ({filtered.length})</h3>
+            <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Audit Log ({filtered.length} Alerts)</h3>
           </div>
-          <div className="relative w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchFilter}
               onChange={e => setSearchFilter(e.target.value)}
-              placeholder="Filter by course code..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Search by code or name..."
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl text-sm font-black text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600"
             />
           </div>
         </div>
         
         {loading ? (
-          <div className="p-12 text-center text-gray-500">Running audit...</div>
+          <div className="p-24 text-center">
+            <RefreshCw className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+            <p className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">Scanning academic matrix...</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center">
-            <ShieldCheck className="w-12 h-12 text-green-500 mx-auto mb-3" />
-            <p className="text-lg font-semibold text-green-700">All Clear!</p>
-            <p className="text-sm text-gray-500 mt-1">No data quality issues found.</p>
+          <div className="p-24 text-center">
+            <ShieldCheck className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
+            <p className="text-xl font-black text-slate-900 dark:text-white tracking-tight">All Clear!</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-1">No data quality anomalies detected in this quadrant.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Course Code</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Course Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Section</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Faculty</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Credits</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Issues</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Course Code</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Identification</th>
+                  <th className="px-8 py-5 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Sec</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Faculty / Credits</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Anomaly Signature</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {filtered.slice(0, 100).map(issue => (
-                  <tr key={issue.id} className="hover:bg-amber-50/50 transition-colors">
-                    <td className="px-6 py-3 text-sm font-mono font-bold text-gray-900">{issue.course_code}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">{issue.course_name || <span className="text-red-500 italic">Missing</span>}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">{issue.section_number ?? '—'}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">{issue.faculty_initials || <span className="text-red-500 italic">TBA / Empty</span>}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">{issue.credit_val ?? <span className="text-red-500 italic">Missing</span>}</td>
-                    <td className="px-6 py-3">
-                      <div className="flex flex-wrap gap-1">
+                  <tr key={issue.id} className="hover:bg-amber-50/30 dark:hover:bg-amber-500/5 transition-colors group">
+                    <td className="px-8 py-5 text-sm font-black text-slate-900 dark:text-white tracking-tight">{issue.course_code}</td>
+                    <td className="px-8 py-5">
+                      <div className="text-sm font-bold text-slate-700 dark:text-slate-300">{issue.course_name || <span className="text-rose-500 italic">Missing Signature</span>}</div>
+                    </td>
+                    <td className="px-8 py-5 text-center">
+                      <div className="w-8 h-8 mx-auto flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-xs font-black text-slate-900 dark:text-white border border-slate-100 dark:border-white/5">{issue.section_number ?? '—'}</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase">{issue.faculty_initials || <span className="text-rose-500">TBA</span>}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest mt-0.5">{issue.credit_val ?? '0.0'} Credits</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="flex flex-wrap gap-1.5">
                         {issue.issues.map((iss, idx) => (
-                          <span key={idx} className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">{iss}</span>
+                          <span key={idx} className="text-[10px] font-black bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-lg border border-rose-100 dark:border-rose-500/20 uppercase tracking-tighter">{iss}</span>
                         ))}
                       </div>
                     </td>
@@ -288,8 +299,8 @@ export function DataQuality() {
               </tbody>
             </table>
             {filtered.length > 100 && (
-              <div className="p-4 text-center text-sm text-gray-500 bg-gray-50">
-                Showing first 100 of {filtered.length} issues. Use the search filter to narrow results.
+              <div className="p-6 text-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50/50 dark:bg-white/5">
+                Truncated View: Showing 100 of {filtered.length} Alerts. Refine search for full access.
               </div>
             )}
           </div>

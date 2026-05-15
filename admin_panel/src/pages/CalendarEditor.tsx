@@ -173,20 +173,20 @@ export function CalendarEditor() {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-4">
-             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-4">
+             <div className="p-3 bg-indigo-600 rounded-2xl text-white shadow-lg shadow-indigo-100 dark:shadow-none">
                <CalendarIcon className="w-6 h-6" />
              </div>
              Calendar Manager
           </h2>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-2 ml-1">
-            Global Academic Timeline for <span className="text-indigo-600">{activeSemester || '...'}</span>
+          <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mt-2 ml-1">
+            Global Academic Timeline for <span className="text-indigo-600 dark:text-indigo-400">{activeSemester || '...'}</span>
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {tracks.length > 1 && (
-            <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 shadow-inner w-full sm:w-auto">
+            <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-white/10 shadow-inner w-full sm:w-auto">
               {tracks.map(t => (
                 <button
                   key={t.track}
@@ -194,8 +194,8 @@ export function CalendarEditor() {
                   className={cn(
                     "flex-1 sm:flex-none px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
                     selectedTrack === t.track 
-                      ? 'bg-white text-indigo-600 shadow-md' 
-                      : 'text-slate-400 hover:text-slate-600'
+                      ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md' 
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
                   )}
                 >
                   {t.track.replace('_', ' ')}
@@ -206,7 +206,7 @@ export function CalendarEditor() {
           <button
             onClick={() => setShowAddForm(true)}
             disabled={!tableName || !!errorMsg}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 text-white rounded-2xl shadow-xl shadow-slate-200 hover:bg-slate-800 disabled:opacity-50 transition-all text-[10px] font-black uppercase tracking-widest"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl shadow-xl shadow-slate-200 dark:shadow-none hover:bg-slate-800 dark:hover:bg-indigo-700 disabled:opacity-50 transition-all text-[10px] font-black uppercase tracking-widest"
           >
             <Plus className="w-4 h-4" />
             Inject Event
@@ -215,7 +215,7 @@ export function CalendarEditor() {
       </div>
 
       {errorMsg && (
-        <div className="bg-rose-50 text-rose-600 p-6 rounded-[1.5rem] border border-rose-100 font-bold text-sm shadow-sm flex items-center gap-3">
+        <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 p-6 rounded-[1.5rem] border border-rose-100 dark:border-rose-500/20 font-bold text-sm shadow-sm flex items-center gap-3">
           <div className="w-2 h-2 rounded-full bg-rose-500 animate-pulse shrink-0" />
           {errorMsg}
         </div>
@@ -227,65 +227,65 @@ export function CalendarEditor() {
             initial={{ opacity: 0, height: 0, y: -20 }}
             animate={{ opacity: 1, height: 'auto', y: 0 }}
             exit={{ opacity: 0, height: 0, y: -20 }}
-            className="bg-white p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-xl border border-indigo-50 relative overflow-hidden"
+            className="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] shadow-xl border border-indigo-50 dark:border-white/5 relative overflow-hidden"
           >
             <button 
               onClick={() => setShowAddForm(false)}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all"
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl transition-all"
             >
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-black mb-6 text-slate-900 flex items-center gap-3 tracking-tight">
-              <div className="p-2 bg-indigo-50 rounded-xl">
-                <CalendarIcon className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-xl font-black mb-6 text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
+              <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl">
+                <CalendarIcon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
               </div>
               Inject Calendar Record
             </h2>
             <form onSubmit={handleAddSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Date</label>
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">Event Date</label>
                   <input
                     type="date"
                     required
                     value={newEvent.date}
                     onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900"
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 dark:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Title</label>
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">Event Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g., Eid-ul-Fitr"
                     value={newEvent.title}
                     onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Event Type</label>
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">Event Type</label>
                   <select
                     value={newEvent.type}
                     onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 appearance-none cursor-pointer"
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 dark:text-white appearance-none cursor-pointer"
                   >
-                    <option value="Holiday">Holiday</option>
-                    <option value="General">General</option>
-                    <option value="Exam">Exam / Academic</option>
+                    <option value="Holiday" className="dark:bg-slate-900">Holiday</option>
+                    <option value="General" className="dark:bg-slate-900">General</option>
+                    <option value="Exam" className="dark:bg-slate-900">Exam / Academic</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Track</label>
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">Target Track</label>
                   <select
                     value={newEvent.targetTrack || selectedTrack}
                     onChange={(e) => setNewEvent({ ...newEvent, targetTrack: e.target.value })}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 appearance-none cursor-pointer"
+                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 dark:text-white appearance-none cursor-pointer"
                   >
-                    <option value="tri_semester">Tri-Semester</option>
-                    <option value="bi_semester">Bi-Semester (PHRM/LLB)</option>
-                    <option value="both">Both Tracks</option>
+                    <option value="tri_semester" className="dark:bg-slate-900">Tri-Semester</option>
+                    <option value="bi_semester" className="dark:bg-slate-900">Bi-Semester (PHRM/LLB)</option>
+                    <option value="both" className="dark:bg-slate-900">Both Tracks</option>
                   </select>
                 </div>
               </div>
@@ -293,7 +293,7 @@ export function CalendarEditor() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100 text-[10px] font-black uppercase tracking-widest"
+                  className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100 dark:shadow-none text-[10px] font-black uppercase tracking-widest"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {saving ? 'Synchronizing...' : 'Save Matrix Record'}
@@ -305,33 +305,33 @@ export function CalendarEditor() {
       </AnimatePresence>
 
       {/* Events Table */}
-      <div className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full">
-            <thead className="bg-slate-50/50 border-b border-slate-100">
+            <thead className="bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5">
               <tr>
-                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Event & Context</th>
-                <th className="hidden sm:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</th>
-                <th className="px-6 sm:px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Control</th>
+                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date</th>
+                <th className="px-6 sm:px-8 py-5 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Event & Context</th>
+                <th className="hidden sm:table-cell px-8 py-5 text-left text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Classification</th>
+                <th className="px-6 sm:px-8 py-5 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Control</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-slate-50 dark:divide-white/5">
               {loading ? (
                 <tr>
                   <td colSpan={4} className="px-8 py-24 text-center">
-                    <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-500" />
-                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Scanning academic timeline...</p>
+                    <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-500 dark:text-indigo-400" />
+                    <p className="text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest">Scanning academic timeline...</p>
                   </td>
                 </tr>
               ) : events.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-8 py-24 text-center">
-                    <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                       <CalendarIcon className="w-10 h-10 text-slate-200" />
+                    <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                       <CalendarIcon className="w-10 h-10 text-slate-200 dark:text-slate-700" />
                     </div>
-                    <h3 className="text-lg font-black text-slate-900">No Records Found</h3>
-                    <p className="text-slate-400 text-sm font-medium mt-2">The academic timeline for this quadrant is currently empty.</p>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white">No Records Found</h3>
+                    <p className="text-slate-400 dark:text-slate-500 text-sm font-medium mt-2">The academic timeline for this quadrant is currently empty.</p>
                   </td>
                 </tr>
               ) : (
@@ -341,23 +341,23 @@ export function CalendarEditor() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    className="hover:bg-slate-50/50 group transition-all"
+                    className="hover:bg-slate-50/50 dark:hover:bg-white/5 group transition-all"
                   >
                     <td className="px-6 sm:px-8 py-6">
-                      <div className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {formatDate(evt.event_date)}
                       </div>
                     </td>
                     <td className="px-6 sm:px-8 py-6">
-                      <div className="text-sm font-black text-slate-900 group-hover:tracking-tight transition-all">{evt.title}</div>
-                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">{evt.target_track}</div>
+                      <div className="text-sm font-black text-slate-900 dark:text-white group-hover:tracking-tight transition-all">{evt.title}</div>
+                      <div className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">{evt.target_track}</div>
                     </td>
                     <td className="hidden sm:table-cell px-8 py-6">
                       <span className={cn(
                         "inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm border",
                         evt.type?.toLowerCase().includes('holiday') 
-                          ? 'bg-rose-50 text-rose-600 border-rose-100' 
-                          : (evt.type?.toLowerCase().includes('exam') ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100')
+                          ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20' 
+                          : (evt.type?.toLowerCase().includes('exam') ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20' : 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20')
                       )}>
                         {evt.type || 'General'}
                       </span>
@@ -365,7 +365,7 @@ export function CalendarEditor() {
                     <td className="px-6 sm:px-8 py-6 text-right">
                       <button
                         onClick={() => handleDelete(evt.id)}
-                        className="p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all"
+                        className="p-3 text-slate-300 dark:text-slate-600 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl transition-all"
                         title="Delete Event"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -380,4 +380,4 @@ export function CalendarEditor() {
       </div>
     </div>
   );
-}
+}

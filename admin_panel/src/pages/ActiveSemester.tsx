@@ -112,14 +112,14 @@ export function ActiveSemester() {
       </div>
 
       {tracks.length === 0 ? (
-        <div className="bg-amber-50 border border-amber-100 p-8 rounded-[2rem] flex items-start gap-5 shadow-sm">
-          <div className="p-3 bg-white rounded-2xl shadow-sm">
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 p-8 rounded-[2rem] flex items-start gap-5 shadow-sm">
+          <div className="p-3 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5">
              <AlertCircle className="w-6 h-6 text-amber-500 shrink-0" />
           </div>
           <div>
-            <h3 className="text-amber-900 font-black tracking-tight">No Tracks Configured</h3>
-            <p className="text-amber-700/70 text-sm font-medium mt-1">
-              Navigate to the <Link to="/academic-data" className="font-black text-amber-900 underline">Global Data</Link> quadrant to initialize your academic tracks.
+            <h3 className="text-amber-900 dark:text-amber-400 font-black tracking-tight">No Tracks Configured</h3>
+            <p className="text-amber-700/70 dark:text-amber-500/70 text-sm font-medium mt-1">
+              Navigate to the <Link to="/academic-data" className="font-black text-amber-900 dark:text-amber-400 underline">Global Data</Link> quadrant to initialize your academic tracks.
             </p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export function ActiveSemester() {
                         ...prev,
                         [t.track]: { ...prev[t.track], next: e.target.value }
                       }))}
-                      className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 placeholder:text-slate-300"
+                      className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                       placeholder="e.g. Summer 2026"
                     />
                   </div>

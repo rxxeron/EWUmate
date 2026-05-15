@@ -26,6 +26,9 @@ export function Dashboard() {
     courses: 0,
     notifications: 0,
     pendingFeedbacks: 0,
+    inProgressFeedbacks: 0,
+    resolvedFeedbacks: 0,
+    ignoredFeedbacks: 0,
   });
   const [recentUsers, setRecentUsers] = useState<Profile[]>([]);
   const [activeUsers, setActiveUsers] = useState<Profile[]>([]);
@@ -59,6 +62,9 @@ export function Dashboard() {
         { count: programsCount },
         { count: noticesCount },
         { count: pendingFeedbackCount },
+        { count: inProgressFeedbackCount },
+        { count: resolvedFeedbackCount },
+        { count: ignoredFeedbackCount },
         { data: recent },
         { data: activeNow },
         { data: activeSemesters },
@@ -70,6 +76,9 @@ export function Dashboard() {
         supabase.from('programs').select('*', { count: 'exact', head: true }),
         supabase.from('notifications').select('*', { count: 'exact', head: true }),
         supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
+        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
+        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'ignored'),
         supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
         supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
         supabase.from('active_semester').select('*'),
@@ -179,6 +188,9 @@ export function Dashboard() {
         courses: totalActiveCourses,
         notifications: noticesCount || 0,
         pendingFeedbacks: pendingFeedbackCount || 0,
+        inProgressFeedbacks: inProgressFeedbackCount || 0,
+        resolvedFeedbacks: resolvedFeedbackCount || 0,
+        ignoredFeedbacks: ignoredFeedbackCount || 0,
       });
       
       setSemesterStats(semStats);
@@ -468,8 +480,7 @@ export function Dashboard() {
               <div className="flex items-center justify-between mb-8">
                  <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">System Infrastructure</h3>
                  <span className="text-[10px] font-black px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-full uppercase">Operational</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              </div>               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { label: 'Portal Scraper', status: 'Healthy', icon: Zap, color: 'bg-amber-500' },
                   { label: 'Azure Core', status: 'Live', icon: ShieldCheck, color: 'bg-emerald-500' },
@@ -490,6 +501,28 @@ export function Dashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Feedback Breakdown */}
+              <div className="mt-8 pt-8 border-t border-slate-50 dark:border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase tracking-[0.2em]">Feedback Resolution</h3>
+                  <button onClick={() => navigate('/feedbacks')} className="text-[10px] font-black text-indigo-500 hover:underline">Manage Feedbacks</button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Pending', count: stats.pendingFeedbacks, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                    { label: 'In Progress', count: stats.inProgressFeedbacks, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                    { label: 'Resolved', count: stats.resolvedFeedbacks, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'Ignored', count: stats.ignoredFeedbacks, color: 'text-slate-400', bg: 'bg-slate-400/10' }
+                  ].map((stat, i) => (
+                    <div key={i} className="p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                      <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                      <p className={cn("text-xl font-black", stat.color)}>{stat.count}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
            </div>
            
            <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col justify-center">
@@ -629,7 +662,7 @@ export function Dashboard() {
                       <div className="text-[10px] text-indigo-500 font-bold uppercase tracking-wider">{user.student_id || '-'}</div>
                     </td>
                     <td className="px-8 py-5 text-center">
-                      <span className="px-3 py-1 bg-slate-100 dark:bg-white/5 rounded-lg text-xs font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
+                      <span className="px-3 py-1 bg-slate-100 dark:bg-slate-900 rounded-lg text-xs font-black text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5">
                         {user.app_open_count || 0}
                       </span>
                     </td>

@@ -276,7 +276,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                 ),
               ),
               subtitle: Padding(
-                padding: const EdgeInsets.top(4.0),
+                padding: const EdgeInsets.only(top: 4.0),
                 child: Row(
                   children: [
                     Text(
@@ -284,7 +284,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                       style: TextStyle(
                         color: statusColor,
                         fontSize: 10,
-                        fontWeight: FontWeight.black,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -324,7 +324,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'CONVERSATION HISTORY',
-                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.black, letterSpacing: 1.2),
+                      style: TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.2),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -351,7 +351,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                                 style: TextStyle(
                                   color: isAdmin ? Colors.blueAccent : Colors.white38,
                                   fontSize: 9,
-                                  fontWeight: FontWeight.black,
+                                  fontWeight: FontWeight.w900,
                                   letterSpacing: 0.5,
                                 ),
                               ),

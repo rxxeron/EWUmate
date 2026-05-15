@@ -127,6 +127,7 @@ export interface FeedbackComment {
   id: string;
   feedback_id: string;
   comment: string;
+  is_admin: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -235,6 +236,9 @@ export interface DashboardStats {
   courses: number;
   notifications: number;
   pendingFeedbacks: number;
+  inProgressFeedbacks: number;
+  resolvedFeedbacks: number;
+  ignoredFeedbacks: number;
 }
 
 export interface SemesterTrackStats {

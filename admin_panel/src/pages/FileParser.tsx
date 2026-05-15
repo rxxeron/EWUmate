@@ -172,202 +172,204 @@ let folderName = 'misc';
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">File Parsing System</h1>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-3">
+          <Upload className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+          File Parsing System
+        </h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6">
-          <form onSubmit={handleUpload} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+        <div className="p-8">
+          <form onSubmit={handleUpload} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">
                   Academic Track (Tri/Bi)
                 </label>
                 <select
                   value={selectedTrack}
                   onChange={(e) => setSelectedTrack(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-black text-slate-900 dark:text-white appearance-none cursor-pointer"
                 >
-                  <option value="tri_semester">Tri-Semester (Standard)</option>
-                  <option value="bi_semester">Bi-Semester (Pharmacy/Law)</option>
+                  <option value="tri_semester" className="dark:bg-slate-900">Tri-Semester (Standard)</option>
+                  <option value="bi_semester" className="dark:bg-slate-900">Bi-Semester (Pharmacy/Law)</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">
                   Target Semester
                 </label>
                 <select
                   value={semesterContext}
                   onChange={(e) => setSemesterContext(e.target.value as any)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-black text-slate-900 dark:text-white appearance-none cursor-pointer"
                 >
-                  <option value="current">Current Semester</option>
-                  <option value="next">Upcoming / Next Semester</option>
+                  <option value="current" className="dark:bg-slate-900">Current Semester</option>
+                  <option value="next" className="dark:bg-slate-900">Upcoming / Next Semester</option>
                 </select>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight ml-1">
                   Switch to "Upcoming" if you are uploading data for the next term.
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">
                   Document Type
                 </label>
                 <select
                   value={parseType}
                   onChange={(e) => setParseType(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-black text-slate-900 dark:text-white appearance-none cursor-pointer"
                 >
-                  <option value="exam">Exam Schedule</option>
-                  <option value="course">Course Catalog / Advising</option>     
-                  <option value="calendar">Academic Calendar</option>
-                  <option value="advising">Faculty Advising Routine</option>
+                  <option value="exam" className="dark:bg-slate-900">Exam Schedule</option>
+                  <option value="course" className="dark:bg-slate-900">Course Catalog / Advising</option>     
+                  <option value="calendar" className="dark:bg-slate-900">Academic Calendar</option>
+                  <option value="advising" className="dark:bg-slate-900">Faculty Advising Routine</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 ml-1">
                   Final Upload Filename
                 </label>
                 <input
                   type="text"
                   value={customFileName}
                   onChange={(e) => setCustomFileName(e.target.value)}
-                  className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10 rounded-2xl focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600"
                   placeholder={parseType === 'advising' ? "e.g., Faculty Advising Spring 2026.eml" : "e.g., Faculty List Spring 2026.pdf"}
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Auto-populated with the active semester. You can edit this if needed. Ensure it ends in {parseType === 'advising' ? '.eml' : '.pdf'}.
+                <p className="mt-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight ml-1">
+                  Auto-populated based on context. Ends in {parseType === 'advising' ? '.eml' : '.pdf'}.
                 </p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">  
-                Upload PDF File
+              <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 ml-1">  
+                Upload Binary File
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-indigo-400 transition-colors bg-gray-50">
-                <div className="space-y-1 text-center">
-                  <FileType className="mx-auto h-12 w-12 text-gray-400" />      
-                  <div className="flex text-sm text-gray-600 justify-center">   
+              <div className="mt-1 flex justify-center px-8 pt-8 pb-10 border-2 border-slate-200 dark:border-white/10 border-dashed rounded-3xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-all bg-slate-50 dark:bg-slate-900/50 group">
+                <div className="space-y-4 text-center">
+                  <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                    <FileType className="h-8 w-8 text-indigo-500" />      
+                  </div>
+                  <div className="flex text-sm text-slate-600 dark:text-slate-400 justify-center">   
                     <label
                       htmlFor="file-upload"
-                      className="relative cursor-pointer rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                      className="relative cursor-pointer rounded-md font-black text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors focus-within:outline-none"
                     >
                       <span>Upload a file</span>
                       <input id="file-upload" name="file-upload" type="file" className="sr-only" accept={parseType === 'advising' ? '.eml' : '.pdf'} onChange={handleFileChange} />
                     </label>
                     <p className="pl-1">or drag and drop</p>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                     {file ? file.name : `${parseType === 'advising' ? 'EML' : 'PDF'} up to 10MB`}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-end pt-4">
               <button
                 type="submit"
                 disabled={status === 'parsing'}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm font-medium"
+                className="w-full md:w-auto flex items-center justify-center gap-3 px-10 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-lg shadow-indigo-100 dark:shadow-none font-black text-[10px] uppercase tracking-widest"
               >
                 {status === 'parsing' ? (
-                  <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Processing Matrix...</>
                 ) : (
-                  <><Upload className="w-5 h-5" /> Execute Data Parse</>        
+                  <><Upload className="w-4 h-4" /> Execute Data Parse</>        
                 )}
               </button>
             </div>
           </form>
 
           {status !== 'idle' && (
-            <div className={`mt-6 p-4 rounded-lg flex items-start gap-3 ${      
-              status === 'error' ? 'bg-red-50 text-red-800' :
-              status === 'success' ? 'bg-emerald-50 text-emerald-800' :
-              'bg-blue-50 text-blue-800'
+            <div className={`mt-8 p-6 rounded-2xl border flex items-start gap-4 animate-in slide-in-from-top-4 ${      
+              status === 'error' ? 'bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-400 border-rose-100 dark:border-rose-500/20' :
+              status === 'success' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20' :
+              'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-800 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20'
             }`}>
-              {status === 'error' && <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />}
-              {status === 'success' && <CheckCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />}
-              {status === 'parsing' && <Loader2 className="w-5 h-5 mt-0.5 flex-shrink-0 animate-spin" />}
+              <div className="mt-1">
+                {status === 'error' && <AlertCircle className="w-6 h-6 flex-shrink-0" />}
+                {status === 'success' && <CheckCircle className="w-6 h-6 flex-shrink-0" />}
+                {status === 'parsing' && <Loader2 className="w-6 h-6 flex-shrink-0 animate-spin" />}
+              </div>
 
               <div className="flex-1">
-                <h3 className="font-semibold">
+                <h3 className="font-black text-sm uppercase tracking-widest">
                   {status === 'error' ? 'Parsing Failed' :
                    status === 'success' ? 'Parse Successful' :
                    'Parsing Document...'}
                 </h3>
-                <p className="text-sm mt-1">{message}</p>
-
-                {status === 'success' && results && (
-                  <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">Server Response:</p>
-                    <pre className="text-xs bg-white/50 p-3 rounded border border-emerald-100 overflow-x-auto">
-                      {JSON.stringify(results, null, 2)}
-                    </pre>
-                  </div>
-                )}
+                <p className="text-sm font-medium mt-1 leading-relaxed">{message}</p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 mt-6">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50 rounded-t-xl">
-          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-            <FolderPen className="w-5 h-5 text-indigo-500" />
-            Manage Uploaded Documents
+      <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+        <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-50/50 dark:bg-white/5">
+          <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl">
+              <FolderPen className="w-5 h-5 text-indigo-500" />
+            </div>
+            Academic Repository
           </h2>
           <button
             onClick={fetchAllUploadedFiles}
-            className="text-sm px-3 py-1.5 bg-white border border-gray-300 rounded hover:bg-gray-50 flex items-center gap-1 shadow-sm text-gray-700"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest transition-all shadow-sm"
           >
             <Loader2 className={`w-3.5 h-3.5 ${loadingFiles ? 'animate-spin' : ''}`} />
-            Refresh
+            Refresh Index
           </button>
         </div>
         
         <div className="p-0">
           {loadingFiles && uploadedFiles.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-500" />
-              Loading bucket items...
+            <div className="p-12 text-center">
+              <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-500" />
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Scanning bucket objects...</p>
             </div>
           ) : uploadedFiles.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-               No files found in the academic_documents bucket yet.
+            <div className="p-12 text-center text-slate-400 dark:text-slate-500 font-bold text-sm">
+               The academic repository is currently empty.
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
               {uploadedFiles.map((group) => (
-                <div key={group.folder} className="p-6">
-                  <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    /{group.folder}
-                    <span className="bg-gray-100 text-gray-600 py-0.5 px-2 rounded-full text-xs font-semibold">{group.files.length}</span>
+                <div key={group.folder} className="p-8">
+                  <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-3">
+                    <span className="text-indigo-600 dark:text-indigo-400">/</span> {group.folder}
+                    <span className="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 py-1 px-3 rounded-full text-[10px] font-black border border-slate-200 dark:border-white/10 shadow-sm">{group.files.length}</span>
                   </h3>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {group.files.map(f => (
-                      <div key={f.id} className="flex items-center justify-between p-4 rounded-lg bg-gray-50 border border-gray-200 hover:border-indigo-300 transition-colors group">
-                        <div className="flex items-start gap-3 truncate pr-4">
-                          <FileType className="w-5 h-5 text-indigo-400 mt-0.5 flex-shrink-0" />
+                      <div key={f.id} className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/10 hover:border-indigo-200 dark:hover:border-indigo-500 transition-all group shadow-sm">
+                        <div className="flex items-start gap-4 truncate pr-4">
+                          <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl group-hover:bg-indigo-50 dark:group-hover:bg-indigo-500/10 transition-colors">
+                            <FileType className="w-5 h-5 text-indigo-400 group-hover:text-indigo-600 transition-colors flex-shrink-0" />
+                          </div>
                           <div className="truncate">
-                            <p className="text-sm font-medium text-gray-900 truncate" title={f.name}>{f.name}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-sm font-black text-slate-900 dark:text-white truncate group-hover:tracking-tight transition-all" title={f.name}>{f.name}</p>
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-widest">
                               {f.metadata ? `${(f.metadata.size / 1024).toFixed(1)} KB` : 'Unknown size'} • 
-                              {new Date(f.created_at || Date.now()).toLocaleString()}
+                              {new Date(f.created_at || Date.now()).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
                         <button
                           onClick={() => handleDeleteFile(group.folder, f.name)}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all flex-shrink-0"
-                          title="Delete from bucket"
+                          className="opacity-0 group-hover:opacity-100 p-3 text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-2xl transition-all flex-shrink-0"
+                          title="Purge Object"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
                     ))}

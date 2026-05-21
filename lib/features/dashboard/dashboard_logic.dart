@@ -189,7 +189,10 @@ class DashboardLogic {
   }
 
   static Map<String, dynamic> processDashboardData(Map<String, dynamic> data, {DateTime? classesEndDate}) {
-    final DateTime? targetDate = data['date'];
+    final dateRaw = data['date'];
+    final DateTime? targetDate = dateRaw is String 
+        ? DateTime.tryParse(dateRaw) 
+        : dateRaw as DateTime?;
     if (targetDate == null) {
        return _buildChillState('Loading your schedule...', 'Today', DateTime.now());
     }
@@ -355,7 +358,7 @@ class DashboardLogic {
     final config = configRaw is Map ? Map<String, dynamic>.from(configRaw) : {};
     final gradeStartStr = config['grade_submission_start'];
     DateTime? gradeStart;
-    if (gradeStartStr != null) gradeStart = DateTime.parse(gradeStartStr);
+    if (gradeStartStr != null) gradeStart = gradeStartStr is DateTime ? gradeStartStr : DateTime.tryParse(gradeStartStr.toString());
 
     if (startDate != null && targetDate.difference(startDate).inDays < 7) {
       return "Classes have officially started, but you have no sessions scheduled for today! Enjoy the calm before the storm.";

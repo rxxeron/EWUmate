@@ -9,6 +9,7 @@ import '../../../../core/providers/academic_providers.dart';
 
 import '../../../../core/models/task.dart';
 import '../../../../core/repositories/task_repository.dart';
+import '../../../course_browser/presentation/providers/course_browser_providers.dart';
 
 class AddTaskBottomSheet extends ConsumerStatefulWidget {
   final Task? existingTask;
@@ -61,28 +62,12 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
   }
 
   Future<void> _fetchEnrolledCourses() async {
-    if (user == null) {
-      if (mounted) setState(() => _isLoadingCourses = false);
-      return;
-    }
     try {
-      final String? currentSemester = ref.read(currentSemesterCodeProvider).value;
-      if (currentSemester == null) {
-         if (mounted) setState(() => _isLoadingCourses = false);
-         return;
-      }
-      
-      final enrollments = await _supabase
-          .from('enrollments')
-          .select('course_code')
-          .eq('user_id', user!.id)
-          .eq('semester_code', currentSemester);
+      final codes = await ref.read(userEnrollmentsProvider.future);
 
       if (mounted) {
         setState(() {
-          enrolledCourses = (enrollments as List)
-              .map((row) => row['course_code'].toString())
-              .toList();
+          enrolledCourses = List<String>.from(codes);
           
           if (widget.existingTask != null && selectedCourse != null && !enrolledCourses.contains(selectedCourse) && selectedCourse != 'Other') {
               enrolledCourses.add(selectedCourse!);
@@ -95,9 +80,6 @@ class _AddTaskBottomSheetState extends ConsumerState<AddTaskBottomSheet> {
       if (kDebugMode) debugPrint("Error fetching courses: $e");
       if (mounted) {
         setState(() => _isLoadingCourses = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
-        );
       }
     }
   }

@@ -62,25 +62,51 @@ async function handleSingleUserSync(supabase: any, userId: string) {
     const cleanSem = semesterCode.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
     const courseTable = `courses_${cleanSem}`;
 
-    // 2. Fetch Enrollments
+    // 2. Fetch Enrollments (Support both 'Summer 2026' and 'summer2026')
     const { data: enrollments, error: enrollError } = await supabase
         .from('enrollments')
         .select('section_id')
         .eq('user_id', userId)
-        .eq('semester_code', semesterCode);
+        .or(`semester_code.eq."${semesterCode}",semester_code.eq."${cleanSem}"`);
 
     if (enrollError) throw enrollError;
     
     let weeklyTemplate = {};
     if (enrollments && enrollments.length > 0) {
+        // Fetch by ID first
         const sectionIds = enrollments.map((e: any) => e.section_id);
-        const { data: courses, error: courseError } = await supabase
+        const { data: idCourses, error: idError } = await supabase
             .from(courseTable)
-            .select('course_code, course_name, schedule_data')
+            .select('id, course_code, course_name, schedule_data')
             .in('id', sectionIds);
 
-        if (courseError) throw courseError;
-        weeklyTemplate = generateTemplate(courses, profile.program_code);
+        if (idError) throw idError;
+
+        // Identify missing IDs
+        const foundIds = new Set(idCourses.map((c: any) => c.id));
+        const missingEnrollments = enrollments.filter((e: any) => !foundIds.has(e.section_id));
+
+        let finalCourses = [...idCourses];
+
+        // Fallback: Resolve missing by Code + Section
+        if (missingEnrollments.length > 0) {
+            for (const me of missingEnrollments) {
+                const { data: fallback } = await supabase
+                    .from(courseTable)
+                    .select('id, course_code, course_name, schedule_data')
+                    .eq('course_code', me.course_code)
+                    .eq('section_number', me.section)
+                    .maybeSingle();
+                
+                if (fallback) {
+                    finalCourses.push(fallback);
+                    // Proactively heal the enrollment table with the new ID
+                    await supabase.from('enrollments').update({ section_id: fallback.id }).eq('id', me.id);
+                }
+            }
+        }
+
+        weeklyTemplate = generateTemplate(finalCourses, profile.program_code);
     }
 
     // 3. Upsert
@@ -122,13 +148,14 @@ async function handleBulkTrackSync(supabase: any, track: string) {
     if (userError) throw userError;
     if (!users || users.length === 0) return new Response(JSON.stringify({ success: true, message: "No users in track" }), { headers: corsHeaders });
 
-    // 3. Fetch all enrollments for these users
+    // 3. Fetch all enrollments for these users (Case-insensitive semester match)
     const userIds = users.map((u: any) => u.id);
     const { data: enrollments, error: enrollError } = await supabase
         .from('enrollments')
-        .select('user_id, section_id')
+        .select('id, user_id, section_id, course_code, section')
         .in('user_id', userIds)
-        .eq('semester_code', semesterCode);
+        .or(`semester_code.eq."${semesterCode}",semester_code.eq."${cleanSem}"`)
+        .limit(10000); // Safety bump
 
     if (enrollError) throw enrollError;
 
@@ -136,11 +163,32 @@ async function handleBulkTrackSync(supabase: any, track: string) {
     const sectionIds = [...new Set(enrollments.map((e: any) => e.section_id))];
     const { data: courses, error: courseError } = await supabase
         .from(courseTable)
-        .select('id, course_code, course_name, schedule_data')
+        .select('id, course_code, section_number, course_name, schedule_data')
         .in('id', sectionIds);
 
     if (courseError) throw courseError;
     const courseMap = (courses || []).reduce((acc: any, c: any) => { acc[c.id] = c; return acc; }, {});
+
+    // 4.5 Self-Healing: Check for orphans and attempt recovery by code+section
+    const missingEnrollments = enrollments.filter((e: any) => !courseMap[e.section_id]);
+    if (missingEnrollments.length > 0) {
+        console.log(`Sync-Schedule: Found ${missingEnrollments.length} orphans. Attempting recovery...`);
+        const { data: fullCatalog } = await supabase.from(courseTable).select('id, course_code, section_number, course_name, schedule_data');
+        const catalogMap: Record<string, any> = {};
+        (fullCatalog || []).forEach((c: any) => {
+            catalogMap[`${c.course_code}:${c.section_number}`] = c;
+        });
+
+        for (const me of missingEnrollments) {
+            const key = `${me.course_code}:${me.section}`;
+            const fallback = catalogMap[key];
+            if (fallback) {
+                courseMap[me.section_id] = fallback; // Temporarily map the old ID to the new data
+                // Proactively heal the enrollment table with the new ID
+                await supabase.from('enrollments').update({ section_id: fallback.id }).eq('id', me.id);
+            }
+        }
+    }
 
     // 5. Generate and batch upsert
     const upserts = users.map((u: any) => {

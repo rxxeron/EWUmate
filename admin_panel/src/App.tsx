@@ -18,6 +18,7 @@ import { Analytics } from './pages/Analytics';
 import { CalendarEditor } from './pages/CalendarEditor';
 import { DataQuality } from './pages/DataQuality';
 import { PortalAutomation } from './pages/PortalAutomation';
+import { StudyVaultManager } from './pages/StudyVaultManager';
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
             <Route path='/academic-data' element={<AcademicData />} />
             <Route path='/parser' element={<FileParser />} />
             <Route path='/scraper' element={<PortalAutomation />} />
+            <Route path='/study-vault' element={<StudyVaultManager />} />
 
             <Route path='/calendar-editor' element={<CalendarEditor />} />
             <Route path='/settings' element={<Settings />} />

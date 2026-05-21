@@ -288,3 +288,35 @@ export interface UserSemesterState {
   weekly_grid_cache: WeeklyGridCache | null;
   updated_at: string;
 }
+
+export interface StudyMaterial {
+  id: string;
+  uploader_id: string | null;
+  faculty_initial: string | null;
+  course_code: string | null;
+  semester: string | null;
+  file_type: string | null;
+  drive_account_id: string | null;
+  drive_file_id: string;
+  file_name: string;
+  file_size_bytes: number;
+  created_at: string;
+  updated_at: string | null;
+  status: 'pending' | 'approved' | 'rejected' | 'removal_requested';
+  profiles?: {
+    full_name: string | null;
+    student_id: string | null;
+  };
+}
+
+// --- Storage / Google Drive Account ---
+export interface DriveAccount {
+  id: string;
+  email: string;
+  total_capacity_bytes: number;
+  used_bytes: number;
+  is_active: boolean;
+  folder_id: string;
+  created_at: string;
+}
+

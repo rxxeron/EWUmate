@@ -76,6 +76,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         "parse_faculty_webhook": handle_parse_webhook,
         "sync_api_courses": handle_sync_api_courses,
         "generate_pdf": handle_generate_pdf,
+        "generate_snapshot": handle_generate_snapshot,
     }
 
     handler = handlers.get(action)
@@ -594,17 +595,18 @@ def handle_sync_api_courses(body: dict) -> dict:
         sb.rpc("create_course_table", {"p_semester_code": clean_sem.lower()}).execute()
 
         import time
-        # 4. Smart upsert: fetch existing → update matched, insert new, delete removed
+        # 4. Smart upsert: fetch existing → update matched (only if changed), insert new, delete removed
         existing_courses = []
         for retry in range(6):
             try:
                 if retry > 0:
-                    time.sleep(2.0) # Only sleep on retries
+                    time.sleep(2.0)
                 
                 all_existing = []
                 offset = 0
                 while True:
-                    chunk = sb.table(table_name).select("id, course_code, section_number").range(offset, offset + 999).execute()
+                    # Select fields for comparison
+                    chunk = sb.table(table_name).select("id, course_code, section_number, faculty_initials, capacity, schedule_data, course_name, credit_val, faculty_full_name, faculty_designation, dedicated_department").range(offset, offset + 999).execute()
                     all_existing.extend(chunk.data or [])
                     if len(chunk.data or []) < 1000:
                         break
@@ -612,39 +614,58 @@ def handle_sync_api_courses(body: dict) -> dict:
                 existing_courses = all_existing
                 break
             except Exception as e:
-                if retry == 5:
-                    raise e
+                if retry == 5: raise e
 
-        existing_map = {}
+        existing_data_map = {}
         for ec in existing_courses:
             cc  = (ec.get("course_code") or "").upper().replace(" ", "")
             sec = (ec.get("section_number") or "").upper().replace(" ", "")
             if cc and sec:
-                existing_map[(cc, sec)] = ec.get("id")
+                existing_data_map[(cc, sec)] = ec
 
-        # Tag records that already exist with their DB id
+        def has_changed(new_c, old_c):
+            # Compare critical fields
+            fields = ["faculty_initials", "capacity", "course_name", "credit_val", "faculty_full_name", "faculty_designation", "dedicated_department"]
+            for f in fields:
+                if str(new_c.get(f)) != str(old_c.get(f)):
+                    return True
+            # Deep compare schedule_data
+            if json.dumps(new_c.get("schedule_data"), sort_keys=True) != json.dumps(old_c.get("schedule_data"), sort_keys=True):
+                return True
+            return False
+
+        new_courses = []
+        updated_courses = []
+        unchanged_count = 0
         seen_ids = set()
+
         for mc in mapped_courses:
             cc  = (mc["course_code"] or "").upper().replace(" ", "")
             sec = (mc["section_number"] or "").upper().replace(" ", "")
             key = (cc, sec)
-            if key in existing_map:
-                mc["id"] = existing_map[key]
-                seen_ids.add(existing_map[key])
+            
+            if key in existing_data_map:
+                old_c = existing_data_map[key]
+                mc["id"] = old_c["id"]
+                seen_ids.add(old_c["id"])
+                
+                if has_changed(mc, old_c):
+                    updated_courses.append(mc)
+                else:
+                    unchanged_count += 1
+            else:
+                new_courses.append(mc)
 
         # Delete records that are no longer in the new data
-        ids_to_delete = [uid for uid in existing_map.values() if uid not in seen_ids]
+        ids_to_delete = [ec["id"] for ec in existing_courses if ec["id"] not in seen_ids]
         for i in range(0, len(ids_to_delete), 100):
             sb.table(table_name).delete().in_("id", ids_to_delete[i:i+100]).execute()
-
-        new_courses     = [mc for mc in mapped_courses if "id" not in mc]
-        updated_courses = [mc for mc in mapped_courses if "id" in mc]
 
         # Insert new
         for i in range(0, len(new_courses), 100):
             sb.table(table_name).insert(new_courses[i:i+100]).execute()
 
-        # Upsert updated (with UUID)
+        # Upsert updated
         for i in range(0, len(updated_courses), 100):
             sb.table(table_name).upsert(updated_courses[i:i+100]).execute()
 
@@ -739,62 +760,76 @@ def _do_parse_faculty(file_path: str) -> dict:
         
         # Let PostgREST schema cache reload completely before querying the new table
         import time
+        # Paginating fetch to avoid 1000 row limit
         existing_courses = []
         for retry in range(6):
             try:
-                time.sleep(1.5) # Wait for schema cache to refresh
-                
-                # Supabase has a 1000 row limit by default. We must paginate.
+                time.sleep(1.5)
                 all_existing = []
                 offset = 0
                 while True:
-                    chunk_res = sb.table(table_name).select("id, course_code, section_number").range(offset, offset + 999).execute()
+                    # Select fields for comparison
+                    chunk_res = sb.table(table_name).select("id, course_code, section_number, faculty_initials, capacity, schedule_data, course_name, credit_val, faculty_full_name, faculty_designation").range(offset, offset + 999).execute()
                     chunk_data = chunk_res.data or []
                     all_existing.extend(chunk_data)
                     if len(chunk_data) < 1000:
                         break
                     offset += 1000
-                    
                 existing_courses = all_existing
-                
-                break # Success!
+                break
             except Exception as wait_e:
-                if retry == 5:
-                    logging.warning(f"Schema cache didn't refresh in time: {wait_e}")
-                    raise wait_e
+                if retry == 5: raise wait_e
         
-        existing_map = {}
+        existing_data_map = {}
         for ec in existing_courses:
-            cc = ec.get("course_code")
-            sec = ec.get("section_number")
+            cc = (ec.get("course_code") or "").upper().replace(" ", "")
+            sec = (ec.get("section_number") or "").upper().replace(" ", "")
             if cc and sec:
-                existing_map[(str(cc).upper().replace(" ", ""), str(sec).upper().replace(" ", ""))] = ec.get("id")
+                existing_data_map[(cc, sec)] = ec
 
+        def has_changed_parsed(new_c, old_c):
+            # Comparison fields (mirrors schema mapped in line 726-736)
+            fields = ["faculty_initials", "capacity", "course_name", "credit_val", "faculty_full_name", "faculty_designation"]
+            for f in fields:
+                if str(new_c.get(f)) != str(old_c.get(f)):
+                    return True
+            # Deep compare schedule_data
+            if json.dumps(new_c.get("schedule_data"), sort_keys=True) != json.dumps(old_c.get("schedule_data"), sort_keys=True):
+                return True
+            return False
+
+        new_courses = []
+        updated_courses = []
+        unchanged_count = 0
         seen_ids = set()
+
         for mc in mapped_courses:
-            cc = mc.get("course_code")
-            sec = mc.get("section_number")
-            if cc and sec:
-                key = (str(cc).upper().replace(" ", ""), str(sec).upper().replace(" ", ""))
-                if key in existing_map:
-                    rec_id = existing_map[key]
-                    mc["id"] = rec_id
-                    seen_ids.add(rec_id)
+            cc = (mc.get("course_code") or "").upper().replace(" ", "")
+            sec = (mc.get("section_number") or "").upper().replace(" ", "")
+            key = (cc, sec)
+            
+            if key in existing_data_map:
+                old_c = existing_data_map[key]
+                mc["id"] = old_c["id"]
+                seen_ids.add(old_c["id"])
+                
+                if has_changed_parsed(mc, old_c):
+                    updated_courses.append(mc)
+                else:
+                    unchanged_count += 1
+            else:
+                new_courses.append(mc)
         
-        ids_to_delete = [uid for uid in existing_map.values() if uid not in seen_ids]
+        ids_to_delete = [ec["id"] for ec in existing_courses if ec["id"] not in seen_ids]
         if ids_to_delete:
             for i in range(0, len(ids_to_delete), 100):
-                batch = ids_to_delete[i:i+100]
-                sb.table(table_name).delete().in_("id", batch).execute()      
+                sb.table(table_name).delete().in_("id", ids_to_delete[i:i+100]).execute()      
 
-        new_courses = [mc for mc in mapped_courses if "id" not in mc]
-        updated_courses = [mc for mc in mapped_courses if "id" in mc]
-
-        # Insert new courses (without UUIDs)
+        # Insert new
         for i in range(0, len(new_courses), 100):
             sb.table(table_name).insert(new_courses[i:i+100]).execute()
 
-        # Upsert updated courses (with UUIDs)
+        # Upsert updated
         for i in range(0, len(updated_courses), 100):
             sb.table(table_name).upsert(updated_courses[i:i+100]).execute()    
 
@@ -1013,3 +1048,27 @@ def handle_generate_pdf(body):
     buffer.seek(0)
     return buffer.read()
 
+
+def handle_generate_snapshot(body: dict) -> dict:
+    """
+    Triggered by DB Webhook or manual call.
+    Payload: { "semester": "Summer 2026" }
+    """
+    semester = body.get("semester")
+    if not semester:
+        return {"status": "error", "message": "semester is required"}
+        
+    import sys
+    import os
+    # Ensure parent dir is in path to find snapshot_utils
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if parent_dir not in sys.path:
+        sys.path.insert(0, parent_dir)
+        
+    try:
+        from snapshot_utils import run_automated_snapshot
+        run_automated_snapshot(semester)
+        return {"status": "ok", "message": f"Snapshot automation triggered for {semester}"}
+    except Exception as e:
+        logging.exception("Snapshot generation failed")
+        return {"status": "error", "message": str(e)}

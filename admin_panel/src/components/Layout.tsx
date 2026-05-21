@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp, Sun, Moon, Library } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -167,6 +167,14 @@ export function Layout() {
           <div className="pt-6 pb-2 px-4">
             <p className="text-[10px] font-black text-indigo-400/50 uppercase tracking-[0.2em]">Management</p>
           </div>
+
+          <Link to="/study-vault" className={getLinkClass('/study-vault')} onClick={() => setIsMobileMenuOpen(false)}>
+            <Library className="w-5 h-5" />
+            <span>Vault Moderation</span>
+            {location.pathname === '/study-vault' && (
+              <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
+            )}
+          </Link>
 
           <Link to="/feedbacks" className={getLinkClass('/feedbacks')} onClick={() => setIsMobileMenuOpen(false)}>
             <Mail className="w-5 h-5" />

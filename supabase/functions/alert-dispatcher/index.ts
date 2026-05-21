@@ -23,7 +23,7 @@ serve(async (req: Request) => {
                 .select("*")
                 .eq("is_dispatched", false)
                 .lte("trigger_at", utcTimestamp)
-                .in("type", ["push_alert", "reminder", "broadcast", "task_reminder", "direct_message"]); // All push-eligible types
+                .in("type", ["push_alert", "reminder", "broadcast", "task_reminder", "direct_message", "system"]); // All push-eligible types
 
             if (fetchError) throw fetchError;
             if (!pending || pending.length === 0) {

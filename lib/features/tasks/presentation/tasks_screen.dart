@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 
-import '../../../../core/models/task.dart';
-import '../../../../core/repositories/task_repository.dart';
-import '../../../../core/repositories/auth_repository.dart';
-import '../../../../core/services/cache_service.dart';
-import '../../../../core/widgets/ewumate_app_bar.dart';
-import '../../../../core/utils/error_utils.dart';
+import '../../../core/models/task.dart';
+import '../../../core/repositories/task_repository.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/services/cache_service.dart';
+import '../../../core/widgets/ewumate_app_bar.dart';
+import '../../../core/utils/error_utils.dart';
 import 'widgets/add_task_bottom_sheet.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {

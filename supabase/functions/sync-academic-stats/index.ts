@@ -1,7 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -95,8 +104,7 @@ serve(async (req) => {
     const semesterMap: Record<string, any> = {};
     const semestersList: any[] = [];
     
-    let cumulativePoints = 0;
-    let cumulativeCredits = 0;
+    const bestGradesMap = new Map<string, { point: number, credits: number, semCode: string }>();
 
     for (const course of courses) {
       const semCode = course.semester_code;
@@ -129,13 +137,38 @@ serve(async (req) => {
       const isExcluded = ['W', 'I', 'P', 'S', 'U', 'R', 'Ongoing', 'Planned', 'ONGOING', 'PLANNED'].includes(course.grade);
       
       if (!isExcluded) {
-        cumulativePoints += (point * credits);
-        cumulativeCredits += credits;
-        semesterMap[semCode].credits_earned += credits;
+        // Retake Logic: Check if we already have a grade for this course
+        const upperCode = course.course_code.toUpperCase();
+        const existing = bestGradesMap.get(upperCode);
+        
+        // "Best one gets count" rule
+        if (!existing || point > existing.point) {
+          bestGradesMap.set(upperCode, { point, credits, semCode });
+        }
       }
       
-      semesterMap[semCode].cgpa = cumulativeCredits > 0 ? Number((cumulativePoints / cumulativeCredits).toFixed(2)) : 0;
-      semesterMap[semCode].total_credits_earned = cumulativeCredits;
+      // Calculate cumulative from the current "Best Grades" state
+      let currentCumulativePoints = 0;
+      let currentCumulativeCredits = 0;
+      
+      for (const best of bestGradesMap.values()) {
+        currentCumulativePoints += (best.point * best.credits);
+        currentCumulativeCredits += best.credits;
+      }
+
+      semesterMap[semCode].cgpa = currentCumulativeCredits > 0 ? Number((currentCumulativePoints / currentCumulativeCredits).toFixed(2)) : 0;
+      semesterMap[semCode].total_credits_earned = currentCumulativeCredits;
+      semesterMap[semCode].credits_earned = semesterMap[semCode].courses
+        .filter((c: any) => !['W', 'I', 'Ongoing', 'Planned'].includes(c.grade))
+        .reduce((sum: number, c: any) => sum + c.credits, 0);
+    }
+
+    // Final Cumulative for Profile
+    let cumulativePoints = 0;
+    let cumulativeCredits = 0;
+    for (const best of bestGradesMap.values()) {
+      cumulativePoints += (best.point * best.credits);
+      cumulativeCredits += best.credits;
     }
 
     // TGPA Calculation
@@ -178,9 +211,18 @@ serve(async (req) => {
     }
 
     // 5. Calculate Current Support (Source of Truth: enrollments table)
+    const { data: profileForTrack } = await supabase
+      .from('profiles')
+      .select('semester_type')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    const userTrack = profileForTrack?.semester_type || 'tri_semester';
+
     const { data: activeSemData, error: activeSemErr } = await supabase
       .from('active_semester')
       .select('*')
+      .eq('track', userTrack)
       .limit(1)
       .single();
     if (activeSemErr) throw activeSemErr;
@@ -189,7 +231,7 @@ serve(async (req) => {
     // However, in Supabase JS we use property names. Based on previous SQL check: [('tri_semester', 'Spring2026', ...)]
     // Map property names: current_semester_code? Let's check table columns or just use raw if possible.
     // For now, I'll use the most likely name or fetch all.
-    const activeSemester = activeSemData.current_semester_code || 'Spring2026';
+    const activeSemester = (activeSemData.current_semester_code || 'Spring2026').replace(/\s+/g, '');
 
     const { data: currentEnrollments, error: enrollError } = await supabase
       .from('enrollments')
@@ -205,7 +247,8 @@ serve(async (req) => {
     const nextCourseCodes: string[] = [];
 
     for (const enr of currentEnrollments) {
-      if (enr.semester_code === activeSemester) {
+      const enrSem = (enr.semester_code || '').replace(/\s+/g, '');
+      if (enrSem === activeSemester) {
         currentEnrollmentIds.push(enr.id);
         currentCourseCodes.push(enr.course_code.toUpperCase());
       } else {
@@ -228,12 +271,14 @@ serve(async (req) => {
       if (metaError) throw metaError;
 
       enrolledCredits = currentCourseCodes.reduce((sum, code) => {
-        const match = (metadata || []).find(m => m.code === code);
+        const cleanCode = code.split('_')[0].toUpperCase();
+        const match = (metadata || []).find(m => m.code === cleanCode);
         return sum + (match ? Number(match.credit_val) : 0);
       }, 0);
 
       enrolledNextCredits = nextCourseCodes.reduce((sum, code) => {
-        const match = (metadata || []).find(m => m.code === code);
+        const cleanCode = code.split('_')[0].toUpperCase();
+        const match = (metadata || []).find(m => m.code === cleanCode);
         return sum + (match ? Number(match.credit_val) : 0);
       }, 0);
     }
@@ -263,7 +308,52 @@ serve(async (req) => {
     
     if (profileError) throw profileError;
 
-    console.log(`Successfully updated profile for ${userId}: CGPA=${finalCgpa}, Credits=${cumulativeCredits}, Courses=${totalCoursesCompleted}`);
+    // 7. AUTO-FIX: Re-sync Enrollment Links (The Summer 2026 ID Mismatch Fix)
+    // This ensures section_ids in enrollments are always pointing to the correct current course rows
+    const { data: allEnrollments, error: allEnrErr } = await supabase
+      .from('enrollments')
+      .select('id, course_code, section, semester_code')
+      .eq('user_id', userId);
+    
+    if (!allEnrErr && allEnrollments) {
+      for (const enr of allEnrollments) {
+        const cleanSem = enr.semester_code.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
+        const courseTable = `courses_${cleanSem}`;
+        
+        // Find correct ID from course table
+        const { data: correctCourse } = await supabase
+          .from(courseTable)
+          .select('id')
+          .eq('course_code', enr.course_code)
+          .eq('section_number', enr.section)
+          .maybeSingle();
+        
+        if (correctCourse && correctCourse.id !== enr.section_id) {
+          await supabase
+            .from('enrollments')
+            .update({ section_id: correctCourse.id })
+            .eq('id', enr.id);
+        }
+      }
+    }
+
+    // 8. Trigger Schedule Rebuild (weekly_grid_cache)
+    // Use the existing sync-schedule function via internal call (or net.http if needed)
+    // For simplicity, we can trigger it via a simple POST to the same project
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/sync-schedule`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+    } catch (e) {
+      console.error("Failed to trigger sync-schedule:", e);
+    }
+
+    console.log(`Successfully synced database for ${userId}: CGPA=${finalCgpa}, Links fixed, Schedule rebuilt.`);
 
     return new Response(JSON.stringify({ 
       success: true, 
@@ -272,9 +362,12 @@ serve(async (req) => {
       total_credits_earned: cumulativeCredits,
       total_courses_completed: totalCoursesCompleted,
       enrolled_credits: enrolledCredits 
-    }), { headers: { "Content-Type": "application/json" } });
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: err.message }), { 
+      status: 500, 
+      headers: { ...corsHeaders, "Content-Type": "application/json" } 
+    });
   }
 });

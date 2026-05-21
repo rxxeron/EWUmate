@@ -37,7 +37,7 @@ final activeTasksConfigProvider =
 );
 
 typedef ActiveTasksConfigRef = AutoDisposeFutureProviderRef<List<Task>>;
-String _$allTasksStreamHash() => r'2445cae547f84d657cbe3950404a5fe071939f4f';
+String _$allTasksStreamHash() => r'd9f991c9f3ef24de84e45ad8b511068eb1616ec1';
 
 /// See also [allTasksStream].
 @ProviderFor(allTasksStream)

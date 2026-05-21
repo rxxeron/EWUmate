@@ -28,19 +28,52 @@ class ProgressRepository {
     try {
       final safeSem = CourseUtils.cleanSemester(semesterCode);
       final spaceSem = semesterCode.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+      
+      // 1. Fetch Enrollments first to know what SHOULD be there
+      final enrollmentsRes = await _supabase
+          .from('enrollments')
+          .select('course_code')
+          .eq('user_id', userId)
+          .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]);
+      
+      final enrolledCodes = (enrollmentsRes as List).map((e) => e['course_code'] as String).toList();
+
+      // 2. Fetch existing marks
       final response = await _supabase
           .from('semester_course_marks')
           .select()
           .eq('user_id', userId)
           .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]);
 
-      final marks = (response as List)
-          .map((e) => SemesterCourseMarks.fromJson(e))
-          .toList();
+      final List<Map<String, dynamic>> rawMarks = List<Map<String, dynamic>>.from(response as List);
+      
+      // 3. Merge: Ensure every enrolled course has a marks object
+      final List<SemesterCourseMarks> finalMarks = [];
+      for (var code in enrolledCodes) {
+        final normalizedCode = CourseUtils.normalize(code);
+        final existing = rawMarks.firstWhere(
+          (m) => CourseUtils.normalize(m['course_code'] as String) == normalizedCode,
+          orElse: () => {
+            'user_id': userId,
+            'semester_code': safeSem,
+            'course_code': code,
+            'id': 'new_$normalizedCode',
+          }
+        );
+        finalMarks.add(SemesterCourseMarks.fromJson(existing));
+      }
+
+      // 4. Add any marks that exist but aren't in enrollments (safety)
+      for (var m in rawMarks) {
+        final normalizedCode = CourseUtils.normalize(m['course_code'] as String);
+        if (!finalMarks.any((f) => CourseUtils.normalize(f.courseCode) == normalizedCode)) {
+          finalMarks.add(SemesterCourseMarks.fromJson(m));
+        }
+      }
       
       _cache.setMapData('semester_progress_box', 'marks_${userId}_$semesterCode', 
-          {'data': marks.map((m) => m.toJson()).toList()});
-      return marks;
+          {'data': finalMarks.map((m) => m.toJson()).toList()});
+      return finalMarks;
     } catch (e) {
       if (kDebugMode) debugPrint('[ProgressRepo] getCourseMarks fallback: $e');
       final cached = _cache.getMapData('semester_progress_box', 'marks_${userId}_$semesterCode');
@@ -174,32 +207,26 @@ Stream<List<SemesterCourseMarks>> currentSemesterMarks(
     return;
   }
   
-  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Spring2026';
+  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Summer2026';
   final repo = ref.watch(progressRepositoryProvider);
   final cacheKey = 'marks_${user.id}_$semCode';
-  bool yieldedCache = false;
 
-  while (true) {
-    try {
-      final marks = await repo.getCourseMarks(user.id, semCode).timeout(const Duration(seconds: 12));
-      if (marks.isNotEmpty) {
-        yield marks.where((m) => m.courseCode.length <= 15).toList();
-        break;
-      }
-    } catch (e) {
-      if (!yieldedCache) {
-        final cached = ref.read(cacheServiceProvider).getMapData('semester_progress_box', cacheKey);
-        if (cached != null && cached['data'] != null) {
-          final list = (cached['data'] as List)
-              .map((e) => SemesterCourseMarks.fromJson(Map<String, dynamic>.from(e)))
-              .where((m) => m.courseCode.length <= 15)
-              .toList();
-          yield list;
-          yieldedCache = true;
-        }
-      }
-      await Future.delayed(const Duration(seconds: 10));
-    }
+  // 1. Yield cache immediately for instant offline use
+  final cached = ref.read(cacheServiceProvider).getMapData('semester_progress_box', cacheKey);
+  if (cached != null && cached['data'] != null) {
+    final list = (cached['data'] as List)
+        .map((e) => SemesterCourseMarks.fromJson(Map<String, dynamic>.from(e)))
+        .where((m) => m.courseCode.length <= 15)
+        .toList();
+    yield list;
+  }
+
+  // 2. Attempt online fetch in background exactly once
+  try {
+    final marks = await repo.getCourseMarks(user.id, semCode).timeout(const Duration(seconds: 12));
+    yield marks.where((m) => m.courseCode.length <= 15).toList();
+  } catch (e) {
+    if (kDebugMode) debugPrint('[currentSemesterMarks] Offline or fetch failed: $e');
   }
 }
 
@@ -215,29 +242,24 @@ Stream<List<SemesterSummary>> allSemesterSummaries(
   
   final repo = ref.watch(progressRepositoryProvider);
   final cacheKey = 'summaries_${user.id}';
-  bool yieldedCache = false;
 
-  while (true) {
-    try {
-      final summaries = await repo.getSemesterSummaries(user.id).timeout(const Duration(seconds: 12));
-      if (summaries.isNotEmpty) {
-        yield summaries;
-        break;
-      }
-    } catch (e) {
-      if (!yieldedCache) {
-        final cached = ref.read(cacheServiceProvider).getMapData('dashboard_box', cacheKey);
-        if (cached != null && cached['data'] != null) {
-          final list = (cached['data'] as List)
-              .map((e) => SemesterSummary.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
-          yield list;
-          yieldedCache = true;
-        }
-      }
-      await Future.delayed(const Duration(seconds: 15));
-    }
+  // 1. Yield cache immediately
+  final cached = ref.read(cacheServiceProvider).getMapData('dashboard_box', cacheKey);
+  if (cached != null && cached['data'] != null) {
+    final list = (cached['data'] as List)
+        .map((e) => SemesterSummary.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+    yield list;
+  }
+
+  // 2. Attempt online fetch in background exactly once
+  try {
+    final summaries = await repo.getSemesterSummaries(user.id).timeout(const Duration(seconds: 12));
+    yield summaries;
+  } catch (e) {
+    if (kDebugMode) debugPrint('[allSemesterSummaries] Offline or fetch failed: $e');
   }
 }
+
 
 // Providers for programDetails are now moved to core/providers/academic_providers.dart

@@ -111,7 +111,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   void _nextSemester() async {
-    if ((_history[_currentSemester!] ?? {}).isEmpty && !_isCurrentSemester) {
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -175,7 +176,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Future<void> _finishOnboarding() async {
-    if ((_history[_currentSemester!] ?? {}).isEmpty && !_isCurrentSemester) {
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -285,42 +287,27 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           _history.clear();
           _selectedSectionIds.clear();
 
-          // Load History
-          for (var row in completedCourses) {
-            final semRaw = row['semester_code'] as String;
-            String sem = semRaw.replaceAll('_', '');
-            final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
-            if (reg.hasMatch(sem)) {
-              final m = reg.firstMatch(sem)!;
-              final name = m.group(1)!;
-              sem =
-                  "${name[0].toUpperCase()}${name.substring(1).toLowerCase()}${m.group(2)}";
+            // Load History
+            for (var row in completedCourses) {
+              final semRaw = row['semester_code'] as String;
+              final sem = CourseUtils.cleanSemester(semRaw);
+
+              final code = row['course_code'] as String;
+              final grade = (row['grade'] ?? "Ongoing").toString();
+
+              if (!_history.containsKey(sem)) _history[sem] = {};
+              _history[sem]![code] = grade;
             }
 
-            final code = row['course_code'] as String;
-            final grade = (row['grade'] ?? "Ongoing").toString();
+            // Load Active Enrollments (The "Missing Link")
+            for (var row in activeEnrollments) {
+              final code = row['course_code'] as String;
+              final sectionNum = row['section']?.toString() ?? '';
+              final sectionId = row['section_id']?.toString() ?? '';
+              final semRaw = (row['semester_code'] ?? _runningSemester).toString();
+              final sem = CourseUtils.cleanSemester(semRaw);
 
-            if (!_history.containsKey(sem)) _history[sem] = {};
-            _history[sem]![code] = grade;
-          }
-
-          // Load Active Enrollments (The "Missing Link")
-          for (var row in activeEnrollments) {
-            final code = row['course_code'] as String;
-            final sectionNum = row['section']?.toString() ?? '';
-            final sectionId = row['section_id']?.toString() ?? '';
-            final semRaw = (row['semester_code'] ?? _runningSemester).toString();
-            
-            // Format to match the "Prettified" version used in UI history
-            String sem = semRaw.replaceAll('_', '');
-            final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
-            if (reg.hasMatch(sem)) {
-              final m = reg.firstMatch(sem)!;
-              final name = m.group(1)!;
-              sem = "${name[0].toUpperCase()}${name.substring(1).toLowerCase()}${m.group(2)}";
-            }
-
-            if (!_history.containsKey(sem)) _history[sem] = {};
+              if (!_history.containsKey(sem)) _history[sem] = {};
             
             // Use the SecN format if it's the running semester
             if (sem.toLowerCase() == _runningSemester.toLowerCase()) {
@@ -447,7 +434,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           });
 
           // 3. Dynamic Semester Filtering
-          String clean(String s) => s.replaceAll(' ', '').replaceAll('_', '').toLowerCase();
+          String clean(String s) => CourseUtils.cleanSemester(s);
           
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
           final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
@@ -607,7 +594,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
       }
     }
 
-    final currentMap = _history[_currentSemester!] ?? {};
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    final currentMap = _history[cleanCurrent] ?? {};
 
     if (currentMap.containsKey(selectionKey)) {
       setState(() {
@@ -665,8 +653,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     }
 
     setState(() {
+      final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
       currentMap[selectionKey] = grade;
-      _history[_currentSemester!] = currentMap;
+      _history[cleanCurrent] = currentMap;
 
       final List<String> ids = [];
       if (course.containsKey('allIds')) {
@@ -681,7 +670,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
   void _removeCourse(String key) {
     setState(() {
-      _history[_currentSemester!]?.remove(key);
+      final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+      _history[cleanCurrent]?.remove(key);
       _selectedSectionIds.remove(key);
       _selectedCoursesMetadata.remove(key);
     });
@@ -822,7 +812,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Widget _buildHeaderCard() {
-    final currentMap = _history[_currentSemester] ?? {};
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    final currentMap = _history[cleanCurrent] ?? {};
     return GlassContainer(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -960,8 +951,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
     String? getPassedGrade(String courseCode) {
       if (_history.isEmpty) return null;
+      final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
       for (final sem in _history.keys) {
-        if (sem == _currentSemester) continue;
+        if (sem == cleanCurrent) continue;
         final semCourses = _history[sem]!;
         for (final prevKey in semCourses.keys) {
           final baseCode = prevKey.contains('_Sec')
@@ -988,7 +980,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         itemBuilder: (ctx, i) {
           final c = _catalog[i];
           final code = c['code'] as String;
-          final isSelected = (_history[_currentSemester] ?? {}).containsKey(
+          final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+          final isSelected = (_history[cleanCurrent] ?? {}).containsKey(
             code,
           );
 
@@ -1072,7 +1065,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             for (var c in sections) {
               final section = (c['section'] ?? '').toString();
               final selectionKey = "${code}_Sec$section";
-              if ((_history[_currentSemester] ?? {}).containsKey(
+              final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+              if ((_history[cleanCurrent] ?? {}).containsKey(
                 selectionKey,
               )) {
                 selectedCount++;
@@ -1176,7 +1170,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                     : sections.map((c) {
                         final section = (c['section'] ?? '').toString();
                         final selectionKey = "${code}_Sec$section";
-                        final isSelected = (_history[_currentSemester] ?? {})
+                        final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+                        final isSelected = (_history[cleanCurrent] ?? {})
                             .containsKey(selectionKey);
 
                         final faculty = c['faculty'] ?? 'TBA';

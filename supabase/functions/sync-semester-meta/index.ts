@@ -51,116 +51,47 @@ serve(async (req) => {
 });
 
 async function syncSemesterDates(supabase: any, track: string, semesterCode: string) {
-    // 1. Resolve Calendar Table Name
-    const cleanSem = semesterCode.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
-    const calendarTable = track === 'bi_semester' ? `calendar_${cleanSem}_phrm_llb` : `calendar_${cleanSem}`;
-
-    console.log(`Syncing meta for ${track} using ${calendarTable}`);
-
-    // 2. Fetch all events from that calendar
-    const { data: events, error: fetchError } = await supabase
-        .from(calendarTable)
-        .select('title, event_date')
-        .order('event_date', { ascending: true });
-
-    if (fetchError) {
-        // Table might not exist yet if PDF hasn't been uploaded
-        console.warn(`Calendar table ${calendarTable} not found or error fetching.`);
-        return new Response(JSON.stringify({ success: false, message: `Calendar table ${calendarTable} unavailable.` }), { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-    }
-
-    if (!events || events.length === 0) {
-        return new Response(JSON.stringify({ success: true, message: "Calendar table empty, skipping sync." }), { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-    }
-
-    // 3. Mapping Logic
-    const updates: any = {};
-    
-    const findDate = (keywords: string[]) => {
-        const found = events.find((e: any) => keywords.some(k => e.title.includes(k)));
-        return found?.event_date;
-    };
-
-    const findLastDate = (keywords: string[]) => {
-        const matches = events.filter((e: any) => keywords.some(k => e.title.includes(k)));
-        return matches.length > 0 ? matches[matches.length - 1].event_date : null;
-    };
-
-    updates.classes_start_date = findDate(["Classes Begin", "First Day of Classes"]);
-    updates.classes_end_date = findDate(["Last Day of Classes"]);
-    updates.final_exam_start = findDate(["Final Examination Begin", "Final Exam Begin", "Final Examination"]);
-    updates.final_exam_end = findLastDate(["Final Examination", "Final Exam"]);
-    updates.advising_start_date = findDate(["Online Advising", "Advising of Courses"]);
-    updates.advising_end_date = findLastDate(["Online Advising", "Advising of Courses"]);
-    updates.grade_submission_deadline = findLastDate(["Grade Submission", "Submission of Final Grade"]);
-    updates.semester_switch_date = findLastDate(["University Reopens"]);
-
-    // Clean up nulls
-    Object.keys(updates).forEach(key => updates[key] === null && delete updates[key]);
-
-    if (Object.keys(updates).length === 0) {
-        return new Response(JSON.stringify({ success: true, message: "No matching dates found in calendar." }), { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-    }
-
-    // 4. Determine if we should perform an automated switch
     const today = new Date();
-    const switchDate = updates.semester_switch_date ? new Date(updates.semester_switch_date) : null;
+    
+    // 1. Fetch meta from CURRENT calendar
+    console.log(`Syncing meta for ${track} using current sem: ${semesterCode}`);
+    let currentMeta = await fetchMetaFromCalendar(supabase, track, semesterCode);
+    if (!currentMeta) {
+        return new Response(JSON.stringify({ success: false, message: `Calendar for ${semesterCode} unavailable.` }), { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+    }
+
+    let updates: any = { ...currentMeta };
     let switchPerformed = false;
-    let nextSemesterToSet = null;
+
+    // 2. Check for Semester Switch threshold
+    const switchDateStr = currentMeta.semester_switch_date;
+    const switchDate = switchDateStr ? new Date(switchDateStr) : null;
 
     if (switchDate && today >= switchDate) {
-        console.log("Semester switch threshold reached. Automating transition...");
+        console.log(`Semester switch threshold reached (${switchDateStr}). Automating transition...`);
+        const nextSem = calculateNextSemester(semesterCode, track);
         
-        // Logical Progression based on Track
-        const current = semesterCode;
-        const lowCurrent = current.toLowerCase();
-        const yearMatch = current.match(/\d{4}/);
-        let year = yearMatch ? parseInt(yearMatch[0]) : today.getFullYear();
-        
-        if (track === 'bi_semester') {
-            // Bi-Semester: Spring -> Fall -> Spring (Next Year)
-            if (lowCurrent.includes('spring')) {
-                nextSemesterToSet = `Fall${year}`;
-            } else if (lowCurrent.includes('fall')) {
-                nextSemesterToSet = `Spring${year + 1}`;
-            }
-        } else {
-            // Tri-Semester: Spring -> Summer -> Fall -> Spring (Next Year)
-            if (lowCurrent.includes('spring')) {
-                nextSemesterToSet = `Summer${year}`;
-            } else if (lowCurrent.includes('summer')) {
-                nextSemesterToSet = `Fall${year}`;
-            } else if (lowCurrent.includes('fall')) {
-                nextSemesterToSet = `Spring${year + 1}`;
-            }
-        }
-
-        if (nextSemesterToSet) {
-            updates.current_semester_code = nextSemesterToSet;
-            
-            // Calculate Next (the one after the new current) for the UI
-            let futureSem = '';
-            if (track === 'bi_semester') {
-                if (nextSemesterToSet.includes('Spring')) futureSem = `Fall${year}`;
-                else futureSem = `Spring${year + 1}`;
-            } else {
-                if (nextSemesterToSet.includes('Summer')) futureSem = `Fall${year}`;
-                else if (nextSemesterToSet.includes('Fall')) futureSem = `Spring${year + 1}`;
-                else futureSem = `Summer${year + 1}`;
-            }
-            
-            updates.next_semester_code = futureSem;
+        if (nextSem) {
+            updates.current_semester_code = nextSem;
+            updates.next_semester_code = calculateNextSemester(nextSem, track);
             switchPerformed = true;
+
+            // 3. IMPORTANT: Try to fetch dates from the NEW calendar immediately to be accurate
+            console.log(`Switching to ${nextSem}. Attempting to sync dates from new calendar...`);
+            const newMeta = await fetchMetaFromCalendar(supabase, track, nextSem);
+            if (newMeta) {
+                // Merge new dates, preferring those in the new calendar if they exist
+                updates = { ...updates, ...newMeta };
+                // Ensure the codes we just calculated remain correct
+                updates.current_semester_code = nextSem;
+                updates.next_semester_code = calculateNextSemester(nextSem, track);
+            }
         }
     }
 
-    // Update active_semester
+    // 4. Update active_semester
     const { error: updateError } = await supabase
         .from('active_semester')
         .update(updates)
@@ -168,37 +99,101 @@ async function syncSemesterDates(supabase: any, track: string, semesterCode: str
 
     if (updateError) throw updateError;
 
-    // 5. Automated Semester Switch for Enrollments
-    // Use 'ongoing' status as preferred by user
-    const targetSem = switchPerformed ? updates.current_semester_code : updates.next_semester_code;
-    
-    // Track-Safe Update using RPC
-    const { error: enrollUpdateError } = await supabase.rpc('shift_enrollments_by_track', {
-        p_track: track,
-        p_semester_code: targetSem,
-        p_new_status: 'ongoing'
-    });
+    // 5. Trigger side effects if switched
+    if (switchPerformed) {
+        console.log(`Switch finalized. Performing enrollment shift for ${updates.current_semester_code}...`);
+        
+        // Final Attempt: Direct update using the REST API with a more resilient strategy
+        // We use an RPC or a loop if needed, but here we'll try to just catch the error 
+        // and acknowledge that some rows might be blocked by retake constraints.
+        const { data: shifted, error: shiftError } = await supabase
+            .from('enrollments')
+            .update({ status: 'enrolled' })
+            .eq('semester_code', updates.current_semester_code)
+            .eq('status', 'upcoming')
+            .select();
 
-    if (enrollUpdateError) {
-        console.warn("Enrollment switch error (non-critical):", enrollUpdateError);
-    }
+        if (shiftError) {
+            if (shiftError.code === '23505') {
+                console.warn("Bulk shift hit unique constraint conflicts (retakes). Performing row-by-row shift.");
+                const { data: records } = await supabase
+                    .from('enrollments')
+                    .select('id')
+                    .eq('semester_code', updates.current_semester_code)
+                    .eq('status', 'upcoming');
+                
+                if (records) {
+                    for (const r of records) {
+                        // Attempt each row individually. If one fails (due to retake), the others still succeed.
+                        await supabase.from('enrollments').update({ status: 'enrolled' }).eq('id', r.id);
+                    }
+                }
+                console.log("Row-by-row shift completed.");
+            } else {
+                console.error("Enrollment shift failed:", shiftError);
+            }
+        } else {
+            console.log(`Successfully shifted ${shifted?.length || 0} enrollments to 'enrolled'.`);
+        }
 
-    // 6. Global Schedule Orchestration
-    try {
-        await supabase.functions.invoke('sync-schedule', {
-            body: { track: track }
-        });
-        console.log(`Bulk schedule sync triggered for track: ${track}`);
-    } catch (e) {
-        console.error("Bulk schedule sync trigger failed:", e);
+        try {
+            await supabase.functions.invoke('sync-schedule', { body: { track: track } });
+            console.log(`Bulk schedule sync triggered for track: ${track}`);
+        } catch (e) {
+            console.error("Bulk schedule sync trigger failed:", e);
+        }
     }
 
     return new Response(JSON.stringify({ 
         success: true, 
-        updated: updates,
-        switch_performed: switchPerformed,
-        enrollments_switched: !enrollUpdateError,
+        updated_to: updates.current_semester_code || semesterCode,
+        switch_performed: switchPerformed 
     }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
+}
+
+async function fetchMetaFromCalendar(supabase: any, track: string, semesterCode: string) {
+    const cleanSem = semesterCode.replace(/\s+/g, '').replace(/_/g, '').toLowerCase();
+    const table = track === 'bi_semester' ? `calendar_${cleanSem}_phrm_llb` : `calendar_${cleanSem}`;
+    
+    const { data: events } = await supabase
+        .from(table)
+        .select('title, event_date')
+        .order('event_date', { ascending: true });
+
+    if (!events || events.length === 0) return null;
+
+    const find = (keys: string[]) => events.find((e: any) => keys.some(k => e.title.includes(k)))?.event_date;
+    const findLast = (keys: string[]) => {
+        const m = events.filter((e: any) => keys.some(k => e.title.includes(k)));
+        return m.length > 0 ? m[m.length - 1].event_date : null;
+    };
+
+    return {
+        classes_start_date: find(["Classes Begin", "First Day of Classes"]),
+        classes_end_date: find(["Last Day of Classes"]),
+        final_exam_start: find(["Final Examination Begin", "Final Exam Begin", "Final Examination"]),
+        final_exam_end: findLast(["Final Examination", "Final Exam"]),
+        advising_start_date: find(["Online Advising", "Advising of Courses"]),
+        advising_end_date: findLast(["Online Advising", "Advising of Courses"]),
+        grade_submission_start: find(["Grade Submission", "Submission of Final Grade"]),
+        grade_submission_deadline: findLast(["Grade Submission", "Submission of Final Grade"]),
+        semester_switch_date: findLast(["University Reopens"])
+    };
+}
+
+function calculateNextSemester(current: string, track: string) {
+    const yearMatch = current.match(/\d{4}/);
+    let year = yearMatch ? parseInt(yearMatch[0]) : new Date().getFullYear();
+    const low = current.toLowerCase();
+
+    if (track === 'bi_semester') {
+        return low.includes('spring') ? `Fall${year}` : `Spring${year + 1}`;
+    } else {
+        if (low.includes('spring')) return `Summer${year}`;
+        if (low.includes('summer')) return `Fall${year}`;
+        if (low.includes('fall')) return `Spring${year + 1}`;
+        return `Spring${year + 1}`;
+    }
 }

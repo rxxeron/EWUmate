@@ -43,8 +43,12 @@ serve(async (req) => {
                 faculty_initials TEXT,
                 capacity TEXT,
                 credit_val NUMERIC,
+                dedicated_department TEXT,
+                faculty_designation TEXT,
+                faculty_full_name TEXT,
                 schedule_data JSONB DEFAULT '[]'::jsonb,
-                created_at TIMESTAMPTZ DEFAULT now()
+                created_at TIMESTAMPTZ DEFAULT now(),
+                CONSTRAINT ${courseTable}_unique_section UNIQUE (course_code, section_number)
             );
 
             -- Regular Calendar Table

@@ -45,21 +45,26 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
     if (queue.isEmpty) return;
 
     bool anySuccess = false;
+    final Set<String> updatedSemesters = {};
     for (final item in queue) {
       if (item['action'] == 'save_course_marks') {
         try {
-          await repo.saveCourseMarks(user.id, item['semesterCode'], Map<String, dynamic>.from(item['data']));
+          final sem = item['semesterCode']?.toString() ?? '';
+          await repo.saveCourseMarks(user.id, sem, Map<String, dynamic>.from(item['data']));
           await cacheService.removeQueueItem(user.id, item['data']['course_code']); 
+          if (sem.isNotEmpty) updatedSemesters.add(sem);
           anySuccess = true;
         } catch (e) {
           if (kDebugMode) debugPrint('[Offline Sync] Still offline for semester marks');
         }
       }
     }
-
+    
     if (anySuccess && mounted) {
       RefreshUtils.refreshAcademicData(ref);
-      ref.invalidate(semesterProgressDataProvider);
+      for (final sem in updatedSemesters) {
+        ref.invalidate(semesterProgressDataProvider(sem));
+      }
     }
   }
 

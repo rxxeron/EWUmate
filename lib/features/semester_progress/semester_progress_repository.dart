@@ -45,17 +45,22 @@ class SemesterProgressRepository {
     try {
       final safeSem = CourseUtils.cleanSemester(semesterCode);
       final spaceSem = semesterCode.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+      
+      if (kDebugMode) {
+        print('[SemesterProgress] Fetching for $userId, Sem: $semesterCode, Safe: $safeSem');
+      }
+
       final enrollments = await _supabase
           .from('enrollments')
           .select('course_code')
           .eq('user_id', userId)
-          .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]); // Fallback: try raw first or always normalize in DB later? 
-          // For now, let's keep it robust by querying both or just assuming normalizing is done.
-          // Better: Clean it here.
+          .inFilter('semester_code', [semesterCode, safeSem, spaceSem, semesterCode.toLowerCase(), semesterCode.replaceAll(' ', '')]);
 
       final enrolledCourseCodes = (enrollments as List).map((e) => e['course_code'] as String).toList();
-
-      if (enrolledCourseCodes.isEmpty) return [];
+      
+      if (kDebugMode) {
+        print('[SemesterProgress] Found ${enrolledCourseCodes.length} enrollments: $enrolledCourseCodes');
+      }
 
       final marksRes = await _supabase
           .from('semester_course_marks')
@@ -65,7 +70,8 @@ class SemesterProgressRepository {
             semesterCode, 
             CourseUtils.cleanSemester(semesterCode), 
             semesterCode.toLowerCase(),
-            semesterCode.replaceAll(' ', '')
+            semesterCode.replaceAll(' ', ''),
+            spaceSem
           ]);
       
       final marksData = List<Map<String, dynamic>>.from(marksRes);

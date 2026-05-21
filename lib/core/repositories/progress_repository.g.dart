@@ -24,7 +24,7 @@ final progressRepositoryProvider =
 
 typedef ProgressRepositoryRef = AutoDisposeProviderRef<ProgressRepository>;
 String _$currentSemesterMarksHash() =>
-    r'c20991002fbf8d17a36cca3c7c682673ff2b09b2';
+    r'bfdf86f845b6c370058a83b4e3ed1bf4efd591d7';
 
 /// See also [currentSemesterMarks].
 @ProviderFor(currentSemesterMarks)
@@ -42,7 +42,7 @@ final currentSemesterMarksProvider =
 typedef CurrentSemesterMarksRef
     = AutoDisposeStreamProviderRef<List<SemesterCourseMarks>>;
 String _$allSemesterSummariesHash() =>
-    r'4ebee86b775d97077db7f5f155608c1343861dfe';
+    r'2e2ca7cc5072cfeddf903ab5a97c268cccc8ec71';
 
 /// See also [allSemesterSummaries].
 @ProviderFor(allSemesterSummaries)

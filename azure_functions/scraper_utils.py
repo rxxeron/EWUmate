@@ -259,12 +259,12 @@ def run_sync(custom_semester=None, is_preview=False):
                         "deleted": sync_res.get("deleted", 0)
                     })
 
-                    # [SNAPSHOT] Trigger PDF generation and archival
-                    try:
-                        from snapshot_utils import run_automated_snapshot
-                        run_automated_snapshot(sem_name)
-                    except Exception as e:
-                        logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
+                    # [SNAPSHOT] Moved to Database Trigger (see handle_scraper_log_trigger)
+                    # try:
+                    #     from snapshot_utils import run_automated_snapshot
+                    #     run_automated_snapshot(sem_name)
+                    # except Exception as e:
+                    #     logging.warning(f"Snapshot trigger failed for {sem_name}: {e}")
             
             except Exception as sem_e:
                 logging.error(f"Error syncing semester {sem_name}: {sem_e}")

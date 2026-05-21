@@ -50,7 +50,7 @@ class EWUmatePDFEngine:
         
         # Start template content from where header left off
         if template in ['group_project', 'term_paper', 'project_report']:
-            curr_y -= 15 # Minimize gap after header for group/term paper templates
+            curr_y -= 5 # Minimize gap after header for group/term paper templates
         else:
             curr_y -= 40 # Gap after header
         
@@ -136,6 +136,8 @@ class EWUmatePDFEngine:
 
     def draw_centred_wrapped_text(self, text, y, max_w, font_size=18):
         self.c.setFont("Times-Bold", font_size)
+        if not text or not str(text).strip():
+            return y - 10
         words = str(text).split(' ')
         lines = []
         current_line = []
@@ -355,13 +357,13 @@ class EWUmatePDFEngine:
         num_students = len(students) if students else 1
         
         is_compact = (num_students > 2)
-        y_top_offset = 5 if is_compact else 15
-        gap_title = 15 if is_compact else 25
-        gap_topic = 15 if is_compact else 25
-        gap_after_topic = 15 if is_compact else 35
-        gap_course_item = 0 if is_compact else 4
-        gap_footer = 15 if is_compact else 35
-        gap_dates = 5 if is_compact else 15
+        y_top_offset = 0 if is_compact else 5
+        gap_title = 10 if is_compact else 15
+        gap_topic = 10 if is_compact else 15
+        gap_after_topic = 10 if is_compact else 20
+        gap_course_item = 0 if is_compact else 2
+        gap_footer = 10 if is_compact else 20
+        gap_dates = 5 if is_compact else 10
         
         title_label = "TERM PAPER ON" if is_term_paper else "PROJECT REPORT ON"
         y = start_y - y_top_offset
@@ -440,7 +442,7 @@ class EWUmatePDFEngine:
         students = self.data.get('students', [])
         num_students = len(students) if students else 1
         is_compact = (is_group and num_students > 2)
-        gap_before_by = 15 if is_compact else 35
+        gap_before_by = 10 if is_compact else 20
         
         y -= gap_before_by
         self.c.setFont("Times-Bold", 12)

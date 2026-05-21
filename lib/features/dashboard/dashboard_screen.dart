@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
+import 'package:hive/hive.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -68,7 +70,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _semConfig;
   bool _showAdvisingBanner = false;
   bool _showUpdateBanner = false;
-  String _downloadUrl = "";
   
   // Track tasks currently showing the "Reschedule?" prompt after being marked missed
   final Set<String> _reschedulePromptIds = {};
@@ -100,17 +101,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     // PHASE 0: Instant Cache Load (User Request: Show cache first)
     if (_lastValidScheduleData == null) {
-      final cacheService = ref.read(cacheServiceProvider);
       final user = this.user;
-      final profile = ref.read(profileProvider).value;
 
-      // SAFETY GATE: Only show cache if we have a verified profile and it is 'completed'
-      if (user != null && profile != null && profile.onboardingStatus == 'completed') {
-         final lastSem = _semesterCode.isNotEmpty ? _semesterCode : "Summer2026"; 
-         final cached = cacheService.getCachedDashboardSchedule(user.id, lastSem);
+      if (user != null) {
+         Map<String, dynamic>? cached;
+         String? detectedSem;
+         
+         try {
+           final box = Hive.box('dashboard_box');
+           for (final key in box.keys) {
+             if (key is String && key.startsWith('${user.id}_') && key.endsWith('_schedule')) {
+               final data = box.get(key);
+               if (data != null) {
+                 cached = Map<String, dynamic>.from(jsonDecode(data as String) as Map);
+                 // Extract semester code from key (e.g. "bd73b4d7..._summer2026_schedule")
+                 final parts = key.split('_');
+                 if (parts.length >= 3) {
+                   detectedSem = parts[1];
+                 }
+                 break;
+               }
+             }
+           }
+         } catch (e) {
+           debugPrint('[Dashboard] Error scanning schedule keys: $e');
+         }
+
          if (cached != null && mounted) {
            setState(() {
              _lastValidScheduleData = cached;
+             if (detectedSem != null && _semesterCode.isEmpty) {
+               _semesterCode = detectedSem;
+             }
              _loadingInit = false; // Show the UI immediately
            });
          } else {
@@ -132,6 +154,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final nextSemesterCode = academicState.nextSemesterCode;
 
       final profile = ref.read(profileProvider).value;
+      final cachedProfile = ref.read(cacheServiceProvider).getCachedProfile(user!.id);
+      final profileUpdatedAt = profile?.updatedAt ?? (cachedProfile != null ? cachedProfile['updated_at'] : null);
 
       // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
       final results = await Future.wait<dynamic>([
@@ -139,15 +163,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           code, 
           _effectiveDate, 
           track: track,
-          profileUpdatedAt: profile?.updatedAt,
+          profileUpdatedAt: profileUpdatedAt,
         ),
-        _supabase.from('enrollments').select('course_code').eq('user_id', user!.id).eq('semester_code', code),
-        _supabase.from('app_config').select('value, latest_version').eq('key', 'update_info').maybeSingle(),
-        PackageInfo.fromPlatform(),
+        Future<List<dynamic>>(() async {
+          try {
+            return await _supabase
+                .from('enrollments')
+                .select('course_code')
+                .eq('user_id', user!.id)
+                .eq('semester_code', code);
+          } catch (_) {
+            return [];
+          }
+        }),
+        Future<Map<String, dynamic>?>(() async {
+          try {
+            return await _supabase
+                .from('app_config')
+                .select('value, latest_version')
+                .eq('key', 'update_info')
+                .maybeSingle();
+          } catch (_) {
+            return null;
+          }
+        }),
+        PackageInfo.fromPlatform().catchError(
+          (_) => PackageInfo(
+            appName: '',
+            packageName: '',
+            version: '',
+            buildNumber: '',
+          ),
+        ),
       ]);
       
       final dashboardData = results[0] as Map<String, dynamic>;
       final enrollments = results[1] as List;
+      try {
+        final codes = enrollments.map((e) => e['course_code']?.toString() ?? '').where((e) => e.isNotEmpty).toList();
+        if (codes.isNotEmpty) {
+          ref.read(cacheServiceProvider).setMapData(
+            'dashboard_box', 
+            'enrollment_codes_${user!.id}_$code', 
+            {'codes': codes}
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[Dashboard] Failed to cache enrollments: $e');
+      }
       final updateRes = results[2] as Map<String, dynamic>?;
       final versionInfo = results[3] as PackageInfo;
 
@@ -165,58 +228,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _updateHomeWidget(dashboardData);
       }
       
-      // 4. Handle App Update Config (v1.0.11 Force Update logic)
+      // 4. Check for app updates and show a soft Play Store redirection banner
       try {
         final currentVersion = versionInfo.version;
         if (updateRes != null) {
-          final val = updateRes['value'] as Map<String, dynamic>?;
           final latestVersion = updateRes['latest_version']?.toString() ?? "";
-          final isForceUpdate = val?['is_force_update'] == true;
-          
-          if (val != null && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
-             final url = val['download_url']?.toString() ?? '';
-             
-             if (isForceUpdate && mounted) {
-               // Show non-dismissible blocking dialog
-               showDialog(
-                 context: context,
-                 barrierDismissible: false,
-                 builder: (context) => WillPopScope(
-                   onWillPop: () async => false,
-                   child: AlertDialog(
-                     backgroundColor: const Color(0xFF1E293B),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                     title: const Text("Update Required", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                     content: const Text(
-                       "A critical update is required to keep EWUmate running smoothly and save server resources. Please update to the latest version to continue.",
-                       style: TextStyle(color: Colors.white70),
-                     ),
-                     actions: [
-                       TextButton(
-                         onPressed: () => url_launcher.launchUrl(Uri.parse(url), mode: url_launcher.LaunchMode.externalApplication),
-                         child: const Text("UPDATE NOW", style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
-                       ),
-                     ],
-                   ),
-                 ),
-               );
-             } else {
-               setState(() {
-                 _showUpdateBanner = true;
-                 _downloadUrl = url;
-               });
-             }
+          if (VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
+            if (mounted) {
+              setState(() {
+                _showUpdateBanner = true;
+              });
+            }
           } else {
-             setState(() => _showUpdateBanner = false);
+            if (mounted) {
+              setState(() {
+                _showUpdateBanner = false;
+              });
+            }
           }
         }
       } catch (e) {
-        debugPrint('[Dashboard] Update Logic Error: $e');
+        debugPrint('[Dashboard] Update Banner Check Error: $e');
       }
 
       // 5. Check Advising Banner for NEXT semester
       _checkAdvisingBanner(nextSemesterCode.toString(), academicState.advisingEndDate);
-        } on PostgrestException catch (e) {
+    } on PostgrestException catch (e) {
       if (e.code == '401' || e.message.contains('JWT expired')) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -229,9 +266,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       debugPrint('[Dashboard] Refresh Error: $e\n$stack');
       if (mounted) {
         setState(() => _loadingInit = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
-        );
+        // Only show snackbar if we do not have any cached data active
+        if (_lastValidScheduleData == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+          );
+        }
       }
     }
   }
@@ -642,8 +682,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
 
     final now = DateTime.now();
-    final start = DateTime.parse(startStr);
-    final end = DateTime.parse(endStr);
+    final start = startStr is DateTime ? startStr : DateTime.parse(startStr.toString());
+    final end = endStr is DateTime ? endStr : DateTime.parse(endStr.toString());
 
     // Only show IF we are past the start of the submission window
     if (now.isBefore(start) || now.isAfter(end.add(const Duration(days: 1)))) {
@@ -702,7 +742,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       padding: const EdgeInsets.all(18),
       borderRadius: 22,
       borderColor: Colors.greenAccent.withValues(alpha: 0.4),
-      onTap: () => context.push('/feedback'),
+      onTap: () => url_launcher.launchUrl(
+        Uri.parse('https://play.google.com/store/apps/details?id=com.rxxeron.ewumate'),
+        mode: url_launcher.LaunchMode.externalApplication,
+      ),
       child: Row(
         children: [
           Container(
@@ -720,7 +763,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               children: [
                 Text('Update EWUmate!', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text('A new app version is ready. Tap to download now.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3)),
+                Text('A new app version is ready on the Play Store. Tap to update now.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3)),
               ],
             ),
           ),
@@ -888,7 +931,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final status = data['status'];
     final reason = data['reason'] ?? "";
     final schedule = (data['schedule'] as List?)?.cast<ScheduleItem>() ?? [];
-    final targetDate = data['targetDate'] as DateTime?;
+    final targetDateRaw = data['targetDate'] ?? data['date'];
+    final DateTime? targetDate = targetDateRaw is String
+        ? DateTime.tryParse(targetDateRaw)
+        : targetDateRaw as DateTime?;
 
     final isToday = targetDate != null && date_util.DateUtils.isToday(targetDate);
     final isTomorrow = targetDate != null && date_util.DateUtils.isTomorrow(targetDate);

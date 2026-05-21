@@ -627,28 +627,43 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: _enrolledCoursesData.isNotEmpty
-                        ? DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(labelText: 'Course Code'),
-                            value: _courseCode.isEmpty ? null : _courseCode,
-                            items: _enrolledCoursesData.map((c) => DropdownMenuItem(value: c['course_code'].toString(), child: Text(c['course_code'].toString()))).toList(),
-                            onChanged: (code) {
-                              if (code == null) return;
-                              final course = _enrolledCoursesData.firstWhere((c) => c['course_code'] == code);
-                              setState(() {
-                                _courseCode = course['course_code'].toString();
-                                _section = course['section']?.toString() ?? '';
-                              });
-                              _fetchFacultyDetails(_courseCode, _section, semesterCode);
-                            },
-                            onSaved: (v) => _courseCode = v ?? '',
-                          )
-                        : TextFormField(
-                            decoration: const InputDecoration(labelText: 'Course Code'),
+                      child: Stack(
+                        alignment: Alignment.centerRight,
+                        children: [
+                          TextFormField(
+                            key: ValueKey('course_code_field_$_courseCode'),
+                            decoration: const InputDecoration(
+                              labelText: 'Course Code',
+                              border: OutlineInputBorder(),
+                            ),
                             initialValue: _courseCode,
                             onChanged: (v) => _courseCode = v,
                             onSaved: (v) => _courseCode = v ?? '',
+                            validator: (v) => v!.isEmpty ? 'Required' : null,
                           ),
+                          if (_enrolledCoursesData.isNotEmpty)
+                            Positioned(
+                              right: 4,
+                              child: PopupMenuButton<String>(
+                                icon: const Icon(Icons.arrow_drop_down),
+                                onSelected: (code) {
+                                  final course = _enrolledCoursesData.firstWhere((c) => c['course_code'] == code);
+                                  setState(() {
+                                    _courseCode = course['course_code'].toString();
+                                    _section = course['section']?.toString() ?? '';
+                                  });
+                                  _fetchFacultyDetails(_courseCode, _section, semesterCode);
+                                },
+                                itemBuilder: (context) => _enrolledCoursesData
+                                    .map((c) => PopupMenuItem(
+                                          value: c['course_code'].toString(),
+                                          child: Text(c['course_code'].toString()),
+                                        ))
+                                    .toList(),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

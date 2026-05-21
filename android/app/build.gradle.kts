@@ -63,4 +63,12 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    constraints {
+        implementation("androidx.glance:glance-appwidget:1.1.0") {
+            because("Version 1.3.0-alpha01 requires compileSdk 37 which breaks the build")
+        }
+        implementation("androidx.compose.remote:remote-creation-android:1.0.0-alpha04") {
+            because("Version 1.0.0-alpha11 requires compileSdk 37 which breaks the build")
+        }
+    }
 }

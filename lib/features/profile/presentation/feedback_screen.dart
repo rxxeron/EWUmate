@@ -21,13 +21,12 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
 
   List<Map<String, dynamic>> _myFeedbacks = [];
   bool _isLoadingFeedbacks = true;
-  bool _isUpdateAvailable = false;
-  String _updateUrl = '';
+  String _currentVersion = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    _checkAppUpdate();
+    _loadCurrentVersion();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
       if (_tabController.index == 1) {
@@ -37,29 +36,20 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
     _fetchMyFeedbacks();
   }
 
-  Future<void> _checkAppUpdate() async {
+  Future<void> _loadCurrentVersion() async {
     try {
       final versionInfo = await PackageInfo.fromPlatform();
-      final currentVersion = versionInfo.version;
-
-      final updateRes = await Supabase.instance.client
-          .from('app_config')
-          .select('value, latest_version')
-          .eq('key', 'update_info')
-          .maybeSingle();
-
-      if (updateRes != null && mounted) {
-        final val = updateRes['value'] as Map<String, dynamic>?;
-        final latestVersion = updateRes['latest_version']?.toString() ?? "";
-        if (val != null && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
-          setState(() {
-            _isUpdateAvailable = true;
-            _updateUrl = val['download_url']?.toString() ?? '';
-          });
-        }
+      if (mounted) {
+        setState(() {
+          _currentVersion = '${versionInfo.version} (Build ${versionInfo.buildNumber})';
+        });
       }
-    } catch (e) {
-      if (kDebugMode) debugPrint('Check app update error: $e');
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _currentVersion = 'Unknown';
+        });
+      }
     }
   }
 
@@ -432,47 +422,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_isUpdateAvailable && _updateUrl.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.greenAccent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.system_update_alt, color: Colors.greenAccent),
-                      SizedBox(width: 10),
-                      Text('Update Available', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('A newer, better version of EWUmate is available to download.', style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: () => _launchUrl(_updateUrl),
-                      icon: const Icon(Icons.download_rounded, color: Colors.black),
-                      label: const Text('Download Update', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Divider(color: Colors.white24),
-            const SizedBox(height: 24),
-          ],
+
           const Text(
             'Report an Issue',
             style: TextStyle(
@@ -583,6 +533,28 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                     label: 'University Email',
                     value: '2025-2-50-009@std.ewubd.edu',
                     onTap: () => _launchUrl('mailto:2025-2-50-009@std.ewubd.edu'),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(color: Colors.white10),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Colors.blueAccent, size: 24),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'App Version',
+                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                          ),
+                          Text(
+                            _currentVersion,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),

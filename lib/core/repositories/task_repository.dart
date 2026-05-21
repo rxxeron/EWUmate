@@ -260,8 +260,8 @@ Future<List<Task>> activeTasksConfig(ActiveTasksConfigRef ref) async {
 @Riverpod(keepAlive: true)
 Stream<List<Task>> allTasksStream(AllTasksStreamRef ref) {
   final user = ref.watch(currentUserProvider);
-  final semCode = ref.watch(currentSemesterCodeProvider).value;
-  if (user == null || semCode == null) return const Stream.empty();
+  final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Summer2026';
+  if (user == null) return const Stream.empty();
   return ref.watch(taskRepositoryProvider).streamUserTasks(user.id, semCode);
 }
 

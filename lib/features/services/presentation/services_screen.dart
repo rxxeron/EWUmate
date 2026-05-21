@@ -57,6 +57,16 @@ class ServicesScreen extends StatelessWidget {
                       context.push('/services/faculty-directory');
                     },
                   ),
+                  _buildServiceCard(
+                    context,
+                    title: 'Study Materials Vault',
+                    icon: Icons.folder_special_outlined,
+                    color: Colors.orange.shade100,
+                    iconColor: Colors.orange.shade700,
+                    onTap: () {
+                      context.push('/services/study-vault');
+                    },
+                  ),
                 ],
               ),
             ),

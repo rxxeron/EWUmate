@@ -7,6 +7,7 @@ import '../../../../core/providers/supabase_provider.dart';
 import '../../../../core/providers/academic_providers.dart';
 import '../../../../core/services/cache_service.dart';
 import '../../../../core/models/course_metadata.dart';
+import '../../../../core/utils/course_utils.dart';
 
 final courseSearchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -110,15 +111,31 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
 
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
+  final safeSem = CourseUtils.cleanSemester(activeSem);
+  final spaceSem = activeSem.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
   
   try {
-    final data = await supabase
+    // 1. Fetch from Enrollments
+    final enrollData = await supabase
         .from('enrollments')
         .select('course_code')
         .eq('user_id', user.id)
-        .eq('semester_code', activeSem);
+        .inFilter('semester_code', [activeSem, safeSem, spaceSem, activeSem.toLowerCase(), activeSem.replaceAll(' ', '')]);
         
-    final res = (data as List).map((e) => e['course_code'] as String).toList();
+    final enrolled = (enrollData as List).map((e) => e['course_code'] as String).toList();
+
+    // 2. Fetch from Marks (to include manual entries)
+    final marksData = await supabase
+        .from('semester_course_marks')
+        .select('course_code')
+        .eq('user_id', user.id)
+        .inFilter('semester_code', [activeSem, safeSem, spaceSem, activeSem.toLowerCase(), activeSem.replaceAll(' ', '')]);
+    
+    final marked = (marksData as List).map((e) => e['course_code'] as String).toList();
+
+    // Merge and deduplicate
+    final res = {...enrolled, ...marked}.toList();
+    
     // Cache it
     cache.setMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem', {'codes': res});
     return res;
@@ -126,7 +143,44 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
     if (kDebugMode) debugPrint('[CourseBrowser] Enrollment fetch failed, using cache: $e');
     final cached = cache.getMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem');
     if (cached != null && cached['codes'] != null) {
-      return List<String>.from(cached['codes']);
+      final List<String> codes = List<String>.from(cached['codes']);
+      if (codes.isNotEmpty) return codes;
+    }
+
+    try {
+      final sched = cache.getCachedDashboardSchedule(user.id, safeSem) 
+          ?? cache.getCachedDashboardSchedule(user.id, activeSem)
+          ?? cache.getCachedDashboardSchedule(user.id, activeSem.toLowerCase())
+          ?? cache.getCachedDashboardSchedule(user.id, activeSem.replaceAll(' ', ''));
+      if (sched != null) {
+        final List<dynamic> template = sched['template'] as List? ?? [];
+        final List<dynamic> exceptions = sched['exceptions'] as List? ?? [];
+        
+        final Set<String> codes = {};
+        for (var cls in template) {
+          if (cls is Map) {
+            final String? code = (cls['courseCode'] ?? cls['course_code'])?.toString();
+            if (code != null && code.trim().isNotEmpty) {
+              codes.add(code.trim().toUpperCase());
+            }
+          }
+        }
+        for (var ex in exceptions) {
+          if (ex is Map) {
+            final String? code = (ex['course_code'] ?? ex['courseCode'])?.toString();
+            if (code != null && code.trim().isNotEmpty) {
+              codes.add(code.trim().toUpperCase());
+            }
+          }
+        }
+        if (codes.isNotEmpty) {
+          final List<String> uniqueCodes = codes.toList()..sort();
+          if (kDebugMode) debugPrint('[CourseBrowser] Offline Fallback: Extracted course codes from cached schedule: $uniqueCodes');
+          return uniqueCodes;
+        }
+      }
+    } catch (innerEx) {
+      if (kDebugMode) debugPrint('[CourseBrowser] Secondary fallback extraction error: $innerEx');
     }
     return [];
   }

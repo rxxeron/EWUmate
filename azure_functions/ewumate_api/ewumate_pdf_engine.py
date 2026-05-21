@@ -49,7 +49,10 @@ class EWUmatePDFEngine:
         curr_y = self.draw_header()
         
         # Start template content from where header left off
-        curr_y -= 40 # Gap after header
+        if template in ['group_project', 'term_paper', 'project_report']:
+            curr_y -= 15 # Minimize gap after header for group/term paper templates
+        else:
+            curr_y -= 40 # Gap after header
         
         if template in ['physics_lab', 'Physics Lab']:
             self.render_physics_lab(curr_y)
@@ -352,13 +355,13 @@ class EWUmatePDFEngine:
         num_students = len(students) if students else 1
         
         is_compact = (num_students > 2)
-        y_top_offset = 10 if is_compact else 30
-        gap_title = 20 if is_compact else 30
-        gap_topic = 25 if is_compact else 30
-        gap_after_topic = 25 if is_compact else 50
-        gap_course_item = 0 if is_compact else 8
-        gap_footer = 20 if is_compact else 50
-        gap_dates = 10 if is_compact else 30
+        y_top_offset = 5 if is_compact else 15
+        gap_title = 15 if is_compact else 25
+        gap_topic = 15 if is_compact else 25
+        gap_after_topic = 15 if is_compact else 35
+        gap_course_item = 0 if is_compact else 4
+        gap_footer = 15 if is_compact else 35
+        gap_dates = 5 if is_compact else 15
         
         title_label = "TERM PAPER ON" if is_term_paper else "PROJECT REPORT ON"
         y = start_y - y_top_offset
@@ -437,7 +440,7 @@ class EWUmatePDFEngine:
         students = self.data.get('students', [])
         num_students = len(students) if students else 1
         is_compact = (is_group and num_students > 2)
-        gap_before_by = 30 if is_compact else 50
+        gap_before_by = 15 if is_compact else 35
         
         y -= gap_before_by
         self.c.setFont("Times-Bold", 12)
@@ -478,5 +481,5 @@ class EWUmatePDFEngine:
                 self.c.setLineWidth(2)
                 self.c.line(self.label_x - 10, block_start_y, self.label_x - 10, y + self.line_height - 2)
                 self.c.setStrokeColor(colors.black)
-            y -= 5 
+            y -= (2 if is_compact else 5) 
         return y

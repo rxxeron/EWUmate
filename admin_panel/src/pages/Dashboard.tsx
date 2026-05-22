@@ -4,8 +4,7 @@ import { supabase } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
   CalendarClock, Mail, Search, Zap, ShieldCheck, 
-  TrendingUp, ArrowUpRight, RefreshCcw, ShieldAlert,
-  FileText, CheckCircle2, XCircle, AlertTriangle
+  TrendingUp, ArrowUpRight, RefreshCcw
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, 

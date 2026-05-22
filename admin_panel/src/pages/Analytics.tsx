@@ -4,12 +4,12 @@ import {
   TrendingUp, Activity, 
   RefreshCcw, Users, 
   ArrowUpRight, Clock,
-  GraduationCap, UserCheck, Sparkles,
+  GraduationCap,
   BarChart3
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, ComposedChart, Area, Bar, Line,
+  Tooltip, ResponsiveContainer, ComposedChart, Area, Bar,
   AreaChart
 } from 'recharts';
 import { motion } from 'framer-motion';

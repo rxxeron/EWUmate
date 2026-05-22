@@ -9,6 +9,8 @@ import '../../../../core/repositories/course_repository.dart';
 import '../../../../core/repositories/profile_repository.dart';
 import '../../../../core/repositories/auth_repository.dart';
 import '../../../../core/providers/academic_providers.dart';
+import '../../../../core/repositories/progress_repository.dart';
+import '../../../../features/semester_progress/semester_progress_repository.dart';
 import '../providers/course_browser_providers.dart';
 
 class CourseCard extends ConsumerStatefulWidget {
@@ -76,9 +78,11 @@ class _CourseCardState extends ConsumerState<CourseCard> {
         }
 
       if (mounted) {
-        // Force refresh all enrollment providers
+        // Force refresh all enrollment and progress providers
         ref.invalidate(userEnrollmentsProvider);
         ref.invalidate(userEnrollmentDetailsProvider);
+        ref.invalidate(currentSemesterMarksProvider);
+        ref.invalidate(semesterProgressDataProvider(academicSemCode));
         
         String msg = '';
         if (action == 'enroll') msg = 'Enrolled in ${widget.course.code}';

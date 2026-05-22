@@ -150,6 +150,7 @@ class ProfileRepository {
 
       // 4. Clear local Hive caches
       _cache.clearEnrollmentCache(userId, semesterCode);
+      _cache.clearSemesterProgressCache(userId, semesterCode);
 
       // 4. Force refresh local profile cache
       await _fetchAndCache(userId);

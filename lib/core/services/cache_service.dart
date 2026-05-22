@@ -165,6 +165,10 @@ class CacheService {
     Hive.box(_dashboardBox).delete('available_courses_$semesterCode');
   }
 
+  void clearSemesterProgressCache(String userId, String semesterCode) {
+    Hive.box(_semesterProgressBox).delete('marks_${userId}_$semesterCode');
+  }
+
   // --- Auth Persistence for Zero-Wait Entry ---
   static const String _authBox = 'auth_box';
   Future<void> saveLastUserId(String userId) async {

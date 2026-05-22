@@ -34,8 +34,7 @@ class _UploadMaterialBottomSheetState extends ConsumerState<UploadMaterialBottom
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      type: FileType.any,
     );
 
     if (result != null && result.files.single.path != null) {
@@ -145,7 +144,7 @@ class _UploadMaterialBottomSheetState extends ConsumerState<UploadMaterialBottom
             OutlinedButton.icon(
               onPressed: _pickFile,
               icon: const Icon(Icons.attach_file),
-              label: Text(_fileName ?? 'Select File (PDF, Word, Image)'),
+              label: Text(_fileName ?? 'Select File (Any file type)'),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

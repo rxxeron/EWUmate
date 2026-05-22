@@ -111,8 +111,7 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
 
   Future<void> _pickFiles() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      type: FileType.any,
       allowMultiple: true,
     );
 
@@ -483,7 +482,7 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                           ),
                           const SizedBox(height: 12),
                           const Text(
-                            'Add Files (PDF, Word, Image)',
+                            'Add Files (Any file type)',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
   CalendarClock, Mail, Search, Zap, ShieldCheck, 
-  TrendingUp, ArrowUpRight, RefreshCcw
+  TrendingUp, ArrowUpRight, RefreshCcw, ShieldAlert,
+  FileText, CheckCircle2, XCircle, AlertTriangle
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, 
@@ -35,6 +36,13 @@ export function Dashboard() {
   const [semesterStats, setSemesterStats] = useState<Record<string, SemesterTrackStats>>({});
   const [registrationTrend, setRegistrationTrend] = useState<any[]>([]);
   const [activityTrend, setActivityTrend] = useState<any[]>([]);
+  const [vaultStats, setVaultStats] = useState({
+    pending: 0,
+    removalRequested: 0,
+    approved: 0,
+    rejected: 0,
+    total: 0
+  });
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -52,7 +60,7 @@ export function Dashboard() {
       const yesterdayIso = yesterday.toISOString();
 
       const last7Days = new Date();
-      last7Days.setDate(last7Days.getDate() - 7);
+      last7Days.setDate(last7Days.getDate() - 6);
       const last7DaysIso = last7Days.toISOString();
 
       // Parallel data fetching
@@ -69,7 +77,12 @@ export function Dashboard() {
         { data: activeNow },
         { data: activeSemesters },
         { data: rawTrendData },
-        { data: activityData }
+        { data: activityData },
+        { count: pendingVaultCount },
+        { count: removalVaultCount },
+        { count: approvedVaultCount },
+        { count: rejectedVaultCount },
+        { count: totalVaultCount }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
@@ -83,7 +96,12 @@ export function Dashboard() {
         supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
         supabase.from('active_semester').select('*'),
         supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
-        supabase.from('profiles').select('last_active_at').gte('last_active_at', last7DaysIso)
+        supabase.from('daily_active_users_metrics').select('activity_date, dau').gte('activity_date', last7DaysIso.split('T')[0]).order('activity_date', { ascending: true }),
+        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'removal_requested'),
+        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+        supabase.from('study_materials').select('*', { count: 'exact', head: true })
       ]);
 
       // Process Registration Trend Data
@@ -105,29 +123,38 @@ export function Dashboard() {
       // Process Activity Trend Data (Last 7 Days)
       if (activityData) {
         const activityGroups: Record<string, number> = {};
-        // Initialize last 7 days with 0
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const dateKey = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-          activityGroups[dateKey] = 0;
-        }
-
-        activityData.forEach(p => {
-          if (p.last_active_at) {
-            const date = new Date(p.last_active_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
-            if (activityGroups[date] !== undefined) {
-              activityGroups[date]++;
-            }
+        activityData.forEach((row: any) => {
+          if (row.activity_date) {
+            activityGroups[row.activity_date] = row.dau;
           }
         });
 
-        const actTrend = Object.entries(activityGroups).map(([date, active]) => ({
-          date,
-          active
-        }));
+        const actTrend = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const isoKey = `${year}-${month}-${day}`;
+
+          const dateLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+          actTrend.push({
+            date: dateLabel,
+            active: activityGroups[isoKey] || 0
+          });
+        }
         setActivityTrend(actTrend);
       }
+
+      setVaultStats({
+        pending: pendingVaultCount || 0,
+        removalRequested: removalVaultCount || 0,
+        approved: approvedVaultCount || 0,
+        rejected: rejectedVaultCount || 0,
+        total: totalVaultCount || 0
+      });
 
       const semStats: Record<string, SemesterTrackStats> = {};
       let totalActiveCourses = 0;
@@ -523,17 +550,91 @@ export function Dashboard() {
                 </div>
               </div>
 
+              {/* Study Vault Breakdown */}
+              <div className="mt-8 pt-8 border-t border-slate-50 dark:border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase tracking-[0.2em]">Vault Moderation</h3>
+                  <button onClick={() => navigate('/study-vault')} className="text-[10px] font-black text-indigo-500 hover:underline">Manage Vault</button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { label: 'Pending', count: vaultStats.pending, color: 'text-amber-500 dark:text-amber-400', bg: 'bg-amber-500/10 dark:bg-amber-500/15' },
+                    { label: 'Removal Req.', count: vaultStats.removalRequested, color: 'text-rose-500 dark:text-rose-400', bg: 'bg-rose-500/10 dark:bg-rose-500/15' },
+                    { label: 'Approved', count: vaultStats.approved, color: 'text-emerald-500 dark:text-emerald-400', bg: 'bg-emerald-500/10 dark:bg-emerald-500/15' },
+                    { label: 'Rejected', count: vaultStats.rejected, color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-white/5' },
+                    { label: 'Total Items', count: vaultStats.total, color: 'text-indigo-500 dark:text-indigo-400', bg: 'bg-indigo-500/5 dark:bg-indigo-500/10', isTotal: true }
+                  ].map((stat, i) => (
+                    <div key={i} className={cn("p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5", stat.isTotal && "border-indigo-500/20")}>
+                      <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
+                      <p className={cn("text-xl font-black", stat.color)}>{stat.count}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
            </div>
-           
-           <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col justify-center">
-              <button 
-                className="w-full py-6 bg-indigo-600 rounded-2xl text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 group"
-                onClick={() => navigate('/scraper')}
-              >
-                <span>Launch Scraper</span>
-                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              </button>
-           </div>
+            
+            <div className="bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-400">
+                    <Zap className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase tracking-[0.2em]">Quick Actions</h3>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Control Shortcuts</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {/* Feedback Action */}
+                  <button 
+                    className="w-full p-4 bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest border border-slate-100 dark:border-white/5 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-between group"
+                    onClick={() => navigate('/feedbacks')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-400">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <span>Feedback Panel</span>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+
+                  {/* Study Vault Action */}
+                  <button 
+                    className="w-full p-4 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-indigo-100 dark:shadow-indigo-950/20 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-between group"
+                    onClick={() => navigate('/study-vault')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-white/20 text-white">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <span>Study Vault</span>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-white/80 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+
+                  {/* Scraper Action */}
+                  <button 
+                    className="w-full p-4 bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 rounded-2xl text-slate-900 dark:text-white font-black text-xs uppercase tracking-widest border border-slate-100 dark:border-white/5 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-between group"
+                    onClick={() => navigate('/scraper')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-500/10 text-amber-500 dark:bg-amber-500/20 dark:text-amber-400">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <span>Launch Scraper</span>
+                    </div>
+                    <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-white/5 text-[9px] font-medium text-slate-400 dark:text-slate-500 text-center leading-relaxed">
+                EWUmate Administrative Shortcuts console. Select any action above to manage respective systems.
+              </div>
+            </div>
         </div>
       </div>
 

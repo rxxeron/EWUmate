@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:home_widget/home_widget.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../../core/models/task.dart';
 import '../../../core/repositories/task_repository.dart';
@@ -16,6 +18,7 @@ import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../../core/repositories/profile_repository.dart';
+import '../../../core/services/cache_service.dart';
 
 class ScheduleScreen extends ConsumerStatefulWidget {
   const ScheduleScreen({super.key});
@@ -51,6 +54,70 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   void _loadData() async {
     final sem = _semesterCode;
     if (sem != null) _loadDataForSemester(sem);
+  }
+
+  Future<void> _invalidateDashboardCache() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null && _semesterCode != null) {
+      final cacheService = ref.read(cacheServiceProvider);
+      final repo = ref.read(dashboardRepositoryProvider);
+      final profile = ref.read(userProfileProvider).valueOrNull;
+      final safeSem = CourseUtils.cleanSemester(_semesterCode!);
+
+      final now = DateTime.now();
+      final effectiveDate = now.hour >= 20
+          ? DateTime(now.year, now.month, now.day).add(const Duration(days: 1))
+          : DateTime(now.year, now.month, now.day);
+
+      try {
+        final freshData = await repo.getSimplifiedDashboardData(
+          _semesterCode!,
+          effectiveDate,
+          track: profile?.track,
+          profileUpdatedAt: profile?.updatedAt,
+        );
+
+        final cachePayload = {...freshData, 'date': effectiveDate.toIso8601String()};
+        await cacheService.cacheDashboardSchedule(user.id, safeSem, cachePayload);
+
+        final processedData = DashboardLogic.processDashboardData(freshData);
+        final Map<String, dynamic> encodableData = {
+          'status': processedData['status'],
+          'reason': processedData['reason'],
+          'displayDate': processedData['displayDate'],
+          'schedule': (processedData['schedule'] as List).map((item) {
+            if (item is ScheduleItem) {
+              return {
+                'courseCode': item.courseCode,
+                'courseName': item.courseName,
+                'sessionType': item.sessionType,
+                'startTime': item.startTime,
+                'endTime': item.endTime,
+                'room': item.room,
+                'faculty': item.faculty,
+                'isCancelled': item.isCancelled,
+                'isMakeup': item.isMakeup,
+              };
+            }
+            return item;
+          }).toList(),
+        };
+
+        await HomeWidget.saveWidgetData('schedule_json', jsonEncode(encodableData));
+        await HomeWidget.updateWidget(
+          androidName: 'ScheduleWidgetProvider',
+        );
+
+        if (kDebugMode) {
+          debugPrint('[ScheduleScreen] Successfully updated Cache & Home Screen Widget with fresh schedule.');
+        }
+      } catch (e) {
+        await cacheService.invalidateDashboardSchedule(user.id, safeSem);
+        if (kDebugMode) {
+          debugPrint('[ScheduleScreen] Failed to update cache. Purged cache: $e');
+        }
+      }
+    }
   }
 
 
@@ -170,14 +237,29 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         }
 
         if (courseData.isEmpty) {
+          final safeSem = CourseUtils.cleanSemester(semCode);
+          final spaceSem = semCode.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+          
           final enrollments = await supabase
               .from('enrollments')
               .select('course_code')
               .eq('user_id', user.id)
-              .eq('semester_code', semCode);
-          for (final row in enrollments as List) {
-            final code = row['course_code'].toString().toUpperCase();
-            if (!seenCodes.contains(code)) {
+              .inFilter('semester_code', [semCode, safeSem, spaceSem, semCode.toLowerCase(), semCode.replaceAll(' ', '')]);
+          
+          final marks = await supabase
+              .from('semester_course_marks')
+              .select('course_code')
+              .eq('user_id', user.id)
+              .inFilter('semester_code', [semCode, safeSem, spaceSem, semCode.toLowerCase(), semCode.replaceAll(' ', '')]);
+
+          final Set<String> allCodes = {
+            ...(enrollments as List).map((e) => e['course_code'].toString()),
+            ...(marks as List).map((e) => e['course_code'].toString()),
+          };
+
+          for (final codeRaw in allCodes) {
+            final code = codeRaw.toUpperCase().trim();
+            if (code.isNotEmpty && !seenCodes.contains(code)) {
               seenCodes.add(code);
               courseData.add({'code': code, 'name': 'Course', 'faculty': '', 'room': ''});
             }
@@ -195,7 +277,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         final weeksRaw = await repo.getTwoWeekSchedule(semCode, track: track);
         
         _twoWeekSchedule = weeksRaw.map((dayData) {
-           final date = dayData['date'] as DateTime;
+           final dateRaw = dayData['date'];
+           final DateTime date = dateRaw is String 
+               ? (DateTime.tryParse(dateRaw) ?? DateTime.now()) 
+               : (dateRaw as DateTime? ?? DateTime.now());
              final processed = DashboardLogic.processDashboardData(dayData);
            return {
               'date': date,
@@ -242,6 +327,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 Navigator.pop(ctx);
                 try {
                   await _exceptionRepo.addCancellation(dateStr, item.courseCode, pendingMakeup: true);
+                  await _invalidateDashboardCache();
                   _loadData();
                 } catch (e) {
                   if (context.mounted) {
@@ -291,6 +377,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               Navigator.pop(ctx);
               try {
                 await _exceptionRepo.removeException(item.id);
+                await _invalidateDashboardCache();
                 _loadData();
               } catch (e) {
                 if (context.mounted) {
@@ -608,6 +695,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               faculty: currentFaculty,
                             );
                           }
+                          await _invalidateDashboardCache();
                           _loadDataForSemester(semesterCode);
                         } catch (e) {
                           if (context.mounted) {
@@ -658,7 +746,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           final events = List<Map<String, dynamic>>.from(day['events'] ?? []);
           final classes = day['classes'] as List<ScheduleItem>? ?? [];
           final dateStr = day['dateStr'] as String;
-          final headerStr = DateFormat('EEEE - MMMM d').format(day['date'] as DateTime);
+          final dateRaw = day['date'];
+          final DateTime dateVal = dateRaw is String 
+              ? (DateTime.tryParse(dateRaw) ?? DateTime.now()) 
+              : (dateRaw as DateTime? ?? DateTime.now());
+          final headerStr = DateFormat('EEEE - MMMM d').format(dateVal);
 
           List<Widget> children = [
             Padding(
@@ -707,7 +799,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             );
           }
 
-          final dTime = day['date'] as DateTime;
+          final dTime = dateVal;
           final currentDayTasks = allTasks.where((t) {
             if (t.dueDate == null) return false;
             final isSameDay = t.dueDate!.year == dTime.year &&
@@ -853,6 +945,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     TextButton(
                       onPressed: () async {
                         await _exceptionRepo.removeException(action['id'].toString());
+                        await _invalidateDashboardCache();
                         _loadDataForSemester(_semesterCode!);
                       },
                       child: const Text("REVERT", style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),

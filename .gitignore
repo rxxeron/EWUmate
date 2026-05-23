@@ -90,3 +90,5 @@ ewumate_production_build/
 *.csv
 *.jks
 .env
+ewumate_pwa/
+

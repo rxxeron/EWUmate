@@ -27,5 +27,28 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Dynamically map React placeholder footer links to active static routes
+      document.addEventListener("DOMContentLoaded", () => {
+        const observer = new MutationObserver((mutations, obs) => {
+          const links = document.querySelectorAll("a");
+          let found = false;
+          for (let link of links) {
+            const text = link.textContent.trim().toLowerCase();
+            if (text === "privacy policy") {
+              link.href = "/privacy/";
+              // Let's open it in the same window
+              link.removeAttribute("target"); 
+              found = true;
+            }
+          }
+          if (found) {
+            // Once updated, we can disconnect the observer
+            obs.disconnect();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      });
+    </script>
   </body>
 </html>

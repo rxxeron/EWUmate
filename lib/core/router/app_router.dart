@@ -17,6 +17,9 @@ import '../../features/services/presentation/services_screen.dart';
 import '../../features/services/presentation/cover_page_screen.dart';
 import '../../features/services/presentation/faculty_list_screen.dart';
 import '../../features/faculty_directory/presentation/faculty_directory_screen.dart';
+import '../../features/study_vault/presentation/study_vault_screen.dart';
+import '../../features/study_vault/presentation/upload_study_material_screen.dart';
+import '../../features/study_vault/presentation/my_study_materials_screen.dart';
 import '../../core/widgets/main_shell.dart';
 
 import '../../features/profile/presentation/profile_screen.dart';
@@ -63,6 +66,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
           GoRoute(path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
           GoRoute(path: '/services/faculty-directory', builder: (context, state) => const FacultyDirectoryScreen()),
+          GoRoute(
+            path: '/services/study-vault',
+            builder: (context, state) => const StudyVaultScreen(),
+            routes: [
+              GoRoute(
+                path: 'upload',
+                builder: (context, state) => const UploadStudyMaterialScreen(),
+              ),
+              GoRoute(
+                path: 'my-uploads',
+                builder: (context, state) => const MyStudyMaterialsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
 

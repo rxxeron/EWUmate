@@ -15,7 +15,10 @@ class ScheduleWidgetRender extends StatelessWidget {
     final status = data['status'];
     final reason = data['reason'] ?? "";
     final schedule = (data['schedule'] as List?)?.cast<ScheduleItem>() ?? [];
-    final targetDate = data['targetDate'] as DateTime?;
+    final targetDateRaw = data['targetDate'] ?? data['date'];
+    final DateTime? targetDate = targetDateRaw is String
+        ? DateTime.tryParse(targetDateRaw)
+        : targetDateRaw as DateTime?;
 
     final isToday = targetDate != null && isSameDay(targetDate, DateTime.now());
     final isTomorrow = targetDate != null && isSameDay(targetDate, DateTime.now().add(const Duration(days: 1)));

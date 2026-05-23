@@ -104,11 +104,14 @@ class OnboardingRepository {
 
     bool hasChanged = false;
     if (existing != null) {
-      final oldProg = existing['program_code']?.toString();
+      final oldProg = existing['program_code']?.toString().toUpperCase();
       final oldDept = existing['department_name']?.toString();
-      final oldAdm = existing['admitted_semester']?.toString();
+      final oldAdm = CourseUtils.cleanSemester(existing['admitted_semester']?.toString() ?? '');
       
-      if (oldProg != programCode || oldDept != department || oldAdm != admittedSemester) {
+      final newProg = programCode.toUpperCase();
+      final newAdm = CourseUtils.cleanSemester(admittedSemester ?? '');
+
+      if (oldProg != newProg || oldDept != department || oldAdm != newAdm) {
         hasChanged = true;
       }
     }
@@ -128,7 +131,7 @@ class OnboardingRepository {
       'program_code': programCode,
       'program_name': programName,
       'department_name': department,
-      'admitted_semester': admittedSemester,
+      'admitted_semester': admittedSemester, // Keep original for display but comparison is clean
       'semester_type': semType,
       'track': semType,
       'onboarding_status': 'course_history',
@@ -170,7 +173,8 @@ class OnboardingRepository {
         .eq('id', user.id)
         .maybeSingle();
     
-    String track = profile?['track'] ?? profile?['semester_type'] ?? 'tri_semester';
+    final rawTrack = profile?['track'] ?? profile?['semester_type'] ?? 'tri_semester';
+    String track = rawTrack.toString().toLowerCase();
     
     // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
     if (track == 'tri') track = 'tri_semester';
@@ -317,7 +321,7 @@ class OnboardingRepository {
     String searchQuery = '',
   }) async {
     if (isCurrent && semester != null) {
-      final safeSem = CourseUtils.cleanSemester(semester);
+      final safeSem = CourseUtils.cleanSemester(semester ?? '');
       final tableName = 'courses_$safeSem';
       try {
         var query = _client

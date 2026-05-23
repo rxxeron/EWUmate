@@ -21,9 +21,15 @@ final profileProvider = StreamProvider<Profile?>((ref) async* {
   }
   
   final userId = effectiveUserId;
-  bool yieldedCache = false;
 
-  // Background retry loop
+  // 1. Yield Cache Immediately (Frame 1)
+  final cachedData = cacheService.getCachedProfile(userId);
+  if (cachedData != null) {
+    debugPrint("[ProfileProvider] Serving Cache instantly on Frame 1...");
+    yield Profile.fromJson(cachedData);
+  }
+
+  // 2. Background retry loop for online updates
   while (true) {
     try {
       debugPrint("[ProfileProvider] Attempting Online Fetch for: $userId");
@@ -38,15 +44,6 @@ final profileProvider = StreamProvider<Profile?>((ref) async* {
       }
     } catch (e) {
       debugPrint("[ProfileProvider] Online failed: $e");
-      
-      if (!yieldedCache) {
-        final cachedData = cacheService.getCachedProfile(userId);
-        if (cachedData != null) {
-          debugPrint("[ProfileProvider] Serving Cache silently...");
-          yield Profile.fromJson(cachedData);
-          yieldedCache = true;
-        }
-      }
       
       // Retry every 5 seconds until success
       await Future.delayed(const Duration(seconds: 5));

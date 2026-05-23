@@ -203,6 +203,9 @@ class DashboardRepository {
              debugPrint('[Dashboard] Manual sync call failed: $e');
           }
           
+          // Wait for the edge function to finish writing to the database
+          await Future.delayed(const Duration(seconds: 4));
+          
           // Re-fetch with a slight delay if needed, though await should handle it
           final freshState = await _supabase
               .from('user_semester_states')
@@ -353,7 +356,7 @@ class DashboardRepository {
         'dateStr': dateStr,
       };
 
-      if (_cache != null) {
+      if (_cache != null && weeklyGrid.isNotEmpty) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
         final safeSem = CourseUtils.cleanSemester(semesterCode);
         _cache.cacheDashboardSchedule(user.id, safeSem, cachePayload);

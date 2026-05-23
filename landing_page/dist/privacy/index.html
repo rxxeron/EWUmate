@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - EWUmate</title>
+  
+  <!-- SEO & Meta Tags -->
+  <meta name="description" content="Privacy Policy for EWUmate - The ultimate student companion app for East West University. Learn how we secure your schedules, academic records, and personal data.">
+  <meta name="keywords" content="EWUmate, Privacy Policy, East West University, Student App, Data Security">
+  
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Privacy Policy - EWUmate">
+  <meta property="og:description" content="Academic life, secured. Learn how EWUmate protects and manages your academic data.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Premium Vanilla CSS Design System */
+    :root {
+      --bg-base: #030712; /* Sleek Dark Slate Neutral */
+      --bg-card: #0f172a; /* Rich Card Slate */
+      --bg-card-hover: #1e293b;
+      --border-color: rgba(255, 255, 255, 0.06);
+      --border-color-active: rgba(6, 182, 212, 0.4);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      /* Harmonious Vibrant Gradients */
+      --accent-primary: #06b6d4; /* Vibrant Cyan */
+      --accent-secondary: #3b82f6; /* Premium Blue */
+      --accent-gradient: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+      --glow-gradient: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%);
+      
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --transition-standard: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      --container-width: 1200px;
+      --sidebar-width: 280px;
+    }
+
+    [data-theme="light"] {
+      --bg-base: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f1f5f9;
+      --border-color: rgba(0, 0, 0, 0.06);
+      --border-color-active: rgba(59, 130, 246, 0.4);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --glow-gradient: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--text-muted) transparent;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Glow Background Elements */
+    .glow-bg {
+      position: fixed;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80vw;
+      height: 60vh;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(59, 130, 246, 0.03) 70%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header Styling */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(var(--bg-base) == #030712 ? "3, 7, 18" : "248, 250, 252", 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      transition: border-color 0.3s ease;
+    }
+
+    .header-container {
+      max-width: var(--container-width);
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-gradient);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+    }
+
+    .brand-name span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition-standard);
+      border: 1px solid transparent;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-secondary);
+      border-color: var(--border-color);
+    }
+
+    .btn-outline:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+      border-color: var(--text-secondary);
+    }
+
+    .btn-primary {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(6, 182, 212, 0.35);
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: var(--transition-standard);
+    }
+
+    .theme-toggle:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    /* Reading Progress Bar */
+    .progress-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: transparent;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent-gradient);
+      transition: width 0.1s ease;
+    }
+
+    /* Main Grid Structure */
+    .main-wrapper {
+      max-width: var(--container-width);
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      gap: 3rem;
+    }
+
+    /* Sidebar Table of Contents */
+    .sidebar {
+      position: sticky;
+      top: 6.5rem;
+      height: calc(100vh - 8rem);
+      overflow-y: auto;
+      padding-right: 1rem;
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      transition: var(--transition-standard);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+      width: 16px;
+      height: 16px;
+    }
+
+    .toc-title {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+    }
+
+    .toc-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 6px;
+      border-left: 2px solid transparent;
+      transition: var(--transition-standard);
+    }
+
+    .toc-link:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+    }
+
+    .toc-link.active {
+      color: var(--accent-primary);
+      background: var(--glow-gradient);
+      border-left-color: var(--accent-primary);
+      font-weight: 600;
+    }
+
+    /* Content Area */
+    .content-area {
+      min-width: 0; /* Prevents flex/grid blowouts */
+    }
+
+    .title-section {
+      margin-bottom: 3rem;
+    }
+
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      background: var(--glow-gradient);
+      border: 1px solid var(--border-color-active);
+      border-radius: 9999px;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--accent-primary);
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .meta-text {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Policy Sections */
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      transition: var(--transition-standard);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .section-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent-gradient);
+      opacity: 0;
+      transition: var(--transition-standard);
+    }
+
+    .section-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .section-card:hover::before {
+      opacity: 1;
+    }
+
+    .section-card.highlight-search {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    h2 .section-num {
+      background: var(--glow-gradient);
+      color: var(--accent-primary);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 700;
+      border: 1px solid var(--border-color-active);
+    }
+
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+      font-size: 0.975rem;
+    }
+
+    p strong {
+      color: var(--text-primary);
+    }
+
+    ul, ol {
+      margin-left: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      font-size: 0.975rem;
+    }
+
+    li strong {
+      color: var(--text-primary);
+    }
+
+    /* Key-Value Lists */
+    .data-table {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .data-row {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.75rem;
+    }
+
+    .data-label {
+      width: 30%;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .data-value {
+      width: 70%;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Note Banner */
+    .note-banner {
+      background: var(--glow-gradient);
+      border: 1px solid var(--border-color-active);
+      padding: 1.25rem 1.5rem;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .note-icon {
+      color: var(--accent-primary);
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      margin-top: 0.15rem;
+    }
+
+    .note-text {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .note-text strong {
+      color: var(--text-primary);
+    }
+
+    /* Highlight class for search */
+    mark {
+      background: rgba(6, 182, 212, 0.3);
+      color: var(--text-primary);
+      border-radius: 2px;
+      padding: 0 0.15rem;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border-color);
+      padding: 3rem 2rem;
+      background: rgba(var(--bg-base) == #030712 ? "2, 6, 16" : "241, 245, 249", 0.5);
+      text-align: center;
+      transition: var(--transition-standard);
+    }
+
+    .footer-container {
+      max-width: var(--container-width);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-gradient);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
+    }
+
+    .brand-name span {
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .footer-text {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .footer-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: var(--transition-standard);
+    }
+
+    .footer-link:hover {
+      color: var(--text-primary);
+    }
+
+    /* Back to Top button */
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: var(--transition-standard);
+      opacity: 0;
+      visibility: hidden;
+      z-index: 99;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .back-to-top.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .back-to-top:hover {
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+      transform: translateY(-2px);
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 1024px) {
+      .main-wrapper {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      h1 {
+        font-size: 2rem;
+      }
+      .section-card {
+        padding: 1.5rem;
+      }
+      .header-container {
+        padding: 1rem;
+      }
+      .main-wrapper {
+        padding: 2rem 1rem;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .header, .sidebar, .glow-bg, .footer, .back-to-top, .theme-toggle, .btn {
+        display: none !important;
+      }
+      .main-wrapper {
+        grid-template-columns: 1fr !important;
+        padding: 0 !important;
+      }
+      .section-card {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin-bottom: 3rem !important;
+        page-break-inside: avoid;
+      }
+      h1, h2 {
+        color: #000000 !important;
+      }
+      p, li {
+        color: #333333 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-bg"></div>
+
+  <!-- Sticky Header -->
+  <header class="header">
+    <div class="header-container">
+      <a href="https://ewumate.pro.bd" class="brand" title="Go to EWUmate Home">
+        <div class="brand-logo">E</div>
+        <div class="brand-name">EWU<span>mate</span></div>
+      </a>
+      
+      <div class="header-actions">
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme" title="Toggle Light/Dark Theme">
+          <!-- Sun Icon -->
+          <svg class="sun-icon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <!-- Moon Icon -->
+          <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+        <button onclick="window.print()" class="btn btn-outline" title="Print this page">Print</button>
+        <a href="https://ewumate.pro.bd" class="btn btn-primary">Back to App</a>
+      </div>
+    </div>
+    <div class="progress-container">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+  </header>
+
+  <!-- Main Grid Wrapper -->
+  <main class="main-wrapper">
+    
+    <!-- Sidebar Left (Fixed TOC & Search) -->
+    <aside class="sidebar">
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Search terms...">
+      </div>
+      
+      <div class="toc-title">ON THIS PAGE</div>
+      <nav>
+        <ul class="toc-list">
+          <li><a href="#introduction" class="toc-link active">1. Introduction</a></li>
+          <li><a href="#data-collection" class="toc-link">2. Data We Collect</a></li>
+          <li><a href="#data-usage" class="toc-link">3. How We Use Data</a></li>
+          <li><a href="#data-sharing" class="toc-link">4. Sharing & Integrations</a></li>
+          <li><a href="#data-security" class="toc-link">5. Data Security</a></li>
+          <li><a href="#user-controls" class="toc-link">6. Your Rights & Controls</a></li>
+          <li><a href="#children-privacy" class="toc-link">7. Children's Privacy</a></li>
+          <li><a href="#updates" class="toc-link">8. Policy Updates</a></li>
+          <li><a href="#contact" class="toc-link">9. Contact & Support</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Content Area Right -->
+    <article class="content-area">
+      
+      <!-- Cover Title Section -->
+      <section class="title-section">
+        <div class="title-badge">Security & Transparency</div>
+        <h1>Privacy Policy</h1>
+        <div class="meta-text">
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Last Updated: May 19, 2026
+          </div>
+          <div class="meta-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            Scope: Mobile Application & Services
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 1: Introduction -->
+      <section id="introduction" class="section-card">
+        <h2><span class="section-num">1</span>Introduction & Scope</h2>
+        <p>Welcome to <strong>EWUmate</strong> ("we", "our", or "us"). We are committed to protecting your privacy and ensuring you have a safe, transparent, and seamless experience while using our mobile application ("EWUmate App") and associated web services.</p>
+        <p>EWUmate is an independent utility application designed specifically for the students of <strong>East West University (EWU)</strong>. It provides local and synchronized academic tools including schedule synchronization, routine planning, CGPA calculators, faculty directories, and class status notifications. This Privacy Policy details how we collect, process, secure, and manage your personal data when you interact with our platform.</p>
+        <p>By downloading, registering, or using the EWUmate App, you consent to the processing of your data as outlined in this Privacy Policy. If you do not agree with any terms herein, please refrain from using our services.</p>
+      </section>
+
+      <!-- Section 2: Data Collection -->
+      <section id="data-collection" class="section-card">
+        <h2><span class="section-num">2</span>Information We Collect</h2>
+        <p>To deliver our core features (like portal routine syncing and automatic calendar building), we collect and process different categories of information. Below is a detailed breakdown:</p>
+        
+        <div class="data-table">
+          <div class="data-row">
+            <div class="data-label">Account Profiles</div>
+            <div class="data-value">When you register, we collect your full name, student email, and academic department details. This helps personalize your dashboard and enable account backups.</div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">Academic Data</div>
+            <div class="data-value">We process your enrolled courses, section numbers, academic calendars, completed courses, semester marks, and grades. This data is required to render your class schedules and calculate CGPA.</div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">Portal Sync Credentials</div>
+            <div class="data-value">If you opt to sync your schedule directly from the official EWU Portal, you input your portal credentials (ID and Password). These credentials are processed locally and securely to query schedules and are <strong>never stored in plain text or uploaded to external servers</strong>.</div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">App Usage Metrics</div>
+            <div class="data-value">We gather non-personally identifiable diagnostic logs, device OS versions, and app version numbers to resolve performance issues and crash alerts.</div>
+          </div>
+        </div>
+
+        <div class="note-banner">
+          <svg class="note-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <div class="note-text">
+            <strong>Important Credential Safety:</strong> When using the Portal Sync feature, your university credentials are used strictly for local-first synchronization. The app establishes a direct, secure connection to the official East West University portal, and your password remains confidential to your local device sandbox.
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Data Usage -->
+      <section id="data-usage" class="section-card">
+        <h2><span class="section-num">3</span>How We Use Your Data</h2>
+        <p>We process your data strictly to maintain, analyze, and optimize EWUmate's academic utility features. Specifically, your data is used to:</p>
+        <ul>
+          <li><strong>Build Academic Calendars:</strong> Convert raw course listings into unified weekly and daily schedules.</li>
+          <li><strong>CGPA & Grade Calculations:</strong> Offer dynamic, simulated trackers that compute cumulative grade point averages (CGPA) securely based on your input.</li>
+          <li><strong>Send Cancelled Class Alerts:</strong> Dispatch real-time push notifications using Firebase Cloud Messaging (FCM) when a registered faculty cancels a class or alters timings.</li>
+          <li><strong>Synchronize Settings:</strong> Keep your chosen themes, favorites, and cached profiles unified across different devices when logged in.</li>
+        </ul>
+      </section>
+
+      <!-- Section 4: Sharing & Integrations -->
+      <section id="data-sharing" class="section-card">
+        <h2><span class="section-num">4</span>Data Sharing & Third-Party Services</h2>
+        <p>Your trust is paramount. <strong>We do not sell, rent, or trade your personal information to third parties</strong>. However, we utilize secure cloud partners to support application backend capabilities:</p>
+        
+        <ol>
+          <li><strong>Supabase:</strong> Our primary hosting provider for databases, administrative consoles, and session handling. Data sent to Supabase is securely encrypted in transit and at rest, guarded by strict Row Level Security (RLS) policies.</li>
+          <li><strong>Firebase Cloud Messaging (FCM):</strong> Used to securely issue push notification tokens and dispatch class schedule updates directly to your phone.</li>
+          <li><strong>Local Browser Storage & Secure Storage:</strong> We cache session keys and active tokens locally inside your device using standard keychains to prevent unauthorized logins.</li>
+        </ol>
+      </section>
+
+      <!-- Section 5: Data Security -->
+      <section id="data-security" class="section-card">
+        <h2><span class="section-num">5</span>How We Protect Your Data</h2>
+        <p>EWUmate enforces rigorous, state-of-the-art security measures to safeguard user data against unauthorized access, loss, or disclosure:</p>
+        <ul>
+          <li><strong>Transport Layer Security (TLS):</strong> All communications between the mobile application and backend services (such as Supabase edge functions) are encrypted using standard HTTPS/WSS protocols.</li>
+          <li><strong>Local Encryption:</strong> Highly sensitive items (like credentials or user tokens) are stored in your device's operating-system-level secure container (KeyStore for Android, Keychain for iOS).</li>
+          <li><strong>Database Access Controls:</strong> Supabase database tables restrict data reading and modification strictly through Row Level Security (RLS), ensuring that only <em>you</em> can read or modify your own profile summaries.</li>
+        </ul>
+      </section>
+
+      <!-- Section 6: User Controls -->
+      <section id="user-controls" class="section-card">
+        <h2><span class="section-num">6</span>Your Rights & Data Controls</h2>
+        <p>We believe that you should have absolute control over your academic data. We provide the following native privacy controls within the EWUmate App Settings page:</p>
+        
+        <ul>
+          <li><strong>Data Export & Access:</strong> You can view all information cached on your profile or downloaded schedules directly inside the app dashboards.</li>
+          <li><strong>Clear Local Cache:</strong> You can instantly purge all local caches, offline schedules, and session logs on your device by using the "Clear Cache" button inside the app.</li>
+          <li><strong>Full Account Deletion:</strong> If you wish to delete your account permanently, you can select the "Delete Account" option. This action will immediately and irrevocably delete your profile, credentials, enrolled courses, and summaries from our Supabase servers.</li>
+        </ul>
+      </section>
+
+      <!-- Section 7: Children's Privacy -->
+      <section id="children-privacy" class="section-card">
+        <h2><span class="section-num">7</span>Children's Privacy</h2>
+        <p>The EWUmate App is built specifically for adult university students enrolled at East West University. We do not knowingly solicit or collect personal information from individuals under the age of 13. If we discover that a child under 13 has registered or provided personal information, we will immediately purge the record from our active databases.</p>
+      </section>
+
+      <!-- Section 8: Updates -->
+      <section id="updates" class="section-card">
+        <h2><span class="section-num">8</span>Changes to this Privacy Policy</h2>
+        <p>We reserve the right to modify or update this Privacy Policy at any time to reflect software additions, security updates, or policy enhancements. When updates are published:</p>
+        <ol>
+          <li>We will adjust the <strong>"Last Updated"</strong> timestamp at the very top of this page.</li>
+          <li>For major modifications, we will post an in-app notice or deliver an announcement email to ensure you are aware of how the updates affect your active sessions.</li>
+        </ol>
+        <p>We encourage you to periodically review this page to remain informed about our modern security frameworks.</p>
+      </section>
+
+      <!-- Section 9: Contact -->
+      <section id="contact" class="section-card">
+        <h2><span class="section-num">9</span>Contact & Support Channels</h2>
+        <p>If you have any suggestions, concerns, or queries regarding this policy, or if you wish to report a security vulnerability, please contact our administrative team through the following official channels:</p>
+        
+        <div class="data-table">
+          <div class="data-row">
+            <div class="data-label">Support Email</div>
+            <div class="data-value">
+              <a href="mailto:support@ewumate.pro.bd" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">support@ewumate.pro.bd</a>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">Administration</div>
+            <div class="data-value">
+              <a href="mailto:admin@ewumate.pro.bd" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">admin@ewumate.pro.bd</a>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">GitHub Repository</div>
+            <div class="data-value">
+              <a href="https://github.com/rxxeron/EWUmate" target="_blank" rel="noopener noreferrer" style="color: var(--text-primary); text-decoration: underline;">github.com/rxxeron/EWUmate</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </article>
+  </main>
+
+  <!-- Back to Top Button -->
+  <button id="backToTop" class="back-to-top" aria-label="Scroll to top" title="Scroll to top">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+  </button>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <a href="https://ewumate.pro.bd" class="footer-logo">
+        <div class="brand-logo" style="width: 24px; height: 24px; font-size: 0.875rem; border-radius: 6px; box-shadow: none;">E</div>
+        <div class="brand-name" style="font-size: 1rem;">EWU<span>mate</span></div>
+      </a>
+      <p class="footer-text">© 2026 EWUmate. Designed for East West University students.</p>
+      <div class="footer-links">
+        <a href="https://ewumate.pro.bd" class="footer-link">Home</a>
+        <a href="#introduction" class="footer-link">Privacy Policy</a>
+        <a href="https://github.com/rxxeron/EWUmate" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script for Interactive UX -->
+  <script>
+    // Theme Toggle Logic
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const sunIcon = themeToggleBtn.querySelector('.sun-icon');
+    const moonIcon = themeToggleBtn.querySelector('.moon-icon');
+    
+    // Check for saved theme preference, otherwise use system preference
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcons(savedTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcons(newTheme);
+    });
+
+    function updateThemeIcons(theme) {
+      if (theme === 'light') {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    }
+
+    // Scroll progress bar
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      document.getElementById('progressBar').style.width = scrolled + '%';
+      
+      // Show/Hide Back to Top button
+      const backToTop = document.getElementById('backToTop');
+      if (winScroll > 400) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    });
+
+    // Back to top click
+    document.getElementById('backToTop').addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Search terms with real-time text highlight
+    const searchInput = document.getElementById('searchInput');
+    const sections = document.querySelectorAll('.section-card');
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase().trim();
+      
+      sections.forEach(section => {
+        // Remove existing highlights
+        removeHighlights(section);
+        section.classList.remove('highlight-search');
+        
+        if (query.length < 2) return;
+        
+        const sectionText = section.textContent.toLowerCase();
+        if (sectionText.includes(query)) {
+          section.classList.add('highlight-search');
+          highlightText(section, query);
+        }
+      });
+    });
+
+    function highlightText(element, query) {
+      // Traverse text nodes to wrap matching terms in <mark> tags
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+      const textNodes = [];
+      let node;
+      
+      while (node = walker.nextNode()) {
+        textNodes.push(node);
+      }
+      
+      textNodes.forEach(node => {
+        const parent = node.parentNode;
+        if (parent.tagName === 'MARK' || parent.tagName === 'A' || parent.tagName === 'SCRIPT' || parent.tagName === 'STYLE' || parent.tagName === 'H2') return;
+        
+        const text = node.nodeValue;
+        const index = text.toLowerCase().indexOf(query);
+        
+        if (index >= 0) {
+          const match = text.substr(index, query.length);
+          const before = text.substr(0, index);
+          const after = text.substr(index + query.length);
+          
+          const highlightSpan = document.createElement('mark');
+          highlightSpan.textContent = match;
+          
+          const beforeNode = document.createTextNode(before);
+          const afterNode = document.createTextNode(after);
+          
+          parent.insertBefore(beforeNode, node);
+          parent.insertBefore(highlightSpan, node);
+          parent.insertBefore(afterNode, node);
+          parent.removeChild(node);
+        }
+      });
+    }
+
+    function removeHighlights(element) {
+      const marks = element.querySelectorAll('mark');
+      marks.forEach(mark => {
+        const parent = mark.parentNode;
+        parent.replaceChild(document.createTextNode(mark.textContent), mark);
+        parent.normalize(); // Merge adjacent text nodes
+      });
+    }
+
+    // Scrollspy for sidebar active state
+    const tocLinks = document.querySelectorAll('.toc-link');
+    
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -60% 0px', // Trigger when section is in the middle of viewport
+      threshold: 0
+    };
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          tocLinks.forEach(link => {
+            if (link.getAttribute('href') === `#${id}`) {
+              link.classList.add('active');
+            } else {
+              link.classList.remove('active');
+            }
+          });
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      sectionObserver.observe(section);
+    });
+  </script>
+</body>
+</html>

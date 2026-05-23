@@ -10,29 +10,67 @@ import '../../../core/utils/grade_helper.dart';
 import '../../semester_progress/semester_summary_providers.dart';
 import '../../../core/models/grade_scale.dart';
 import '../../../core/utils/error_utils.dart';
+import '../../auth/auth_providers.dart';
 
-// Provides the list of enrollments needing grades
+// Provides the list of enrollments needing grades (filtered by blocking logic)
 final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
   final user = ref.read(currentUserProvider);
   if (user == null) return [];
 
+  final profile = await ref.watch(profileProvider.future);
+  if (profile == null) return [];
+
   final cache = ref.read(cacheServiceProvider);
   final cacheKey = 'pending_grades_${user.id}';
 
   try {
-    // Query enrollments with 'enrolled' status that have no grade
-    final res = await Supabase.instance.client
+    // 1. Fetch Active Semester configuration
+    String track = profile.track ?? profile.semesterType;
+    if (track == 'tri') track = 'tri_semester';
+    if (track == 'bi') track = 'bi_semester';
+
+    final client = Supabase.instance.client;
+    final activeSemRes = await client
+        .from('active_semester')
+        .select()
+        .eq('track', track)
+        .maybeSingle();
+
+    final activeCode = activeSemRes?['current_semester_code'];
+    final submissionStartStr = activeSemRes?['grade_submission_start'];
+
+    bool isPhase2Active = false;
+    if (submissionStartStr != null) {
+      final submissionStart = DateTime.tryParse(submissionStartStr.toString());
+      if (submissionStart != null && DateTime.now().isAfter(submissionStart.add(const Duration(days: 1)))) {
+        isPhase2Active = true;
+      }
+    }
+
+    // 2. Query ALL enrollments with 'enrolled' status that have no grade
+    final res = await client
         .from('enrollments')
         .select()
         .eq('user_id', user.id)
         .eq('status', 'enrolled')
         .isFilter('grade', null);
 
-    final data = List<Map<String, dynamic>>.from(res);
-    cache.setMapData('dashboard_box', cacheKey, {'data': data});
-    return data;
+    final allData = List<Map<String, dynamic>>.from(res);
+
+    // 3. Filter: Only show those that are actually blocking
+    // - Past courses (Phase 1)
+    // - Current courses if submission window is open (Phase 2)
+    final filteredData = allData.where((enrollment) {
+      final semCode = enrollment['semester_code'];
+      if (activeCode == null) return true; // Fallback if no active sem config
+      if (semCode != activeCode) return true; // Past hanging course
+      return isPhase2Active; // Current course only if deadline passed
+    }).toList();
+
+    cache.setMapData('dashboard_box', cacheKey, {'data': filteredData});
+    return filteredData;
   } catch (e) {
     if (kDebugMode) debugPrint('[GradeEntry] Pending grades fallback: $e');
     final cached = cache.getMapData('dashboard_box', cacheKey);
@@ -42,6 +80,7 @@ final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
     return [];
   }
 });
+
 
 class GradeEntryScreen extends ConsumerStatefulWidget {
   const GradeEntryScreen({super.key});
@@ -109,6 +148,8 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
       }
 
       ref.invalidate(pendingGradesProvider);
+      ref.invalidate(requiresGradeEntryProvider);
+      
       if (mounted) {
         // Go back to auth check
         context.go('/');

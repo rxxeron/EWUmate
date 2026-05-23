@@ -56,14 +56,22 @@ class _CourseProgressDetailScreenState
     _data = Map<String, dynamic>.from(widget.courseData);
     _tabController = TabController(length: 2, vsync: this);
 
-    _quizStrategy = _data['quiz_strategy'] ?? 'best_one';
+    String normalizeStrategy(String? s) {
+      if (s == null) return 'best_one';
+      final cleaned = s.toLowerCase().replaceAll(' ', '_');
+      if (cleaned == 'bestn') return 'best_n';
+      if (cleaned == 'averagen') return 'average_n';
+      return cleaned;
+    }
+
+    _quizStrategy = normalizeStrategy(_data['quiz_strategy']?.toString());
     // Removed legacy sum_all overwrite to support Best N correctly
     _quizNCtrl = TextEditingController(
       text: _data['quiz_n']?.toString() ?? '1',
     );
 
     Map<String, dynamic> extra = _data['marks_data'] ?? {};
-    _shortQuizStrategy = extra['short_quiz_strategy'] ?? 'best_one';
+    _shortQuizStrategy = normalizeStrategy(extra['short_quiz_strategy']?.toString());
     // Removed legacy sum_all overwrite to support Best N correctly
     _shortQuizNCtrl = TextEditingController(
       text: _data['short_quiz_n']?.toString() ?? '1',
@@ -441,7 +449,7 @@ class _CourseProgressDetailScreenState
           ),
         );
         RefreshUtils.refreshAcademicData(ref);
-        ref.invalidate(semesterProgressDataProvider);
+        ref.invalidate(semesterProgressDataProvider(widget.semesterCode));
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -421,6 +421,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       icon: Image.network(
                         'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
                         height: 20,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text(
+                                "G",
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       label: const Text("Sign up with Google",
                           style: TextStyle(

@@ -396,7 +396,7 @@ export function UserDetails() {
                 <span className='text-[10px] font-black bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full uppercase tracking-widest'>{user.track?.replace('_', ' ') || 'Tri-Semester'}</span>
                 {(user as any).app_version && (
                   <span className='text-[10px] font-black bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-widest flex items-center gap-1'>
-                    <Zap className="w-3 h-3" /> v{(user as any).app_version}
+                    <Zap className="w-3 h-3" /> {/^\d/.test((user as any).app_version) ? `v${(user as any).app_version}` : (user as any).app_version}
                   </span>
                 )}
               </div>

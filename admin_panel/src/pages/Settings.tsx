@@ -168,7 +168,7 @@ export function Settings() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
                           <span className={`text-lg font-mono font-bold truncate ${isLatest ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-slate-300'}`}>
-                            v{version}
+                            {/^\d/.test(version) ? `v${version}` : version}
                           </span>
                           {isLatest && (
                             <span className="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">

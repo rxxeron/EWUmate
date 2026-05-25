@@ -370,7 +370,7 @@ export function UsersList() {
                       {(user as any).app_version ? (
                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
                            <Package className="w-3 h-3" />
-                           <span className="text-[10px] font-black uppercase tracking-widest">v{(user as any).app_version}</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest">{/^\d/.test((user as any).app_version) ? `v${(user as any).app_version}` : (user as any).app_version}</span>
                         </div>
                       ) : (
                         <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest">Legacy</span>

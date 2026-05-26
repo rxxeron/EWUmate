@@ -35,7 +35,7 @@ class FacultyRepository {
       // Fetch from the MASTER table directly
       final data = await _supabase
           .from('faculty_master')
-          .select('id, full_name, short_name, email, designation_name, photo_url')
+          .select('id, full_name, short_name, email, designation_name, photo_url, office_room')
           .order('full_name', ascending: true);
 
       final list = data as List;
@@ -60,7 +60,7 @@ class FacultyRepository {
     try {
       final data = await _supabase
           .from('faculty_master')
-          .select('id, full_name, short_name, email, designation_name, photo_url')
+          .select('id, full_name, short_name, email, designation_name, photo_url, office_room')
           .or('full_name.ilike.%$query%,short_name.ilike.%$query%,email.ilike.%$query%')
           .order('full_name', ascending: true);
           

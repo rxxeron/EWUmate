@@ -15,14 +15,15 @@ class OfficeHoursRepository {
 
   OfficeHoursRepository(this._supabase);
 
-  // Fetch approved office hours for a faculty member
-  Future<List<FacultyOfficeHour>> getApprovedOfficeHours(String initials) async {
+  // Fetch approved office hours for a faculty member for a specific semester
+  Future<List<FacultyOfficeHour>> getApprovedOfficeHours(String initials, String semesterCode) async {
     try {
       final normalized = initials.trim().toUpperCase();
       final data = await _supabase
           .from('faculty_office_hours')
           .select()
           .eq('status', 'approved')
+          .eq('semester_code', semesterCode)
           .ilike('faculty_initials', normalized)
           .order('day', ascending: true);
 
@@ -56,6 +57,8 @@ class OfficeHoursRepository {
     required String fileName,
     required String facultyInitials,
     required List<Map<String, String>> slots,
+    required String semesterCode,
+    String? officeRoom,
   }) async {
     final fileBytes = await file.readAsBytes();
     final fileSizeBytes = fileBytes.length;
@@ -121,6 +124,8 @@ class OfficeHoursRepository {
       'file_name': fileName,
       'submitted_by': user.id,
       'status': 'pending', // Seed as pending, awaiting moderation approval
+      'semester_code': semesterCode,
+      'office_room': officeRoom,
     }).toList();
 
     await _supabase.from('faculty_office_hours').insert(rows);

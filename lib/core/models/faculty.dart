@@ -6,6 +6,7 @@ class Faculty {
   final String? email;
   final String? photoUrl;
   final String? profileUrl;
+  final String? officeRoom;
 
   Faculty({
     required this.id,
@@ -15,6 +16,7 @@ class Faculty {
     this.email,
     this.photoUrl,
     this.profileUrl,
+    this.officeRoom,
   });
 
   factory Faculty.fromMap(Map<String, dynamic> map) {
@@ -26,6 +28,7 @@ class Faculty {
       email: map['email'],
       photoUrl: map['photo_url'],
       profileUrl: map['profile_url'],
+      officeRoom: map['office_room'],
     );
   }
 
@@ -38,6 +41,7 @@ class Faculty {
       'email': email,
       'photo_url': photoUrl,
       'profile_url': profileUrl,
+      'office_room': officeRoom,
     };
   }
 }

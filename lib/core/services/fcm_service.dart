@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
 import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
 import '../repositories/notification_repository.dart';
@@ -26,6 +27,18 @@ class FCMService {
   Future<void> initialize() async {
     // 0. Register Background Handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    // Handle terminated-state notification tap (app was fully closed)
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleIncomingAction(
+          initialMessage.notification?.title,
+          initialMessage.notification?.body,
+          initialMessage.data['url'] as String?,
+        );
+      });
+    }
 
     // 1. Setup Local Notifications for Foreground and Channel Creation
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -148,12 +161,13 @@ class FCMService {
   }
 
   void _handleIncomingAction(String? title, String? body, String? url) {
-    if (url != null && url.isNotEmpty) {
-      if (url.startsWith('http')) {
-        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      }
+    if (url == null || url.isEmpty) return;
+    if (url.startsWith('/')) {
+      final context = rootNavigatorKey.currentContext;
+      if (context != null) context.go(url);
+    } else if (url.startsWith('http')) {
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
-    // You can add more complex routing here if needed
   }
 
   void showNotificationPopup(String title, String body, String? url) {

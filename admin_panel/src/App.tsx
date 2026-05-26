@@ -20,6 +20,7 @@ import { DataQuality } from './pages/DataQuality';
 import { PortalAutomation } from './pages/PortalAutomation';
 import { StudyVaultManager } from './pages/StudyVaultManager';
 import { OfficeHoursModeration } from './pages/OfficeHoursModeration';
+import { TutorialsManager } from './pages/TutorialsManager';
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
             <Route path='/scraper' element={<PortalAutomation />} />
             <Route path='/study-vault' element={<StudyVaultManager />} />
             <Route path='/office-hours' element={<OfficeHoursModeration />} />
+            <Route path='/tutorials' element={<TutorialsManager />} />
 
             <Route path='/calendar-editor' element={<CalendarEditor />} />
             <Route path='/settings' element={<Settings />} />

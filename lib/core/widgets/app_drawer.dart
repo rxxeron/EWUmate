@@ -127,6 +127,13 @@ class AppDrawer extends ConsumerWidget {
                     color: Colors.amberAccent,
                   ),
                   _buildDrawerItem(
+                    context,
+                    Icons.play_circle_outline_rounded,
+                    'Tutorials',
+                    () => context.push('/tutorials'),
+                    color: Colors.purpleAccent,
+                  ),
+                  _buildDrawerItem(
                         context, Icons.feedback_outlined, "Feedback & Support",
                         () => context.push('/feedback'),
                         color: Colors.lightGreenAccent),                  const Divider(color: Colors.white24),

@@ -34,6 +34,7 @@ import '../../features/schedule/presentation/schedule_screen.dart';
 import '../../features/advising/presentation/next_semester_screen.dart';
 import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
+import '../../features/tutorials/presentation/tutorials_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -108,6 +109,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/next-semester', builder: (context, state) => const NextSemesterScreen()),
       GoRoute(path: '/results/grade-entry', builder: (context, state) => const GradeEntryScreen()),
       GoRoute(path: '/feedback', builder: (context, state) => const FeedbackScreen()),
+      GoRoute(path: '/tutorials', builder: (context, state) => const TutorialsScreen()),
     ],
   );
 });

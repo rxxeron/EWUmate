@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/faculty.dart';
+import '../models/course_section.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
 
@@ -69,6 +70,36 @@ class FacultyRepository {
       return [];
     }
   }
+
+  Future<List<CourseSection>> getFacultySections(String initials, String semesterCode) async {
+    final safeSem = semesterCode.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+    final tableName = 'courses_$safeSem';
+    try {
+      final data = await _supabase
+          .from(tableName)
+          .select()
+          .ilike('faculty_initials', initials);
+
+      return (data as List).map((e) {
+        final map = Map<String, dynamic>.from(e);
+        map['id'] = map['id']?.toString() ?? e['course_code'];
+        map['code'] = map['course_code'] ?? map['code'];
+        map['section'] = map['section_number'] ?? map['section'];
+        map['sessions'] = (map['schedule_data'] as List? ?? []).map((s) {
+          final sessionMap = Map<String, dynamic>.from(s);
+          sessionMap['start_time'] = sessionMap['startTime'] ?? sessionMap['start_time'];
+          sessionMap['end_time'] = sessionMap['endTime'] ?? sessionMap['end_time'];
+          return sessionMap;
+        }).toList();
+        map['capacity'] = map['capacity']?.toString() ?? '0/0';
+        map['credits'] = map['credit_val']?.toString() ?? '3.0';
+        return CourseSection.fromJson(map);
+      }).toList();
+    } catch (e) {
+      if (kDebugMode) print('Failed to fetch faculty sections: $e');
+      return [];
+    }
+  }
 }
 
 @riverpod
@@ -82,4 +113,15 @@ FacultyRepository facultyRepository(FacultyRepositoryRef ref) {
 @riverpod
 Future<List<Faculty>> allFaculty(AllFacultyRef ref) {
   return ref.watch(facultyRepositoryProvider).getAllFaculty();
+}
+
+@riverpod
+Future<List<CourseSection>> facultySections(
+  FacultySectionsRef ref, {
+  required String initials,
+  required String semesterCode,
+}) {
+  return ref
+      .watch(facultyRepositoryProvider)
+      .getFacultySections(initials, semesterCode);
 }

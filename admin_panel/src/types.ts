@@ -322,7 +322,7 @@ export interface DriveAccount {
   is_active: boolean;
   folder_id: string;
   created_at: string;
-  purpose: string; // Add the purpose field ('study_vault' | 'office_hours')
+  purpose?: string; // Add the purpose field ('study_vault' | 'office_hours')
 }
 
 // --- Faculty Office Hour Submissions ---

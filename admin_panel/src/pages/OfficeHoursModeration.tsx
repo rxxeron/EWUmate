@@ -9,10 +9,8 @@ import {
   Search, 
   User, 
   RefreshCw, 
-  CalendarDays, 
   HardDrive,
-  FileText,
-  AlertCircle
+  FileText
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,7 +25,6 @@ export function OfficeHoursModeration() {
 
   // Storage Pools state
   const [driveAccounts, setDriveAccounts] = useState<DriveAccount[]>([]);
-  const [loadingDrive, setLoadingDrive] = useState(true);
 
   useEffect(() => {
     fetchOfficeHours();
@@ -35,7 +32,6 @@ export function OfficeHoursModeration() {
   }, []);
 
   async function fetchDriveAccounts() {
-    setLoadingDrive(true);
     try {
       const { data, error } = await supabase
         .from('drive_accounts')
@@ -47,8 +43,6 @@ export function OfficeHoursModeration() {
     } catch (err: any) {
       console.error('Error fetching drive accounts:', err);
       toast.error('Failed to load drive accounts.');
-    } finally {
-      setLoadingDrive(false);
     }
   }
 
@@ -225,18 +219,7 @@ export function OfficeHoursModeration() {
     }
   }
 
-  // Helper colors for status badges
-  function getStatusStyle(status: string) {
-    switch (status) {
-      case 'approved':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      case 'rejected':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-      case 'pending':
-      default:
-        return 'bg-sky-500/10 text-sky-400 border-sky-500/20';
-    }
-  }
+
 
   // Format file size nicely
   function formatBytes(bytes: number, decimals = 2) {

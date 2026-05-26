@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Settings as SettingsIcon, RefreshCw } from 'lucide-react';
+import { Settings as SettingsIcon, RefreshCw, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';
 
@@ -9,6 +9,7 @@ export function Settings() {
   const [versionStats, setVersionStats] = useState<Record<string, { count: number, students: any[] }>>({});
   const [expandedVersions, setExpandedVersions] = useState<Set<string>>(new Set());
   const [updateConfig, setUpdateConfig] = useState<any>(null);
+  const [adConfig, setAdConfig] = useState<any>(null);
 
   useEffect(() => {
     fetchConfigs();
@@ -43,8 +44,8 @@ export function Settings() {
     setExpandedVersions(newExpanded);
   };
 
-  async function fetchConfigs() {
-    setLoading(true);
+  async function fetchConfigs(silent = false) {
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from('app_config')
       .select('*')
@@ -53,11 +54,100 @@ export function Settings() {
     if (!error && data) {
       const updateInfo = data.find(c => c.key === 'update_info');
       if (updateInfo) setUpdateConfig(updateInfo);
+
+      const ads = data.find(c => c.key === 'ad_settings');
+      if (ads) {
+        const val = ads.value || {};
+        const mergedVal = {
+          is_enabled: val.is_enabled ?? true,
+          banner_enabled: val.banner_enabled ?? true,
+          native_enabled: val.native_enabled ?? true,
+          interstitial_enabled: val.interstitial_enabled ?? true,
+          screens: {
+            pre_advising: val.screens?.pre_advising ?? true,
+            cover_page: val.screens?.cover_page ?? true,
+            semester_progress: val.screens?.semester_progress ?? true,
+            degree_progress: val.screens?.degree_progress ?? true,
+            course_browser: val.screens?.course_browser ?? true,
+            faculty_directory: val.screens?.faculty_directory ?? true,
+            services: val.screens?.services ?? true,
+            study_vault: val.screens?.study_vault ?? true,
+            tasks: val.screens?.tasks ?? true,
+            ...(val.screens || {})
+          }
+        };
+        setAdConfig({ ...ads, value: mergedVal });
+      } else {
+        setAdConfig({
+          key: 'ad_settings',
+          value: {
+            is_enabled: true,
+            banner_enabled: true,
+            native_enabled: true,
+            interstitial_enabled: true,
+            screens: {
+              pre_advising: true,
+              cover_page: true,
+              semester_progress: true,
+              degree_progress: true,
+              course_browser: true,
+              faculty_directory: true,
+              services: true,
+              study_vault: true,
+              tasks: true
+            }
+          }
+        });
+      }
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
   }
 
+  const handleAdSettingsUpdate = async (updatedValue: any) => {
+    // Optimistic state update
+    setAdConfig((prev: any) => ({
+      ...prev,
+      value: updatedValue
+    }));
+
+    const { data: checkData } = await supabase
+      .from('app_config')
+      .select('key')
+      .eq('key', 'ad_settings')
+      .maybeSingle();
+
+    let error;
+    if (checkData) {
+      const { error: updateError } = await supabase
+        .from('app_config')
+        .update({ value: updatedValue })
+        .eq('key', 'ad_settings');
+      error = updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from('app_config')
+        .insert([{ key: 'ad_settings', value: updatedValue }]);
+      error = insertError;
+    }
+
+    if (error) {
+      toast.error('Failed to update ad configurations: ' + error.message);
+      await fetchConfigs(true);
+    } else {
+      toast.success(`Monetization settings saved successfully!`);
+      await fetchConfigs(true);
+    }
+  };
+
   const handleUpdate = async (itemKey: string, updates: any) => {
+    // Optimistic state update if update_info
+    if (itemKey === 'update_info') {
+      setUpdateConfig((prev: any) => ({
+        ...prev,
+        ...updates
+      }));
+    }
+
     const { error } = await supabase
       .from('app_config')
       .update(updates)
@@ -65,9 +155,10 @@ export function Settings() {
 
     if (error) {
       toast.error('Failed to update config: ' + error.message);
+      await fetchConfigs(true);
     } else {
       toast.success('Configuration saved');
-      await fetchConfigs();
+      await fetchConfigs(true);
     }
   };
 
@@ -138,6 +229,106 @@ export function Settings() {
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${updateConfig?.value?.update_available ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* AdMob Monetization Controls Card */}
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-indigo-100 dark:border-white/5 overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-indigo-50 to-white dark:from-slate-900 dark:to-slate-800 border-b border-indigo-100 dark:border-white/5">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Globe className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                AdMob Monetization Controls
+              </h3>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Master Global Toggle */}
+              <div className="flex items-center justify-between p-4 bg-emerald-50/10 dark:bg-emerald-500/5 rounded-xl border border-emerald-100 dark:border-emerald-500/10">
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white">Enable Mobile Advertisements (Master Switch)</h4>
+                  <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">When disabled, all ads are turned off instantly across the entire app regardless of other settings.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const nextVal = !adConfig?.value?.is_enabled;
+                    await handleAdSettingsUpdate({ ...adConfig?.value, is_enabled: nextVal });
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer shrink-0 ${adConfig?.value?.is_enabled ? 'bg-emerald-500' : 'bg-gray-200 dark:bg-slate-700'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${adConfig?.value?.is_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              {adConfig?.value?.is_enabled && (
+                <div className="space-y-6 border-t border-gray-100 dark:border-white/5 pt-6">
+                  {/* Format Toggles */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Ad Format Toggles</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[
+                        { key: 'banner_enabled', title: 'Banner Ads', desc: 'Tiny rectangular ads at bottom slots.' },
+                        { key: 'native_enabled', title: 'Native Ads', desc: 'Grid style tile ads matching content layout.' },
+                        { key: 'interstitial_enabled', title: 'Interstitial Ads', desc: 'Full-screen ads during action triggers.' }
+                      ].map((format) => (
+                        <div key={format.key} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-gray-100 dark:border-white/5">
+                          <div className="mr-4">
+                            <h5 className="font-bold text-sm text-gray-900 dark:text-white">{format.title}</h5>
+                            <p className="text-[10px] text-gray-500 dark:text-slate-500 mt-0.5">{format.desc}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const nextVal = !adConfig?.value?.[format.key];
+                              await handleAdSettingsUpdate({ ...adConfig?.value, [format.key]: nextVal });
+                            }}
+                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer shrink-0 ${adConfig?.value?.[format.key] ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-slate-700'}`}
+                          >
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${adConfig?.value?.[format.key] ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Screen Placement Toggles */}
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mb-4">Screen Placement Toggles</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {[
+                        { key: 'pre_advising', title: 'Pre-Advising Interstitials', desc: 'Ad shown before schedule combinations.' },
+                        { key: 'cover_page', title: 'Cover Page Interstitials', desc: 'Ad shown before PDF report download.' },
+                        { key: 'semester_progress', title: 'Semester Progress Banners', desc: 'Banner placed on progress view.' },
+                        { key: 'degree_progress', title: 'Degree Progress Native', desc: 'Grid ad placed under credits tracker.' },
+                        { key: 'course_browser', title: 'Course Browser Native', desc: 'Grid ad embedded in directory list.' },
+                        { key: 'faculty_directory', title: 'Faculty Directory Native', desc: 'Tile ad in teacher browser lists.' },
+                        { key: 'services', title: 'Services Tab Native', desc: 'Integrated tile inside support services.' },
+                        { key: 'study_vault', title: 'Study Vault Native', desc: 'Tile placed inside materials vault.' },
+                        { key: 'tasks', title: 'Tasks Manager Native', desc: 'Pastel red tile placed under personal tasks.' }
+                      ].map((screen) => (
+                        <div key={screen.key} className="flex items-center justify-between p-3.5 bg-slate-50/50 dark:bg-slate-900/30 rounded-xl border border-gray-100 dark:border-white/5">
+                          <div className="mr-4">
+                            <h5 className="font-bold text-xs text-gray-900 dark:text-white">{screen.title}</h5>
+                            <p className="text-[9px] text-gray-500 dark:text-slate-500 mt-0.5">{screen.desc}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const nextScreens = {
+                                ...adConfig?.value?.screens,
+                                [screen.key]: !adConfig?.value?.screens?.[screen.key]
+                              };
+                              await handleAdSettingsUpdate({ ...adConfig?.value, screens: nextScreens });
+                            }}
+                            className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors cursor-pointer shrink-0 ${adConfig?.value?.screens?.[screen.key] ? 'bg-indigo-500' : 'bg-gray-200 dark:bg-slate-700'}`}
+                          >
+                            <span className={`inline-block h-3  w-3 transform rounded-full bg-white transition-transform ${adConfig?.value?.screens?.[screen.key] ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

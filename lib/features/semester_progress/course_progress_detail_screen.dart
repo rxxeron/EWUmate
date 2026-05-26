@@ -4,6 +4,7 @@ import '../../core/repositories/auth_repository.dart';
 import 'semester_progress_repository.dart';
 import '../../core/utils/error_utils.dart';
 import '../../core/utils/refresh_utils.dart';
+import '../../core/widgets/premium_banner_ad.dart';
 
 class CourseProgressDetailScreen extends ConsumerStatefulWidget {
   final Map<String, dynamic> courseData;
@@ -655,6 +656,10 @@ class _CourseProgressDetailScreenState
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
       children: [
+        const PremiumBannerAd(
+          screenName: 'semester_progress',
+          margin: EdgeInsets.only(bottom: 16),
+        ),
         _buildSummaryCard(currentObtained, totalMarks, grade),
         const SizedBox(height: 24),
 

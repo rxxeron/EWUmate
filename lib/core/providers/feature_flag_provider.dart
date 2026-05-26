@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/supabase_provider.dart';
 import '../../features/auth/auth_providers.dart';
 
@@ -53,3 +54,57 @@ Future<bool> isNextSemesterOpen(IsNextSemesterOpenRef ref) async {
   } catch (_) {}
   return false;
 }
+
+final adSettingsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  try {
+    final res = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'ad_settings')
+        .maybeSingle();
+    
+    if (res != null && res['value'] != null) {
+      final val = res['value'];
+      if (val is Map) {
+        return Map<String, dynamic>.from(val);
+      }
+    }
+  } catch (_) {}
+  return {};
+});
+
+final isAdsEnabledProvider = Provider<bool>((ref) {
+  final settingsAsync = ref.watch(adSettingsProvider);
+  return settingsAsync.maybeWhen(
+    data: (settings) => settings['is_enabled'] ?? true,
+    orElse: () => true,
+  );
+});
+
+final isAdEnabledForProvider = Provider.family<bool, String>((ref, key) {
+  final settingsAsync = ref.watch(adSettingsProvider);
+  return settingsAsync.maybeWhen(
+    data: (settings) {
+      // 1. Global master check
+      final globalEnabled = settings['is_enabled'] ?? true;
+      if (!globalEnabled) return false;
+
+      // 2. Type format checks
+      if (key == 'banner' && !(settings['banner_enabled'] ?? true)) return false;
+      if (key == 'native' && !(settings['native_enabled'] ?? true)) return false;
+      if (key == 'interstitial' && !(settings['interstitial_enabled'] ?? true)) return false;
+
+      // 3. Screen placement checks
+      final screens = settings['screens'];
+      if (screens is Map) {
+        if (screens.containsKey(key)) {
+          return screens[key] ?? true;
+        }
+      }
+
+      return true; // ON by default if key doesn't exist
+    },
+    orElse: () => true, // ON by default while loading/error
+  );
+});

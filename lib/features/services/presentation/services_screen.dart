@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/widgets/premium_native_ad.dart';
 
 class ServicesScreen extends StatelessWidget {
   const ServicesScreen({super.key});
@@ -11,7 +12,7 @@ class ServicesScreen extends StatelessWidget {
         title: const Text('Services'),
         centerTitle: false,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -21,12 +22,13 @@ class ServicesScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
                   _buildServiceCard(
                     context,
                     title: 'Cover Page Generator',
@@ -36,6 +38,10 @@ class ServicesScreen extends StatelessWidget {
                     onTap: () {
                       context.push('/services/cover-page');
                     },
+                  ),
+                  const PremiumNativeAd(
+                    screenName: 'services',
+                    isTile: true,
                   ),
                   _buildServiceCard(
                     context,
@@ -67,8 +73,11 @@ class ServicesScreen extends StatelessWidget {
                       context.push('/services/study-vault');
                     },
                   ),
-                ],
-              ),
+                  const PremiumNativeAd(
+                    screenName: 'services',
+                    isTile: true,
+                  ),
+              ],
             ),
           ],
         ),
@@ -98,7 +107,7 @@ class ServicesScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: iconColor.withOpacity(0.9),
+                color: iconColor.withValues(alpha: 0.9),
               ),
             ),
           ],

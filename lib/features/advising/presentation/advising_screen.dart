@@ -10,6 +10,7 @@ import 'user_academic_providers.dart';
 import 'advising_notifier.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../../core/providers/feature_flag_provider.dart';
+import '../../../core/utils/ad_helper.dart';
 
 class AdvisingScreen extends ConsumerStatefulWidget {
   const AdvisingScreen({super.key});
@@ -25,10 +26,12 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
   String _searchQuery = "";
   final Set<String> _hiddenFaculties = {};
   Timer? _refreshTimer;
+  late final InterstitialAdManager _adManager;
 
   @override
   void initState() {
     super.initState();
+    _adManager = InterstitialAdManager();
     _tabController = TabController(length: 3, vsync: this);
     _refreshTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
       if (mounted) {
@@ -40,6 +43,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
 
   @override
   void dispose() {
+    _adManager.dispose();
     _tabController.dispose();
     _searchController.dispose();
     _refreshTimer?.cancel();
@@ -51,6 +55,19 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
     final activeSemAsync = ref.watch(activeSemesterProvider);
     final advisingState = ref.watch(advisingNotifierProvider);
     final isFeatureOpenAsync = ref.watch(isAdvisingOpenProvider);
+    
+    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('pre_advising'));
+    final interstitialFormatEnabled = ref.watch(isAdEnabledForProvider('interstitial'));
+    final adsEnabled = screenAdsEnabled && interstitialFormatEnabled;
+    if (adsEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _adManager.loadAd(enabled: true);
+        }
+      });
+    } else {
+      _adManager.dispose();
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF16202A),
@@ -72,6 +89,8 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         color: Colors.cyan,
         backgroundColor: const Color(0xFF1E2836),
         child: activeSemAsync.when(
+          skipLoadingOnReload: true,
+          skipLoadingOnRefresh: true,
           data: (activeSem) {
             if (activeSem != null) {
               final now = DateTime.now();
@@ -185,6 +204,9 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
   Widget _buildSelectionTab(ActiveSemester? activeSem) {
     final availableCoursesAsync = ref.watch(availableAdvisingCoursesProvider);
     final advisingState = ref.watch(advisingNotifierProvider);
+    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('pre_advising'));
+    final interstitialFormatEnabled = ref.watch(isAdEnabledForProvider('interstitial'));
+    final adsEnabled = screenAdsEnabled && interstitialFormatEnabled;
 
     return Column(
       children: [
@@ -286,6 +308,8 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
         // Course List
         Expanded(
           child: availableCoursesAsync.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
             data: (courses) {
               final queryMatch = _searchQuery.toLowerCase().replaceAll(' ', '');
               final filtered = courses.where((c) {
@@ -319,13 +343,16 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                     child: GlassContainer(
                       opacity: 0.05,
                       borderRadius: 16,
-                      child: ListTile(
-                        onTap: () => ref.read(advisingNotifierProvider.notifier).toggleCourse(course.code),
-                        title: Text(course.code, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        subtitle: Text(course.name, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                        trailing: Icon(
-                          isSelected ? Icons.check_circle : Icons.add_circle_outline,
-                          color: isSelected ? Colors.cyan : Colors.grey[600],
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          onTap: () => ref.read(advisingNotifierProvider.notifier).toggleCourse(course.code),
+                          title: Text(course.code, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          subtitle: Text(course.name, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                          trailing: Icon(
+                            isSelected ? Icons.check_circle : Icons.add_circle_outline,
+                            color: isSelected ? Colors.cyan : Colors.grey[600],
+                          ),
                         ),
                       ),
                     ),
@@ -380,14 +407,19 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
             child: SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: advisingState.isGenerating ? null : () async {
-                  final user = ref.read(currentUserProvider);
-                  if (user != null && activeSem != null) {
-                    ref.read(advisingNotifierProvider.notifier).startGeneration(
-                      userId: user.id,
-                      semester: activeSem.nextSemesterCode!,
-                    );
-                  }
+                onPressed: advisingState.isGenerating ? null : () {
+                  _adManager.showAd(
+                    enabled: adsEnabled,
+                    onAdDismissed: () {
+                      final user = ref.read(currentUserProvider);
+                      if (user != null && activeSem != null) {
+                        ref.read(advisingNotifierProvider.notifier).startGeneration(
+                          userId: user.id,
+                          semester: activeSem.nextSemesterCode!,
+                        );
+                      }
+                    },
+                  );
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.cyan,
@@ -410,6 +442,8 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
     final semesterName = activeSem?.nextSemesterCode ?? 'Next Semester';
 
     return trackerAsync.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       data: (data) {
         if (data == null) return const Center(child: Text('Generation session missing.', style: TextStyle(color: Colors.white)));
 
@@ -637,21 +671,24 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                         final name = sec['course_name'] ?? sec['name'] ?? '';
                         final faculty = (sec['faculty_initials'] ?? sec['faculty'] ?? 'TBA').toString();
 
-                        return ListTile(
-                          dense: true,
-                          title: Row(
-                            children: [
-                              Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
-                              const SizedBox(width: 8),
-                              _buildCapacityIndicator(sec['capacity']?.toString() ?? ''),
-                            ],
+                        return Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            dense: true,
+                            title: Row(
+                              children: [
+                                Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
+                                const SizedBox(width: 8),
+                                _buildCapacityIndicator(sec['capacity']?.toString() ?? ''),
+                              ],
+                            ),
+                            subtitle: Text(_formatSessions(sec['sessions']),
+                                style: TextStyle(
+                                    color: Colors.grey[600], fontSize: 11)),
+                            trailing: Text(faculty,
+                                style: const TextStyle(
+                                    color: Colors.cyan, fontSize: 11)),
                           ),
-                          subtitle: Text(_formatSessions(sec['sessions']),
-                              style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 11)),
-                          trailing: Text(faculty,
-                              style: const TextStyle(
-                                  color: Colors.cyan, fontSize: 11)),
                         );
                       }),
                       const SizedBox(height: 12),
@@ -687,6 +724,8 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
 
   Widget _buildSavedSchedulesTab() {
     return ref.watch(savedSchedulesProvider).when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       data: (saved) {
         if (saved.isEmpty) {
           return Center(
@@ -748,10 +787,13 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                       final code = sec['course_code'] ?? sec['code'] ?? '???';
                       final sessions = sec['sessions'];
                       
-                      return ListTile(
-                        dense: true,
-                        title: Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
-                        subtitle: Text(_formatSessions(sessions), style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          dense: true,
+                          title: Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
+                          subtitle: Text(_formatSessions(sessions), style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+                        ),
                       );
                     }),
                     const SizedBox(height: 12),
@@ -785,6 +827,8 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
 
   Widget _buildGenerationHistoryTab() {
     return ref.watch(pastGenerationsProvider).when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       data: (gens) {
         if (gens.isEmpty) {
           return Center(
@@ -815,14 +859,17 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
               child: GlassContainer(
                 opacity: 0.08,
                 borderRadius: 16,
-                child: ListTile(
-                  title: Text(courses.join(', '), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  subtitle: Text('$date • Status: $status • Found: $count', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                  trailing: const Icon(Icons.chevron_right, color: Colors.cyan),
-                  onTap: () {
-                    // Start overview mode using existing functionality
-                    ref.read(advisingNotifierProvider.notifier).resumeGeneration(id);
-                  },
+                child: Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    title: Text(courses.join(', '), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    subtitle: Text('$date • Status: $status • Found: $count', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                    trailing: const Icon(Icons.chevron_right, color: Colors.cyan),
+                    onTap: () {
+                      // Start overview mode using existing functionality
+                      ref.read(advisingNotifierProvider.notifier).resumeGeneration(id);
+                    },
+                  ),
                 ),
               ),
             );
@@ -970,6 +1017,8 @@ class _FacultySelectionSheet extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           facultiesAsync.when(
+            skipLoadingOnReload: true,
+            skipLoadingOnRefresh: true,
             data: (faculties) {
                if (faculties.isEmpty) {
                  return const Center(child: Text('No faculty options available.', style: TextStyle(color: Colors.grey)));

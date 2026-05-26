@@ -67,6 +67,7 @@ dependencies:
   home_widget: ^0.9.1
   google_sign_in: ^6.2.1
   file_picker: ^8.1.4
+  google_mobile_ads: ^5.1.0
 
 dev_dependencies:
   flutter_test:

@@ -1243,26 +1243,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF22D3EE).withOpacity(0.1),
-            shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF22D3EE).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.assignment_rounded, color: Color(0xFF22D3EE), size: 20),
           ),
-          child: const Icon(Icons.assignment_rounded, color: Color(0xFF22D3EE), size: 20),
+          title: Text(
+            t['title']?.toString() ?? 'Untitled Task', 
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)
+          ),
+          subtitle: Text(
+            "${t['course_code']?.toString() ?? 'General'} • $formattedDue",
+            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+          onTap: () => _showTaskEditor(t),
         ),
-        title: Text(
-          t['title']?.toString() ?? 'Untitled Task', 
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)
-        ),
-        subtitle: Text(
-          "${t['course_code']?.toString() ?? 'General'} • $formattedDue",
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
-        onTap: () => _showTaskEditor(t),
       ),
     );
   }

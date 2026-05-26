@@ -104,6 +104,14 @@ export function Layout() {
             )}
           </Link>
 
+          <Link to="/active-semester" className={getLinkClass('/active-semester')} onClick={() => setIsMobileMenuOpen(false)}>
+            <CalendarDays className="w-5 h-5" />
+            <span>Active Semester</span>
+            {location.pathname === '/active-semester' && (
+              <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
+            )}
+          </Link>
+
           <Link to="/calendar-editor" className={getLinkClass('/calendar-editor')} onClick={() => setIsMobileMenuOpen(false)}>
             <CalendarDays className="w-5 h-5" />
             <span>Academic Calendar</span>

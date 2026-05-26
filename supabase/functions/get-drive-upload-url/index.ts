@@ -78,6 +78,8 @@ serve(async (req) => {
     const accessTokenRes = await authClient.getAccessToken();
     const accessToken = accessTokenRes.token;
 
+    const origin = req.headers.get('origin');
+
     // 5. Generate Resumable Upload URL from Google
     const driveUploadUrl = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable';
     
@@ -87,7 +89,8 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
         'X-Upload-Content-Type': mimeType || 'application/octet-stream',
-        'X-Upload-Content-Length': fileSizeBytes.toString()
+        'X-Upload-Content-Length': fileSizeBytes.toString(),
+        ...(origin ? { 'Origin': origin } : {})
       },
       body: JSON.stringify({
         name: fileName,

@@ -156,16 +156,19 @@ class AppDrawer extends ConsumerWidget {
   Widget _buildDrawerItem(
       BuildContext context, IconData icon, String title, VoidCallback onTap,
       {Color color = Colors.white, bool closeDrawer = true}) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title, style: TextStyle(color: color)),
-      onTap: () {
-        if (closeDrawer && context.mounted) {
-          Navigator.pop(context);
-        }
-        onTap();
-      },
-      hoverColor: Colors.white.withValues(alpha: 0.1),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(title, style: TextStyle(color: color)),
+        onTap: () {
+          if (closeDrawer && context.mounted) {
+            Navigator.pop(context);
+          }
+          onTap();
+        },
+        hoverColor: Colors.white.withValues(alpha: 0.1),
+      ),
     );
   }
 }

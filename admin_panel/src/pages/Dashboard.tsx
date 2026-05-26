@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
@@ -48,6 +49,86 @@ export function Dashboard() {
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
+
+  // Real-time System Infrastructure Health Check State
+  const [infraStatus, setInfraStatus] = useState({
+    scraper: 'Healthy',
+    azure: 'Live',
+    db: 'Optimized',
+    broadcaster: 'Idle'
+  });
+  const [infraColors, setInfraColors] = useState({
+    scraper: 'bg-amber-500',
+    azure: 'bg-emerald-500',
+    db: 'bg-indigo-500',
+    broadcaster: 'bg-slate-400'
+  });
+
+  const checkInfrastructureHealth = async () => {
+    // 1. Check DB Edge Latency
+    const startDb = performance.now();
+    try {
+      const { error } = await supabase.from('profiles').select('id').limit(1).maybeSingle();
+      const endDb = performance.now();
+      const latency = endDb - startDb;
+      
+      let status = 'Optimized';
+      let color = 'bg-indigo-500';
+      if (error) {
+        status = 'Error';
+        color = 'bg-rose-500';
+      } else if (latency > 1000) {
+        status = 'Lagging';
+        color = 'bg-amber-500';
+      } else if (latency > 300) {
+        status = 'Operational';
+        color = 'bg-emerald-500';
+      }
+      
+      setInfraStatus(prev => ({ ...prev, db: status }));
+      setInfraColors(prev => ({ ...prev, db: color }));
+    } catch {
+      setInfraStatus(prev => ({ ...prev, db: 'Offline' }));
+      setInfraColors(prev => ({ ...prev, db: 'bg-rose-500' }));
+    }
+
+    // 2. Check Azure Function Connectivity (Portal Scraper and Azure Core)
+    try {
+      const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
+      const key = import.meta.env.VITE_AZURE_FUNCTION_KEY;
+      
+      const res = await fetch(`${baseUrl}/api/scraper/portal_sync?code=${key}&preview=true&semester=PING`);
+      if (res.status === 200) {
+        setInfraStatus(prev => ({ ...prev, scraper: 'Healthy', azure: 'Live' }));
+        setInfraColors(prev => ({ ...prev, scraper: 'bg-amber-500', azure: 'bg-emerald-500' }));
+      } else {
+        setInfraStatus(prev => ({ ...prev, scraper: 'Issues', azure: 'Down' }));
+        setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
+      }
+    } catch {
+      setInfraStatus(prev => ({ ...prev, scraper: 'Offline', azure: 'Offline' }));
+      setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
+    }
+
+    // 3. Check Broadcaster (Ping the broadcast function anonymously or assume operational if DB is healthy)
+    try {
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ping: true })
+      });
+      if (res.status === 401 || res.status === 200 || res.status === 400) {
+        setInfraStatus(prev => ({ ...prev, broadcaster: 'Idle' }));
+        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-slate-400' }));
+      } else {
+        setInfraStatus(prev => ({ ...prev, broadcaster: 'Issues' }));
+        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500' }));
+      }
+    } catch {
+      setInfraStatus(prev => ({ ...prev, broadcaster: 'Offline' }));
+      setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500' }));
+    }
+  };
 
   const fetchDashboardData = async (silent = false) => {
     try {
@@ -181,7 +262,9 @@ export function Dashboard() {
             current_courses: 0,
             current_sections: 0,
             next_courses: 0,
-            next_sections: 0
+            next_sections: 0,
+            is_advising_open: sem.is_advising_open || false,
+            is_next_semester_open: sem.is_next_semester_open || false
           };
 
           if (sem.current_semester_code) {
@@ -222,6 +305,9 @@ export function Dashboard() {
       setSemesterStats(semStats);
       setRecentUsers((recent as Profile[]) || []);
       setActiveUsers((activeNow as Profile[]) || []);
+
+      // Asynchronously scan cloud infrastructure status
+      checkInfrastructureHealth();
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
     } finally {
@@ -233,6 +319,34 @@ export function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const toggleTrackState = async (track: string, field: 'is_advising_open' | 'is_next_semester_open', currentValue: boolean) => {
+    const newValue = !currentValue;
+    
+    // Optimistic state update
+    setSemesterStats(prev => {
+      if (!prev[track]) return prev;
+      return {
+        ...prev,
+        [track]: {
+          ...prev[track],
+          [field]: newValue
+        }
+      };
+    });
+
+    const { error } = await supabase
+      .from('active_semester')
+      .update({ [field]: newValue })
+      .eq('track', track);
+
+    if (error) {
+      toast.error(`Failed to update ${track}: ${error.message}`);
+      fetchDashboardData(true);
+    } else {
+      toast.success(`${track.replace('_', ' ')} ${field === 'is_advising_open' ? 'Advising' : 'Next Semester'} set to ${newValue ? 'ON' : 'OFF'}`);
+    }
+  };
 
   // Handle Search
   useEffect(() => {
@@ -506,12 +620,13 @@ export function Dashboard() {
               <div className="flex items-center justify-between mb-8">
                  <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">System Infrastructure</h3>
                  <span className="text-[10px] font-black px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-full uppercase">Operational</span>
-              </div>               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { label: 'Portal Scraper', status: 'Healthy', icon: Zap, color: 'bg-amber-500' },
-                  { label: 'Azure Core', status: 'Live', icon: ShieldCheck, color: 'bg-emerald-500' },
-                  { label: 'Cloud DB', status: 'Optimized', icon: Clock, color: 'bg-indigo-500' },
-                  { label: 'Broadcaster', status: 'Idle', icon: Mail, color: 'bg-slate-400' }
+                  { label: 'Portal Scraper', status: infraStatus.scraper, icon: Zap, color: infraColors.scraper },
+                  { label: 'Azure Core', status: infraStatus.azure, icon: ShieldCheck, color: infraColors.azure },
+                  { label: 'Cloud DB', status: infraStatus.db, icon: Clock, color: infraColors.db },
+                  { label: 'Broadcaster', status: infraStatus.broadcaster, icon: Mail, color: infraColors.broadcaster }
                 ].map((sys, i) => (
                   <div key={i} className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/5 flex items-center justify-between group hover:bg-white dark:hover:bg-slate-700 hover:border-indigo-100 dark:hover:border-indigo-500/20 transition-all">
                     <div className="flex items-center gap-4">
@@ -681,6 +796,61 @@ export function Dashboard() {
                     <span className="text-sm font-black text-slate-900 dark:text-white">{data.next_sections}</span>
                     <span className="text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase">Sec</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Status Toggles */}
+            <div className="p-6 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-50 dark:border-white/5 grid grid-cols-2 gap-4">
+              {/* Advising Toggle */}
+              <div 
+                onClick={() => toggleTrackState(track, 'is_advising_open', data.is_advising_open)}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between group/toggle ${
+                  data.is_advising_open 
+                    ? 'bg-emerald-50/50 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20 shadow-sm' 
+                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
+                }`}
+              >
+                <div>
+                  <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${
+                    data.is_advising_open ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                  }`}>Advising System</p>
+                  <p className="text-xs font-black text-slate-800 dark:text-white">
+                    {data.is_advising_open ? 'OPEN' : 'CLOSED'}
+                  </p>
+                </div>
+                <div className={`w-9 h-5 rounded-full relative transition-colors ${
+                  data.is_advising_open ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                }`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                    data.is_advising_open ? 'left-5' : 'left-1'
+                  }`} />
+                </div>
+              </div>
+
+              {/* Next Semester Toggle */}
+              <div 
+                onClick={() => toggleTrackState(track, 'is_next_semester_open', data.is_next_semester_open)}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between group/toggle ${
+                  data.is_next_semester_open 
+                    ? 'bg-blue-50/50 dark:bg-blue-500/10 border-blue-100/50 dark:border-blue-500/20 shadow-sm' 
+                    : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
+                }`}
+              >
+                <div>
+                  <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${
+                    data.is_next_semester_open ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
+                  }`}>Next Sem Screen</p>
+                  <p className="text-xs font-black text-slate-800 dark:text-white">
+                    {data.is_next_semester_open ? 'VISIBLE' : 'HIDDEN'}
+                  </p>
+                </div>
+                <div className={`w-9 h-5 rounded-full relative transition-colors ${
+                  data.is_next_semester_open ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'
+                }`}>
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                    data.is_next_semester_open ? 'left-5' : 'left-1'
+                  }`} />
                 </div>
               </div>
             </div>

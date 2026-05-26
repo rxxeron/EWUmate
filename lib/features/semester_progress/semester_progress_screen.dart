@@ -13,6 +13,7 @@ import '../../core/utils/error_utils.dart';
 import 'course_progress_detail_screen.dart';
 import 'widgets/course_progress_card.dart';
 import '../../core/utils/refresh_utils.dart';
+import '../../core/widgets/premium_banner_ad.dart';
 
 class SemesterProgressScreen extends ConsumerStatefulWidget {
   const SemesterProgressScreen({super.key});
@@ -143,7 +144,17 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                           physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
                             SliverToBoxAdapter(
-                              child: const SizedBox(height: 16),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  SizedBox(height: 12),
+                                  PremiumBannerAd(
+                                    screenName: 'semester_progress',
+                                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  ),
+                                  SizedBox(height: 12),
+                                ],
+                              ),
                             ),
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),

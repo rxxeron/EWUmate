@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { BookOpen, GraduationCap, Award, Plus, Edit2, Trash2, X, Check, Search, CalendarClock, Database, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -89,7 +90,7 @@ export function AcademicData() {
     }
   };
 
-  const columns: Record<Tab, { key: string, label: string, type: 'text' | 'number' | 'date' }[]> = {
+  const columns: Record<Tab, { key: string, label: string, type: 'text' | 'number' | 'date' | 'checkbox' }[]> = {
     course_metadata: [
       { key: 'code', label: 'Course Code', type: 'text' },
       { key: 'name', label: 'Course Name', type: 'text' },
@@ -121,6 +122,8 @@ export function AcademicData() {
         { key: 'final_exam_start', label: 'Finals Start', type: 'date' },
         { key: 'final_exam_end', label: 'Finals End', type: 'date' },
         { key: 'grade_submission_start', label: 'Grade Sub Start', type: 'date' },
+        { key: 'is_advising_open', label: 'Advising Open', type: 'checkbox' },
+        { key: 'is_next_semester_open', label: 'Next Semester Open', type: 'checkbox' }
       ]
     };
 
@@ -153,6 +156,14 @@ export function AcademicData() {
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-sm font-bold text-slate-900 dark:text-white focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700 shadow-sm"
             />
           </div>
+          {activeTab === 'active_semester' && (
+            <Link
+              to="/active-semester"
+              className="w-full sm:w-auto flex items-center justify-center gap-3 bg-slate-900 dark:bg-slate-900 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-800 transition-all shadow-lg dark:shadow-none group border border-slate-800 dark:border-white/10"
+            >
+              <CalendarClock className="w-4 h-4 text-indigo-400" /> Visual Track Editor
+            </Link>
+          )}
           <button
             onClick={() => {
               setIsAdding(true);
@@ -212,13 +223,22 @@ export function AcademicData() {
                   <tr className="bg-indigo-50/30 dark:bg-indigo-500/5 animate-in fade-in slide-in-from-left-4">
                     {columns[activeTab].map(col => (
                       <td key={col.key} className="px-8 py-6">
-                        <input
-                          type={col.type}
-                          value={editForm[col.key] || ''}
-                          onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.value })}
-                          className="w-full px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-white/10 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 dark:text-white placeholder:text-slate-300"
-                          placeholder={col.label}
-                        />
+                        {col.type === 'checkbox' ? (
+                          <input
+                            type="checkbox"
+                            checked={editForm[col.key] || false}
+                            onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.checked })}
+                            className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-white/10 cursor-pointer"
+                          />
+                        ) : (
+                          <input
+                            type={col.type}
+                            value={editForm[col.key] || ''}
+                            onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.value })}
+                            className="w-full px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-white/10 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 dark:text-white placeholder:text-slate-300"
+                            placeholder={col.label}
+                          />
+                        )}
                       </td>
                     ))}
                     <td className="px-8 py-6 text-right">
@@ -237,19 +257,61 @@ export function AcademicData() {
                       {columns[activeTab].map(col => (
                         <td key={col.key} className="px-8 py-6 whitespace-nowrap">
                           {isEditingRow ? (
-                            <input
-                              type={col.type}
-                              value={editForm[col.key] || ''}
-                              onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.value })}
-                              className="w-full px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-white/10 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 dark:text-white"
-                            />
+                            col.type === 'checkbox' ? (
+                              <input
+                                type="checkbox"
+                                checked={editForm[col.key] || false}
+                                onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.checked })}
+                                className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-white/10 cursor-pointer"
+                              />
+                            ) : (
+                              <input
+                                type={col.type}
+                                value={editForm[col.key] || ''}
+                                onChange={(e) => setEditForm({ ...editForm, [col.key]: e.target.value })}
+                                className="w-full px-4 py-3 text-sm font-bold bg-white dark:bg-slate-900 border border-indigo-200 dark:border-white/10 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-900 dark:text-white"
+                              />
+                            )
                           ) : (
                             <div className="text-sm font-bold text-slate-900 dark:text-slate-300 tracking-tight">
                               {col.key.includes('cgpa_min') 
                                 ? <span className="bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 font-black text-xs">{row[col.key]} - {row[col.label.split(' ')[0].toLowerCase() + '_cgpa_max']}</span>
-                                : (col.type === 'date' && row[col.key] 
-                                    ? <span className="text-slate-500 dark:text-slate-400 font-medium">{new Date(row[col.key]).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                    : <span className={cn(col.key === 'code' && "font-black text-indigo-600 dark:text-indigo-400")}>{row[col.key] || '—'}</span>)
+                                : (col.type === 'checkbox'
+                                    ? <div 
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          const updatedVal = !row[col.key];
+                                          let pkField = 'id';
+                                          if (activeTab === 'course_metadata') pkField = 'code';
+                                          if (activeTab === 'grade_scale') pkField = 'grade';
+                                          if (activeTab === 'active_semester') pkField = 'track';
+
+                                          const { error } = await supabase
+                                            .from(activeTab)
+                                            .update({ [col.key]: updatedVal })
+                                            .eq(pkField, row[pkField]);
+                                          
+                                          if (error) {
+                                            toast.error(`Failed to toggle: ${error.message}`);
+                                          } else {
+                                            toast.success(`${col.label} toggled ${updatedVal ? 'ON' : 'OFF'}`);
+                                            fetchData(activeTab);
+                                          }
+                                        }}
+                                        className="cursor-pointer inline-block"
+                                      >
+                                        <span className={cn(
+                                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm transition-all hover:scale-105 active:scale-95",
+                                          row[col.key]
+                                            ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20'
+                                            : 'bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20'
+                                        )}>
+                                          {row[col.key] ? 'ON' : 'OFF'}
+                                        </span>
+                                      </div>
+                                    : (col.type === 'date' && row[col.key] 
+                                        ? <span className="text-slate-500 dark:text-slate-400 font-medium">{new Date(row[col.key]).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                        : <span className={cn(col.key === 'code' && "font-black text-indigo-600 dark:text-indigo-400")}>{row[col.key] || '—'}</span>))
                               }
                             </div>
                           )}

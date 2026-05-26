@@ -184,6 +184,8 @@ export interface ActiveSemester {
   final_exam_start: string | null;
   final_exam_end: string | null;
   grade_submission_start: string | null;
+  is_advising_open: boolean;
+  is_next_semester_open: boolean;
 }
 
 // --- Parsing Log ---
@@ -248,6 +250,8 @@ export interface SemesterTrackStats {
   current_sections: number;
   next_courses: number;
   next_sections: number;
+  is_advising_open: boolean;
+  is_next_semester_open: boolean;
 }
 
 // --- Storage File ---

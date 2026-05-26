@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/faculty_providers.dart';
 import 'widgets/faculty_card.dart';
+import '../../../core/widgets/premium_native_ad.dart';
 import '../../../core/widgets/animations/skeleton_loader.dart';
 
 class FacultyDirectoryScreen extends ConsumerWidget {
@@ -64,12 +65,22 @@ class FacultyDirectoryScreen extends ConsumerWidget {
                   );
                 }
                 
+                final totalCount = facultyList.length + (facultyList.isNotEmpty ? (facultyList.length - 1) ~/ 5 : 0);
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: facultyList.length,
-                  itemBuilder: (context, index) => FacultyCard(
-                    faculty: facultyList[index],
-                  ),
+                  itemCount: totalCount,
+                  itemBuilder: (context, index) {
+                    if (index % 6 == 5) {
+                      return const PremiumNativeAd(
+                        screenName: 'faculty_directory',
+                        margin: EdgeInsets.only(bottom: 16),
+                      );
+                    }
+                    final facultyIndex = index - (index ~/ 6);
+                    return FacultyCard(
+                      faculty: facultyList[facultyIndex],
+                    );
+                  },
                 );
               },
               loading: () => ListView.builder(

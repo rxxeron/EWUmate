@@ -244,23 +244,26 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
                             borderRadius: BorderRadius.circular(12),
                             side: BorderSide(color: Colors.cyanAccent.withValues(alpha: 0.2)),
                           ),
-                          child: ListTile(
-                            leading: const Icon(Icons.add_circle_outline_rounded, color: Colors.cyanAccent),
-                            title: Text(
-                              'Use Custom: "$customValue"',
-                              style: const TextStyle(
-                                color: Colors.cyanAccent,
-                                fontWeight: FontWeight.bold,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              leading: const Icon(Icons.add_circle_outline_rounded, color: Colors.cyanAccent),
+                              title: Text(
+                                'Use Custom: "$customValue"',
+                                style: const TextStyle(
+                                  color: Colors.cyanAccent,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                              subtitle: Text(
+                                widget.customValueLabel,
+                                style: TextStyle(color: Colors.cyanAccent.withValues(alpha: 0.6), fontSize: 12),
+                              ),
+                              onTap: () {
+                                widget.onSelected(customValue, "Custom Entry");
+                                Navigator.pop(context);
+                              },
                             ),
-                            subtitle: Text(
-                              widget.customValueLabel,
-                              style: TextStyle(color: Colors.cyanAccent.withValues(alpha: 0.6), fontSize: 12),
-                            ),
-                            onTap: () {
-                              widget.onSelected(customValue, "Custom Entry");
-                              Navigator.pop(context);
-                            },
                           ),
                         ),
                       Expanded(
@@ -295,24 +298,27 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
 
                                   return Column(
                                     children: [
-                                      ListTile(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                        title: Text(
-                                          label,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: ListTile(
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                          title: Text(
+                                            label,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
+                                          subtitle: Text(
+                                            subtitle,
+                                            style: const TextStyle(color: Colors.white38),
+                                          ),
+                                          trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white10, size: 16),
+                                          onTap: () {
+                                            widget.onSelected(label, subtitle);
+                                            Navigator.pop(context);
+                                          },
                                         ),
-                                        subtitle: Text(
-                                          subtitle,
-                                          style: const TextStyle(color: Colors.white38),
-                                        ),
-                                        trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white10, size: 16),
-                                        onTap: () {
-                                          widget.onSelected(label, subtitle);
-                                          Navigator.pop(context);
-                                        },
                                       ),
                                       const Divider(color: Colors.white10, height: 1),
                                     ],
@@ -382,20 +388,23 @@ class StaticListBottomSheet extends StatelessWidget {
                 final item = items[index];
                 return Column(
                   children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      title: Text(
-                        item['label']!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                    Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        title: Text(
+                          item['label']!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+                        onTap: () {
+                          onSelected(item['value']!);
+                          Navigator.pop(context);
+                        },
                       ),
-                      trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
-                      onTap: () {
-                        onSelected(item['value']!);
-                        Navigator.pop(context);
-                      },
                     ),
                     const Divider(color: Colors.white10, height: 1),
                   ],

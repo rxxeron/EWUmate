@@ -111,21 +111,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   void _nextSemester() async {
-    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Please select at least one course for this semester.",
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-      return;
-    }
-
     if (_currentSemester == _runningSemester) {
       _finishOnboarding();
       return;
@@ -176,19 +161,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Future<void> _finishOnboarding() async {
-    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please select at least one course to continue."),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-      return;
-    }
-
     setState(() => _isSyncing = true);
     try {
       final currentSemMap = _history[_runningSemester] ?? {};

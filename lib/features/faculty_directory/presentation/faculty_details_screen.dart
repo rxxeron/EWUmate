@@ -12,9 +12,11 @@ import '../../../core/repositories/office_hours_repository.dart';
 import '../../../core/providers/academic_providers.dart';
 import 'widgets/submit_office_hours_sheet.dart';
 
-// Riverpod Provider to fetch approved office hours
-final approvedOfficeHoursProvider = FutureProvider.family<List<FacultyOfficeHour>, String>((ref, initials) {
-  return ref.watch(officeHoursRepositoryProvider).getApprovedOfficeHours(initials);
+// Riverpod Provider to fetch approved office hours for the active semester
+final approvedOfficeHoursProvider = FutureProvider.family<List<FacultyOfficeHour>, String>((ref, initials) async {
+  final activeSemester = ref.watch(academicStateProvider).value;
+  final semesterCode = activeSemester?.currentSemesterCode ?? 'Summer 2026';
+  return ref.watch(officeHoursRepositoryProvider).getApprovedOfficeHours(initials, semesterCode);
 });
 
 class FacultyDetailsScreen extends ConsumerStatefulWidget {
@@ -202,6 +204,24 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+
+                        if (widget.faculty.officeRoom != null && widget.faculty.officeRoom!.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              const Icon(Icons.room_rounded, color: Color(0xFF00E5FF), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Office: ${widget.faculty.officeRoom}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 10),
                         ],

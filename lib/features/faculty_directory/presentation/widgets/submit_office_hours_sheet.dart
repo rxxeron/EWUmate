@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../../../../core/repositories/office_hours_repository.dart';
+import '../../../../core/providers/academic_providers.dart';
 
 class SubmitOfficeHoursSheet extends ConsumerStatefulWidget {
   final String facultyInitials;
@@ -22,8 +23,15 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
   
   // List of dynamic slots
   final List<Map<String, dynamic>> _slots = [];
+  final _roomController = TextEditingController();
   PlatformFile? _selectedFile;
   bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _roomController.dispose();
+    super.dispose();
+  }
 
   final List<String> _daysOfWeek = [
     'Sunday',
@@ -205,11 +213,16 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
         };
       }).toList();
 
+      final activeSemester = ref.read(academicStateProvider).value;
+      final semesterCode = activeSemester?.currentSemesterCode ?? 'Summer 2026';
+
       await repo.submitOfficeHours(
         file: File(_selectedFile!.path!),
         fileName: _selectedFile!.name,
         facultyInitials: widget.facultyInitials,
         slots: formattedSlots,
+        semesterCode: semesterCode,
+        officeRoom: _roomController.text.trim().isNotEmpty ? _roomController.text.trim() : null,
       );
 
       if (mounted) {
@@ -462,6 +475,47 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                   side: BorderSide(color: Colors.cyanAccent.withOpacity(0.4), width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // OFFICE ROOM SECTION
+              const Text(
+                'OFFICE ROOM',
+                style: TextStyle(
+                  color: Colors.cyanAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Enter the office room number where this faculty member sits.',
+                style: TextStyle(color: Colors.white38, fontSize: 11),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _roomController,
+                style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                decoration: InputDecoration(
+                  hintText: 'e.g., SAC 402, Annex 501',
+                  hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.02),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.white10),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.white10),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: const BorderSide(color: Colors.cyanAccent, width: 1.5),
                   ),
                 ),
               ),

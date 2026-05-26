@@ -9,6 +9,8 @@ class FacultyOfficeHour {
   final String fileName;
   final String? submittedBy;
   final String status;
+  final String semesterCode;
+  final String? officeRoom;
   final DateTime createdAt;
 
   FacultyOfficeHour({
@@ -22,6 +24,8 @@ class FacultyOfficeHour {
     required this.fileName,
     this.submittedBy,
     required this.status,
+    required this.semesterCode,
+    this.officeRoom,
     required this.createdAt,
   });
 
@@ -37,6 +41,8 @@ class FacultyOfficeHour {
       fileName: map['file_name'] ?? '',
       submittedBy: map['submitted_by'],
       status: map['status'] ?? 'pending',
+      semesterCode: map['semester_code'] ?? 'Summer 2026',
+      officeRoom: map['office_room'],
       createdAt: map['created_at'] != null 
           ? DateTime.parse(map['created_at']) 
           : DateTime.now(),
@@ -55,6 +61,8 @@ class FacultyOfficeHour {
       'file_name': fileName,
       'submitted_by': submittedBy,
       'status': status,
+      'semester_code': semesterCode,
+      'office_room': officeRoom,
       'created_at': createdAt.toIso8601String(),
     };
   }

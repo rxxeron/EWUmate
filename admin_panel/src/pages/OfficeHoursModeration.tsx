@@ -80,6 +80,12 @@ export function OfficeHoursModeration() {
 
       // Notify the submitter if possible
       const item = hours.find(h => h.id === id);
+      if (newStatus === 'approved' && item && item.office_room) {
+        await supabase
+          .from('faculty_master')
+          .update({ office_room: item.office_room })
+          .ilike('short_name', item.faculty_initials);
+      }
       if (item && item.submitted_by) {
         let title = '';
         let body = '';
@@ -130,6 +136,16 @@ export function OfficeHoursModeration() {
         .in('id', ids);
 
       if (error) throw error;
+
+      if (newStatus === 'approved') {
+        const representative = batchSlots[0];
+        if (representative && representative.office_room) {
+          await supabase
+            .from('faculty_master')
+            .update({ office_room: representative.office_room })
+            .ilike('short_name', representative.faculty_initials);
+        }
+      }
 
       // Dispatch notifications to the submitter (once per batch)
       const representative = batchSlots[0];
@@ -253,6 +269,8 @@ export function OfficeHoursModeration() {
     uploaderStudentId: string;
     createdAt: string;
     slots: FacultyOfficeHour[];
+    semesterCode: string;
+    officeRoom: string | null;
   }
 
   const groupedSubmissions: GroupedSubmission[] = [];
@@ -270,7 +288,9 @@ export function OfficeHoursModeration() {
         uploaderName: h.profiles?.full_name || 'Anonymous Student',
         uploaderStudentId: h.profiles?.student_id || 'N/A',
         createdAt: h.created_at,
-        slots: []
+        slots: [],
+        semesterCode: h.semester_code,
+        officeRoom: h.office_room
       };
       groupedSubmissions.push(group);
     }
@@ -482,8 +502,12 @@ export function OfficeHoursModeration() {
                           </span>
                         </div>
                         
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1">
-                          Submission Date: {new Date(group.createdAt).toLocaleString()}
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                          <span>Semester: <strong className="text-slate-600 dark:text-slate-300">{group.semesterCode}</strong></span>
+                          {group.officeRoom && (
+                            <span>Reported Office: <strong className="text-cyan-500">{group.officeRoom}</strong></span>
+                          )}
+                          <span>Date: {new Date(group.createdAt).toLocaleString()}</span>
                         </div>
                       </div>
                     </div>

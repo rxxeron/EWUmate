@@ -337,6 +337,8 @@ export interface FacultyOfficeHour {
   file_name: string;
   submitted_by: string | null;
   status: 'pending' | 'approved' | 'rejected';
+  semester_code: string;
+  office_room: string | null;
   created_at: string;
   updated_at: string | null;
   profiles?: {

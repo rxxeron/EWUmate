@@ -8,6 +8,7 @@ import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
+import 'package:ewumate/core/widgets/premium_native_ad.dart';
 
 class DegreeProgressScreen extends ConsumerStatefulWidget {
   const DegreeProgressScreen({super.key});
@@ -161,6 +162,11 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                 _buildStatsGrid(semestersCount, earnedCredits, coursesDone, profile),
                 const SizedBox(height: 16),
                 _buildCgpaCard(actualCgpa),
+                const SizedBox(height: 16),
+                const PremiumNativeAd(
+                  screenName: 'degree_progress',
+                  margin: EdgeInsets.zero,
+                ),
                 const SizedBox(height: 16),
                 _buildSemesterSummaryCard(context),
                 const SizedBox(height: 32),

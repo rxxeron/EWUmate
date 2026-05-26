@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/repositories/course_repository.dart';
 import '../../../core/repositories/schedule_repository.dart';
@@ -9,77 +11,156 @@ import '../../../core/providers/supabase_provider.dart';
 import '../../../core/providers/academic_providers.dart';
 
 final activeSemesterProvider = FutureProvider<ActiveSemester?>((ref) async {
-  final academicState = await ref.watch(academicStateProvider.future);
-  if (academicState == null) return null;
-  
-  // Convert AcademicState to ActiveSemester for compatibility with existing UI
-  return ActiveSemester(
-    track: academicState.track,
-    currentSemesterCode: academicState.currentSemesterCode,
-    nextSemesterCode: academicState.nextSemesterCode,
-    advisingStartDate: academicState.advisingStartDate,
-    advisingEndDate: academicState.advisingEndDate,
-    classesStartDate: academicState.classesStartDate,
-    upcomingClassesStartDate: academicState.upcomingClassesStartDate,
-    semesterSwitchDate: academicState.semesterSwitchDate,
-  );
+  try {
+    final academicState = await ref.watch(academicStateProvider.future)
+        .timeout(const Duration(seconds: 6));
+    if (academicState == null) return null;
+    
+    // Convert AcademicState to ActiveSemester for compatibility with existing UI
+    return ActiveSemester(
+      track: academicState.track,
+      currentSemesterCode: academicState.currentSemesterCode,
+      nextSemesterCode: academicState.nextSemesterCode,
+      advisingStartDate: academicState.advisingStartDate,
+      advisingEndDate: academicState.advisingEndDate,
+      classesStartDate: academicState.classesStartDate,
+      upcomingClassesStartDate: academicState.upcomingClassesStartDate,
+      semesterSwitchDate: academicState.semesterSwitchDate,
+    );
+  } catch (e) {
+    if (kDebugMode) {
+      print('Timeout or Error in activeSemesterProvider: $e. Using fallback.');
+    }
+    // High-quality fallback so the advising flow doesn't break
+    return ActiveSemester(
+      track: 'tri_semester',
+      currentSemesterCode: 'Summer2026',
+      nextSemesterCode: 'Fall2026',
+      advisingEndDate: DateTime.now().add(const Duration(days: 30)),
+    );
+  }
 });
 
 final excludedCourseCodesProvider = FutureProvider<Set<String>>((ref) async {
-  final user = ref.watch(currentUserProvider);
-  if (user == null) return {};
+  try {
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return {};
 
-  final activeSem = await ref.watch(activeSemesterProvider.future);
-  final currentSemCode = activeSem?.currentSemesterCode;
-  
-  if (currentSemCode == null) return {};
+    final activeSem = await ref.watch(activeSemesterProvider.future)
+        .timeout(const Duration(seconds: 4));
+    final currentSemCode = activeSem?.currentSemesterCode;
+    
+    if (currentSemCode == null) return {};
 
-  // 1. Get past completed courses from semester summaries
-  final summaries = await ref.watch(allSemesterSummariesProvider.future);
-  final Set<String> codes = {};
-  
-  for (final summary in summaries) {
-    for (final course in summary.courses) {
-      String? code;
-      if (course is Map) {
-        code = (course['code'] ?? course['course_code'])?.toString();
-      } else if (course is String) {
-        code = course;
-      }
+    final Set<String> codes = {};
+
+    // 1. Get past completed courses from semester summaries (safe timeout)
+    try {
+      final summaries = await ref.watch(allSemesterSummariesProvider.future)
+          .timeout(const Duration(seconds: 5));
       
-      if (code != null) {
-        // Normalize: remove spaces and uppercase
-        codes.add(code.replaceAll(' ', '').toUpperCase());
+      for (final summary in summaries) {
+        for (final course in summary.courses) {
+          String? code;
+          if (course is Map) {
+            code = (course['code'] ?? course['course_code'])?.toString();
+          } else if (course is String) {
+            code = course;
+          }
+          
+          if (code != null) {
+            // Normalize: remove spaces and uppercase
+            codes.add(code.replaceAll(' ', '').toUpperCase());
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error or timeout fetching semester summaries in excludedCourseCodesProvider: $e');
       }
     }
-  }
 
-  // 2. Get current enrolled courses
-  final enrollments = await ref.watch(scheduleRepositoryProvider)
-      .getEnrollments(user.id, currentSemCode);
-      
-  for (final enr in enrollments) {
-    codes.add(enr.courseCode.replaceAll(' ', '').toUpperCase());
-  }
+    // 2. Get current enrolled courses (safe timeout)
+    try {
+      final enrollments = await ref.watch(scheduleRepositoryProvider)
+          .getEnrollments(user.id, currentSemCode)
+          .timeout(const Duration(seconds: 4));
+          
+      for (final enr in enrollments) {
+        codes.add(enr.courseCode.replaceAll(' ', '').toUpperCase());
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error or timeout fetching enrollments in excludedCourseCodesProvider: $e');
+      }
+    }
 
-  return codes;
+    return codes;
+  } catch (e) {
+    if (kDebugMode) {
+      print('Global error in excludedCourseCodesProvider: $e');
+    }
+    return {};
+  }
 });
 
 final availableAdvisingCoursesProvider = FutureProvider<List<CourseMetadata>>((ref) async {
-  final activeSem = await ref.watch(activeSemesterProvider.future);
-  final nextSemCode = activeSem?.nextSemesterCode;
-  
-  if (nextSemCode == null) return [];
-  
-  final semCourses = await ref.watch(semesterCoursesProvider(nextSemCode).future);
-  final excluded = await ref.watch(excludedCourseCodesProvider.future);
+  List<CourseMetadata> semCourses = [];
+  Set<String> excluded = {};
 
-  if (excluded.isEmpty) return semCourses;
+  try {
+    final activeSem = await ref.watch(activeSemesterProvider.future)
+        .timeout(const Duration(seconds: 4));
+    final nextSemCode = activeSem?.nextSemesterCode;
+    
+    if (nextSemCode == null) return [];
 
-  return semCourses.where((c) {
-    final normalized = c.code.replaceAll(' ', '').toUpperCase();
-    return !excluded.contains(normalized);
-  }).toList();
+    // Query semester courses with a timeout
+    try {
+      semCourses = await ref.watch(semesterCoursesProvider(nextSemCode).future)
+          .timeout(const Duration(seconds: 6));
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error/timeout fetching specific semester courses: $e. Falling back to all courses catalog.');
+      }
+      // If we failed to get semester courses, fall back to entire courses catalog
+      semCourses = await ref.watch(allCoursesProvider.future)
+          .timeout(const Duration(seconds: 5));
+    }
+    
+    // Get excluded course codes with a timeout
+    try {
+      excluded = await ref.watch(excludedCourseCodesProvider.future)
+          .timeout(const Duration(seconds: 4));
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error/timeout fetching excluded course codes: $e');
+      }
+    }
+
+    if (excluded.isEmpty) return semCourses;
+
+    return semCourses.where((c) {
+      final normalized = c.code.replaceAll(' ', '').toUpperCase();
+      return !excluded.contains(normalized);
+    }).toList();
+
+  } catch (e) {
+    if (kDebugMode) {
+      print('Critical error in availableAdvisingCoursesProvider: $e. Performing emergency full load.');
+    }
+    // Last-line emergency fallback to the entire catalog
+    try {
+      final emergencyCourses = await ref.watch(allCoursesProvider.future)
+          .timeout(const Duration(seconds: 5));
+      return emergencyCourses;
+    } catch (err) {
+      if (kDebugMode) {
+        print('Emergency catalog fetch failed: $err');
+      }
+      return [];
+    }
+  }
 });
 
 final savedSchedulesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {

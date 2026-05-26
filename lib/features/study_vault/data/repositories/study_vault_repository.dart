@@ -123,7 +123,8 @@ class StudyVaultRepository {
     final normalizedCourseCode = courseCode?.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
     final normalizedFacultyInitial = facultyInitial?.replaceAll(RegExp(r'[\s\.]'), '').toUpperCase();
 
-    await _supabase.from('study_materials').insert({
+    // 1. Insert primary material entry
+    final inserted = await _supabase.from('study_materials').insert({
       'uploader_id': user.id,
       'faculty_initial': normalizedFacultyInitial,
       'course_code': normalizedCourseCode,
@@ -133,7 +134,46 @@ class StudyVaultRepository {
       'drive_file_id': driveFileId,
       'file_name': fileName,
       'file_size_bytes': fileSizeBytes,
-    });
+    }).select('id').single();
+
+    final primaryId = inserted['id'] as String;
+
+    // 2. Fetch if this course has a "same_course" mapped equivalent
+    String? sameCourseCode;
+    try {
+      if (normalizedCourseCode != null) {
+        final courseRes = await _supabase
+            .from('course_metadata')
+            .select('same_course')
+            .eq('code', normalizedCourseCode)
+            .maybeSingle();
+        if (courseRes != null) {
+          sameCourseCode = courseRes['same_course'] as String?;
+        }
+      }
+    } catch (_) {
+      // Fail silently, do not prevent main upload
+    }
+
+    // 3. Insert child entry for the peer equivalent course
+    if (sameCourseCode != null && sameCourseCode.isNotEmpty) {
+      try {
+        await _supabase.from('study_materials').insert({
+          'uploader_id': user.id,
+          'faculty_initial': normalizedFacultyInitial,
+          'course_code': sameCourseCode,
+          'semester': semester,
+          'file_type': fileType,
+          'drive_account_id': driveAccountId,
+          'drive_file_id': driveFileId,
+          'file_name': fileName,
+          'file_size_bytes': fileSizeBytes,
+          'parent_id': primaryId,
+        });
+      } catch (_) {
+        // Fail silently
+      }
+    }
   }
 
   Future<List<StudyMaterial>> getMyMaterials() async {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/semester_course_marks.dart';
 import '../../../../core/repositories/progress_repository.dart';
 import '../../../../core/utils/refresh_utils.dart';
+import '../../../semester_progress/semester_progress_repository.dart';
 
 class CourseMarksEditorScreen extends ConsumerStatefulWidget {
   final SemesterCourseMarks courseMarks;
@@ -79,7 +80,7 @@ class _CourseMarksEditorScreenState extends ConsumerState<CourseMarksEditorScree
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved successfully!', style: TextStyle(color: Colors.white)), backgroundColor: Colors.green));
       RefreshUtils.refreshAcademicData(ref);
-      ref.invalidate(semesterProgressDataProvider);
+      ref.invalidate(semesterProgressDataProvider(widget.courseMarks.semesterCode));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e', style: const TextStyle(color: Colors.white)), backgroundColor: Colors.redAccent));

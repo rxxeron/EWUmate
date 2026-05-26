@@ -7,6 +7,7 @@ import '../../../core/widgets/glass_kit.dart';
 import 'providers/study_vault_providers.dart';
 import 'package:go_router/go_router.dart';
 import 'widgets/paginated_search_bottom_sheet.dart';
+import '../../../core/widgets/premium_native_ad.dart';
 
 class StudyVaultScreen extends ConsumerStatefulWidget {
   const StudyVaultScreen({super.key});
@@ -468,11 +469,28 @@ class _StudyVaultScreenState extends ConsumerState<StudyVaultScreen> {
                     ),
                   );
                 }
+                const int adInterval = 5; // Blend an ad after every 4 files (every 5th item)
+                final int numAds = materials.isEmpty ? 0 : (materials.length - 1) ~/ (adInterval - 1);
+                final int totalCount = materials.length + numAds;
+
                 return ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 80), // Added bottom padding to not hide under FAB
-                  itemCount: materials.length,
+                  itemCount: totalCount,
                   itemBuilder: (context, index) {
-                    final item = materials[index];
+                    final isAd = (index + 1) % adInterval == 0;
+
+                    if (isAd) {
+                      return const Padding(
+                        padding: EdgeInsets.only(bottom: 12.0),
+                        child: PremiumNativeAd(
+                          screenName: 'study_vault',
+                          margin: EdgeInsets.zero,
+                        ),
+                      );
+                    }
+
+                    final int materialIndex = index - (index ~/ adInterval);
+                    final item = materials[materialIndex];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: GlassContainer(

@@ -111,21 +111,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   void _nextSemester() async {
-    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Please select at least one course for this semester.",
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-      return;
-    }
-
     if (_currentSemester == _runningSemester) {
       _finishOnboarding();
       return;
@@ -176,19 +161,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   Future<void> _finishOnboarding() async {
-    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-    if ((_history[cleanCurrent] ?? {}).isEmpty && !_isCurrentSemester) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please select at least one course to continue."),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-      return;
-    }
-
     setState(() => _isSyncing = true);
     try {
       final currentSemMap = _history[_runningSemester] ?? {};
@@ -992,53 +964,56 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                 ? Colors.white.withOpacity(0.02)
                 : Colors.white.withOpacity(0.05),
             margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              enabled: passedGrade == null,
-              title: Text(
-                code,
-                style: TextStyle(
-                  color: passedGrade != null
-                      ? Colors.white38
-                      : Colors.cyanAccent,
-                  fontWeight: FontWeight.bold,
-                  decoration: passedGrade != null
-                      ? TextDecoration.lineThrough
-                      : null,
-                  decorationColor: Colors.white38,
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                enabled: passedGrade == null,
+                title: Text(
+                  code,
+                  style: TextStyle(
+                    color: passedGrade != null
+                        ? Colors.white38
+                        : Colors.cyanAccent,
+                    fontWeight: FontWeight.bold,
+                    decoration: passedGrade != null
+                        ? TextDecoration.lineThrough
+                        : null,
+                    decorationColor: Colors.white38,
+                  ),
                 ),
-              ),
-              subtitle: Text(
-                c['name'] ?? '',
-                style: TextStyle(
-                  color: passedGrade != null ? Colors.white24 : Colors.white70,
+                subtitle: Text(
+                  c['name'] ?? '',
+                  style: TextStyle(
+                    color: passedGrade != null ? Colors.white24 : Colors.white70,
+                  ),
                 ),
-              ),
-              trailing: passedGrade != null
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        "Passed ($passedGrade)",
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                trailing: passedGrade != null
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          "Passed ($passedGrade)",
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        isSelected
+                            ? Icons.check_circle
+                            : Icons.add_circle_outline,
+                        color: isSelected ? Colors.greenAccent : Colors.white38,
                       ),
-                    )
-                  : Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.add_circle_outline,
-                      color: isSelected ? Colors.greenAccent : Colors.white38,
-                    ),
-              onTap: passedGrade != null ? null : () => _addCourse(c),
+                onTap: passedGrade != null ? null : () => _addCourse(c),
+              ),
             ),
           );
         },
@@ -1185,40 +1160,43 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                               ),
                             ),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 4,
-                            ),
-                            title: Text(
-                              "Section $section",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 4,
                               ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                "Faculty: $faculty\nSchedule: $schedule",
+                              title: Text(
+                                "Section $section",
                                 style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                  height: 1.4,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  "Faculty: $faculty\nSchedule: $schedule",
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              isThreeLine: true,
+                              trailing: Icon(
+                                isSelected
+                                    ? Icons.check_circle
+                                    : Icons.add_circle_outline,
+                                color: isSelected
+                                    ? Colors.greenAccent
+                                    : Colors.white38,
+                              ),
+                              onTap: () => _addCourse(c),
                             ),
-                            isThreeLine: true,
-                            trailing: Icon(
-                              isSelected
-                                  ? Icons.check_circle
-                                  : Icons.add_circle_outline,
-                              color: isSelected
-                                  ? Colors.greenAccent
-                                  : Colors.white38,
-                            ),
-                            onTap: () => _addCourse(c),
                           ),
                         );
                       }).toList(),

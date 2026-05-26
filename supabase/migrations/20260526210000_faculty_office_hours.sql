@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS public.faculty_office_hours (
     drive_account_id UUID REFERENCES public.drive_accounts(id) ON DELETE SET NULL,
     drive_file_id TEXT NOT NULL,            -- Google Drive File ID
     file_name TEXT NOT NULL,                -- Proof file name
-    submitted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    submitted_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
@@ -64,3 +64,10 @@ WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = submitted_by);
 CREATE POLICY "Users can delete their own pending submissions" 
 ON public.faculty_office_hours FOR DELETE 
 USING (auth.uid() = submitted_by AND status = 'pending');
+
+-- 4. Grant privileges to standard Supabase client roles
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.faculty_office_hours TO authenticated;
+GRANT SELECT ON public.faculty_office_hours TO anon;
+GRANT ALL PRIVILEGES ON public.faculty_office_hours TO service_role;
+GRANT ALL PRIVILEGES ON public.faculty_office_hours TO postgres;
+

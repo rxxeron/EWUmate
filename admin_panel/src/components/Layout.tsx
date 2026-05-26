@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp, Sun, Moon, Library } from 'lucide-react';
+import { LayoutDashboard, LogOut, Users, BellRing, BookOpen, Settings, Database, FileUp, Mail, CalendarDays, ShieldCheck, Globe, Menu, X, TrendingUp, Sun, Moon, Library, Clock } from 'lucide-react';
 import { useTheme } from './ThemeContext';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -180,6 +180,14 @@ export function Layout() {
             <Library className="w-5 h-5" />
             <span>Vault Moderation</span>
             {location.pathname === '/study-vault' && (
+              <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
+            )}
+          </Link>
+
+          <Link to="/office-hours" className={getLinkClass('/office-hours')} onClick={() => setIsMobileMenuOpen(false)}>
+            <Clock className="w-5 h-5" />
+            <span>Hours Moderation</span>
+            {location.pathname === '/office-hours' && (
               <motion.div layoutId="activeNav" className="absolute left-0 w-1 h-6 bg-blue-400 rounded-r-full" />
             )}
           </Link>

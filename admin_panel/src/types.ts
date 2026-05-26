@@ -322,5 +322,26 @@ export interface DriveAccount {
   is_active: boolean;
   folder_id: string;
   created_at: string;
+  purpose: string; // Add the purpose field ('study_vault' | 'office_hours')
+}
+
+// --- Faculty Office Hour Submissions ---
+export interface FacultyOfficeHour {
+  id: string;
+  faculty_initials: string;
+  day: string;
+  start_time: string;
+  end_time: string;
+  drive_account_id: string | null;
+  drive_file_id: string;
+  file_name: string;
+  submitted_by: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string | null;
+  profiles?: {
+    full_name: string | null;
+    student_id: string | null;
+  };
 }
 

@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     // 2. Parse the Request Body
-    const { fileName, fileSizeBytes, mimeType } = await req.json();
+    const { fileName, fileSizeBytes, mimeType, purpose = 'study_vault' } = await req.json();
     if (!fileName || !fileSizeBytes) {
       throw new Error("Missing fileName or fileSizeBytes");
     }
@@ -46,10 +46,11 @@ serve(async (req) => {
       .from('drive_accounts')
       .select('*')
       .eq('is_active', true)
+      .eq('purpose', purpose)
       .order('used_bytes', { ascending: true }); // Get least used first
 
     if (accountError || !accounts || accounts.length === 0) {
-      throw new Error("No active drive accounts available");
+      throw new Error(`No active drive accounts available for purpose: ${purpose}`);
     }
 
     let selectedAccount = null;

@@ -161,6 +161,14 @@ class FCMService {
   }
 
   void _handleIncomingAction(String? title, String? body, String? url) {
+    showNotificationPopup(
+      title ?? 'Notification Received',
+      body ?? '',
+      url,
+    );
+  }
+
+  void _navigateToUrl(String? url) {
     if (url == null || url.isEmpty) return;
     if (url.startsWith('/')) {
       final context = rootNavigatorKey.currentContext;
@@ -222,7 +230,7 @@ class FCMService {
                           child: FilledButton(
                             onPressed: () {
                               Navigator.pop(context);
-                              _handleIncomingAction(title, body, url);
+                              _navigateToUrl(url);
                             },
                             style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent),
                             child: const Text('View Action', style: TextStyle(color: Colors.black)),

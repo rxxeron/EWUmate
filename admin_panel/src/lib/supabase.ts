@@ -22,3 +22,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
   }
 })
 
+// Forward all Deno Edge function proxy invocations to the standard authenticated client
+// so they carry the logged-in admin's active session JWT instead of the service role key.
+;(supabaseAdmin as any).functions = supabase.functions;
+

@@ -2,24 +2,22 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AzureFunctionsService {
   final String _baseUrl;
-  final String _functionKey;
 
   AzureFunctionsService()
-      : _baseUrl = dotenv.env['AZURE_FUNCTION_URL'] ?? 'http://localhost:7071',
-        _functionKey = dotenv.env['AZURE_FUNCTION_KEY'] ?? '';
-
-  String get functionKey => _functionKey;
+      : _baseUrl = dotenv.env['AZURE_FUNCTION_URL'] ?? 'http://localhost:7071';
 
   Future<Map<String, dynamic>> _postRequest(
       String endpoint, Map<String, dynamic> body) async {
+    final String? token = Supabase.instance.client.auth.currentSession?.accessToken;
     final response = await http.post(
       Uri.parse('$_baseUrl$endpoint'),
       headers: {
         'Content-Type': 'application/json',
-        'x-functions-key': _functionKey,
+        if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(body),
     );
@@ -29,14 +27,15 @@ class AzureFunctionsService {
 
   Future<Map<String, dynamic>> _getRequest(
       String endpoint, Map<String, String> queryParams) async {
-    final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: {
-      ...queryParams,
-      'code': _functionKey,
-    });
+    final String? token = Supabase.instance.client.auth.currentSession?.accessToken;
+    final uri = Uri.parse('$_baseUrl$endpoint').replace(queryParameters: queryParams);
 
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
     );
 
     return _handleResponse(response);

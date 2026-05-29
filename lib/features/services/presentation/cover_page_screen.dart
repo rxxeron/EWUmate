@@ -12,6 +12,8 @@ import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
+import '../../../core/utils/ad_helper.dart';
+import '../../../core/providers/feature_flag_provider.dart';
 
 class CoverPageScreen extends ConsumerStatefulWidget {
   const CoverPageScreen({super.key});
@@ -22,6 +24,7 @@ class CoverPageScreen extends ConsumerStatefulWidget {
 
 class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   final _formKey = GlobalKey<FormState>();
+  late final InterstitialAdManager _adManager;
   
   String _selectedTemplate = 'assignment';
   String _topic = '';
@@ -81,7 +84,14 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   @override
   void initState() {
     super.initState();
+    _adManager = InterstitialAdManager();
     _loadDepartments();
+  }
+
+  @override
+  void dispose() {
+    _adManager.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDepartments() async {
@@ -218,7 +228,8 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
       "students": allStudents,
     };
 
-    final azureService = ref.read(azureFunctionsServiceProvider);
+    final supabase = ref.read(supabaseClientProvider);
+    final String? token = supabase.auth.currentSession?.accessToken;
     
     try {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -229,7 +240,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
         Uri.parse('https://ewumate-parser.azurewebsites.net/api/generate_pdf'),
         headers: {
           "Content-Type": "application/json",
-          "x-functions-key": azureService.functionKey,
+          if (token != null) "Authorization": "Bearer $token",
         },
         body: jsonEncode(payload),
       );
@@ -330,6 +341,19 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
     final profileAsync = ref.watch(userProfileProvider);
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
     final marksAsync = ref.watch(currentSemesterMarksProvider);
+
+    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('cover_page'));
+    final interstitialFormatEnabled = ref.watch(isAdEnabledForProvider('interstitial'));
+    final adsEnabled = screenAdsEnabled && interstitialFormatEnabled;
+    if (adsEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _adManager.loadAd(enabled: true);
+        }
+      });
+    } else {
+      _adManager.dispose();
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Cover Page Generator')),
@@ -772,7 +796,12 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                 const SizedBox(height: 24),
 
                 ElevatedButton(
-                  onPressed: () => _generatePDF({}, _semester),
+                  onPressed: () {
+                    _adManager.showAd(
+                      enabled: adsEnabled,
+                      onAdDismissed: () => _generatePDF({}, _semester),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Theme.of(context).primaryColor,

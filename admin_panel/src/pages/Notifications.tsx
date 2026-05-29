@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, serviceRoleKey } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import { RefreshCw, Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck, Package } from 'lucide-react'; 
 import toast from 'react-hot-toast';
@@ -115,8 +115,8 @@ export function Notifications() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': serviceRoleKey
         },
         body: JSON.stringify(payload)
       });

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabase';
+import { supabase, serviceRoleKey } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
   CalendarClock, Mail, Search, Zap, ShieldCheck, 
@@ -110,11 +110,15 @@ export function Dashboard() {
       setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
     }
 
-    // 3. Check Broadcaster (Ping the broadcast function anonymously or assume operational if DB is healthy)
+    // 3. Check Broadcaster (Ping the broadcast function with service role key)
     try {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/broadcast`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'apikey': serviceRoleKey
+        },
         body: JSON.stringify({ ping: true })
       });
       if (res.status === 401 || res.status === 200 || res.status === 400) {

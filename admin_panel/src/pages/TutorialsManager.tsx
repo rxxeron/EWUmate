@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PlayCircle, Plus, Pencil, Trash2, Star, StarOff, ChevronUp, ChevronDown, Eye, EyeOff, X, Save, Loader2, ExternalLink } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 
 interface Tutorial {
   id: string;

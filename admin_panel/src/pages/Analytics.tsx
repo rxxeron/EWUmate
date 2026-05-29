@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { supabaseAdmin as supabase } from '../lib/supabase';
 import { 
   TrendingUp, Activity, 
@@ -56,130 +57,33 @@ export function Analytics() {
       else setIsRefreshing(true);
 
       const days = timeWindows[timeRange];
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
-      const startDateIso = startDate.toISOString().split('T')[0];
+      
+      const { data, error } = await supabase.rpc('get_admin_analytics_stats', { timeframe_days: days });
+      if (error) throw error;
 
-      // Fetch metadata-only counts for total and onboarding funnel, and filter growth to range
-      const [
-        { count: totalCount },
-        { count: completedFunnelCount },
-        { count: courseHistoryFunnelCount },
-        { data: recentProfiles, error: profileError }
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('onboarding_status', 'completed'),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('onboarding_status', 'course_history'),
-        supabase.from('profiles')
-          .select('created_at')
-          .gte('created_at', startDate.toISOString())
-          .order('created_at', { ascending: true })
-      ]);
-
-      if (profileError) throw profileError;
-
-      const totalUsersCount = totalCount || 0;
-      const completedCount = completedFunnelCount || 0;
-      const courseHistoryCount = courseHistoryFunnelCount || 0;
-      const registeredOnlyCount = Math.max(0, totalUsersCount - completedCount - courseHistoryCount);
-
-      setFunnelData({
-        registered: registeredOnlyCount,
-        courseHistory: courseHistoryCount,
-        completed: completedCount,
-        total: totalUsersCount
-      });
-
-      // 1. Process Growth Data
-      const growthMap: Record<string, number> = {};
-      // Initialize the range with 0s
-      for (let i = days; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        growthMap[key] = 0;
-      }
-
-      if (recentProfiles) {
-        recentProfiles.forEach(p => {
-          const pDate = new Date(p.created_at);
-          const key = pDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
-          if (growthMap[key] !== undefined) {
-            growthMap[key]++;
-          }
+      if (data) {
+        setFunnelData({
+          registered: data.funnelData.registered || 0,
+          courseHistory: data.funnelData.courseHistory || 0,
+          completed: data.funnelData.completed || 0,
+          total: data.funnelData.total || 0
+        });
+        
+        setGrowthData(data.growthData || []);
+        setActivityData(data.activityData || []);
+        
+        setStats({
+          totalUsers: data.stats.totalUsers || 0,
+          activeUsers: data.stats.activeUsers || 0,
+          rollingMau: data.stats.rollingMau || 0,
+          rollingYau: data.stats.rollingYau || 0,
+          growthRate: parseFloat(data.stats.growthRate || '0'),
+          peakActivity: data.stats.peakActivity || 0
         });
       }
-
-      // Calculate total registered before this range
-      const registeredInRangeCount = recentProfiles ? recentProfiles.length : 0;
-      let cumulative = Math.max(0, totalUsersCount - registeredInRangeCount);
-
-      const growthTrend = Object.entries(growthMap).map(([date, count]) => {
-        cumulative += count;
-        return { date, count, total: cumulative };
-      });
-
-      // 2. Fetch Active Users from the database view daily_active_users_metrics
-      const { data: activityRows, error: activityError } = await supabase
-        .from('daily_active_users_metrics')
-        .select('activity_date, dau, mau, yau')
-        .gte('activity_date', startDateIso)
-        .order('activity_date', { ascending: true });
-
-      if (activityError) throw activityError;
-
-      const activityMap: Record<string, { date: string, dau: number, mau: number, yau: number }> = {};
-      for (let i = days; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const key = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        activityMap[key] = {
-          date: key,
-          dau: 0,
-          mau: 0,
-          yau: 0
-        };
-      }
-
-      if (activityRows) {
-        activityRows.forEach((row: any) => {
-          if (row.activity_date) {
-            const [year, month, day] = row.activity_date.split('-');
-            const dateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            const dateKey = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
-            if (activityMap[dateKey]) {
-              activityMap[dateKey].dau = row.dau || 0;
-              activityMap[dateKey].mau = row.mau || 0;
-              activityMap[dateKey].yau = row.yau || 0;
-            }
-          }
-        });
-      }
-
-      const formattedActivityTrend = Object.values(activityMap);
-
-      // 4. Calculate Stats
-      const latestRow = activityRows && activityRows.length > 0 
-        ? activityRows[activityRows.length - 1] 
-        : { dau: 0, mau: 0, yau: 0 };
-
-      const peakDau = Math.max(...formattedActivityTrend.map(d => d.dau), 0);
-      const totalInRange = registeredInRangeCount;
-      const rate = ((totalInRange / Math.max(totalUsersCount, 1)) * 100).toFixed(1);
-
-      setGrowthData(growthTrend);
-      setActivityData(formattedActivityTrend);
-      setStats({
-        totalUsers: totalUsersCount,
-        activeUsers: latestRow.dau || 0,
-        rollingMau: latestRow.mau || 0,
-        rollingYau: latestRow.yau || 0,
-        growthRate: parseFloat(rate),
-        peakActivity: peakDau
-      });
-
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
+      toast.error('Failed to load system analytics trend');
     } finally {
       setLoading(false);
       setIsRefreshing(false);

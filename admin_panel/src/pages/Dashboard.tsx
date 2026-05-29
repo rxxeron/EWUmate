@@ -143,233 +143,39 @@ export function Dashboard() {
       if (!silent) setLoading(true);
       else setIsRefreshing(true);
 
-      const yesterday = new Date();
-      yesterday.setHours(yesterday.getHours() - 24);
-      const yesterdayIso = yesterday.toISOString();
+      const { data, error } = await supabase.rpc('get_admin_dashboard_stats');
+      if (error) throw error;
 
-      const last7Days = new Date();
-      last7Days.setDate(last7Days.getDate() - 6);
-      const last7DaysIso = last7Days.toISOString();
-
-      const last14Days = new Date();
-      last14Days.setDate(last14Days.getDate() - 13);
-      const last14DaysIso = last14Days.toISOString();
-
-      // STAGE 1: Fetch Primary Metrics & Recent Activity & Tracks Settings
-      // These run in parallel to give the fastest initial paint
-      const [
-        { count: usersCount },
-        { count: activeUsersCount },
-        { count: programsCount },
-        { data: recent },
-        { data: activeNow },
-        { data: activeSemesters }
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
-        supabase.from('programs').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
-        supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
-        supabase.from('active_semester').select('*')
-      ]);
-
-      // Apply Stage 1 numbers instantly
-      setStats(prev => ({
-        ...prev,
-        users: usersCount || 0,
-        activeUsers24h: activeUsersCount || 0,
-        programs: programsCount || 0
-      }));
-      setRecentUsers((recent as Profile[]) || []);
-      setActiveUsers((activeNow as Profile[]) || []);
-
-      // If initial loading, turn off loading state now to show Stage 1 data immediately
-      if (!silent) setLoading(false);
-
-      // STAGE 2: Fetch Feedback & Study Vault Counts and Active Semester Course Stats
-      // These are run in a separate staggered Promise.all block so they don't lock up connection pool
-      const [
-        { count: pendingFeedbackCount },
-        { count: inProgressFeedbackCount },
-        { count: resolvedFeedbackCount },
-        { count: ignoredFeedbackCount },
-        { count: pendingVaultCount },
-        { count: removalVaultCount },
-        { count: approvedVaultCount },
-        { count: rejectedVaultCount },
-        { count: totalVaultCount }
-      ] = await Promise.all([
-        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
-        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
-        supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'ignored'),
-        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'removal_requested'),
-        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
-        supabase.from('study_materials').select('*', { count: 'exact', head: true })
-      ]);
-
-      setVaultStats({
-        pending: pendingVaultCount || 0,
-        removalRequested: removalVaultCount || 0,
-        approved: approvedVaultCount || 0,
-        rejected: rejectedVaultCount || 0,
-        total: totalVaultCount || 0
-      });
-
-      setStats(prev => ({
-        ...prev,
-        pendingFeedbacks: pendingFeedbackCount || 0,
-        inProgressFeedbacks: inProgressFeedbackCount || 0,
-        resolvedFeedbacks: resolvedFeedbackCount || 0,
-        ignoredFeedbacks: ignoredFeedbackCount || 0
-      }));
-
-      // Calculate courses and sections metrics dynamically but efficiently
-      const semStats: Record<string, SemesterTrackStats> = {};
-      let totalActiveCourses = 0;
-
-      if (activeSemesters) {
-        for (const sem of activeSemesters) {
-          semStats[sem.track] = {
-            current: sem.current_semester_code,
-            next: sem.next_semester_code,
-            current_courses: 0,
-            current_sections: 0,
-            next_courses: 0,
-            next_sections: 0,
-            is_advising_open: sem.is_advising_open || false,
-            is_next_semester_open: sem.is_next_semester_open || false
-          };
-
-          if (sem.current_semester_code) {
-            const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-            const tableName = `courses_${tableBase}`;
-            
-            // Fetch total sections (rows count) - extremely fast
-            const { count: currentSectionsCount } = await supabase
-              .from(tableName)
-              .select('*', { count: 'exact', head: true });
-            
-            // Fetch only course codes to compute unique courses - lightweight
-            const { data: cCodes } = await supabase
-              .from(tableName)
-              .select('course_code');
-            
-            if (cCodes && Array.isArray(cCodes)) {
-              semStats[sem.track].current_sections = currentSectionsCount || cCodes.length;
-              const uniqueCourses = new Set(cCodes.map(c => c.course_code)).size;
-              semStats[sem.track].current_courses = uniqueCourses;
-              totalActiveCourses += uniqueCourses;
-            }
-          }
-
-          if (sem.next_semester_code) {
-            const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-            const tableName = `courses_${tableBase}`;
-            
-            // Fetch total sections (rows count)
-            const { count: nextSectionsCount } = await supabase
-              .from(tableName)
-              .select('*', { count: 'exact', head: true });
-            
-            // Fetch only course codes
-            const { data: nCodes } = await supabase
-              .from(tableName)
-              .select('course_code');
-            
-            if (nCodes && Array.isArray(nCodes)) {
-              semStats[sem.track].next_sections = nextSectionsCount || nCodes.length;
-              const uniqueNextCourses = new Set(nCodes.map(c => c.course_code)).size;
-              semStats[sem.track].next_courses = uniqueNextCourses;
-            }
-          }
-        }
-      }
-
-      setSemesterStats(semStats);
-      setStats(prev => ({
-        ...prev,
-        courses: totalActiveCourses
-      }));
-
-      // STAGE 3: Fetch growth trend, activity trend and notifications
-      const [
-        { count: noticesCount },
-        { data: rawTrendData },
-        { data: activityData }
-      ] = await Promise.all([
-        supabase.from('notifications').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('created_at').gte('created_at', last14DaysIso).order('created_at', { ascending: true }),
-        supabase.from('daily_active_users_metrics').select('activity_date, dau').gte('activity_date', last7DaysIso.split('T')[0]).order('activity_date', { ascending: true })
-      ]);
-
-      setStats(prev => ({
-        ...prev,
-        notifications: noticesCount || 0
-      }));
-
-      // Process Registration Trend Data (Last 14 Days)
-      if (rawTrendData && usersCount !== null) {
-        const groups: Record<string, number> = {};
-        
-        // Initialize the last 14 days with 0
-        for (let i = 13; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          const dateLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-          groups[dateLabel] = 0;
-        }
-
-        rawTrendData.forEach(p => {
-          const date = new Date(p.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
-          if (groups[date] !== undefined) {
-            groups[date]++;
-          }
-        });
-        
-        // Cumulative count starts from: Total users minus the ones registered in the last 14 days
-        const registeredInLast14DaysCount = rawTrendData.length;
-        let cumulative = Math.max(0, (usersCount || 0) - registeredInLast14DaysCount);
-        
-        const trend = Object.entries(groups).map(([date, count]) => {
-          cumulative += count;
-          return { date, count, total: cumulative };
-        });
-        setRegistrationTrend(trend);
-      }
-
-      // Process Activity Trend Data (Last 7 Days)
-      if (activityData) {
-        const activityGroups: Record<string, number> = {};
-        activityData.forEach((row: any) => {
-          if (row.activity_date) {
-            activityGroups[row.activity_date] = row.dau;
-          }
+      if (data) {
+        setStats({
+          users: data.stats.users || 0,
+          activeUsers24h: data.stats.activeUsers24h || 0,
+          programs: data.stats.programs || 0,
+          courses: data.stats.courses || 0,
+          notifications: data.stats.notifications || 0,
+          pendingFeedbacks: data.stats.pendingFeedbacks || 0,
+          inProgressFeedbacks: data.stats.inProgressFeedbacks || 0,
+          resolvedFeedbacks: data.stats.resolvedFeedbacks || 0,
+          ignoredFeedbacks: data.stats.ignoredFeedbacks || 0,
         });
 
-        const actTrend = [];
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          
-          const year = d.getFullYear();
-          const month = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          const isoKey = `${year}-${month}-${day}`;
+        setVaultStats({
+          pending: data.vaultStats.pending || 0,
+          removalRequested: data.vaultStats.removalRequested || 0,
+          approved: data.vaultStats.approved || 0,
+          rejected: data.vaultStats.rejected || 0,
+          total: data.vaultStats.total || 0
+        });
 
-          const dateLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-          actTrend.push({
-            date: dateLabel,
-            active: activityGroups[isoKey] || 0
-          });
-        }
-        setActivityTrend(actTrend);
+        setRecentUsers((data.recentUsers as Profile[]) || []);
+        setActiveUsers((data.activeUsers as Profile[]) || []);
+        setSemesterStats(data.semesterStats || {});
+        setRegistrationTrend(data.registrationTrend || []);
+        setActivityTrend(data.activityTrend || []);
       }
-
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
+      toast.error('Failed to load real-time dashboard analytics');
     } finally {
       setLoading(false);
       setIsRefreshing(false);

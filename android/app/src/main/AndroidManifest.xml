@@ -4,6 +4,8 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Required for AdMob Advertising ID on Android 12+ -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <application
         android:label="EWUmate"
@@ -42,6 +44,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Google Mobile Ads App ID configuration -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-7033696898787402~3843793698"/>
+
         <receiver android:name=".ScheduleWidgetProvider" android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

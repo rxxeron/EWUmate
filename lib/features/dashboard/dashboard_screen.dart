@@ -13,6 +13,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/utils/error_utils.dart';
 import '../../core/utils/version_utils.dart';
 import '../../core/utils/refresh_utils.dart';
+import '../../core/services/fcm_service.dart';
 
 
 
@@ -70,6 +71,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _semConfig;
   bool _showAdvisingBanner = false;
   bool _showUpdateBanner = false;
+  bool _isPlayStoreUser = false;
+  String _customApkUrl = "";
   
   // Track tasks currently showing the "Reschedule?" prompt after being marked missed
   final Set<String> _reschedulePromptIds = {};
@@ -88,6 +91,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) _refreshDashboard(isSilent: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _checkAndShowPendingNotifications() {
+    if (_loadingInit) return;
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final fcmService = ref.read(fcmServiceProvider);
+        fcmService.isDashboardStable = true;
+        
+        final pending = fcmService.pendingAction;
+        if (pending != null) {
+          debugPrint("[FCM] Executing pending notification click inside stable Dashboard Screen");
+          fcmService.showNotificationPopup(pending.title, pending.body, pending.url);
+          fcmService.clearPendingAction();
+        }
+      }
     });
   }
 
@@ -180,7 +206,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           try {
             return await _supabase
                 .from('app_config')
-                .select('value, latest_version')
+                .select('value, latest_version, download_url')
                 .eq('key', 'update_info')
                 .maybeSingle();
           } catch (_) {
@@ -226,17 +252,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         });
         
         _updateHomeWidget(dashboardData);
+        _checkAndShowPendingNotifications();
       }
       
       // 4. Check for app updates and show a soft Play Store redirection banner
       try {
         final currentVersion = versionInfo.version;
         if (updateRes != null) {
+          // Extract the update_available toggle from the value map (admin config)
+          bool isPromptEnabled = true;
+          try {
+            final val = updateRes['value'];
+            if (val is Map) {
+              isPromptEnabled = val['update_available'] as bool? ?? true;
+            } else if (val is String) {
+              final decoded = jsonDecode(val);
+              if (decoded is Map) {
+                isPromptEnabled = decoded['update_available'] as bool? ?? true;
+              }
+            }
+          } catch (_) {}
+
           final latestVersion = updateRes['latest_version']?.toString() ?? "";
-          if (VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
+          if (isPromptEnabled && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
+            // Determine if they are a Play Store user
+            final installer = versionInfo.installerStore;
+            final isPlayStore = installer == 'com.android.vending';
+            
+            // Extract the download_url from the root level column or value map
+            String apkUrl = updateRes['download_url']?.toString() ?? "";
+            if (apkUrl.isEmpty) {
+              try {
+                final val = updateRes['value'];
+                if (val is Map) {
+                  apkUrl = val['download_url']?.toString() ?? "";
+                } else if (val is String) {
+                  final decoded = jsonDecode(val);
+                  if (decoded is Map) {
+                    apkUrl = decoded['download_url']?.toString() ?? "";
+                  }
+                }
+              } catch (_) {}
+            }
+
             if (mounted) {
               setState(() {
                 _showUpdateBanner = true;
+                _isPlayStoreUser = isPlayStore;
+                _customApkUrl = apkUrl;
               });
             }
           } else {
@@ -261,11 +324,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           );
         }
       }
-      if (mounted) setState(() => _loadingInit = false);
+      if (mounted) {
+        setState(() => _loadingInit = false);
+        _checkAndShowPendingNotifications();
+      }
     } catch (e, stack) {
       debugPrint('[Dashboard] Refresh Error: $e\n$stack');
       if (mounted) {
         setState(() => _loadingInit = false);
+        _checkAndShowPendingNotifications();
         // Only show snackbar if we do not have any cached data active
         if (_lastValidScheduleData == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -737,13 +804,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildAppUpdateBanner() {
     if (!_showUpdateBanner) return const SizedBox.shrink();
 
+    final String updateUrl = _isPlayStoreUser 
+        ? 'https://play.google.com/store/apps/details?id=com.rxxeron.ewumate'
+        : (_customApkUrl.isNotEmpty ? _customApkUrl : 'https://play.google.com/store/apps/details?id=com.rxxeron.ewumate');
+
+    final String bannerTitle = _isPlayStoreUser ? 'Update EWUmate!' : 'New APK Update!';
+    final String bannerBody = _isPlayStoreUser 
+        ? 'A new app version is ready on the Play Store. Tap to update now.'
+        : 'A new manual installation APK is ready. Tap to download now.';
+
     return GlassContainer(
       margin: const EdgeInsets.only(bottom: 25),
       padding: const EdgeInsets.all(18),
       borderRadius: 22,
       borderColor: Colors.greenAccent.withValues(alpha: 0.4),
       onTap: () => url_launcher.launchUrl(
-        Uri.parse('https://play.google.com/store/apps/details?id=com.rxxeron.ewumate'),
+        Uri.parse(updateUrl),
         mode: url_launcher.LaunchMode.externalApplication,
       ),
       child: Row(
@@ -757,13 +833,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: const Icon(Icons.system_update_alt_rounded, color: Colors.greenAccent, size: 28),
           ),
           const SizedBox(width: 15),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Update EWUmate!', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                SizedBox(height: 4),
-                Text('A new app version is ready on the Play Store. Tap to update now.', style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3)),
+                Text(bannerTitle, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(bannerBody, style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.3)),
               ],
             ),
           ),
@@ -1243,26 +1319,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF22D3EE).withOpacity(0.1),
-            shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF22D3EE).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.assignment_rounded, color: Color(0xFF22D3EE), size: 20),
           ),
-          child: const Icon(Icons.assignment_rounded, color: Color(0xFF22D3EE), size: 20),
+          title: Text(
+            t['title']?.toString() ?? 'Untitled Task', 
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)
+          ),
+          subtitle: Text(
+            "${t['course_code']?.toString() ?? 'General'} • $formattedDue",
+            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
+          onTap: () => _showTaskEditor(t),
         ),
-        title: Text(
-          t['title']?.toString() ?? 'Untitled Task', 
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)
-        ),
-        subtitle: Text(
-          "${t['course_code']?.toString() ?? 'General'} • $formattedDue",
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24),
-        onTap: () => _showTaskEditor(t),
       ),
     );
   }

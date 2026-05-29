@@ -56,6 +56,14 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
               data: (profile) {
                 _stallTimer?.cancel();
 
+                // 0. Primary Auth Check: If the Supabase session is null, they are signed out
+                final hasSession = Supabase.instance.client.auth.currentSession != null;
+                if (user == null && !hasSession) {
+                  debugPrint("[CheckAuth] User is signed out. Redirecting to Login.");
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
+                  return const CircularProgressBinding(text: 'Redirecting to login...');
+                }
+
                 // 1. If we have NO profile data
                 if (profile == null) {
                   debugPrint("[CheckAuth] Profile is NULL. User is: ${user?.id}");

@@ -16,7 +16,20 @@ serve(async (req) => {
         const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        let { title, body, link, scheduledAt, targetUserId, targetDepartment, targetStatus, targetVersion } = await req.json();
+        let payload;
+        try {
+            payload = await req.json();
+        } catch {
+            payload = {};
+        }
+
+        if (payload.ping) {
+            return new Response(JSON.stringify({ success: true, message: 'pong' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        let { title, body, link, scheduledAt, targetUserId, targetDepartment, targetStatus, targetVersion } = payload;
 
         if (!title || !body) {
             return new Response(JSON.stringify({ error: 'Title and body are required' }), {

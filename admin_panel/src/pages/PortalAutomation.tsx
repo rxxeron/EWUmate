@@ -5,7 +5,7 @@ import {
   Table as TableIcon, User, Lock, Zap,
   Terminal, History, Database
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 

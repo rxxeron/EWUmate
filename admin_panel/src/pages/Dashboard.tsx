@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
   CalendarClock, Mail, Search, Zap, ShieldCheck, 

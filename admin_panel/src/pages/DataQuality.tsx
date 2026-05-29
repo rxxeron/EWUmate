@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { ShieldCheck, AlertTriangle, Copy, Search, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';

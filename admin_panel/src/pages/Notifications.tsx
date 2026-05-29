@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import { RefreshCw, Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck, Package } from 'lucide-react'; 
 import toast from 'react-hot-toast';

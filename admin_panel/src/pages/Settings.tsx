@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { Settings as SettingsIcon, RefreshCw, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';

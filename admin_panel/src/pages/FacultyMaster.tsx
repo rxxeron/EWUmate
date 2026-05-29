@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { Users, Search, Mail, Phone, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Faculty } from '../types';

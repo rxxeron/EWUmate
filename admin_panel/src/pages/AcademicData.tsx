@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { supabaseAdmin as supabase } from '../lib/supabase';
 import { BookOpen, GraduationCap, Award, Plus, Edit2, Trash2, X, Check, Search, CalendarClock, Database, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import toast from 'react-hot-toast';

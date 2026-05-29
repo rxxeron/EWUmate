@@ -60,13 +60,35 @@ export function Analytics() {
       startDate.setDate(startDate.getDate() - days);
       const startDateIso = startDate.toISOString().split('T')[0];
 
-      // Fetch all profiles for growth and onboarding status
-      const { data: allProfiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('created_at, onboarding_status')
-        .order('created_at', { ascending: true });
+      // Fetch metadata-only counts for total and onboarding funnel, and filter growth to range
+      const [
+        { count: totalCount },
+        { count: completedFunnelCount },
+        { count: courseHistoryFunnelCount },
+        { data: recentProfiles, error: profileError }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('onboarding_status', 'completed'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('onboarding_status', 'course_history'),
+        supabase.from('profiles')
+          .select('created_at')
+          .gte('created_at', startDate.toISOString())
+          .order('created_at', { ascending: true })
+      ]);
 
       if (profileError) throw profileError;
+
+      const totalUsersCount = totalCount || 0;
+      const completedCount = completedFunnelCount || 0;
+      const courseHistoryCount = courseHistoryFunnelCount || 0;
+      const registeredOnlyCount = Math.max(0, totalUsersCount - completedCount - courseHistoryCount);
+
+      setFunnelData({
+        registered: registeredOnlyCount,
+        courseHistory: courseHistoryCount,
+        completed: completedCount,
+        total: totalUsersCount
+      });
 
       // 1. Process Growth Data
       const growthMap: Record<string, number> = {};
@@ -78,18 +100,20 @@ export function Analytics() {
         growthMap[key] = 0;
       }
 
-      let totalBeforeRange = 0;
-      allProfiles.forEach(p => {
-        const pDate = new Date(p.created_at);
-        const key = pDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
-        if (growthMap[key] !== undefined) {
-          growthMap[key]++;
-        } else if (pDate < startDate) {
-          totalBeforeRange++;
-        }
-      });
+      if (recentProfiles) {
+        recentProfiles.forEach(p => {
+          const pDate = new Date(p.created_at);
+          const key = pDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
+          if (growthMap[key] !== undefined) {
+            growthMap[key]++;
+          }
+        });
+      }
 
-      let cumulative = totalBeforeRange;
+      // Calculate total registered before this range
+      const registeredInRangeCount = recentProfiles ? recentProfiles.length : 0;
+      let cumulative = Math.max(0, totalUsersCount - registeredInRangeCount);
+
       const growthTrend = Object.entries(growthMap).map(([date, count]) => {
         cumulative += count;
         return { date, count, total: cumulative };
@@ -134,42 +158,19 @@ export function Analytics() {
 
       const formattedActivityTrend = Object.values(activityMap);
 
-      // 3. Process Onboarding Funnel Counts
-      let completedCount = 0;
-      let courseHistoryCount = 0;
-      let registeredOnlyCount = 0;
-
-      allProfiles.forEach(p => {
-        const status = p.onboarding_status || 'registered';
-        if (status === 'completed') {
-          completedCount++;
-        } else if (status === 'course_history') {
-          courseHistoryCount++;
-        } else {
-          registeredOnlyCount++;
-        }
-      });
-
-      setFunnelData({
-        registered: registeredOnlyCount,
-        courseHistory: courseHistoryCount,
-        completed: completedCount,
-        total: allProfiles.length
-      });
-
       // 4. Calculate Stats
       const latestRow = activityRows && activityRows.length > 0 
         ? activityRows[activityRows.length - 1] 
         : { dau: 0, mau: 0, yau: 0 };
 
       const peakDau = Math.max(...formattedActivityTrend.map(d => d.dau), 0);
-      const totalInRange = allProfiles.filter(p => new Date(p.created_at) >= startDate).length;
-      const rate = ((totalInRange / Math.max(allProfiles.length, 1)) * 100).toFixed(1);
+      const totalInRange = registeredInRangeCount;
+      const rate = ((totalInRange / Math.max(totalUsersCount, 1)) * 100).toFixed(1);
 
       setGrowthData(growthTrend);
       setActivityData(formattedActivityTrend);
       setStats({
-        totalUsers: allProfiles.length,
+        totalUsers: totalUsersCount,
         activeUsers: latestRow.dau || 0,
         rollingMau: latestRow.mau || 0,
         rollingYau: latestRow.yau || 0,

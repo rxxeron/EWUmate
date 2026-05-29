@@ -51,20 +51,24 @@ export function Dashboard() {
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
 
   // Real-time System Infrastructure Health Check State
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [infraStatus, setInfraStatus] = useState({
-    scraper: 'Healthy',
-    azure: 'Live',
-    db: 'Optimized',
-    broadcaster: 'Idle'
+    scraper: 'Pending Diagnostics',
+    azure: 'Pending Diagnostics',
+    db: 'Pending Diagnostics',
+    broadcaster: 'Pending Diagnostics'
   });
   const [infraColors, setInfraColors] = useState({
-    scraper: 'bg-amber-500',
-    azure: 'bg-emerald-500',
-    db: 'bg-indigo-500',
-    broadcaster: 'bg-slate-400'
+    scraper: 'bg-slate-300 dark:bg-white/10 text-slate-400',
+    azure: 'bg-slate-300 dark:bg-white/10 text-slate-400',
+    db: 'bg-slate-300 dark:bg-white/10 text-slate-400',
+    broadcaster: 'bg-slate-300 dark:bg-white/10 text-slate-400'
   });
 
   const checkInfrastructureHealth = async () => {
+    setIsCheckingHealth(true);
+    const toastId = toast.loading('Running system diagnostics...');
+    
     // 1. Check DB Edge Latency
     const startDb = performance.now();
     try {
@@ -73,23 +77,23 @@ export function Dashboard() {
       const latency = endDb - startDb;
       
       let status = 'Optimized';
-      let color = 'bg-indigo-500';
+      let color = 'bg-indigo-500 text-white';
       if (error) {
         status = 'Error';
-        color = 'bg-rose-500';
+        color = 'bg-rose-500 text-white';
       } else if (latency > 1000) {
         status = 'Lagging';
-        color = 'bg-amber-500';
+        color = 'bg-amber-500 text-white';
       } else if (latency > 300) {
         status = 'Operational';
-        color = 'bg-emerald-500';
+        color = 'bg-emerald-500 text-white';
       }
       
       setInfraStatus(prev => ({ ...prev, db: status }));
       setInfraColors(prev => ({ ...prev, db: color }));
     } catch {
       setInfraStatus(prev => ({ ...prev, db: 'Offline' }));
-      setInfraColors(prev => ({ ...prev, db: 'bg-rose-500' }));
+      setInfraColors(prev => ({ ...prev, db: 'bg-rose-500 text-white' }));
     }
 
     // 2. Check Azure Function Connectivity (Securely via azure-admin-proxy)
@@ -103,14 +107,14 @@ export function Dashboard() {
       });
       if (!res.error) {
         setInfraStatus(prev => ({ ...prev, scraper: 'Healthy', azure: 'Live' }));
-        setInfraColors(prev => ({ ...prev, scraper: 'bg-amber-500', azure: 'bg-emerald-500' }));
+        setInfraColors(prev => ({ ...prev, scraper: 'bg-amber-500 text-white', azure: 'bg-emerald-500 text-white' }));
       } else {
         setInfraStatus(prev => ({ ...prev, scraper: 'Issues', azure: 'Down' }));
-        setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
+        setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500 text-white', azure: 'bg-rose-500 text-white' }));
       }
     } catch {
       setInfraStatus(prev => ({ ...prev, scraper: 'Offline', azure: 'Offline' }));
-      setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
+      setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500 text-white', azure: 'bg-rose-500 text-white' }));
     }
 
     // 3. Check Broadcaster (Ping securely under admin session token)
@@ -120,15 +124,18 @@ export function Dashboard() {
       });
       if (!error) {
         setInfraStatus(prev => ({ ...prev, broadcaster: 'Idle' }));
-        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-slate-400' }));
+        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-slate-400 text-white' }));
       } else {
         setInfraStatus(prev => ({ ...prev, broadcaster: 'Issues' }));
-        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500' }));
+        setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500 text-white' }));
       }
     } catch {
       setInfraStatus(prev => ({ ...prev, broadcaster: 'Offline' }));
-      setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500' }));
+      setInfraColors(prev => ({ ...prev, broadcaster: 'bg-rose-500 text-white' }));
     }
+
+    setIsCheckingHealth(false);
+    toast.success('Diagnostics completed successfully!', { id: toastId });
   };
 
   const fetchDashboardData = async (silent = false) => {
@@ -144,40 +151,58 @@ export function Dashboard() {
       last7Days.setDate(last7Days.getDate() - 6);
       const last7DaysIso = last7Days.toISOString();
 
-      // Parallel data fetching
+      const last14Days = new Date();
+      last14Days.setDate(last14Days.getDate() - 13);
+      const last14DaysIso = last14Days.toISOString();
+
+      // STAGE 1: Fetch Primary Metrics & Recent Activity & Tracks Settings
+      // These run in parallel to give the fastest initial paint
       const [
         { count: usersCount },
         { count: activeUsersCount },
         { count: programsCount },
-        { count: noticesCount },
+        { data: recent },
+        { data: activeNow },
+        { data: activeSemesters }
+      ] = await Promise.all([
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
+        supabase.from('programs').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
+        supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
+        supabase.from('active_semester').select('*')
+      ]);
+
+      // Apply Stage 1 numbers instantly
+      setStats(prev => ({
+        ...prev,
+        users: usersCount || 0,
+        activeUsers24h: activeUsersCount || 0,
+        programs: programsCount || 0
+      }));
+      setRecentUsers((recent as Profile[]) || []);
+      setActiveUsers((activeNow as Profile[]) || []);
+
+      // If initial loading, turn off loading state now to show Stage 1 data immediately
+      if (!silent) setLoading(false);
+
+      // STAGE 2: Fetch Feedback & Study Vault Counts and Active Semester Course Stats
+      // These are run in a separate staggered Promise.all block so they don't lock up connection pool
+      const [
         { count: pendingFeedbackCount },
         { count: inProgressFeedbackCount },
         { count: resolvedFeedbackCount },
         { count: ignoredFeedbackCount },
-        { data: recent },
-        { data: activeNow },
-        { data: activeSemesters },
-        { data: rawTrendData },
-        { data: activityData },
         { count: pendingVaultCount },
         { count: removalVaultCount },
         { count: approvedVaultCount },
         { count: rejectedVaultCount },
         { count: totalVaultCount }
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('last_active_at', yesterdayIso),
-        supabase.from('programs').select('*', { count: 'exact', head: true }),
-        supabase.from('notifications').select('*', { count: 'exact', head: true }),
         supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'in_progress'),
         supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'resolved'),
         supabase.from('feedbacks').select('*', { count: 'exact', head: true }).eq('status', 'ignored'),
-        supabase.from('profiles').select('id, full_name, student_id, program_code, department_name, created_at, last_active_at, app_open_count').order('created_at', { ascending: false }).limit(5),
-        supabase.from('profiles').select('id, full_name, student_id, last_active_at, app_open_count').order('last_active_at', { ascending: false }).limit(5),
-        supabase.from('active_semester').select('*'),
-        supabase.from('profiles').select('created_at').order('created_at', { ascending: true }),
-        supabase.from('daily_active_users_metrics').select('activity_date, dau').gte('activity_date', last7DaysIso.split('T')[0]).order('activity_date', { ascending: true }),
         supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'removal_requested'),
         supabase.from('study_materials').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -185,19 +210,133 @@ export function Dashboard() {
         supabase.from('study_materials').select('*', { count: 'exact', head: true })
       ]);
 
-      // Process Registration Trend Data
-      if (rawTrendData) {
+      setVaultStats({
+        pending: pendingVaultCount || 0,
+        removalRequested: removalVaultCount || 0,
+        approved: approvedVaultCount || 0,
+        rejected: rejectedVaultCount || 0,
+        total: totalVaultCount || 0
+      });
+
+      setStats(prev => ({
+        ...prev,
+        pendingFeedbacks: pendingFeedbackCount || 0,
+        inProgressFeedbacks: inProgressFeedbackCount || 0,
+        resolvedFeedbacks: resolvedFeedbackCount || 0,
+        ignoredFeedbacks: ignoredFeedbackCount || 0
+      }));
+
+      // Calculate courses and sections metrics dynamically but efficiently
+      const semStats: Record<string, SemesterTrackStats> = {};
+      let totalActiveCourses = 0;
+
+      if (activeSemesters) {
+        for (const sem of activeSemesters) {
+          semStats[sem.track] = {
+            current: sem.current_semester_code,
+            next: sem.next_semester_code,
+            current_courses: 0,
+            current_sections: 0,
+            next_courses: 0,
+            next_sections: 0,
+            is_advising_open: sem.is_advising_open || false,
+            is_next_semester_open: sem.is_next_semester_open || false
+          };
+
+          if (sem.current_semester_code) {
+            const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+            const tableName = `courses_${tableBase}`;
+            
+            // Fetch total sections (rows count) - extremely fast
+            const { count: currentSectionsCount } = await supabase
+              .from(tableName)
+              .select('*', { count: 'exact', head: true });
+            
+            // Fetch only course codes to compute unique courses - lightweight
+            const { data: cCodes } = await supabase
+              .from(tableName)
+              .select('course_code');
+            
+            if (cCodes && Array.isArray(cCodes)) {
+              semStats[sem.track].current_sections = currentSectionsCount || cCodes.length;
+              const uniqueCourses = new Set(cCodes.map(c => c.course_code)).size;
+              semStats[sem.track].current_courses = uniqueCourses;
+              totalActiveCourses += uniqueCourses;
+            }
+          }
+
+          if (sem.next_semester_code) {
+            const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
+            const tableName = `courses_${tableBase}`;
+            
+            // Fetch total sections (rows count)
+            const { count: nextSectionsCount } = await supabase
+              .from(tableName)
+              .select('*', { count: 'exact', head: true });
+            
+            // Fetch only course codes
+            const { data: nCodes } = await supabase
+              .from(tableName)
+              .select('course_code');
+            
+            if (nCodes && Array.isArray(nCodes)) {
+              semStats[sem.track].next_sections = nextSectionsCount || nCodes.length;
+              const uniqueNextCourses = new Set(nCodes.map(c => c.course_code)).size;
+              semStats[sem.track].next_courses = uniqueNextCourses;
+            }
+          }
+        }
+      }
+
+      setSemesterStats(semStats);
+      setStats(prev => ({
+        ...prev,
+        courses: totalActiveCourses
+      }));
+
+      // STAGE 3: Fetch growth trend, activity trend and notifications
+      const [
+        { count: noticesCount },
+        { data: rawTrendData },
+        { data: activityData }
+      ] = await Promise.all([
+        supabase.from('notifications').select('*', { count: 'exact', head: true }),
+        supabase.from('profiles').select('created_at').gte('created_at', last14DaysIso).order('created_at', { ascending: true }),
+        supabase.from('daily_active_users_metrics').select('activity_date, dau').gte('activity_date', last7DaysIso.split('T')[0]).order('activity_date', { ascending: true })
+      ]);
+
+      setStats(prev => ({
+        ...prev,
+        notifications: noticesCount || 0
+      }));
+
+      // Process Registration Trend Data (Last 14 Days)
+      if (rawTrendData && usersCount !== null) {
         const groups: Record<string, number> = {};
+        
+        // Initialize the last 14 days with 0
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dateLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+          groups[dateLabel] = 0;
+        }
+
         rawTrendData.forEach(p => {
           const date = new Date(p.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
-          groups[date] = (groups[date] || 0) + 1;
+          if (groups[date] !== undefined) {
+            groups[date]++;
+          }
         });
         
-        let cumulative = 0;
+        // Cumulative count starts from: Total users minus the ones registered in the last 14 days
+        const registeredInLast14DaysCount = rawTrendData.length;
+        let cumulative = Math.max(0, (usersCount || 0) - registeredInLast14DaysCount);
+        
         const trend = Object.entries(groups).map(([date, count]) => {
           cumulative += count;
           return { date, count, total: cumulative };
-        }).slice(-14); // Last 14 days
+        });
         setRegistrationTrend(trend);
       }
 
@@ -229,86 +368,6 @@ export function Dashboard() {
         setActivityTrend(actTrend);
       }
 
-      setVaultStats({
-        pending: pendingVaultCount || 0,
-        removalRequested: removalVaultCount || 0,
-        approved: approvedVaultCount || 0,
-        rejected: rejectedVaultCount || 0,
-        total: totalVaultCount || 0
-      });
-
-      const semStats: Record<string, SemesterTrackStats> = {};
-      let totalActiveCourses = 0;
-
-      async function fetchAllCourseCodes(tableName: string) {
-        let allCodes: { course_code: string }[] = [];
-        let from = 0;
-        let to = 999;
-        while (true) {
-          const { data, error } = await supabase.from(tableName).select('course_code').range(from, to);
-          if (error || !data || data.length === 0) break;
-          allCodes = [...allCodes, ...data];
-          if (data.length < 1000) break;
-          from += 1000;
-          to += 1000;
-        }
-        return allCodes;
-      }
-
-      if (activeSemesters) {
-        for (const sem of activeSemesters) {
-          semStats[sem.track] = {
-            current: sem.current_semester_code,
-            next: sem.next_semester_code,
-            current_courses: 0,
-            current_sections: 0,
-            next_courses: 0,
-            next_sections: 0,
-            is_advising_open: sem.is_advising_open || false,
-            is_next_semester_open: sem.is_next_semester_open || false
-          };
-
-          if (sem.current_semester_code) {
-             const tableBase = sem.current_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-             const cData = await fetchAllCourseCodes(`courses_${tableBase}`);       
-             if (cData && Array.isArray(cData)) {
-               semStats[sem.track].current_sections = cData.length;
-               const uniqueCourses = new Set(cData.map(c => c.course_code)).size;
-               semStats[sem.track].current_courses = uniqueCourses;
-               totalActiveCourses += uniqueCourses;
-             }
-          }
-
-          if (sem.next_semester_code) {
-             const tableBase = sem.next_semester_code.toLowerCase().replace(/[\s_]+/g, '');
-             const nData = await fetchAllCourseCodes(`courses_${tableBase}`);
-             if (nData && Array.isArray(nData)) {
-               semStats[sem.track].next_sections = nData.length;
-               const uniqueNextCourses = new Set(nData.map(c => c.course_code)).size;
-               semStats[sem.track].next_courses = uniqueNextCourses;
-             }
-          }
-        }
-      }
-
-      setStats({
-        users: usersCount || 0,
-        activeUsers24h: activeUsersCount || 0,
-        programs: programsCount || 0,
-        courses: totalActiveCourses,
-        notifications: noticesCount || 0,
-        pendingFeedbacks: pendingFeedbackCount || 0,
-        inProgressFeedbacks: inProgressFeedbackCount || 0,
-        resolvedFeedbacks: resolvedFeedbackCount || 0,
-        ignoredFeedbacks: ignoredFeedbackCount || 0,
-      });
-      
-      setSemesterStats(semStats);
-      setRecentUsers((recent as Profile[]) || []);
-      setActiveUsers((activeNow as Profile[]) || []);
-
-      // Asynchronously scan cloud infrastructure status
-      checkInfrastructureHealth();
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
     } finally {
@@ -618,9 +677,30 @@ export function Dashboard() {
         {/* System Health / Status */}
         <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-8">
            <div className="md:col-span-3 bg-white dark:bg-slate-800 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-100 dark:border-white/5 flex flex-col">
-              <div className="flex items-center justify-between mb-8">
-                 <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">System Infrastructure</h3>
-                 <span className="text-[10px] font-black px-3 py-1 bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 rounded-full uppercase">Operational</span>
+              <div className="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center mb-8">
+                 <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">System Infrastructure</h3>
+                    <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Diagnostics & Cloud Telemetry</p>
+                 </div>
+                 <button 
+                   onClick={checkInfrastructureHealth}
+                   disabled={isCheckingHealth}
+                   className={cn(
+                     "text-[10px] font-black px-4 py-2.5 rounded-xl transition-all uppercase tracking-wider flex items-center gap-2 border",
+                     isCheckingHealth 
+                       ? "bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-white/5 cursor-not-allowed"
+                       : "bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-100/50 dark:border-indigo-500/20 shadow-sm"
+                   )}
+                 >
+                   {isCheckingHealth ? (
+                     <>
+                       <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                       Running...
+                     </>
+                   ) : (
+                     'Run Diagnostics'
+                   )}
+                 </button>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[

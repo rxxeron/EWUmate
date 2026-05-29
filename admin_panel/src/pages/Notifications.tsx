@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, serviceRoleKey } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { cn } from '../lib/utils';
 import { RefreshCw, Send, Link as LinkIcon, Clock, Building, Target, BookmarkPlus, History, Copy, BellRing, Users, ShieldCheck, Package } from 'lucide-react'; 
 import toast from 'react-hot-toast';
@@ -111,20 +111,12 @@ export function Notifications() {
         payload.targetVersion = targetVersion;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/broadcast`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'apikey': serviceRoleKey
-        },
-        body: JSON.stringify(payload)
+      // Secure Cloud-Side Notification Broadcast (invokes Deno Edge Function securely, completely shielding keys)
+      const { error: bcastError } = await supabase.functions.invoke('broadcast', {
+        body: payload
       });
 
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error || 'Deployment failed');
-      }
+      if (bcastError) throw bcastError;
 
       toast.success('Notification deployed successfully!');
       resetForm();

@@ -171,8 +171,10 @@ export function UserDetails() {
     setSaving(true);
     const toastId = toast.loading('Purging user data...');
     try {
-      // Delete from Auth (requires service role key, which supabaseAdmin has)
-      const { error: authError } = await supabase.auth.admin.deleteUser(id);
+      // Secure Cloud-Side Purge (invokes admin-purge-user Edge Function securely, completely shielding superuser keys)
+      const { error: authError } = await supabase.functions.invoke('admin-purge-user', {
+        body: { targetUserId: id }
+      });
       if (authError) throw authError;
 
       // Delete profile (though cascade should handle it)

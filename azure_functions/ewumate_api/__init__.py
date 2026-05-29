@@ -31,6 +31,67 @@ from . import course_parser
 from . import exam_parser
 from . import advising_parser
 
+try:
+    import jwt
+except ImportError:
+    jwt = None
+
+import httpx
+
+# ─── Supabase JWT Verification ──────────────────────────────────────
+def verify_supabase_jwt(req: func.HttpRequest) -> dict:
+    auth_header = req.headers.get("Authorization")
+    if not auth_header:
+        raise ValueError("Missing Authorization header")
+    
+    if not auth_header.startswith("Bearer "):
+        raise ValueError("Authorization header must start with 'Bearer '")
+        
+    token = auth_header.replace("Bearer ", "").strip()
+    
+    # Check if we are running in local Azure Functions emulator
+    # and if the token is a mock token for local testing
+    is_local = os.environ.get("AZURE_WEB_JOBS_SCRIPT_ROOT") is None or "127.0.0.1" in req.url or "localhost" in req.url
+    if is_local and token == "local-test-token":
+        logging.warning("Received mock local-test-token. Decoding without verification.")
+        return {"sub": "local-test-user-id", "role": "authenticated"}
+        
+    # We validate the token by making a GET request to the Supabase Auth server
+    supabase_url = os.environ.get("SUPABASE_URL", "https://jwygjihrbwxhehijldiz.supabase.co")
+    # We can retrieve the public anon key or service key for apikey header
+    anon_key = os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or ""
+    
+    try:
+        # Call the Supabase Auth endpoint
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "apikey": anon_key
+        }
+        # Using httpx for high-performance HTTP requests
+        response = httpx.get(f"{supabase_url}/auth/v1/user", headers=headers, timeout=5.0)
+        
+        if response.status_code != 200:
+            err_msg = "Invalid or expired session token"
+            try:
+                err_data = response.json()
+                if "error_description" in err_data:
+                    err_msg = err_data["error_description"]
+                elif "msg" in err_data:
+                    err_msg = err_data["msg"]
+            except:
+                pass
+            raise ValueError(err_msg)
+            
+        user_data = response.json()
+        # Supabase auth returns the user ID in the 'id' field
+        return {
+            "sub": user_data.get("id"),
+            "role": user_data.get("role", "authenticated"),
+            "email": user_data.get("email")
+        }
+    except httpx.RequestError as e:
+        raise ValueError(f"Failed to reach Supabase Auth server: {str(e)}")
+
 # ─── Supabase Config ───────────────────────────────────────────────
 def _get_supabase() -> Client:
     url = os.environ.get("SUPABASE_URL", "https://jwygjihrbwxhehijldiz.supabase.co")
@@ -45,10 +106,54 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
     action = req.route_params.get("action", "")
     logging.info(f"EWUmate API called: action={action}")
 
+    # 🔒 Admin Action Guard
+    # Protects high-privilege operations from being invoked with public client keys
+    admin_only_actions = {"parse_calendar", "parse_faculty", "parse_exam", "parse_advising", "sync_api_courses"}
+    if action in admin_only_actions:
+        admin_secret = os.environ.get("AZURE_ADMIN_SECRET_KEY")
+        client_key = req.headers.get("x-functions-key") or req.params.get("code")
+        if not admin_secret or client_key != admin_secret:
+            return func.HttpResponse(
+                json.dumps({"error": "Unauthorized: Admin privileges required"}),
+                status_code=401,
+                mimetype="application/json",
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
+
+    # 🔒 Student Action JWT Guard
+    # Protects student-facing endpoints from being called without a valid Supabase JWT
+    student_actions = {"generate_schedules", "generate_pdf"}
+    decoded_jwt = None
+    if action in student_actions:
+        try:
+            decoded_jwt = verify_supabase_jwt(req)
+        except Exception as e:
+            logging.warning(f"Student endpoint JWT verification failed for action={action}: {str(e)}")
+            return func.HttpResponse(
+                json.dumps({"error": f"Unauthorized: {str(e)}"}),
+                status_code=401,
+                mimetype="application/json",
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
+
+
     try:
         body = req.get_json()
     except Exception:
         body = {}
+
+    # Check if user_id in generate_schedules matches JWT sub
+    if action == "generate_schedules" and decoded_jwt:
+        body_user_id = body.get("user_id")
+        jwt_sub = decoded_jwt.get("sub")
+        if body_user_id and jwt_sub and body_user_id != jwt_sub:
+            logging.warning(f"User ID mismatch in generate_schedules: body.user_id={body_user_id}, jwt.sub={jwt_sub}")
+            return func.HttpResponse(
+                json.dumps({"error": "Forbidden: User ID mismatch"}),
+                status_code=403,
+                mimetype="application/json",
+                headers={"Access-Control-Allow-Origin": "*"}
+            )
 
     # Special handling for binary PDF generation
     if action == "generate_pdf":

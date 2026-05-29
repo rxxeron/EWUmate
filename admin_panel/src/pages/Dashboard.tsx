@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { supabase, serviceRoleKey } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { 
   Users, BookOpen, Activity, GraduationCap, Clock, 
   CalendarClock, Mail, Search, Zap, ShieldCheck, 
@@ -92,13 +92,16 @@ export function Dashboard() {
       setInfraColors(prev => ({ ...prev, db: 'bg-rose-500' }));
     }
 
-    // 2. Check Azure Function Connectivity (Portal Scraper and Azure Core)
+    // 2. Check Azure Function Connectivity (Securely via azure-admin-proxy)
     try {
-      const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
-      const key = import.meta.env.VITE_AZURE_FUNCTION_KEY;
-      
-      const res = await fetch(`${baseUrl}/api/scraper/portal_sync?code=${key}&preview=true&semester=PING`);
-      if (res.status === 200) {
+      const res = await supabase.functions.invoke('azure-admin-proxy', {
+        body: {
+          action: 'portal_sync',
+          semester: 'PING',
+          preview: true
+        }
+      });
+      if (!res.error) {
         setInfraStatus(prev => ({ ...prev, scraper: 'Healthy', azure: 'Live' }));
         setInfraColors(prev => ({ ...prev, scraper: 'bg-amber-500', azure: 'bg-emerald-500' }));
       } else {
@@ -110,18 +113,12 @@ export function Dashboard() {
       setInfraColors(prev => ({ ...prev, scraper: 'bg-rose-500', azure: 'bg-rose-500' }));
     }
 
-    // 3. Check Broadcaster (Ping the broadcast function with service role key)
+    // 3. Check Broadcaster (Ping securely under admin session token)
     try {
-      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/broadcast`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'apikey': serviceRoleKey
-        },
-        body: JSON.stringify({ ping: true })
+      const { error } = await supabase.functions.invoke('broadcast', {
+        body: { ping: true }
       });
-      if (res.status === 401 || res.status === 200 || res.status === 400) {
+      if (!error) {
         setInfraStatus(prev => ({ ...prev, broadcaster: 'Idle' }));
         setInfraColors(prev => ({ ...prev, broadcaster: 'bg-slate-400' }));
       } else {

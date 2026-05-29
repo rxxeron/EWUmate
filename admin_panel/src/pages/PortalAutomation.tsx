@@ -86,9 +86,14 @@ export function PortalAutomation() {
   const checkAzureHealth = async () => {
     setIsAzureLive('checking');
     try {
-      const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
-      const res = await fetch(`${baseUrl}/api/scraper/portal_sync?code=${import.meta.env.VITE_AZURE_FUNCTION_KEY}&preview=true&semester=PING`);
-      if (res.status === 200) setIsAzureLive('live');
+      const res = await supabase.functions.invoke('azure-admin-proxy', {
+        body: {
+          action: 'portal_sync',
+          semester: 'PING',
+          preview: true
+        }
+      });
+      if (!res.error) setIsAzureLive('live');
       else setIsAzureLive('down');
     } catch {
       setIsAzureLive('down');
@@ -105,23 +110,15 @@ export function PortalAutomation() {
     addLog(`Initiating extraction for ${semester}...`, 'info');
     
     try {
-      const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
-      const key = import.meta.env.VITE_AZURE_FUNCTION_KEY;
-      const url = `${baseUrl}/api/scraper/portal_sync?code=${key}&preview=true&semester=${semester}`;
-      
-      const response = await fetch(url);
-      
-      const contentType = response.headers.get("content-type");
-      let result;
-      
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-        addLog(`Server error: ${text || response.statusText}`, 'error');
-        setStatus('error');
-        return;
-      }
+      const { data: result, error: scrapeError } = await supabase.functions.invoke('azure-admin-proxy', {
+        body: {
+          action: 'portal_sync',
+          semester: semester,
+          preview: true
+        }
+      });
+
+      if (scrapeError) throw scrapeError;
       
       if (result.status === 'success' && result.data) { 
         setScrapedData(result.data); 
@@ -158,17 +155,14 @@ export function PortalAutomation() {
         }))
       };
 
-      const baseUrl = import.meta.env.VITE_AZURE_FUNCTION_URL;
-      const key = import.meta.env.VITE_AZURE_FUNCTION_KEY;
-      const url = `${baseUrl}/api/sync_api_courses?code=${key}`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const { data: result, error: syncError } = await supabase.functions.invoke('azure-admin-proxy', {
+        body: {
+          action: 'sync_api_courses',
+          payload: payload
+        }
       });
 
-      const result = await response.json();
+      if (syncError) throw syncError;
       
       if (result.status === 'ok' || result.status === 'success') {
         addLog(`Database Sync Success! ${result.inserted || 0} added, ${result.updated || 0} updated.`, 'success');

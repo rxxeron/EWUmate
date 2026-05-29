@@ -228,7 +228,8 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
       "students": allStudents,
     };
 
-    final azureService = ref.read(azureFunctionsServiceProvider);
+    final supabase = ref.read(supabaseClientProvider);
+    final String? token = supabase.auth.currentSession?.accessToken;
     
     try {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -239,7 +240,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
         Uri.parse('https://ewumate-parser.azurewebsites.net/api/generate_pdf'),
         headers: {
           "Content-Type": "application/json",
-          "x-functions-key": azureService.functionKey,
+          if (token != null) "Authorization": "Bearer $token",
         },
         body: jsonEncode(payload),
       );

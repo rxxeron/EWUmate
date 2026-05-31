@@ -8,6 +8,8 @@ import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
+import 'package:ewumate/core/widgets/premium_native_ad.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 
 class DegreeProgressScreen extends ConsumerStatefulWidget {
   const DegreeProgressScreen({super.key});
@@ -126,7 +128,16 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
               ? ref.watch(programDetailsProvider(profile.programCode!))
               : const AsyncData<Map<String, dynamic>?>(null);
           
-          final double requiredCredits = (programDetailsAsync.value?['total_degree_credits'] as num?)?.toDouble() ?? 140.0;
+          double requiredCredits = (programDetailsAsync.value?['total_degree_credits'] as num?)?.toDouble() ?? 140.0;
+          
+          // SPECIAL CASE: BBA curriculum credit adjustment based on admitted semester
+          if (profile.programCode?.toUpperCase() == 'BBA') {
+            if (CourseUtils.isSemesterBeforeSpring2025(profile.admittedSemester)) {
+              requiredCredits = 123.0;
+            } else {
+              requiredCredits = 130.0;
+            }
+          }
           final String programName = programDetailsAsync.value?['name'] ?? profile.programCode ?? 'Unknown Program';
           
           final academicState = ref.watch(academicStateProvider).value;
@@ -161,6 +172,11 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                 _buildStatsGrid(semestersCount, earnedCredits, coursesDone, profile),
                 const SizedBox(height: 16),
                 _buildCgpaCard(actualCgpa),
+                const SizedBox(height: 16),
+                const PremiumNativeAd(
+                  screenName: 'degree_progress',
+                  margin: EdgeInsets.zero,
+                ),
                 const SizedBox(height: 16),
                 _buildSemesterSummaryCard(context),
                 const SizedBox(height: 32),

@@ -36,6 +36,22 @@ class CourseUtils {
     return code.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
   }
 
+  /// Determines if a semester is chronologically before Spring 2025.
+  static bool isSemesterBeforeSpring2025(String? semester) {
+    if (semester == null || semester.isEmpty) return true; // Default to older curriculum
+    final clean = cleanSemester(semester);
+    final reg = RegExp(r'^([a-z]+)(\d{4})$');
+    final match = reg.firstMatch(clean);
+    if (match != null) {
+      final year = int.tryParse(match.group(2)!) ?? 0;
+      if (year < 2025) return true;
+      if (year > 2025) return false;
+      // If year is 2025, Spring 2025 and onwards is new curriculum.
+      return false;
+    }
+    return true;
+  }
+
   /// RESTORED: Resolves dynamic table names (e.g., calendar_spring2026_phrm_llb)
   static String semesterTable(String prefix, String semesterCode, {String? cycleType}) {
     final safeSem = cleanSemester(semesterCode);

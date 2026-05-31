@@ -12,6 +12,7 @@ import 'core/providers/session_guardian.dart';
 import 'core/repositories/auth_repository.dart';
 import 'dart:io';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'core/theme/app_theme.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -96,25 +97,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'EWUmate',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF1E293B).withValues(alpha: 0.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.darkTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

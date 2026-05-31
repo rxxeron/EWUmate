@@ -136,7 +136,7 @@ export function Notifications() {
         .select('*')
         .not('alert_key', 'ilike', 'c_%') 
         .order('created_at', { ascending: false })
-        .limit(200);
+        .limit(5000);
       
       if (error) throw error;
 
@@ -145,8 +145,8 @@ export function Notifications() {
       (data || []).forEach((n: any) => {
         let groupKey = n.id; 
         if (n.alert_key) {
-          const parts = n.alert_key.split('_');
-          groupKey = parts.length >= 2 ? `${parts[0]}_${parts[1]}` : n.alert_key;
+          const lastUnderscoreIndex = n.alert_key.lastIndexOf('_');
+          groupKey = lastUnderscoreIndex !== -1 ? n.alert_key.substring(0, lastUnderscoreIndex) : n.alert_key;
         }
         
         if (!groupedHistory[groupKey]) {

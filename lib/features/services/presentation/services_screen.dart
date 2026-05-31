@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/widgets/premium_native_ad.dart';
+import '../../../core/providers/feature_flag_provider.dart';
 
-class ServicesScreen extends StatelessWidget {
+class ServicesScreen extends ConsumerWidget {
   const ServicesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('services'));
+    final nativeFormatEnabled = ref.watch(isAdEnabledForProvider('native'));
+    final isAdAllowed = screenAdsEnabled && nativeFormatEnabled;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Services'),
         centerTitle: false,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -21,12 +27,13 @@ class ServicesScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                children: [
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
                   _buildServiceCard(
                     context,
                     title: 'Cover Page Generator',
@@ -37,6 +44,11 @@ class ServicesScreen extends StatelessWidget {
                       context.push('/services/cover-page');
                     },
                   ),
+                  if (isAdAllowed)
+                    const PremiumNativeAd(
+                      screenName: 'services',
+                      isTile: true,
+                    ),
                   _buildServiceCard(
                     context,
                     title: 'Faculty List (PDF)',
@@ -67,8 +79,12 @@ class ServicesScreen extends StatelessWidget {
                       context.push('/services/study-vault');
                     },
                   ),
-                ],
-              ),
+                  if (isAdAllowed)
+                    const PremiumNativeAd(
+                      screenName: 'services',
+                      isTile: true,
+                    ),
+              ],
             ),
           ],
         ),
@@ -98,7 +114,7 @@ class ServicesScreen extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: iconColor.withOpacity(0.9),
+                color: iconColor.withValues(alpha: 0.9),
               ),
             ),
           ],

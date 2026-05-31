@@ -11,6 +11,8 @@ import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
 import 'core/repositories/auth_repository.dart';
 import 'dart:io';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'core/theme/app_theme.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -23,6 +25,24 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Mobile Ads SDK
+  if (!kIsWeb) {
+    try {
+      await MobileAds.instance.initialize();
+      if (kDebugMode) {
+        await MobileAds.instance.updateRequestConfiguration(
+          RequestConfiguration(
+            testDeviceIds: [
+              'DB2E2735BE410225768589D0F45D51CB', // Developer test device ID
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Google Mobile Ads initialization failed: $e');
+    }
+  }
 
   // Initialize Cache Service (Hive) before running the app
   final cacheService = CacheService();
@@ -77,25 +97,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp.router(
       title: 'EWUmate',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.5,
-          ),
-        ),
-        cardTheme: CardThemeData(
-          color: const Color(0xFF1E293B).withOpacity(0.5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 0,
-        ),
-      ),
+      theme: AppTheme.darkTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );

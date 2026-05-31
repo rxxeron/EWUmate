@@ -44,6 +44,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     routes: [
       GoRoute(path: '/', builder: (context, state) => const CheckAuthScreen()),
+      GoRoute(path: '/login-callback', builder: (context, state) => const CheckAuthScreen()),
 
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),

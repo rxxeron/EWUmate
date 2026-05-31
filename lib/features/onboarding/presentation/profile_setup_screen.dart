@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
+import '../../../core/services/storage_service.dart';
 import '../onboarding_repository.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/utils/error_utils.dart';
@@ -18,6 +21,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _nameController = TextEditingController();
   final _nickController = TextEditingController();
   final _idController = TextEditingController();
+  
+  final StorageService _storageService = StorageService();
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   bool _isSaving = false;
 
   @override
@@ -30,8 +37,41 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     
-    // Attempt to pre-fill from auth metadata if available
-    _nameController.text = user.userMetadata?['full_name'] ?? '';
+    try {
+      // Attempt online fetch since handle_new_user trigger already created the profile row
+      final profileData = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profileData != null && mounted) {
+        setState(() {
+          _nameController.text = profileData['full_name'] ?? user.userMetadata?['full_name'] ?? '';
+          _nickController.text = profileData['nickname'] ?? user.userMetadata?['nickname'] ?? '';
+          _idController.text = profileData['student_id'] ?? user.userMetadata?['studentId'] ?? '';
+        });
+      } else {
+        // Fallback to metadata
+        _nameController.text = user.userMetadata?['full_name'] ?? '';
+        _nickController.text = user.userMetadata?['nickname'] ?? '';
+        _idController.text = user.userMetadata?['studentId'] ?? '';
+      }
+    } catch (e) {
+      debugPrint("Error loading profile data: $e");
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 60);
+    if (picked != null) {
+      final bytes = await picked.readAsBytes();
+      setState(() {
+        _imageFile = picked;
+        _imageBytes = bytes;
+      });
+    }
   }
 
   @override
@@ -48,10 +88,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     setState(() => _isSaving = true);
 
     try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) throw Exception("Session expired");
+
+      String? photoUrl;
+      if (_imageFile != null) {
+        photoUrl = await _storageService.uploadProfileImage(_imageFile!, user.id);
+      }
+
       await ref.read(onboardingRepositoryProvider).saveProfileDetails(
             fullName: _nameController.text.trim(),
             nickname: _nickController.text.trim(),
             studentId: _idController.text.trim(),
+            photoUrl: photoUrl,
           );
       
       if (mounted) {
@@ -60,7 +109,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+          SnackBar(
+            content: Text(AuthErrorUtils.getFriendlyMessage(e)),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -80,10 +132,37 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-                const Icon(
-                  Icons.person_add_rounded,
-                  size: 80,
-                  color: Colors.cyanAccent,
+                Center(
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white10,
+                        backgroundImage: _imageBytes != null
+                            ? MemoryImage(_imageBytes!)
+                            : null,
+                        child: _imageFile == null
+                            ? const Icon(Icons.person,
+                                size: 50, color: Colors.white70)
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.cyanAccent,
+                          radius: 18,
+                          child: IconButton(
+                            constraints: const BoxConstraints(),
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.camera_alt,
+                                size: 18, color: Colors.black),
+                            onPressed: _pickImage,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(

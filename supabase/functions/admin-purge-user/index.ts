@@ -49,7 +49,7 @@ serve(async (req) => {
       });
     }
 
-    // 3. Purge user account from auth (cascades database deletes)
+    // 3. Purge user account from auth (Delete dependent rows FIRST to resolve foreign key constraints)
     const { targetUserId } = await req.json();
     if (!targetUserId) {
       return new Response(JSON.stringify({ error: 'Missing targetUserId' }), { 
@@ -58,11 +58,13 @@ serve(async (req) => {
       });
     }
 
+    // Explicitly delete from dependent tables first to clear foreign keys
+    await supabase.from('tasks').delete().eq('user_id', targetUserId);
+    await supabase.from('profiles').delete().eq('id', targetUserId);
+
+    // Finally delete the authenticated user record safely
     const { error: deleteError } = await supabase.auth.admin.deleteUser(targetUserId);
     if (deleteError) throw deleteError;
-
-    // Remove remaining database entries explicitly if any survived cascade
-    await supabase.from('profiles').delete().eq('id', targetUserId);
 
     return new Response(JSON.stringify({ success: true, message: 'User has been completely removed.' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

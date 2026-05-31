@@ -100,8 +100,8 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                 if (profile.onboardingStatus == 'pending' ||
                     profile.onboardingStatus == 'registered' ||
                     profile.programCode == null) {
-                  debugPrint("[CheckAuth] Redirecting to Onboarding Flow (Incomplete Profile)");
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
+                  debugPrint("[CheckAuth] Redirecting to Profile Setup Flow (Incomplete Profile)");
+                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/profile-setup'));
                 } else if (profile.onboardingStatus == 'course_history') {
                   debugPrint("[CheckAuth] Redirecting to Course History (Partial Completion)");
                   WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/course-history'));

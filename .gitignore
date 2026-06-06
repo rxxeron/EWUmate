@@ -89,6 +89,7 @@ replay_pid*.log
 ewumate_production_build/
 *.csv
 *.jks
+key.properties
 .env
 
 # Subprojects

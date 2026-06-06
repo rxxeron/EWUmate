@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -43,6 +45,12 @@ jobs:
 
       - name: Build Android App Bundle
         run: flutter build appbundle --release
+
+      - name: Cleanup Keystore and Credentials
+        if: always()
+        run: |
+          rm -f android/key.properties
+          rm -f android/upload-keystore.jks
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

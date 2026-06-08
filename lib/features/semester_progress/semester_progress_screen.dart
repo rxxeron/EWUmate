@@ -163,7 +163,7 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                                   crossAxisCount: 2,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
-                                  childAspectRatio: 0.75,
+                                  childAspectRatio: 0.68,
                                 ),
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {

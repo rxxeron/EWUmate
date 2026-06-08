@@ -29,6 +29,22 @@ class CourseProgressCard extends StatelessWidget {
     final courseModel = SemesterCourseMarks.fromJson(safeData);
     final double totalObtained = courseModel.totalObtained;
 
+    // Attendance calculation
+    final extra = courseData['marks_data'] ?? {};
+    final attendance = extra['attendance'] ?? {};
+    final dates = attendance['dates'] as Map<dynamic, dynamic>? ?? {};
+    
+    int joined = 0;
+    int missed = 0;
+    dates.forEach((date, status) {
+      if (status == 'joined') joined++;
+      if (status == 'missed') missed++;
+    });
+    
+    final conducted = joined + missed;
+    final double attPct = conducted > 0 ? (joined / conducted) * 100 : 0;
+    final bool hasAttendance = conducted > 0;
+
     final String percentageText = '${totalObtained.toStringAsFixed(1)}%';
     
     // Logic for grade badge (placeholder logic based on percentage)
@@ -126,6 +142,55 @@ class CourseProgressCard extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
+
+            if (hasAttendance) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: (attPct >= 80 
+                      ? const Color(0xFF10B981) 
+                      : attPct >= 60 
+                          ? const Color(0xFFF59E0B) 
+                          : const Color(0xFFEF4444)).withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: (attPct >= 80 
+                        ? const Color(0xFF10B981) 
+                        : attPct >= 60 
+                            ? const Color(0xFFF59E0B) 
+                            : const Color(0xFFEF4444)).withOpacity(0.2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.people_alt_rounded,
+                      size: 11,
+                      color: attPct >= 80 
+                          ? const Color(0xFF10B981) 
+                          : attPct >= 60 
+                              ? const Color(0xFFF59E0B) 
+                              : const Color(0xFFEF4444),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Attendance: ${attPct.toStringAsFixed(0)}% ($joined/$conducted)',
+                      style: TextStyle(
+                        color: attPct >= 80 
+                            ? const Color(0xFF10B981) 
+                            : attPct >= 60 
+                                ? const Color(0xFFF59E0B) 
+                                : const Color(0xFFEF4444),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             
             // Progress Bar
             const SizedBox(height: 20),

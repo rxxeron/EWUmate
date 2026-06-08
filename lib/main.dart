@@ -26,12 +26,11 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Mobile Ads SDK
+  // Initialize Mobile Ads SDK in background (non-blocking)
   if (!kIsWeb) {
-    try {
-      await MobileAds.instance.initialize();
+    MobileAds.instance.initialize().then((_) {
       if (kDebugMode) {
-        await MobileAds.instance.updateRequestConfiguration(
+        MobileAds.instance.updateRequestConfiguration(
           RequestConfiguration(
             testDeviceIds: [
               'DB2E2735BE410225768589D0F45D51CB', // Developer test device ID
@@ -39,27 +38,32 @@ void main() async {
           ),
         );
       }
-    } catch (e) {
+    }).catchError((e) {
       if (kDebugMode) debugPrint('Google Mobile Ads initialization failed: $e');
-    }
+    });
   }
 
-  // Initialize Cache Service (Hive) before running the app
+  // Initialize Cache Service (Hive), Firebase, and Supabase in parallel
   final cacheService = CacheService();
-  await cacheService.init();
-
+  
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    await Future.wait([
+      cacheService.init(),
+      () async {
+        try {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        } catch (e) {
+          if (kDebugMode) debugPrint('Firebase init error: $e');
+        }
+      }(),
+      SupabaseConfig.initialize().catchError((e) {
+        if (kDebugMode) debugPrint('Supabase init error: $e');
+      }),
+    ]);
   } catch (e) {
-    if (kDebugMode) debugPrint('Firebase init error: $e');
-  }
-
-  try {
-    await SupabaseConfig.initialize();
-  } catch (e) {
-    if (kDebugMode) debugPrint('Supabase init error: $e');
+    if (kDebugMode) debugPrint('Parallel initialization error: $e');
   }
 
   // FCM setup moved to MyApp for better Riverpod integration

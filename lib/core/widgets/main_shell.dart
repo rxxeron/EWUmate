@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'glass_kit.dart';
 import '../providers/scaffold_provider.dart';
 import 'app_drawer.dart';
+import '../../features/auth/auth_providers.dart';
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -18,6 +19,14 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to grade blocker changes and redirect immediately if blocked
+    ref.listen<AsyncValue<bool>>(requiresGradeEntryProvider, (previous, next) {
+      if (next.hasValue && next.value == true) {
+        debugPrint("[MainShell] Grade blocker detected! Redirecting to grade entry.");
+        context.go('/results/grade-entry');
+      }
+    });
+
     // Determine current index based on location
     final location = GoRouterState.of(context).uri.toString();
     int currentIndex = _getSelectedIndex(location);

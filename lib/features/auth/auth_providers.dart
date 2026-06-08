@@ -63,79 +63,88 @@ final authStateProvider = StreamProvider<AuthState>((ref) async* {
   yield* client.auth.onAuthStateChange;
 });
 
-final requiresGradeEntryProvider = FutureProvider<bool>((ref) async {
+final requiresGradeEntryProvider = StreamProvider<bool>((ref) async* {
   final user = ref.watch(authRepositoryProvider).currentUser;
-  if (user == null) return false;
+  if (user == null) {
+    yield false;
+    return;
+  }
 
+  final cacheService = ref.read(cacheServiceProvider);
   final client = Supabase.instance.client;
 
+  // 1. Emit cached decision instantly (Frame 1)
+  final cached = cacheService.getMapData('profile_box', '${user.id}_requires_grade_entry');
+  if (cached != null) {
+    yield cached['requires'] as bool? ?? false;
+  } else {
+    yield false;
+  }
+
+  // 2. Fetch fresh decision online
   try {
     final profile = await ref.watch(profileProvider.future);
-    
-    // SAFETY: If no profile exists, they are a new user and can't have hanging grades.
-    // Skip the database scans entirely.
-    if (profile == null) return false;
+    if (profile == null) {
+      yield false;
+      return;
+    }
 
     // NORMALIZE: Map 'tri' -> 'tri_semester' to match DB Enum constraints
     String track = profile.track ?? profile.semesterType;
     if (track == 'tri') track = 'tri_semester';
     if (track == 'bi') track = 'bi_semester';
 
-    final activeSemRes = await client
-        .from('active_semester')
-        .select()
-        .eq('track', track)
-        .limit(1)
-        .maybeSingle()
-        .timeout(const Duration(seconds: 15))
-        .catchError((e) => null);
-    
-    if (activeSemRes == null) return false;
+    // Fetch active semester and unsubmitted enrollments concurrently
+    final results = await Future.wait([
+      client.from('active_semester')
+          .select()
+          .eq('track', track)
+          .limit(1)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 10)),
+      client.from('enrollments')
+          .select('id, semester_code, grade')
+          .eq('user_id', user.id)
+          .eq('status', 'enrolled')
+          .isFilter('grade', null)
+          .timeout(const Duration(seconds: 10))
+          .catchError((e) => <Map<String, dynamic>>[]),
+    ]);
 
-    final activeCode = activeSemRes['current_semester_code'];
+    final activeSemRes = results[0] as Map<String, dynamic>?;
+    final unsubmittedEnrollments = List<Map<String, dynamic>>.from(results[1] as List? ?? []);
 
-    // PHASE 1: Check for PAST "Hanging" Courses
-    // If a course from a previous semester is still 'enrolled' without a grade, 
-    // we block immediately regardless of the current semester's dates.
-    final pastHangingRes = await client
-        .from('enrollments')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('status', 'enrolled')
-        .neq('semester_code', activeCode) // Different from the current active one
-        .isFilter('grade', null)
-        .limit(1)
-        .timeout(const Duration(seconds: 15))
-        .catchError((e) => []);
-
-    if (pastHangingRes.isNotEmpty) {
-      return true;
+    if (activeSemRes == null) {
+      yield false;
+      return;
     }
 
-    // PHASE 2: Check for CURRENT Semester Hand-off
-    // We only block for the current semester if the submission window has started.
-    final submissionStartStr = activeSemRes['grade_submission_start'];
-    if (submissionStartStr != null) {
-      final submissionStart = DateTime.tryParse(submissionStartStr.toString());
-      if (submissionStart != null && DateTime.now().isAfter(submissionStart.add(const Duration(days: 1)))) {
-        final currentUnsubmittedRes = await client
-            .from('enrollments')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('status', 'enrolled')
-            .eq('semester_code', activeCode) // Specifically the current one
-            .isFilter('grade', null)
-            .limit(1)
-            .timeout(const Duration(seconds: 15))
-            .catchError((e) => []);
+    final activeCode = activeSemRes['current_semester_code'];
+    bool requiresGrade = false;
 
-        return currentUnsubmittedRes.isNotEmpty;
+    // Check past unsubmitted courses
+    final hasPastHanging = unsubmittedEnrollments.any((e) => e['semester_code'] != activeCode);
+    if (hasPastHanging) {
+      requiresGrade = true;
+    } else {
+      // Check current semester hand-off
+      final submissionStartStr = activeSemRes['grade_submission_start'];
+      if (submissionStartStr != null) {
+        final submissionStart = DateTime.tryParse(submissionStartStr.toString());
+        if (submissionStart != null && DateTime.now().isAfter(submissionStart.add(const Duration(days: 1)))) {
+          final hasCurrentUnsubmitted = unsubmittedEnrollments.any((e) => e['semester_code'] == activeCode);
+          if (hasCurrentUnsubmitted) {
+            requiresGrade = true;
+          }
+        }
       }
     }
 
-    return false;
+    // Cache the fresh decision
+    await cacheService.setMapData('profile_box', '${user.id}_requires_grade_entry', {'requires': requiresGrade});
+    yield requiresGrade;
   } catch (e) {
     if (kDebugMode) print("DEBUG: Grade entry check failed: $e");
-    return false;
+    // Fall back to cached value, already yielded
   }
 });

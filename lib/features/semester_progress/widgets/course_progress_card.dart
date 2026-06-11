@@ -33,17 +33,51 @@ class CourseProgressCard extends StatelessWidget {
     final extra = courseData['marks_data'] ?? {};
     final attendance = extra['attendance'] ?? {};
     final dates = attendance['dates'] as Map<dynamic, dynamic>? ?? {};
+    final types = attendance['types'] as Map<dynamic, dynamic>? ?? {};
     
-    int joined = 0;
-    int missed = 0;
-    dates.forEach((date, status) {
-      if (status == 'joined') joined++;
-      if (status == 'missed') missed++;
+    // Filter out duplicate plain date keys if their suffix-based equivalents exist
+    final Set<String> keysToIgnore = {};
+    dates.forEach((keyStr, _) {
+      final key = keyStr.toString();
+      if (key.contains('_')) {
+        final plainKey = key.split('_')[0];
+        keysToIgnore.add(plainKey);
+      }
     });
     
-    final conducted = joined + missed;
-    final double attPct = conducted > 0 ? (joined / conducted) * 100 : 0;
-    final bool hasAttendance = conducted > 0;
+    int joinedTheory = 0;
+    int conductedTheory = 0;
+    int joinedLab = 0;
+    int conductedLab = 0;
+    
+    dates.forEach((keyStr, status) {
+      final key = keyStr.toString();
+      if (keysToIgnore.contains(key)) return;
+      
+      final type = types[key]?.toString() ?? (key.endsWith('_Lab') ? 'Lab' : 'Theory');
+      
+      if (status == 'joined') {
+        if (type == 'Lab') {
+          joinedLab++;
+          conductedLab++;
+        } else {
+          joinedTheory++;
+          conductedTheory++;
+        }
+      } else if (status == 'missed') {
+        if (type == 'Lab') {
+          conductedLab++;
+        } else {
+          conductedTheory++;
+        }
+      }
+    });
+    
+    final double theoryPct = conductedTheory > 0 ? (joinedTheory / conductedTheory) * 100 : 0;
+    final double labPct = conductedLab > 0 ? (joinedLab / conductedLab) * 100 : 0;
+    
+    final bool hasTheory = conductedTheory > 0;
+    final bool hasLab = conductedLab > 0;
 
     final String percentageText = '${totalObtained.toStringAsFixed(1)}%';
     
@@ -143,53 +177,103 @@ class CourseProgressCard extends StatelessWidget {
               ),
             ),
 
-            if (hasAttendance) ...[
+            if (hasTheory || hasLab) ...[
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: (attPct >= 80 
-                      ? const Color(0xFF10B981) 
-                      : attPct >= 60 
-                          ? const Color(0xFFF59E0B) 
-                          : const Color(0xFFEF4444)).withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: (attPct >= 80 
+              if (hasTheory) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: (theoryPct >= 80 
                         ? const Color(0xFF10B981) 
-                        : attPct >= 60 
+                        : theoryPct >= 60 
                             ? const Color(0xFFF59E0B) 
-                            : const Color(0xFFEF4444)).withOpacity(0.2),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.people_alt_rounded,
-                      size: 11,
-                      color: attPct >= 80 
+                            : const Color(0xFFEF4444)).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: (theoryPct >= 80 
                           ? const Color(0xFF10B981) 
-                          : attPct >= 60 
+                          : theoryPct >= 60 
                               ? const Color(0xFFF59E0B) 
-                              : const Color(0xFFEF4444),
+                              : const Color(0xFFEF4444)).withOpacity(0.2),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Attendance: ${attPct.toStringAsFixed(0)}% ($joined/$conducted)',
-                      style: TextStyle(
-                        color: attPct >= 80 
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.people_alt_rounded,
+                        size: 11,
+                        color: theoryPct >= 80 
                             ? const Color(0xFF10B981) 
-                            : attPct >= 60 
+                            : theoryPct >= 60 
                                 ? const Color(0xFFF59E0B) 
                                 : const Color(0xFFEF4444),
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Text(
+                        'Theory: ${theoryPct.toStringAsFixed(0)}% ($joinedTheory/$conductedTheory)',
+                        style: TextStyle(
+                          color: theoryPct >= 80 
+                              ? const Color(0xFF10B981) 
+                              : theoryPct >= 60 
+                                  ? const Color(0xFFF59E0B) 
+                                  : const Color(0xFFEF4444),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
+              if (hasLab) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: (labPct >= 80 
+                        ? const Color(0xFF10B981) 
+                        : labPct >= 60 
+                            ? const Color(0xFFF59E0B) 
+                            : const Color(0xFFEF4444)).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: (labPct >= 80 
+                          ? const Color(0xFF10B981) 
+                          : labPct >= 60 
+                              ? const Color(0xFFF59E0B) 
+                              : const Color(0xFFEF4444)).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.science_rounded,
+                        size: 11,
+                        color: labPct >= 80 
+                            ? const Color(0xFF10B981) 
+                            : labPct >= 60 
+                                ? const Color(0xFFF59E0B) 
+                                : const Color(0xFFEF4444),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Lab: ${labPct.toStringAsFixed(0)}% ($joinedLab/$conductedLab)',
+                        style: TextStyle(
+                          color: labPct >= 80 
+                              ? const Color(0xFF10B981) 
+                              : labPct >= 60 
+                                  ? const Color(0xFFF59E0B) 
+                                  : const Color(0xFFEF4444),
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
             
             // Progress Bar

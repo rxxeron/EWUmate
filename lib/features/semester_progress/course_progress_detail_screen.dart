@@ -25,6 +25,12 @@ class CourseProgressDetailScreen extends ConsumerStatefulWidget {
       _CourseProgressDetailScreenState();
 }
 
+class AttendanceSession {
+  final DateTime date;
+  final String type; // 'Theory' or 'Lab'
+  AttendanceSession(this.date, this.type);
+}
+
 class _CourseProgressDetailScreenState
     extends ConsumerState<CourseProgressDetailScreen>
     with SingleTickerProviderStateMixin {
@@ -33,7 +39,8 @@ class _CourseProgressDetailScreenState
   bool _isSaving = false;
 
   Map<String, String> _markedDates = {};
-  List<DateTime> _generatedClassDates = [];
+  Map<String, String> _dateTypes = {};
+  List<AttendanceSession> _generatedClassSessions = [];
   bool _isLoadingAttendance = false;
   String _attendanceError = '';
 
@@ -217,7 +224,7 @@ class _CourseProgressDetailScreenState
 
   void _handleTabChange() {
     setState(() {});
-    if (_tabController.index == 1 && _generatedClassDates.isEmpty && !_isLoadingAttendance) {
+    if (_tabController.index == 1 && _generatedClassSessions.isEmpty && !_isLoadingAttendance) {
       _loadAttendanceCalendar();
     }
   }
@@ -442,6 +449,7 @@ class _CourseProgressDetailScreenState
     _data['marks_data']['short_quiz_strategy'] = _shortQuizStrategy;
     _data['marks_data']['attendance'] = {
       'dates': _markedDates,
+      'types': _dateTypes,
     };
 
     _data['short_quiz_n'] = int.tryParse(_shortQuizNCtrl.text) ?? 1;
@@ -1076,7 +1084,7 @@ class _CourseProgressDetailScreenState
       
       final String currentCourseCodeNormalized = (widget.courseData['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
       
-      final List<String> scheduledDays = [];
+      final List<Map<String, String>> scheduledTemplates = [];
       final Map<String, int> weekdayMap = {
         'Monday': DateTime.monday,
         'Tuesday': DateTime.tuesday,
@@ -1094,8 +1102,14 @@ class _CourseProgressDetailScreenState
           for (final c in dayClasses) {
             final code = (c['courseCode'] ?? c['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
             if (code == currentCourseCodeNormalized) {
-              scheduledDays.add(day);
-              break;
+              final startTime = (c['startTime'] ?? c['start_time'] ?? '').toString();
+              final endTime = (c['endTime'] ?? c['end_time'] ?? '').toString();
+              final isLab = CourseUtils.isLab(startTime, endTime, code);
+              final type = c['type']?.toString() ?? (isLab ? 'Lab' : 'Theory');
+              scheduledTemplates.add({
+                'day': day,
+                'type': type,
+              });
             }
           }
         }
@@ -1132,20 +1146,25 @@ class _CourseProgressDetailScreenState
         debugPrint('[Attendance] Calendar fetch failed or table does not exist: $e');
       }
       
-      // 4. Fetch cancellations from schedule exceptions
+      // 4. Fetch cancellations and makeups from schedule exceptions
       final Set<String> cancelledDates = {};
+      final List<Map<String, dynamic>> courseMakeups = [];
       try {
         final exceptionsRes = await Supabase.instance.client
             .from('schedule_exceptions')
             .select()
             .eq('user_id', user.id)
-            .eq('course_code', currentCourseCodeNormalized)
-            .eq('type', 'cancel');
+            .eq('course_code', currentCourseCodeNormalized);
         if (exceptionsRes is List) {
           for (final ex in exceptionsRes) {
             final dateStr = ex['date']?.toString();
+            final type = ex['type']?.toString();
             if (dateStr != null && dateStr.isNotEmpty) {
-              cancelledDates.add(dateStr);
+              if (type == 'cancel') {
+                cancelledDates.add(dateStr);
+              } else if (type == 'makeup' || type == 'manual') {
+                courseMakeups.add(ex);
+              }
             }
           }
         }
@@ -1154,8 +1173,8 @@ class _CourseProgressDetailScreenState
       }
       
       // 5. Generate matching weekdays up to today's date
-      final List<DateTime> generatedList = [];
-      final List<int> weekdaysInt = scheduledDays.map((day) => weekdayMap[day]!).toList();
+      final List<AttendanceSession> generatedSessions = [];
+      final List<int> weekdaysInt = scheduledTemplates.map((t) => weekdayMap[t['day']!]!).toSet().toList();
       
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
@@ -1163,34 +1182,110 @@ class _CourseProgressDetailScreenState
       
       for (DateTime d = startDate; d.isBefore(endLimit) || d.isAtSameMomentAs(endLimit); d = d.add(const Duration(days: 1))) {
         if (weekdaysInt.contains(d.weekday)) {
-          generatedList.add(DateTime(d.year, d.month, d.day));
-        }
-      }
-      
-      // Sort generated list in reverse order (newest first)
-      generatedList.sort((a, b) => b.compareTo(a));
-      
-      // Load saved dates from DB (marks_data['attendance']['dates'])
-      Map<String, dynamic> extra = _data['marks_data'] ?? {};
-      Map<String, dynamic> attendance = extra['attendance'] ?? {};
-      Map<String, dynamic> datesRaw = attendance['dates'] ?? {};
-      _markedDates = Map<String, String>.from(datesRaw);
-      
-      // Auto-mark holidays and cancellations if not already set by the user
-      for (final date in generatedList) {
-        final dateStr = DateFormat('yyyy-MM-dd').format(date);
-        if (!_markedDates.containsKey(dateStr)) {
-          if (holidayDates.contains(dateStr)) {
-            _markedDates[dateStr] = 'holiday';
-          } else if (cancelledDates.contains(dateStr)) {
-            _markedDates[dateStr] = 'cancelled';
+          final dayName = DateFormat('EEEE').format(d);
+          final dayTemplates = scheduledTemplates.where((t) => t['day'] == dayName).toList();
+          for (final temp in dayTemplates) {
+            generatedSessions.add(AttendanceSession(
+              DateTime(d.year, d.month, d.day),
+              temp['type'] ?? 'Theory',
+            ));
           }
         }
       }
       
+      // Load saved dates and types from DB
+      Map<String, dynamic> extra = _data['marks_data'] ?? {};
+      Map<String, dynamic> attendance = extra['attendance'] ?? {};
+      Map<String, dynamic> datesRaw = attendance['dates'] ?? {};
+      Map<String, dynamic> typesRaw = attendance['types'] ?? {};
+      _markedDates = Map<String, String>.from(datesRaw);
+      _dateTypes = Map<String, String>.from(typesRaw);
+      
+      // Populate scheduled day types first
+      for (final session in generatedSessions) {
+        final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
+        final key = '${dateStr}_${session.type}';
+        if (!_dateTypes.containsKey(key)) {
+          _dateTypes[key] = session.type;
+        }
+        if (!_dateTypes.containsKey(dateStr)) {
+          _dateTypes[dateStr] = session.type; // legacy fallback
+        }
+      }
+
+      // Add makeup classes/manual entries that have occurred up to endLimit
+      for (final makeup in courseMakeups) {
+        final dateStr = makeup['date']?.toString() ?? '';
+        final mDate = DateTime.tryParse(dateStr);
+        if (mDate != null && (mDate.isBefore(endLimit) || mDate.isAtSameMomentAs(endLimit))) {
+          final normalizedDate = DateTime(mDate.year, mDate.month, mDate.day);
+          final sessionType = makeup['session_type']?.toString() ?? makeup['sessionType']?.toString() ?? 'Theory';
+          
+          final exists = generatedSessions.any((s) => s.date == normalizedDate && s.type == sessionType);
+          if (!exists) {
+            generatedSessions.add(AttendanceSession(normalizedDate, sessionType));
+          }
+          final key = '${dateStr}_$sessionType';
+          _dateTypes[key] = sessionType;
+          _dateTypes[dateStr] = sessionType; // legacy fallback
+        }
+      }
+      
+      // Sort generated list in reverse order (newest first)
+      generatedSessions.sort((a, b) {
+        final cmp = b.date.compareTo(a.date);
+        if (cmp != 0) return cmp;
+        return a.type.compareTo(b.type);
+      });
+      
+      // Auto-mark holidays and cancellations if not already set by the user
+      for (final session in generatedSessions) {
+        final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
+        final key = '${dateStr}_${session.type}';
+        if (!_markedDates.containsKey(key) && !_markedDates.containsKey(dateStr)) {
+          if (holidayDates.contains(dateStr)) {
+            _markedDates[key] = 'holiday';
+          } else if (cancelledDates.contains(dateStr)) {
+            _markedDates[key] = 'cancelled';
+          }
+        }
+      }
+
+      // Silent auto-save of updated/missing type mappings
+      bool typesChanged = false;
+      for (final entry in _dateTypes.entries) {
+        if (typesRaw[entry.key]?.toString() != entry.value) {
+          typesChanged = true;
+          break;
+        }
+      }
+
+      if (typesChanged) {
+        final updatedData = Map<String, dynamic>.from(_data);
+        if (updatedData['marks_data'] == null) updatedData['marks_data'] = {};
+        final marksData = Map<String, dynamic>.from(updatedData['marks_data']);
+        marksData['attendance'] = {
+          'dates': _markedDates,
+          'types': _dateTypes,
+        };
+        updatedData['marks_data'] = marksData;
+        _data = updatedData;
+
+        ref.read(semesterProgressRepositoryProvider)
+           .saveCourseMarks(user.id, widget.semesterCode, updatedData)
+           .then((_) {
+             if (mounted) {
+               ref.invalidate(semesterProgressDataProvider(widget.semesterCode));
+             }
+           })
+           .catchError((err) {
+             debugPrint('[DetailScreen] Silent types sync failed: $err');
+           });
+      }
+      
       if (mounted) {
         setState(() {
-          _generatedClassDates = generatedList;
+          _generatedClassSessions = generatedSessions;
           _isLoadingAttendance = false;
         });
       }
@@ -1213,13 +1308,49 @@ class _CourseProgressDetailScreenState
     );
     if (picked != null) {
       final dateStr = DateFormat('yyyy-MM-dd').format(picked);
+      
+      final String? selectedType = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Session Type', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: const Text('Is this makeup class a Theory session or a Lab session?', style: TextStyle(color: Colors.white70)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'Theory'),
+              child: const Text('Theory', style: TextStyle(color: Color(0xFF22D3EE), fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, 'Lab'),
+              child: const Text('Lab', style: TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      );
+      
+      final type = selectedType ?? 'Theory';
+      
       setState(() {
-        if (!_markedDates.containsKey(dateStr)) {
-          _markedDates[dateStr] = 'joined';
+        final key = '${dateStr}_$type';
+        _dateTypes[key] = type;
+        _dateTypes[dateStr] = type; // fallback
+        
+        if (!_markedDates.containsKey(key)) {
+          _markedDates[key] = 'joined';
         }
-        if (!_generatedClassDates.contains(picked)) {
-          _generatedClassDates.add(picked);
-          _generatedClassDates.sort((a, b) => b.compareTo(a));
+        if (!_markedDates.containsKey(dateStr)) {
+          _markedDates[dateStr] = 'joined'; // fallback
+        }
+        
+        final exists = _generatedClassSessions.any((s) => s.date == picked && s.type == type);
+        if (!exists) {
+          _generatedClassSessions.add(AttendanceSession(picked, type));
+          _generatedClassSessions.sort((a, b) {
+            final cmp = b.date.compareTo(a.date);
+            if (cmp != 0) return cmp;
+            return a.type.compareTo(b.type);
+          });
         }
       });
     }
@@ -1260,15 +1391,35 @@ class _CourseProgressDetailScreenState
 
     int joined = 0;
     int missed = 0;
-    int holidayCount = 0;
-    int cancelledCount = 0;
 
-    _markedDates.forEach((date, status) {
-      if (status == 'joined') joined++;
-      if (status == 'missed') missed++;
-      if (status == 'holiday') holidayCount++;
-      if (status == 'cancelled') cancelledCount++;
-    });
+    int joinedTheory = 0;
+    int conductedTheory = 0;
+    int joinedLab = 0;
+    int conductedLab = 0;
+
+    for (final session in _generatedClassSessions) {
+      final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
+      final key = '${dateStr}_${session.type}';
+      final status = _markedDates[key] ?? _markedDates[dateStr] ?? 'unmarked';
+      
+      if (status == 'joined') {
+        joined++;
+        if (session.type == 'Lab') {
+          joinedLab++;
+          conductedLab++;
+        } else {
+          joinedTheory++;
+          conductedTheory++;
+        }
+      } else if (status == 'missed') {
+        missed++;
+        if (session.type == 'Lab') {
+          conductedLab++;
+        } else {
+          conductedTheory++;
+        }
+      }
+    }
 
     final conducted = joined + missed;
     final double percentage = conducted > 0 ? (joined / conducted) * 100 : 100.0;
@@ -1276,7 +1427,15 @@ class _CourseProgressDetailScreenState
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        _buildAttendanceGauge(percentage, joined, missed),
+        _buildAttendanceGauge(
+          percentage, 
+          joined, 
+          missed,
+          joinedTheory: joinedTheory,
+          conductedTheory: conductedTheory,
+          joinedLab: joinedLab,
+          conductedLab: conductedLab,
+        ),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1292,7 +1451,7 @@ class _CourseProgressDetailScreenState
             ),
           ],
         ),
-        if (_generatedClassDates.isEmpty)
+        if (_generatedClassSessions.isEmpty)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 40),
             decoration: BoxDecoration(
@@ -1312,11 +1471,15 @@ class _CourseProgressDetailScreenState
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _generatedClassDates.length,
+            itemCount: _generatedClassSessions.length,
             itemBuilder: (context, index) {
-              final date = _generatedClassDates[index];
+              final session = _generatedClassSessions[index];
+              final date = session.date;
               final dateStr = DateFormat('yyyy-MM-dd').format(date);
-              final String status = _markedDates[dateStr] ?? 'unmarked';
+              final key = '${dateStr}_${session.type}';
+              
+              final status = _markedDates[key] ?? _markedDates[dateStr] ?? 'unmarked';
+              final sessionType = session.type;
               
               final isHoliday = status == 'holiday';
               final isCancelled = status == 'cancelled';
@@ -1340,13 +1503,37 @@ class _CourseProgressDetailScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            DateFormat('EEEE').format(date),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                DateFormat('EEEE').format(date),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: (sessionType == 'Lab' ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: (sessionType == 'Lab' ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  sessionType.toUpperCase(),
+                                  style: TextStyle(
+                                    color: sessionType == 'Lab' ? Colors.orangeAccent : const Color(0xFF22D3EE),
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -1395,7 +1582,7 @@ class _CourseProgressDetailScreenState
                         ),
                       )
                     else
-                      _buildActionButtons(dateStr, status),
+                      _buildActionButtons(key, status),
                   ],
                 ),
               );
@@ -1405,7 +1592,15 @@ class _CourseProgressDetailScreenState
     );
   }
 
-  Widget _buildAttendanceGauge(double percentage, int joined, int missed) {
+  Widget _buildAttendanceGauge(
+    double percentage, 
+    int joined, 
+    int missed, {
+    required int joinedTheory, 
+    required int conductedTheory, 
+    required int joinedLab, 
+    required int conductedLab,
+  }) {
     final conducted = joined + missed;
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1484,9 +1679,10 @@ class _CourseProgressDetailScreenState
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _buildMiniCounterPill('Joined', joined, const Color(0xFF10B981)),
+                    _buildMiniCounterPill('Theory', '$joinedTheory/$conductedTheory', const Color(0xFF22D3EE)),
                     const SizedBox(width: 8),
-                    _buildMiniCounterPill('Missed', missed, const Color(0xFFEF4444)),
+                    if (conductedLab > 0)
+                      _buildMiniCounterPill('Lab', '$joinedLab/$conductedLab', const Color(0xFFF59E0B)),
                   ],
                 ),
               ],
@@ -1497,7 +1693,7 @@ class _CourseProgressDetailScreenState
     );
   }
 
-  Widget _buildMiniCounterPill(String label, int count, Color color) {
+  Widget _buildMiniCounterPill(String label, String value, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -1506,7 +1702,7 @@ class _CourseProgressDetailScreenState
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Text(
-        '$label: $count',
+        '$label: $value',
         style: TextStyle(
           color: color,
           fontSize: 10,
@@ -1516,7 +1712,7 @@ class _CourseProgressDetailScreenState
     );
   }
 
-  Widget _buildActionButtons(String dateStr, String currentStatus) {
+  Widget _buildActionButtons(String sessionKey, String currentStatus) {
     final bool isJoined = currentStatus == 'joined';
     final bool isMissed = currentStatus == 'missed';
     
@@ -1527,9 +1723,17 @@ class _CourseProgressDetailScreenState
           onTap: () {
             setState(() {
               if (isJoined) {
-                _markedDates.remove(dateStr);
+                _markedDates.remove(sessionKey);
+                final parts = sessionKey.split('_');
+                if (parts.isNotEmpty) {
+                  _markedDates.remove(parts[0]);
+                }
               } else {
-                _markedDates[dateStr] = 'joined';
+                _markedDates[sessionKey] = 'joined';
+                final parts = sessionKey.split('_');
+                if (parts.isNotEmpty) {
+                  _markedDates[parts[0]] = 'joined';
+                }
               }
             });
           },
@@ -1555,9 +1759,17 @@ class _CourseProgressDetailScreenState
           onTap: () {
             setState(() {
               if (isMissed) {
-                _markedDates.remove(dateStr);
+                _markedDates.remove(sessionKey);
+                final parts = sessionKey.split('_');
+                if (parts.isNotEmpty) {
+                  _markedDates.remove(parts[0]);
+                }
               } else {
-                _markedDates[dateStr] = 'missed';
+                _markedDates[sessionKey] = 'missed';
+                final parts = sessionKey.split('_');
+                if (parts.isNotEmpty) {
+                  _markedDates[parts[0]] = 'missed';
+                }
               }
             });
           },

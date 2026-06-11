@@ -188,7 +188,7 @@ class DashboardLogic {
     return list;
   }
 
-  static Map<String, dynamic> processDashboardData(Map<String, dynamic> data, {DateTime? classesEndDate}) {
+  static Map<String, dynamic> processDashboardData(Map<String, dynamic> data, {DateTime? classesEndDate, bool filterPast = true}) {
     final dateRaw = data['date'];
     final DateTime? targetDate = dateRaw is String 
         ? DateTime.tryParse(dateRaw) 
@@ -285,7 +285,7 @@ class DashboardLogic {
     }
 
     _sortByTime(schedule);
-    final filteredSchedule = _filterPastClasses(schedule, targetDate);
+    final filteredSchedule = filterPast ? _filterPastClasses(schedule, targetDate) : schedule;
 
     return {
       'status': status,

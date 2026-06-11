@@ -14,6 +14,8 @@ import '../../core/utils/error_utils.dart';
 import '../../core/utils/version_utils.dart';
 import '../../core/utils/refresh_utils.dart';
 import '../../core/services/fcm_service.dart';
+import '../../core/utils/course_utils.dart';
+import '../semester_progress/semester_progress_repository.dart';
 
 
 
@@ -78,6 +80,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final Set<String> _reschedulePromptIds = {};
   
   Map<String, dynamic>? _lastValidScheduleData;
+  bool _isSavingAttendance = false;
+  List<Map<String, dynamic>> _pendingAttendanceItems = [];
+  Timer? _refreshTimer;
   
   
   
@@ -89,13 +94,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     _refreshDashboard();
     _showDashboardTutorial();
 
-    final refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
+    _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) _refreshDashboard(isSilent: true);
     });
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     super.dispose();
   }
 
@@ -239,7 +245,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       }
       final updateRes = results[2] as Map<String, dynamic>?;
       final versionInfo = results[3] as PackageInfo;
-
+ 
       if (mounted) {
         setState(() {
           _semesterCode = code;
@@ -253,6 +259,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         
         _updateHomeWidget(dashboardData);
         _checkAndShowPendingNotifications();
+        _loadPendingAttendance();
       }
       
       // 4. Check for app updates and show a soft Play Store redirection banner
@@ -412,6 +419,231 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
+  Future<void> _loadPendingAttendance() async {
+    final user = this.user;
+    if (user == null || _semesterCode.isEmpty) return;
+    
+    try {
+      final profile = ref.read(profileProvider).value;
+      final bool isBiSemester = profile?.track == 'bi';
+      
+      // Fetch parallel metadata needed
+      final results = await Future.wait<dynamic>(<Future<dynamic>>[
+        // [0] Weekly grid cache
+        _supabase
+            .from('user_semester_states')
+            .select('weekly_grid_cache')
+            .eq('user_id', user.id)
+            .eq('semester_code', _semesterCode)
+            .maybeSingle(),
+        // [1] Active semester start/end dates
+        _supabase
+            .from('active_semester')
+            .select('classes_start_date, classes_end_date')
+            .eq('track', isBiSemester ? 'bi_semester' : 'tri_semester')
+            .maybeSingle(),
+        // [2] Academic calendar holidays
+        _supabase
+            .from(CourseUtils.semesterTable(
+              'calendar',
+              _semesterCode,
+              cycleType: isBiSemester ? 'bi_semester' : 'tri_semester',
+            ))
+            .select()
+            .catchError((_) => []),
+        // [3] Exceptions
+        _supabase
+            .from('schedule_exceptions')
+            .select()
+            .eq('user_id', user.id),
+        // [4] Course progress marks
+        ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(user.id, _semesterCode),
+      ]);
+      
+      final grid = (results[0] as Map<String, dynamic>?)?['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
+      final activeSem = results[1] as Map<String, dynamic>?;
+      final holidays = results[2] as List;
+      final exceptions = results[3] as List;
+      final progressData = results[4] as List<Map<String, dynamic>>;
+      
+      DateTime? startDate = DateTime.tryParse(activeSem?['classes_start_date']?.toString() ?? '');
+      DateTime? endDate = DateTime.tryParse(activeSem?['classes_end_date']?.toString() ?? '');
+      startDate ??= DateTime.now().subtract(const Duration(days: 45));
+      endDate ??= DateTime.now().add(const Duration(days: 45));
+      
+      // Resolve holiday and cancellation dates
+      final Set<String> holidayDates = {};
+      for (final ev in holidays) {
+        final dateStr = (ev['event_date'] ?? ev['date'] ?? '').toString();
+        final title = (ev['title'] ?? ev['name'] ?? '').toString().toLowerCase();
+        final isHoliday = ev['is_holiday'] == true ||
+            ev['type']?.toString().toLowerCase() == 'holiday' ||
+            title.contains('holiday') ||
+            title.contains('vacation') ||
+            title.contains('break') ||
+            title.contains('leave') ||
+            title.contains('off day') ||
+            title.contains('no classes');
+        if (isHoliday && dateStr.isNotEmpty) {
+          holidayDates.add(dateStr);
+        }
+      }
+      
+      // Map courseCode to their exceptions
+      final Map<String, List<Map<String, dynamic>>> exceptionsByCourse = {};
+      for (final ex in exceptions) {
+        final course = (ex['course_code'] ?? ex['courseCode'] ?? '').toString().toUpperCase().replaceAll(' ', '');
+        exceptionsByCourse.putIfAbsent(course, () => []).add(Map<String, dynamic>.from(ex));
+      }
+      
+      // Build weekday mapping
+      final Map<String, int> weekdayMap = {
+        'Monday': DateTime.monday,
+        'Tuesday': DateTime.tuesday,
+        'Wednesday': DateTime.wednesday,
+        'Thursday': DateTime.thursday,
+        'Friday': DateTime.friday,
+        'Saturday': DateTime.saturday,
+        'Sunday': DateTime.sunday,
+      };
+      
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final DateTime endLimit = endDate.isAfter(today) ? today : endDate;
+      
+      final List<Map<String, dynamic>> pendingItems = [];
+      
+      // Loop over each enrolled course progress record
+      for (final courseMap in progressData) {
+        final rawCode = courseMap['course_code']?.toString() ?? '';
+        final courseCode = rawCode.toUpperCase().replaceAll(' ', '');
+        if (courseCode.isEmpty) continue;
+        
+        final courseName = courseMap['course_name']?.toString() ?? 'Course';
+        
+        // Extract schedule template details for this course
+        final List<Map<String, String>> scheduledTemplates = [];
+        
+        for (final entry in grid.entries) {
+          final day = entry.key;
+          final dayClasses = entry.value;
+          if (dayClasses is List) {
+            for (final c in dayClasses) {
+              final code = (c['courseCode'] ?? c['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
+              if (code == courseCode) {
+                final startTime = (c['startTime'] ?? c['start_time'] ?? '').toString();
+                final endTime = (c['endTime'] ?? c['end_time'] ?? '').toString();
+                final isLab = CourseUtils.isLab(startTime, endTime, code);
+                final type = c['type']?.toString() ?? (isLab ? 'Lab' : 'Theory');
+                scheduledTemplates.add({
+                  'day': day,
+                  'type': type,
+                });
+              }
+            }
+          }
+        }
+        
+        if (scheduledTemplates.isEmpty) continue;
+        
+        // Extract exception cancellations and makeups for this course
+        final courseExceptions = exceptionsByCourse[courseCode] ?? [];
+        final Set<String> cancelledDates = {};
+        final List<Map<String, dynamic>> makeups = [];
+        for (final ex in courseExceptions) {
+          final dateStr = ex['date']?.toString() ?? '';
+          final type = ex['type']?.toString() ?? '';
+          if (dateStr.isNotEmpty) {
+            if (type == 'cancel') {
+              cancelledDates.add(dateStr);
+            } else if (type == 'makeup' || type == 'manual') {
+              makeups.add(ex);
+            }
+          }
+        }
+        
+        // Generate all scheduled class sessions for this course
+        final List<Map<String, dynamic>> classSessions = [];
+        final List<int> weekdaysInt = scheduledTemplates.map((t) => weekdayMap[t['day']!]!).toSet().toList();
+        
+        for (DateTime d = startDate; d.isBefore(endLimit) || d.isAtSameMomentAs(endLimit); d = d.add(const Duration(days: 1))) {
+          if (weekdaysInt.contains(d.weekday)) {
+            final dayName = DateFormat('EEEE').format(d);
+            final dayTemplates = scheduledTemplates.where((t) => t['day'] == dayName).toList();
+            for (final temp in dayTemplates) {
+              classSessions.add({
+                'date': DateTime(d.year, d.month, d.day),
+                'type': temp['type'] ?? 'Theory',
+              });
+            }
+          }
+        }
+        
+        final Map<String, dynamic> marksData = courseMap['marks_data'] ?? {};
+        final Map<String, dynamic> attendance = marksData['attendance'] ?? {};
+        final Map<String, dynamic> datesMap = attendance['dates'] ?? {};
+        final Map<String, dynamic> typesMap = attendance['types'] ?? {};
+        
+        // Insert makeups
+        for (final makeup in makeups) {
+          final dateStr = makeup['date']?.toString() ?? '';
+          final mDate = DateTime.tryParse(dateStr);
+          if (mDate != null && (mDate.isBefore(endLimit) || mDate.isAtSameMomentAs(endLimit))) {
+            final normalizedDate = DateTime(mDate.year, mDate.month, mDate.day);
+            final sessionType = makeup['session_type']?.toString() ?? makeup['sessionType']?.toString() ?? 'Theory';
+            
+            final exists = classSessions.any((s) => s['date'] == normalizedDate && s['type'] == sessionType);
+            if (!exists) {
+              classSessions.add({
+                'date': normalizedDate,
+                'type': sessionType,
+              });
+            }
+          }
+        }
+        
+        // Check if sessions are unmarked
+        for (final session in classSessions) {
+          final date = session['date'] as DateTime;
+          final type = session['type'] as String;
+          final dateStr = DateFormat('yyyy-MM-dd').format(date);
+          
+          if (holidayDates.contains(dateStr) || cancelledDates.contains(dateStr)) {
+            continue;
+          }
+          
+          final key = '${dateStr}_$type';
+          final String? status = datesMap[key]?.toString() ?? datesMap[dateStr]?.toString();
+          
+          if (status == null || (status != 'joined' && status != 'missed' && status != 'holiday' && status != 'cancelled')) {
+            pendingItems.add({
+              'course_code': rawCode,
+              'course_name': courseName,
+              'date': date,
+              'dateStr': dateStr,
+              'session_type': type,
+              'course_map': courseMap,
+            });
+          }
+        }
+      }
+      
+      pendingItems.sort((a, b) {
+        final DateTime dateA = a['date'] as DateTime;
+        final DateTime dateB = b['date'] as DateTime;
+        return dateB.compareTo(dateA);
+      });
+      
+      if (mounted) {
+        setState(() {
+          _pendingAttendanceItems = pendingItems;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Dashboard] Error loading pending attendance: $e');
+    }
+  }
+
   Future<void> _checkAdvisingBanner(String nextSemCode, dynamic advisingEndObj) async {
     try {
         final prefs = await SharedPreferences.getInstance();
@@ -455,6 +687,403 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     }
   }
 
+  Map<String, List<Map<String, dynamic>>> _groupPendingByDate() {
+    final Map<String, List<Map<String, dynamic>>> groups = {};
+    for (final item in _pendingAttendanceItems) {
+      final dateStr = item['dateStr'] as String;
+      groups.putIfAbsent(dateStr, () => []).add(item);
+    }
+    return groups;
+  }
+
+  Future<void> _markSingleAttendance(Map<String, dynamic> item, String status) async {
+    final user = this.user;
+    if (user == null || _semesterCode.isEmpty) return;
+    
+    setState(() => _isSavingAttendance = true);
+    
+    try {
+      final courseMap = item['course_map'] as Map<String, dynamic>;
+      final dateStr = item['dateStr'] as String;
+      final sessionType = item['session_type'] as String;
+      
+      final updatedMap = Map<String, dynamic>.from(courseMap);
+      final marksData = Map<String, dynamic>.from(updatedMap['marks_data'] ?? {});
+      final attendance = Map<String, dynamic>.from(marksData['attendance'] ?? {});
+      final dates = Map<String, dynamic>.from(attendance['dates'] ?? {});
+      final types = Map<String, dynamic>.from(attendance['types'] ?? {});
+      
+      final key = '${dateStr}_$sessionType';
+      dates[key] = status;
+      types[key] = sessionType;
+      
+      // Legacy fallback
+      dates[dateStr] = status;
+      types[dateStr] = sessionType;
+      
+      attendance['dates'] = dates;
+      attendance['types'] = types;
+      marksData['attendance'] = attendance;
+      updatedMap['marks_data'] = marksData;
+      
+      await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(user.id, _semesterCode, updatedMap);
+      
+      setState(() {
+        _pendingAttendanceItems.removeWhere((i) => 
+            i['course_code'] == item['course_code'] && 
+            i['dateStr'] == dateStr && 
+            i['session_type'] == sessionType);
+        _isSavingAttendance = false;
+      });
+      
+      ref.invalidate(semesterProgressDataProvider(_semesterCode));
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item['course_code']} ($sessionType) marked as ${status == 'joined' ? 'attended' : 'missed'}!'),
+          backgroundColor: status == 'joined' ? Colors.green : Colors.redAccent,
+        ),
+      );
+    } catch (e) {
+      debugPrint('[Dashboard] Error saving single attendance: $e');
+      setState(() => _isSavingAttendance = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save attendance: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _markMultipleAttendance(List<Map<String, dynamic>> items, String status) async {
+    final user = this.user;
+    if (user == null || _semesterCode.isEmpty) return;
+    
+    setState(() => _isSavingAttendance = true);
+    
+    try {
+      final List<Future<void>> saveFutures = [];
+      final List<String> codesDatesAndTypes = [];
+      
+      final progressData = await ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(user.id, _semesterCode);
+      
+      // Accumulate all modifications by course code to avoid concurrent overwrites
+      final Map<String, Map<String, dynamic>> accumulatedCourseUpdates = {};
+      
+      for (final item in items) {
+        final courseCode = (item['course_code'] as String).toUpperCase().replaceAll(' ', '');
+        final dateStr = item['dateStr'] as String;
+        final sessionType = item['session_type'] as String;
+        
+        if (!accumulatedCourseUpdates.containsKey(courseCode)) {
+          final courseMap = progressData.firstWhere(
+            (c) => CourseUtils.areEquivalent(c['course_code'], courseCode),
+            orElse: () => <String, dynamic>{},
+          );
+          if (courseMap.isEmpty) continue;
+          accumulatedCourseUpdates[courseCode] = Map<String, dynamic>.from(courseMap);
+        }
+        
+        final updatedMap = accumulatedCourseUpdates[courseCode]!;
+        if (updatedMap['marks_data'] == null) {
+          updatedMap['marks_data'] = <String, dynamic>{};
+        } else {
+          updatedMap['marks_data'] = Map<String, dynamic>.from(updatedMap['marks_data']);
+        }
+        
+        final marksData = updatedMap['marks_data'] as Map<String, dynamic>;
+        if (marksData['attendance'] == null) {
+          marksData['attendance'] = <String, dynamic>{};
+        } else {
+          marksData['attendance'] = Map<String, dynamic>.from(marksData['attendance']);
+        }
+        
+        final attendance = marksData['attendance'] as Map<String, dynamic>;
+        final dates = Map<String, dynamic>.from(attendance['dates'] ?? {});
+        final types = Map<String, dynamic>.from(attendance['types'] ?? {});
+        
+        final key = '${dateStr}_$sessionType';
+        dates[key] = status;
+        types[key] = sessionType;
+        
+        // Legacy fallback
+        dates[dateStr] = status;
+        types[dateStr] = sessionType;
+        
+        attendance['dates'] = dates;
+        attendance['types'] = types;
+        marksData['attendance'] = attendance;
+        
+        codesDatesAndTypes.add('${courseCode}_${dateStr}_$sessionType');
+      }
+      
+      // Save the accumulated updates (one save future per course)
+      for (final entry in accumulatedCourseUpdates.entries) {
+        saveFutures.add(
+          ref.read(semesterProgressRepositoryProvider).saveCourseMarks(user.id, _semesterCode, entry.value)
+        );
+      }
+      
+      if (saveFutures.isNotEmpty) {
+        await Future.wait(saveFutures);
+        
+        setState(() {
+          _pendingAttendanceItems.removeWhere((i) {
+            final key = '${(i['course_code'] as String).toUpperCase().replaceAll(' ', '')}_${i['dateStr']}_${i['session_type']}';
+            return codesDatesAndTypes.contains(key);
+          });
+          _isSavingAttendance = false;
+        });
+        
+        ref.invalidate(semesterProgressDataProvider(_semesterCode));
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${codesDatesAndTypes.length} session(s) marked as ${status == 'joined' ? 'attended' : 'missed'}!'),
+            backgroundColor: status == 'joined' ? Colors.green : Colors.redAccent,
+          ),
+        );
+      } else {
+        setState(() => _isSavingAttendance = false);
+      }
+    } catch (e) {
+      debugPrint('[Dashboard] Error saving multiple attendance: $e');
+      setState(() => _isSavingAttendance = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Widget _buildPendingAttendanceWidget(List<Map<String, dynamic>> progressData) {
+    if (_pendingAttendanceItems.isEmpty) return const SizedBox.shrink();
+    
+    final groups = _groupPendingByDate();
+    
+    return GlassContainer(
+      margin: const EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.all(20),
+      borderRadius: 24,
+      borderColor: Colors.amberAccent.withOpacity(0.3),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.amberAccent.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.fact_check_rounded, color: Colors.amberAccent, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Pending Attendance Check",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      "Mark your attendance for previously held classes.",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (_isSavingAttendance)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: CircularProgressIndicator(color: Colors.cyanAccent),
+              ),
+            )
+          else ...[
+            ...groups.entries.map((entry) {
+              final items = entry.value;
+              final dateVal = items.first['date'] as DateTime;
+              final formattedDate = DateFormat('EEEE - MMMM d').format(dateVal);
+              
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.02),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.04)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          formattedDate,
+                          style: const TextStyle(
+                            color: Color(0xFF00E5FF),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => _markMultipleAttendance(items, 'joined'),
+                          icon: const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF10B981)),
+                          label: const Text(
+                            "Tick All",
+                            style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ...items.map((item) {
+                      final courseCode = item['course_code'] as String;
+                      final courseName = item['course_name'] as String;
+                      final type = item['session_type'] as String;
+                      final isLab = type == 'Lab';
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.02),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white.withOpacity(0.04)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        courseCode,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          type.toUpperCase(),
+                                          style: TextStyle(
+                                            color: isLab ? Colors.orangeAccent : const Color(0xFF22D3EE),
+                                            fontSize: 7,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    courseName,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.4),
+                                      fontSize: 10,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => _markSingleAttendance(item, 'joined'),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
+                                    ),
+                                    child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 16),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () => _markSingleAttendance(item, 'missed'),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEF4444).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.2)),
+                                    ),
+                                    child: const Icon(Icons.close_rounded, color: Color(0xFFEF4444), size: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              );
+            }).toList(),
+            if (groups.length > 1) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amberAccent,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => _markMultipleAttendance(_pendingAttendanceItems, 'joined'),
+                  icon: const Icon(Icons.done_all_rounded, size: 18),
+                  label: const Text(
+                    "Mark All as Attended",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+
   void _dismissAdvisingBanner() async {
     final prefs = await SharedPreferences.getInstance();
     final nextSem = _semConfig?['next_semester_code'] ?? _semesterCode;
@@ -467,6 +1096,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (user == null) {
       return const Center(child: Text("Please log in"));
     }
+
+    final progressData = ref.watch(semesterProgressDataProvider(_semesterCode)).valueOrNull ?? [];
 
     if (_loadingInit) {
       return Container(
@@ -555,9 +1186,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         FadeInSlide(delay: const Duration(milliseconds: 200), child: _buildAdvisingBanner()),
                         FadeInSlide(delay: const Duration(milliseconds: 300), child: _buildExamTimeline()),
                         FadeInSlide(delay: const Duration(milliseconds: 400), child: _buildOverdueDecisionSection()),
+                        FadeInSlide(delay: const Duration(milliseconds: 500), child: _buildPendingAttendanceWidget(progressData)),
                         FadeInSlide(
                           delay: const Duration(milliseconds: 600), 
-                                                    child: _buildScheduleSection(
+                          child: _buildScheduleSection(
                             DashboardLogic.processDashboardData(_lastValidScheduleData!),
                           ),
                         ),

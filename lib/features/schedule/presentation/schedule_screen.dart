@@ -134,7 +134,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         final track = profile?.track; // Use track hint
         
         return DefaultTabController(
-          length: 2,
+          length: 3,
           child: Scaffold(
             backgroundColor: const Color(0xFF16202A),
             appBar: EWUmateAppBar(
@@ -144,7 +144,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 labelColor: Color(0xFF00E5FF),
                 unselectedLabelColor: Colors.white70,
                 indicatorWeight: 3,
-                tabs: [Tab(text: "Upcoming"), Tab(text: "Pending Events")],
+                tabs: [
+                  Tab(text: "Upcoming"),
+                  Tab(text: "Past 7 Days"),
+                  Tab(text: "Pending Events"),
+                ],
               ),
             ),
             body: RefreshIndicator(
@@ -167,6 +171,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
                       _buildUpcomingTab(semCode, userTasks), 
+                      _buildPastTab(semCode, userTasks),
                       _buildPendingActionsTab()
                     ],
                   );
@@ -274,7 +279,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           return a['type'] == 'cancel' && metadata['pendingMakeup'] == true;
         }).toList();
 
-        final weeksRaw = await repo.getTwoWeekSchedule(semCode, track: track);
+        final weeksRaw = await repo.getTwoWeekSchedule(semCode, track: track, daysBack: 7);
         
         _twoWeekSchedule = weeksRaw.map((dayData) {
            final dateRaw = dayData['date'];
@@ -736,7 +741,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   }
 
   Widget _buildUpcomingTab(String semCode, List<Task> allTasks) {
-    if (_twoWeekSchedule.isEmpty) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final upcomingDays = _twoWeekSchedule.where((day) {
+      final date = day['date'] as DateTime;
+      return !date.isBefore(today);
+    }).toList();
+
+    if (upcomingDays.isEmpty) {
       return Center(
           child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -752,9 +764,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
     return ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _twoWeekSchedule.length,
+        itemCount: upcomingDays.length,
         itemBuilder: (ctx, idx) {
-          final day = _twoWeekSchedule[idx];
+          final day = upcomingDays[idx];
           final isHoliday = day['isHoliday'] == true;
           final holidayReason = day['holidayReason']?.toString() ?? '';
           final events = List<Map<String, dynamic>>.from(day['events'] ?? []);
@@ -881,6 +893,131 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         ],
                       ),
                     ),
+                  ScheduleCard(
+                    item: c,
+                    compact: true,
+                    trailing: c.isCancelled
+                        ? null
+                        : (c.isManual || c.isMakeup)
+                            ? TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () => _showDeleteDialog(c, dateStr),
+                                child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                              )
+                            : TextButton(
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                onPressed: () => _showCancelDialog(c, dateStr),
+                                child: const Text('Cancel', style: TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                              ),
+                  ),
+                ],
+              )
+            );
+          }
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: children);
+        },
+    );
+  }
+
+  Widget _buildPastTab(String semCode, List<Task> allTasks) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final pastDays = _twoWeekSchedule.where((day) {
+      final date = day['date'] as DateTime;
+      return date.isBefore(today);
+    }).toList()..sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
+
+    if (pastDays.isEmpty) {
+      return Center(
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.history_toggle_off_rounded, color: Colors.white24, size: 48),
+          const SizedBox(height: 16),
+          const Text("No past sessions found.", style: TextStyle(color: Colors.white54)),
+          const SizedBox(height: 8),
+          Text("Semester: $semCode", style: const TextStyle(color: Colors.cyanAccent, fontSize: 10)),
+        ],
+      ));
+    }
+
+    return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: pastDays.length,
+        itemBuilder: (ctx, idx) {
+          final day = pastDays[idx];
+          final isHoliday = day['isHoliday'] == true;
+          final holidayReason = day['holidayReason']?.toString() ?? '';
+          final events = List<Map<String, dynamic>>.from(day['events'] ?? []);
+          final classes = day['classes'] as List<ScheduleItem>? ?? [];
+          final dateStr = day['dateStr'] as String;
+          final dateRaw = day['date'];
+          final DateTime dateVal = dateRaw is String 
+              ? (DateTime.tryParse(dateRaw) ?? DateTime.now()) 
+              : (dateRaw as DateTime? ?? DateTime.now());
+          final headerStr = DateFormat('EEEE - MMMM d').format(dateVal);
+
+          List<Widget> children = [
+            Padding(
+              padding: const EdgeInsets.only(top: 24, bottom: 8),
+              child: Text(headerStr, style: const TextStyle(color: Colors.white38, fontWeight: FontWeight.bold, fontSize: 16)),
+            )
+          ];
+
+          if (isHoliday) {
+            children.add(
+              GlassContainer(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                borderColor: Colors.purpleAccent.withOpacity(0.3),
+                child: Row(
+                  children: [
+                    const Icon(Icons.celebration, color: Colors.purpleAccent, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(holidayReason, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                  ],
+                ),
+              )
+            );
+          }
+
+          for (var ev in events) {
+            final title = (ev['title'] ?? ev['name'] ?? '').toString();
+            if (title.toLowerCase() == holidayReason.toLowerCase()) continue;
+            children.add(
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Colors.blueAccent, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(title, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500))),
+                  ],
+                ),
+              )
+            );
+          }
+
+          for (int i = 0; i < classes.length; i++) {
+            final c = classes[i];
+            children.add(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   ScheduleCard(
                     item: c,
                     compact: true,

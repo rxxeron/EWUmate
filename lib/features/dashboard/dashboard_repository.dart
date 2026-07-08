@@ -560,14 +560,16 @@ class DashboardRepository {
   Future<List<Map<String, dynamic>>> getTwoWeekSchedule(
     String semesterCode, {
     String? track,
+    int daysBack = 0,
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return [];
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final startDate = today.subtract(Duration(days: daysBack));
     final twoWeeksLater = today.add(const Duration(days: 14));
-    final startDateStr = DateFormat('yyyy-MM-dd').format(today);
+    final startDateStr = DateFormat('yyyy-MM-dd').format(startDate);
     final endDateStr = DateFormat('yyyy-MM-dd').format(twoWeeksLater);
 
     try {
@@ -722,7 +724,7 @@ class DashboardRepository {
 
       List<Map<String, dynamic>> finalDays = [];
 
-      for (int i = 0; i < 14; i++) {
+      for (int i = -daysBack; i < 14; i++) {
         final date = today.add(Duration(days: i));
         final dateStr = DateFormat('yyyy-MM-dd').format(date);
         final dayName = DateFormat('EEEE').format(date);

@@ -1268,29 +1268,39 @@ class _CourseProgressDetailScreenState
         return a.type.compareTo(b.type);
       });
       
-      // Auto-mark holidays and cancellations if not already set by the user
+      // Auto-mark holidays and cancellations (force override if cancellation/holiday exception exists)
       for (final session in generatedSessions) {
         final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
         final key = '${dateStr}_${session.type}';
-        if (!_markedDates.containsKey(key) && !_markedDates.containsKey(dateStr)) {
-          if (holidayDates.contains(dateStr)) {
+        if (holidayDates.contains(dateStr)) {
+          if (_markedDates[key] != 'holiday' && _markedDates[dateStr] != 'holiday') {
             _markedDates[key] = 'holiday';
-          } else if (cancelledDates.contains(dateStr)) {
+          }
+        } else if (cancelledDates.contains(dateStr)) {
+          if (_markedDates[key] != 'cancelled' && _markedDates[dateStr] != 'cancelled') {
             _markedDates[key] = 'cancelled';
           }
         }
       }
 
-      // Silent auto-save of updated/missing type mappings
-      bool typesChanged = false;
+      // Silent auto-save of updated/missing markings or type mappings
+      bool changed = false;
       for (final entry in _dateTypes.entries) {
         if (typesRaw[entry.key]?.toString() != entry.value) {
-          typesChanged = true;
+          changed = true;
           break;
         }
       }
+      if (!changed) {
+        for (final entry in _markedDates.entries) {
+          if (datesRaw[entry.key]?.toString() != entry.value) {
+            changed = true;
+            break;
+          }
+        }
+      }
 
-      if (typesChanged) {
+      if (changed) {
         final updatedData = Map<String, dynamic>.from(_data);
         if (updatedData['marks_data'] == null) updatedData['marks_data'] = {};
         final marksData = Map<String, dynamic>.from(updatedData['marks_data']);

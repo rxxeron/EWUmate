@@ -65,20 +65,12 @@ class FacultyDirectoryScreen extends ConsumerWidget {
                   );
                 }
                 
-                final totalCount = facultyList.length + (facultyList.isNotEmpty ? (facultyList.length - 1) ~/ 5 : 0);
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: totalCount,
+                  itemCount: facultyList.length,
                   itemBuilder: (context, index) {
-                    if (index % 6 == 5) {
-                      return const PremiumNativeAd(
-                        screenName: 'faculty_directory',
-                        margin: EdgeInsets.only(bottom: 16),
-                      );
-                    }
-                    final facultyIndex = index - (index ~/ 6);
                     return FacultyCard(
-                      faculty: facultyList[facultyIndex],
+                      faculty: facultyList[index],
                     );
                   },
                 );

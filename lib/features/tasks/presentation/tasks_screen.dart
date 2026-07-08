@@ -11,7 +11,6 @@ import '../../../core/services/cache_service.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/utils/error_utils.dart';
 import 'widgets/add_task_bottom_sheet.dart';
-import '../../../core/widgets/premium_native_ad.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
@@ -155,10 +154,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
 
           return Column(
             children: [
-              const PremiumNativeAd(
-                screenName: 'tasks',
-                margin: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 0),
-              ),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
@@ -239,16 +234,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
           : ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              itemCount: tasks.length + (tasks.isNotEmpty ? (tasks.length - 1) ~/ 5 : 0),
+              itemCount: tasks.length,
               itemBuilder: (context, index) {
-                if (index % 6 == 5) {
-                  return const PremiumNativeAd(
-                    screenName: 'tasks',
-                    margin: EdgeInsets.only(bottom: 12),
-                  );
-                }
-                final taskIndex = index - (index ~/ 6);
-                final task = tasks[taskIndex];
+                final task = tasks[index];
                 final isOverdue = type == "Overdue";
                 final isCompleted = type == "Completed";
 

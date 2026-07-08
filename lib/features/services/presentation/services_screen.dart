@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/widgets/premium_native_ad.dart';
-import '../../../core/providers/feature_flag_provider.dart';
-
 class ServicesScreen extends ConsumerWidget {
   const ServicesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('services'));
-    final nativeFormatEnabled = ref.watch(isAdEnabledForProvider('native'));
-    final isAdAllowed = screenAdsEnabled && nativeFormatEnabled;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Services'),
@@ -33,6 +27,7 @@ class ServicesScreen extends ConsumerWidget {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
+              childAspectRatio: (1.0 / MediaQuery.textScalerOf(context).scale(1.0)).clamp(0.75, 1.0),
               children: [
                   _buildServiceCard(
                     context,
@@ -44,11 +39,6 @@ class ServicesScreen extends ConsumerWidget {
                       context.push('/services/cover-page');
                     },
                   ),
-                  if (isAdAllowed)
-                    const PremiumNativeAd(
-                      screenName: 'services',
-                      isTile: true,
-                    ),
                   _buildServiceCard(
                     context,
                     title: 'Faculty List (PDF)',
@@ -79,11 +69,6 @@ class ServicesScreen extends ConsumerWidget {
                       context.push('/services/study-vault');
                     },
                   ),
-                  if (isAdAllowed)
-                    const PremiumNativeAd(
-                      screenName: 'services',
-                      isTile: true,
-                    ),
               ],
             ),
           ],

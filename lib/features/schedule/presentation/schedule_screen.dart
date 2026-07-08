@@ -326,7 +326,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
              onPressed: () async {
                 Navigator.pop(ctx);
                 try {
-                  await _exceptionRepo.addCancellation(dateStr, item.courseCode, pendingMakeup: true);
+                  await _exceptionRepo.addCancellation(
+                    dateStr,
+                    item.courseCode,
+                    pendingMakeup: true,
+                    startTime: item.startTime,
+                    sessionType: item.sessionType,
+                  );
                   await _invalidateDashboardCache();
                   _loadData();
                 } catch (e) {
@@ -346,6 +352,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 _showAddClassModal(_semesterCode!,
                   originalCancelCode: item.courseCode,
                   originalCancelDateStr: dateStr,
+                  originalCancelStartTime: item.startTime,
                   sessionType: item.sessionType,
                 );
              },
@@ -431,6 +438,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   void _showAddClassModal(String semesterCode, {
     String? originalCancelCode,
     String? originalCancelDateStr,
+    String? originalCancelStartTime,
     String? resolveExceptionId,
     String? sessionType,
   }) {
@@ -679,7 +687,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                         try {
                           if (isMakeup) {
                             if (originalCancelDateStr != null) {
-                              await _exceptionRepo.addCancellation(originalCancelDateStr, selectedCourse!, pendingMakeup: false);
+                              await _exceptionRepo.addCancellation(
+                                originalCancelDateStr,
+                                selectedCourse!,
+                                pendingMakeup: false,
+                                startTime: originalCancelStartTime,
+                                sessionType: sessionType,
+                              );
                             } else if (resolveExceptionId != null) {
                               await _exceptionRepo.resolvePendingMakeup(resolveExceptionId);
                             }

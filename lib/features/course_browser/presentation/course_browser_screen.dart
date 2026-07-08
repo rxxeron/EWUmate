@@ -208,21 +208,13 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
           if (courses.isEmpty) {
             return const Center(child: Text('No courses found.', style: TextStyle(color: Colors.grey)));
           }
-          final totalCount = courses.length + (courses.isNotEmpty ? (courses.length - 1) ~/ 5 : 0);
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: totalCount,
+            itemCount: courses.length,
             itemBuilder: (context, index) {
-              if (index % 6 == 5) {
-                return const PremiumNativeAd(
-                  screenName: 'course_browser',
-                  margin: EdgeInsets.only(bottom: 12),
-                );
-              }
-              final courseIndex = index - (index ~/ 6);
               return CourseCard(
-                key: ValueKey(courses[courseIndex].code),
-                course: courses[courseIndex],
+                key: ValueKey(courses[index].code),
+                course: courses[index],
               );
             },
           );
@@ -237,21 +229,13 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
       data: (courses) {
         if (courses.isEmpty) return const Center(child: Text('No courses match your filters.', style: TextStyle(color: Colors.grey)));
         
-        final totalCount = courses.length + (courses.isNotEmpty ? (courses.length - 1) ~/ 5 : 0);
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: totalCount,
+          itemCount: courses.length,
           itemBuilder: (context, index) {
-            if (index % 6 == 5) {
-              return const PremiumNativeAd(
-                screenName: 'course_browser',
-                margin: EdgeInsets.only(bottom: 12),
-              );
-            }
-            final courseIndex = index - (index ~/ 6);
             return CourseCard(
-              key: ValueKey(courses[courseIndex].code),
-              course: courses[courseIndex],
+              key: ValueKey(courses[index].code),
+              course: courses[index],
             );
           },
         );
@@ -288,21 +272,13 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
               return const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF)));
             }
             final metas = snapshot.data ?? [];
-            final totalCount = metas.length + (metas.isNotEmpty ? (metas.length - 1) ~/ 5 : 0);
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: totalCount,
+              itemCount: metas.length,
               itemBuilder: (context, index) {
-                if (index % 6 == 5) {
-                  return const PremiumNativeAd(
-                    screenName: 'course_browser',
-                    margin: EdgeInsets.only(bottom: 12),
-                  );
-                }
-                final courseIndex = index - (index ~/ 6);
                 return CourseCard(
-                  key: ValueKey(metas[courseIndex].code),
-                  course: metas[courseIndex],
+                  key: ValueKey(metas[index].code),
+                  course: metas[index],
                   isEnrolledView: true,
                 );
               },

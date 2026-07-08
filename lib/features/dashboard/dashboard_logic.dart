@@ -243,11 +243,30 @@ class DashboardLogic {
         final code = cls['courseCode']?.toString() ?? '';
         
         // Check for 'cancel' exception
-        final cancelEx = exceptions.where((ex) => 
-          ex['date'] == dateStr &&
-          _compareCode(ex['course_code'] ?? ex['courseCode'], code) && 
-          ex['type'] == 'cancel'
-        ).firstOrNull;
+        final cancelEx = exceptions.where((ex) {
+          if (ex['date'] != dateStr || ex['type'] != 'cancel') return false;
+          if (!_compareCode(ex['course_code'] ?? ex['courseCode'], code)) return false;
+          
+          final meta = ex['metadata'] as Map<String, dynamic>?;
+          if (meta != null) {
+            final exStartTime = meta['startTime']?.toString();
+            final exSessionType = meta['sessionType']?.toString();
+            
+            final clsStartTime = cls['startTime']?.toString() ?? 'TBA';
+            final clsEndTime = cls['endTime']?.toString() ?? 'TBA';
+            
+            if (exStartTime != null && exStartTime != clsStartTime) {
+              return false;
+            }
+            if (exSessionType != null) {
+              final clsSessionType = cls['type']?.toString() ?? (CourseUtils.isLab(clsStartTime, clsEndTime, code) ? 'Lab' : 'Theory');
+              if (exSessionType != clsSessionType) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }).firstOrNull;
 
         if (cancelEx != null) {
           schedule.add(ScheduleItem(
@@ -311,6 +330,18 @@ class DashboardLogic {
       if (ex['type'] == 'cancel') {
         result = result.map((item) {
           if (_compareCode(ex['course_code'] ?? ex['courseCode'], item.courseCode)) {
+            final meta = ex['metadata'] as Map<String, dynamic>?;
+            if (meta != null) {
+              final exStartTime = meta['startTime']?.toString();
+              final exSessionType = meta['sessionType']?.toString();
+              
+              if (exStartTime != null && exStartTime != item.startTime) {
+                return item;
+              }
+              if (exSessionType != null && exSessionType != item.sessionType) {
+                return item;
+              }
+            }
             return item.copyWith(isCancelled: true);
           }
           return item;

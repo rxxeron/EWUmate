@@ -21,7 +21,13 @@ class ExceptionRepository {
   }
 
   /// Add a cancellation exception
-  Future<void> addCancellation(String date, String courseCode, {bool pendingMakeup = false}) async {
+  Future<void> addCancellation(
+    String date,
+    String courseCode, {
+    bool pendingMakeup = false,
+    String? startTime,
+    String? sessionType,
+  }) async {
     if (_uid == null) return;
     try {
       await _supabase.from('schedule_exceptions').insert({
@@ -29,7 +35,11 @@ class ExceptionRepository {
         'type': 'cancel',
         'date': date,
         'course_code': courseCode,
-        'metadata': {'pendingMakeup': pendingMakeup},
+        'metadata': {
+          'pendingMakeup': pendingMakeup,
+          if (startTime != null) 'startTime': startTime,
+          if (sessionType != null) 'sessionType': sessionType,
+        },
       });
     } catch (e) {
     }

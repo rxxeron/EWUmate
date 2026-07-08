@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import 'package:hive/hive.dart';
@@ -51,6 +52,7 @@ import '../auth/auth_providers.dart';
 import '../../core/models/task.dart';
 import '../tasks/presentation/widgets/add_task_bottom_sheet.dart';
 import '../../core/repositories/task_repository.dart';
+import '../../core/providers/feature_flag_provider.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
 
@@ -82,6 +84,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _lastValidScheduleData;
   bool _isSavingAttendance = false;
   List<Map<String, dynamic>> _pendingAttendanceItems = [];
+  bool _showAllPendingOnDashboard = false;
+  bool _promoBannerDismissed = false;
   Timer? _refreshTimer;
   
   
@@ -124,53 +128,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _refreshDashboard({bool isSilent = false}) async {
-    if (user == null) return;
+    final lastUserId = ref.read(cacheServiceProvider).getLastUserId();
+    final effectiveUserId = user?.id ?? lastUserId;
+    if (effectiveUserId == null) return;
     
     if (!isSilent && _lastValidScheduleData != null) {
-       // Manual refresh: invalidate academic data
-       RefreshUtils.refreshAcademicData(ref);
+        // Manual refresh: invalidate academic data
+        RefreshUtils.refreshAcademicData(ref);
     }
 
     // PHASE 0: Instant Cache Load (User Request: Show cache first)
     if (_lastValidScheduleData == null) {
-      final user = this.user;
-
-      if (user != null) {
-         Map<String, dynamic>? cached;
-         String? detectedSem;
-         
-         try {
-           final box = Hive.box('dashboard_box');
-           for (final key in box.keys) {
-             if (key is String && key.startsWith('${user.id}_') && key.endsWith('_schedule')) {
-               final data = box.get(key);
-               if (data != null) {
-                 cached = Map<String, dynamic>.from(jsonDecode(data as String) as Map);
-                 // Extract semester code from key (e.g. "bd73b4d7..._summer2026_schedule")
-                 final parts = key.split('_');
-                 if (parts.length >= 3) {
-                   detectedSem = parts[1];
-                 }
-                 break;
+       Map<String, dynamic>? cached;
+       String? detectedSem;
+       
+       try {
+         final box = Hive.box('dashboard_box');
+         for (final key in box.keys) {
+           if (key is String && key.startsWith('${effectiveUserId}_') && key.endsWith('_schedule')) {
+             final data = box.get(key);
+             if (data != null) {
+               cached = Map<String, dynamic>.from(jsonDecode(data as String) as Map);
+               // Extract semester code from key (e.g. "bd73b4d7..._summer2026_schedule")
+               final parts = key.split('_');
+               if (parts.length >= 3) {
+                 detectedSem = parts[1];
                }
+               break;
              }
            }
-         } catch (e) {
-           debugPrint('[Dashboard] Error scanning schedule keys: $e');
          }
+       } catch (e) {
+         debugPrint('[Dashboard] Error scanning schedule keys: $e');
+       }
 
-         if (cached != null && mounted) {
-           setState(() {
-             _lastValidScheduleData = cached;
-             if (detectedSem != null && _semesterCode.isEmpty) {
-               _semesterCode = detectedSem;
-             }
-             _loadingInit = false; // Show the UI immediately
-           });
-         } else {
-           setState(() => _loadingInit = true);
-         }
-      }
+       if (cached != null && mounted) {
+          setState(() {
+            _lastValidScheduleData = cached;
+            if (detectedSem != null && _semesterCode.isEmpty) {
+              _semesterCode = detectedSem;
+            }
+            _loadingInit = false; // Show the UI immediately
+          });
+        } else {
+          setState(() => _loadingInit = true);
+        }
     }
 
     try {
@@ -185,8 +187,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       final track = academicState.track;
       final nextSemesterCode = academicState.nextSemesterCode;
 
+      final lastUserId = ref.read(cacheServiceProvider).getLastUserId();
+      final effectiveUserId = user?.id ?? lastUserId;
+      if (effectiveUserId == null) {
+        if (mounted) setState(() => _loadingInit = false);
+        return;
+      }
+
       final profile = ref.read(profileProvider).value;
-      final cachedProfile = ref.read(cacheServiceProvider).getCachedProfile(user!.id);
+      final cachedProfile = ref.read(cacheServiceProvider).getCachedProfile(effectiveUserId);
       final profileUpdatedAt = profile?.updatedAt ?? (cachedProfile != null ? cachedProfile['updated_at'] : null);
 
       // 2. Fetch Dashboard data, Enrollments, and Update Info in parallel
@@ -202,7 +211,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             return await _supabase
                 .from('enrollments')
                 .select('course_code')
-                .eq('user_id', user!.id)
+                .eq('user_id', effectiveUserId)
                 .eq('semester_code', code);
           } catch (_) {
             return [];
@@ -236,7 +245,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         if (codes.isNotEmpty) {
           ref.read(cacheServiceProvider).setMapData(
             'dashboard_box', 
-            'enrollment_codes_${user!.id}_$code', 
+            'enrollment_codes_${effectiveUserId}_$code', 
             {'codes': codes}
           );
         }
@@ -456,8 +465,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             .from('schedule_exceptions')
             .select()
             .eq('user_id', user.id),
-        // [4] Course progress marks
-        ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(user.id, _semesterCode),
+        // [4] Course progress marks — use fresh network data to avoid stale cache
+        ref.read(semesterProgressRepositoryProvider).getFreshProgressData(user.id, _semesterCode),
       ]);
       
       final grid = (results[0] as Map<String, dynamic>?)?['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
@@ -613,7 +622,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           }
           
           final key = '${dateStr}_$type';
-          final String? status = datesMap[key]?.toString() ?? datesMap[dateStr]?.toString();
+          final hasTypedKey = datesMap.containsKey('${dateStr}_Theory') || datesMap.containsKey('${dateStr}_Lab');
+          final String? status = datesMap[key]?.toString() ?? (hasTypedKey ? null : datesMap[dateStr]?.toString());
           
           if (status == null || (status != 'joined' && status != 'missed' && status != 'holiday' && status != 'cancelled')) {
             pendingItems.add({
@@ -916,168 +926,203 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             )
           else ...[
-            ...groups.entries.map((entry) {
-              final items = entry.value;
-              final dateVal = items.first['date'] as DateTime;
-              final formattedDate = DateFormat('EEEE - MMMM d').format(dateVal);
-              
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.04)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          formattedDate,
-                          style: const TextStyle(
-                            color: Color(0xFF00E5FF),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                        TextButton.icon(
-                          onPressed: () => _markMultipleAttendance(items, 'joined'),
-                          icon: const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF10B981)),
-                          label: const Text(
-                            "Tick All",
-                            style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
+            ...(() {
+              final visibleEntries = _showAllPendingOnDashboard
+                  ? groups.entries.toList()
+                  : groups.entries.take(2).toList();
+              final remainingGroups = groups.length - visibleEntries.length;
+
+              return [
+                ...visibleEntries.map((entry) {
+                  final items = entry.value;
+                  final dateVal = items.first['date'] as DateTime;
+                  final formattedDate = DateFormat('EEEE - MMMM d').format(dateVal);
+                  
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.02),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.04)),
                     ),
-                    const SizedBox(height: 8),
-                    ...items.map((item) {
-                      final courseCode = item['course_code'] as String;
-                      final courseName = item['course_name'] as String;
-                      final type = item['session_type'] as String;
-                      final isLab = type == 'Lab';
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.02),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white.withOpacity(0.04)),
-                        ),
-                        child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        courseCode,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.15),
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(
-                                            color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.3),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          type.toUpperCase(),
-                                          style: TextStyle(
-                                            color: isLab ? Colors.orangeAccent : const Color(0xFF22D3EE),
-                                            fontSize: 7,
-                                            fontWeight: FontWeight.w900,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    courseName,
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.4),
-                                      fontSize: 10,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                            Text(
+                              formattedDate,
+                              style: const TextStyle(
+                                color: Color(0xFF00E5FF),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                GestureDetector(
-                                  onTap: () => _markSingleAttendance(item, 'joined'),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF10B981).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
-                                    ),
-                                    child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 16),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () => _markSingleAttendance(item, 'missed'),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFEF4444).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.2)),
-                                    ),
-                                    child: const Icon(Icons.close_rounded, color: Color(0xFFEF4444), size: 16),
-                                  ),
-                                ),
-                              ],
+                            TextButton.icon(
+                              onPressed: () => _markMultipleAttendance(items, 'joined'),
+                              icon: const Icon(Icons.done_all_rounded, size: 14, color: Color(0xFF10B981)),
+                              label: const Text(
+                                "Tick All",
+                                style: TextStyle(color: Color(0xFF10B981), fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ],
                         ),
-                      );
-                    }).toList(),
-                  ],
-                ),
-              );
-            }).toList(),
-            if (groups.length > 1) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amberAccent,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                        const SizedBox(height: 8),
+                        ...items.map((item) {
+                          final courseCode = item['course_code'] as String;
+                          final courseName = item['course_name'] as String;
+                          final type = item['session_type'] as String;
+                          final isLab = type == 'Lab';
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.02),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white.withOpacity(0.04)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            courseCode,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                              border: Border.all(
+                                                color: (isLab ? Colors.orange : const Color(0xFF22D3EE)).withOpacity(0.3),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              type.toUpperCase(),
+                                              style: TextStyle(
+                                                color: isLab ? Colors.orangeAccent : const Color(0xFF22D3EE),
+                                                fontSize: 7,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        courseName,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.4),
+                                          fontSize: 10,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => _markSingleAttendance(item, 'joined'),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
+                                        ),
+                                        child: const Icon(Icons.check_rounded, color: Color(0xFF10B981), size: 16),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => _markSingleAttendance(item, 'missed'),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.2)),
+                                        ),
+                                        child: const Icon(Icons.close_rounded, color: Color(0xFFEF4444), size: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                if (remainingGroups > 0)
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() => _showAllPendingOnDashboard = true);
+                      },
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.amberAccent, size: 18),
+                      label: Text(
+                        "Show $remainingGroups more days...",
+                        style: const TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
+                else if (_showAllPendingOnDashboard && groups.length > 2)
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() => _showAllPendingOnDashboard = false);
+                      },
+                      icon: const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.amberAccent, size: 18),
+                      label: const Text(
+                        "Collapse list",
+                        style: TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
-                  onPressed: () => _markMultipleAttendance(_pendingAttendanceItems, 'joined'),
-                  icon: const Icon(Icons.done_all_rounded, size: 18),
-                  label: const Text(
-                    "Mark All as Attended",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                if (groups.length > 1) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amberAccent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      onPressed: () => _markMultipleAttendance(_pendingAttendanceItems, 'joined'),
+                      icon: const Icon(Icons.done_all_rounded, size: 18),
+                      label: const Text(
+                        "Mark All as Attended",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              ];
+            })(),
           ],
         ],
       ),
@@ -1181,6 +1226,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                          FadeInSlide(delay: const Duration(milliseconds: 50), child: _buildPromoBanner()),
                           FadeInSlide(delay: const Duration(milliseconds: 100), child: _buildAppUpdateBanner()),
                           FadeInSlide(delay: const Duration(milliseconds: 150), child: _buildTransitionBanner()),
                         FadeInSlide(delay: const Duration(milliseconds: 200), child: _buildAdvisingBanner()),
@@ -1478,6 +1524,85 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
         ],
       ),
+    );
+  }
+
+  Widget _buildPromoBanner() {
+    if (_promoBannerDismissed) return const SizedBox.shrink();
+
+    final bannerAsync = ref.watch(promoBannerProvider);
+    return bannerAsync.maybeWhen(
+      data: (config) {
+        if (config == null) return const SizedBox.shrink();
+        final isActive = config['is_active'] == true;
+        if (!isActive) return const SizedBox.shrink();
+
+        final imageUrl = config['image_url']?.toString() ?? '';
+        final linkUrl = config['link_url']?.toString() ?? '';
+        if (imageUrl.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Stack(
+            children: [
+              GestureDetector(
+                onTap: linkUrl.isNotEmpty
+                    ? () async {
+                        final uri = Uri.tryParse(linkUrl);
+                        if (uri != null) {
+                          await url_launcher.launchUrl(
+                            uri,
+                            mode: url_launcher.LaunchMode.externalApplication,
+                          );
+                        }
+                      }
+                    : null,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: SizedBox(
+                    height: 120,
+                    width: double.infinity,
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: double.infinity,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 120,
+                        color: Colors.white.withOpacity(0.05),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF22D3EE),
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
+              ),
+              // Dismiss button
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => setState(() => _promoBannerDismissed = true),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 

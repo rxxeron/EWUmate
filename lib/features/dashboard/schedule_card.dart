@@ -103,20 +103,28 @@ class ScheduleCard extends StatelessWidget {
                         decorationThickness: 2.5,
                       ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.person_outline, size: 16, color: Colors.white54),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.faculty.isNotEmpty ? item.faculty : "TBA",
-                          style: TextStyle(
-                            color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500,
-                            decoration: item.isCancelled ? TextDecoration.lineThrough : null,
-                            decorationThickness: 2.5,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          const Icon(Icons.person_outline, size: 16, color: Colors.white54),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              item.faculty.isNotEmpty ? item.faculty : "TBA",
+                              style: TextStyle(
+                                color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500,
+                                decoration: item.isCancelled ? TextDecoration.lineThrough : null,
+                                decorationThickness: 2.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -187,11 +195,15 @@ class ScheduleCard extends StatelessWidget {
                 // Row 1: Course code + badge
                 Row(
                   children: [
-                    Text(
-                      item.courseCode,
-                      style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold, color: accentColor,
-                        decoration: item.isCancelled ? TextDecoration.lineThrough : null,
+                    Expanded(
+                      child: Text(
+                        item.courseCode,
+                        style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold, color: accentColor,
+                          decoration: item.isCancelled ? TextDecoration.lineThrough : null,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -223,12 +235,24 @@ class ScheduleCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.person_outline, size: 14, color: Colors.white54),
                     const SizedBox(width: 4),
-                    Text(item.faculty.isNotEmpty ? item.faculty : "TBA", style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    Flexible(
+                      child: Text(
+                        item.faculty.isNotEmpty ? item.faculty : "TBA",
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     const Icon(Icons.location_on_outlined, size: 14, color: Colors.white54),
                     const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(item.room, style: const TextStyle(color: Colors.white54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Flexible(
+                      child: Text(
+                        item.room,
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),

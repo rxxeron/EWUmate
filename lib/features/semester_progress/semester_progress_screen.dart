@@ -13,7 +13,6 @@ import '../../core/utils/error_utils.dart';
 import 'course_progress_detail_screen.dart';
 import 'widgets/course_progress_card.dart';
 import '../../core/utils/refresh_utils.dart';
-import '../../core/widgets/premium_banner_ad.dart';
 
 class SemesterProgressScreen extends ConsumerStatefulWidget {
   const SemesterProgressScreen({super.key});
@@ -143,27 +142,14 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                     : CustomScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
-                            SliverToBoxAdapter(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  SizedBox(height: 12),
-                                  PremiumBannerAd(
-                                    screenName: 'semester_progress',
-                                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  ),
-                                  SizedBox(height: 12),
-                                ],
-                              ),
-                            ),
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                               sliver: SliverGrid(
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
-                                  childAspectRatio: 0.68,
+                                  childAspectRatio: (0.68 / MediaQuery.textScalerOf(context).scale(1.0)).clamp(0.5, 0.68),
                                 ),
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {

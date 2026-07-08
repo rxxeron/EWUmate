@@ -247,7 +247,7 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 80,
+                  height: 95 * MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.15),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: advisingState.selectedCourses.entries.map((entry) {
@@ -561,24 +561,26 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
           padding: const EdgeInsets.all(20.0),
           child: Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(
-                    status == 'processing' ? 'Searching...' : '${filteredCombinations.length} Schedules Found',
-                    style: const TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Doing advising for $semesterName',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 13),
-                  ),
-                  if (status == 'processing')
-                    Text(
-                      'Found $count so far...',
-                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                     Text(
+                      status == 'processing' ? 'Searching...' : '${filteredCombinations.length} Schedules Found',
+                      style: const TextStyle(color: Colors.cyan, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      'Doing advising for $semesterName',
+                      style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                    ),
+                    if (status == 'processing')
+                      Text(
+                        'Found $count so far...',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      ),
+                  ],
+                ),
               ),
               const Spacer(),
               if (status == 'processing')
@@ -677,7 +679,14 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                             dense: true,
                             title: Row(
                               children: [
-                                Text('$code - ${sec['section']}', style: const TextStyle(color: Colors.white70)),
+                                Expanded(
+                                  child: Text(
+                                    '$code - ${sec['section']}', 
+                                    style: const TextStyle(color: Colors.white70),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                                 const SizedBox(width: 8),
                                 _buildCapacityIndicator(sec['capacity']?.toString() ?? ''),
                               ],
@@ -762,7 +771,15 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                         children: [
                           const Icon(Icons.bookmark, color: Colors.cyan, size: 20),
                           const SizedBox(width: 12),
-                          Text('Draft for $sem', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          Flexible(
+                            child: Text(
+                              'Draft for $sem', 
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
                           const Spacer(),
                           IconButton(
                             onPressed: () async {
@@ -898,7 +915,15 @@ class _AdvisingScreenState extends ConsumerState<AdvisingScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Filter by Faculty', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Expanded(
+                        child: Text(
+                          'Filter by Faculty', 
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
                     ],
                   ),
@@ -1008,10 +1033,15 @@ class _FacultySelectionSheet extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Select Faculty for $courseCode',
-                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  'Select Faculty for $courseCode',
+                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 12),
               IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white54))
             ],
           ),

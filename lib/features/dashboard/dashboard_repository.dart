@@ -34,7 +34,9 @@ class DashboardRepository {
     DateTime? profileUpdatedAt,
   }) async {
     final user = _supabase.auth.currentUser;
-    if (user == null) return {};
+    final lastUserId = _cache?.getLastUserId();
+    final effectiveUserId = user?.id ?? lastUserId;
+    if (effectiveUserId == null) return {};
 
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final dayName = DateFormat('EEEE').format(date);
@@ -46,7 +48,7 @@ class DashboardRepository {
     // Smart Invalidation Cache Check
     if (_cache != null) {
       final safeSem = CourseUtils.cleanSemester(semesterCode);
-      final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
+      final cached = _cache.getCachedDashboardSchedule(effectiveUserId, safeSem);
       if (cached != null) {
         final cacheDateStr = cached['dateStr'] as String?;
         if (cacheDateStr == dateStr) {
@@ -95,14 +97,14 @@ class DashboardRepository {
         _supabase
             .from('user_semester_states')
             .select('weekly_grid_cache')
-            .eq('user_id', user.id)
+            .eq('user_id', effectiveUserId)
             .eq('semester_code', semesterCode)
             .maybeSingle(),
         // [1] Date-specific exceptions
         _supabase
             .from('schedule_exceptions')
             .select()
-            .eq('user_id', user.id)
+            .eq('user_id', effectiveUserId)
             .eq('date', dateStr),
         // [2] Standard (Tri) holiday/swap
         (standardTable != null)
@@ -126,7 +128,7 @@ class DashboardRepository {
         _supabase
             .from('tasks')
             .select()
-            .eq('user_id', user.id)
+            .eq('user_id', effectiveUserId)
             .or('semester_code.eq.$semesterCode,semester_code.is.null')
             .eq('is_completed', false)
             .gte(
@@ -195,7 +197,7 @@ class DashboardRepository {
                 'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
               },
               body: jsonEncode({
-                'user_id': user.id,
+                'user_id': effectiveUserId,
                 'semester_code': safeCode,
               }),
             );
@@ -210,7 +212,7 @@ class DashboardRepository {
           final freshState = await _supabase
               .from('user_semester_states')
               .select('weekly_grid_cache')
-              .eq('user_id', user.id)
+              .eq('user_id', effectiveUserId)
               .eq('semester_code', semesterCode)
               .maybeSingle();
               
@@ -359,14 +361,14 @@ class DashboardRepository {
       if (_cache != null && weeklyGrid.isNotEmpty) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
         final safeSem = CourseUtils.cleanSemester(semesterCode);
-        _cache.cacheDashboardSchedule(user.id, safeSem, cachePayload);
+        _cache.cacheDashboardSchedule(effectiveUserId, safeSem, cachePayload);
       }
 
       return payload;
     } catch (e) {
       if (_cache != null) {
         final safeSem = CourseUtils.cleanSemester(semesterCode);
-        final cached = _cache.getCachedDashboardSchedule(user.id, safeSem);
+        final cached = _cache.getCachedDashboardSchedule(effectiveUserId, safeSem);
         if (cached != null) {
           debugPrint('[DashboardRepository] Network error, serving from offline cache: $e');
           if (cached['date'] != null && cached['date'] is String) {

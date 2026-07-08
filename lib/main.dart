@@ -104,6 +104,18 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.darkTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final mediaQueryData = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQueryData.copyWith(
+            textScaler: mediaQueryData.textScaler.clamp(
+              minScaleFactor: 0.8,
+              maxScaleFactor: 1.15,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
   }
 }

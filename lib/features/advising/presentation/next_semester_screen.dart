@@ -666,20 +666,23 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Beautiful Tabs
-                            Row(
-                              children: [
-                                _buildTabChip(
-                                  'Available',
-                                  _activeTab == 0,
-                                  () => setState(() => _activeTab = 0),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildTabChip(
-                                  'Selected (${_selectedCourses.length})',
-                                  _activeTab == 1,
-                                  () => setState(() => _activeTab = 1),
-                                ),
-                              ],
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _buildTabChip(
+                                    'Available',
+                                    _activeTab == 0,
+                                    () => setState(() => _activeTab = 0),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  _buildTabChip(
+                                    'Selected (${_selectedCourses.length})',
+                                    _activeTab == 1,
+                                    () => setState(() => _activeTab = 1),
+                                  ),
+                                ],
+                              ),
                             ),
                             const SizedBox(height: 16),
 

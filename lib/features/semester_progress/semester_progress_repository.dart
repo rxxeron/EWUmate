@@ -41,6 +41,31 @@ class SemesterProgressRepository {
     return await _fetchProgressAndCache(userId, semesterCode, cacheKey);
   }
 
+  /// Fetches fresh data directly from the network (bypasses cache-first logic).
+  /// Falls back to cached data if the device is offline or the network call fails,
+  /// so the pending attendance check still works without connectivity.
+  Future<List<Map<String, dynamic>>> getFreshProgressData(String userId, String semesterCode) async {
+    final cacheKey = 'marks_${userId}_$semesterCode';
+    try {
+      final fresh = await _fetchProgressAndCache(userId, semesterCode, cacheKey);
+      // _fetchProgressAndCache swallows network errors and returns [].
+      // If we got an empty list but the cache has data, the device is likely offline.
+      if (fresh.isEmpty) {
+        final cached = _cache.getMapData('semester_progress_box', cacheKey);
+        if (cached != null && cached['data'] != null) {
+          return List<Map<String, dynamic>>.from(cached['data']);
+        }
+      }
+      return fresh;
+    } catch (e) {
+      // Ultimate fallback — serve cache
+      final cached = _cache.getMapData('semester_progress_box', cacheKey);
+      return cached != null && cached['data'] != null
+          ? List<Map<String, dynamic>>.from(cached['data'])
+          : [];
+    }
+  }
+
   Future<List<Map<String, dynamic>>> _fetchProgressAndCache(String userId, String semesterCode, String cacheKey) async {
     try {
       final safeSem = CourseUtils.cleanSemester(semesterCode);
@@ -155,8 +180,8 @@ class SemesterProgressRepository {
           .single();
       
       _updateProgressCache(userId, semesterCode, res);
-      // Trigger background credit recalculation
-      _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
+      // Trigger background credit recalculation (fire-and-forget)
+      _supabase.functions.invoke('sync-academic-stats').ignore();
     } catch (e) {
       if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
       _updateProgressCache(userId, semesterCode, data);

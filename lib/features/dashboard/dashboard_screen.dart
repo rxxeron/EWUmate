@@ -37,6 +37,7 @@ import '../../core/utils/date_utils.dart' as date_util;
 
 import '../../core/utils/time_utils.dart';
 import '../../core/services/cache_service.dart';
+import '../../core/services/tutorial_service.dart';
 import 'hero_card.dart';
 import 'schedule_card.dart';
 import 'package:home_widget/home_widget.dart';
@@ -97,6 +98,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     super.initState();
     _refreshDashboard();
     _showDashboardTutorial();
+    _checkAndShowDonationPopup();
 
     _refreshTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (mounted) _refreshDashboard(isSilent: true);
@@ -416,6 +418,135 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: Icons.bubble_chart_rounded,
           ),
         ],
+      );
+    });
+  }
+
+  void _checkAndShowDonationPopup() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      
+      final hasSeenDashboardTutorial = await TutorialService().hasSeen('dashboard_main');
+      if (!hasSeenDashboardTutorial) return; // Wait until onboarding is finished/seen
+      
+      final cache = ref.read(cacheServiceProvider);
+      
+      // Load current state
+      final Map<String, dynamic> popupState = cache.getMapData('profile_box', 'donation_popup_state') ?? {
+        'count': 0,
+        'last_shown': '',
+      };
+      
+      final int count = popupState['count'] as int? ?? 0;
+      final String lastShown = popupState['last_shown']?.toString() ?? '';
+      
+      if (count >= 3) return; // Shown exactly 3 times already
+      
+      final currentDateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      if (lastShown == currentDateStr) return; // Already shown once today
+      
+      // Update state in cache
+      await cache.setMapData('profile_box', 'donation_popup_state', {
+        'count': count + 1,
+        'last_shown': currentDateStr,
+      });
+      
+      if (!mounted) return;
+      
+      // Display premium dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEC4899).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: Color(0xFFEC4899),
+                  size: 36,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                "Support EWUmate's Server",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "EWUmate runs on dedicated servers to keep schedules, grades, and notifications synced. To keep it 100% ad-free and open for everyone, consider contributing a small amount to support hosting costs. Even a tiny cup of tea helps!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 12,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: Colors.white.withOpacity(0.08)),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Maybe Later",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEC4899),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        Navigator.pop(context); // Close dialog
+                        context.push('/support-developer'); // Route to support page
+                      },
+                      child: const Text(
+                        "Support",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       );
     });
   }

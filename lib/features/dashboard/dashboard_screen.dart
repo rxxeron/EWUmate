@@ -426,13 +426,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       
+      // 1. Check if the popup is enabled by the admin
+      try {
+        final isEnabled = await ref.read(isDonationPopupEnabledProvider.future);
+        if (!isEnabled) return;
+      } catch (e) {
+        debugPrint('[Dashboard] Failed to read donation flag: $e');
+        return; // Safe fallback
+      }
+
       final hasSeenDashboardTutorial = await TutorialService().hasSeen('dashboard_main');
       if (!hasSeenDashboardTutorial) return; // Wait until onboarding is finished/seen
       
       final cache = ref.read(cacheServiceProvider);
       final currentDateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
       
-      // If the user has already supported us, we don't show the popup
+      // 2. If the user has already supported us, we don't show the popup
       if (user != null) {
         try {
           final donationCheck = await _supabase
@@ -441,54 +450,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               .eq('user_id', user!.id)
               .limit(1)
               .maybeSingle();
-          if (donationCheck != null) {
-            // Already donated, disable popup forever
-            await cache.setMapData('profile_box', 'donation_popup_state', {
-              'count': 3,
-              'last_shown': currentDateStr,
-            });
-            await _supabase.auth.updateUser(
-              UserAttributes(data: {'donation_popup_count': 3}),
-            );
-            return;
-          }
+          if (donationCheck != null) return; // Already donated, skip
         } catch (e) {
           debugPrint('[Dashboard] Failed to check donation status: $e');
         }
       }
       
-      // Load current state from both Hive cache and Supabase user metadata
-      final metadata = user?.userMetadata ?? {};
-      final int dbCount = metadata['donation_popup_count'] as int? ?? 0;
-      
+      // 3. Once-per-day check (using local cache to save state)
       final Map<String, dynamic> popupState = cache.getMapData('profile_box', 'donation_popup_state') ?? {
-        'count': 0,
         'last_shown': '',
       };
       
-      final int cacheCount = popupState['count'] as int? ?? 0;
-      final int count = dbCount > cacheCount ? dbCount : cacheCount;
       final String lastShown = popupState['last_shown']?.toString() ?? '';
-      
-      if (count >= 3) return; // Shown exactly 3 times already
       if (lastShown == currentDateStr) return; // Already shown once today
       
-      // Update state in cache and Supabase user metadata
-      final nextCount = count + 1;
+      // Update state in cache
       await cache.setMapData('profile_box', 'donation_popup_state', {
-        'count': nextCount,
         'last_shown': currentDateStr,
       });
-      
-      if (user != null) {
-        try {
-          await _supabase.auth.updateUser(
-            UserAttributes(data: {'donation_popup_count': nextCount}),
-          );
-        } catch (e) {
-          debugPrint('[Dashboard] Failed to sync donation metadata: $e');
-        }
-      }
       
       if (!mounted) return;
       

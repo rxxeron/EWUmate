@@ -118,3 +118,30 @@ final promoBannerProvider = FutureProvider<Map<String, dynamic>?>((ref) async {
   } catch (_) {}
   return null;
 });
+
+final isDonationPopupEnabledProvider = FutureProvider<bool>((ref) async {
+  final supabase = ref.watch(supabaseClientProvider);
+  try {
+    final res = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('key', 'donation_popup')
+        .maybeSingle();
+
+    if (res != null && res['value'] != null) {
+      final val = res['value'];
+      if (val is Map) {
+        return val['is_active'] == true;
+      }
+      if (val is String) {
+        try {
+          final decoded = jsonDecode(val);
+          if (decoded is Map) {
+            return decoded['is_active'] == true;
+          }
+        } catch (_) {}
+      }
+    }
+  } catch (_) {}
+  return false;
+});

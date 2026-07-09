@@ -1689,65 +1689,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final imageUrl = config['image_url']?.toString() ?? '';
         final linkUrl = config['link_url']?.toString() ?? '';
         if (imageUrl.isEmpty) return const SizedBox.shrink();
-
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
-          child: Stack(
-            children: [
-              GestureDetector(
-                onTap: linkUrl.isNotEmpty
-                    ? () async {
-                        final uri = Uri.tryParse(linkUrl);
-                        if (uri != null) {
-                          await url_launcher.launchUrl(
-                            uri,
-                            mode: url_launcher.LaunchMode.externalApplication,
-                          );
-                        }
-                      }
-                    : null,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: SizedBox(
-                    height: 120,
-                    width: double.infinity,
-                    child: CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      width: double.infinity,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 120,
-                        color: Colors.white.withOpacity(0.05),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF22D3EE),
-                            strokeWidth: 2,
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ),
+              child: Stack(
+                children: [
+                  GestureDetector(
+                    onTap: linkUrl.isNotEmpty
+                        ? () async {
+                            final uri = Uri.tryParse(linkUrl);
+                            if (uri != null) {
+                              await url_launcher.launchUrl(
+                                uri,
+                                mode: url_launcher.LaunchMode.externalApplication,
+                              );
+                            }
+                          }
+                        : null,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        placeholder: (context, url) => Container(
+                          height: 100,
+                          color: Colors.white.withOpacity(0.05),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF22D3EE),
+                              strokeWidth: 2,
+                            ),
                           ),
                         ),
+                        errorWidget: (context, url, error) => const SizedBox.shrink(),
                       ),
-                      errorWidget: (context, url, error) => const SizedBox.shrink(),
                     ),
                   ),
-                ),
-              ),
-              // Dismiss button
-              Positioned(
-                top: 8,
-                right: 8,
-                child: GestureDetector(
-                  onTap: () => setState(() => _promoBannerDismissed = true),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      shape: BoxShape.circle,
+                  // Dismiss button
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _promoBannerDismissed = true),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 14),
+                      ),
                     ),
-                    child: const Icon(Icons.close, color: Colors.white, size: 14),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

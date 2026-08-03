@@ -164,9 +164,26 @@ class CourseRepository {
   }
   Future<List<CourseMetadata>> getSemesterCourses(String semesterCode) async {
     final cacheKey = 'sem_${semesterCode.toLowerCase()}';
-    // 1. Try cache first
+    
+    int? serverVersion;
+    try {
+      final configRes = await _supabase
+          .from('app_config')
+          .select('value')
+          .eq('key', 'catalog_cache_version')
+          .maybeSingle();
+      if (configRes != null && configRes['value'] != null) {
+        serverVersion = (configRes['value']['version'] as num?)?.toInt();
+      }
+    } catch (_) {}
+
     final cached = _cache.getMapData('course_catalog', cacheKey);
     if (cached != null && cached['data'] != null && (cached['data'] as List).length >= 50) {
+      final cachedVersion = (cached['version'] as num?)?.toInt() ?? 0;
+      if (serverVersion != null && serverVersion > cachedVersion) {
+        return await _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);
+      }
+
       final updatedAtStr = cached['updated_at'] as String?;
       bool isStale = true;
       if (updatedAtStr != null) {
@@ -177,15 +194,15 @@ class CourseRepository {
       }
       if (isStale) {
         // Trigger background sync if cache is older than 7 days
-        _fetchSemesterAndCache(semesterCode, cacheKey);
+        _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);
       }
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
     }
 
-    return await _fetchSemesterAndCache(semesterCode, cacheKey);
+    return await _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);
   }
 
-  Future<List<CourseMetadata>> _fetchSemesterAndCache(String semesterCode, String cacheKey) async {
+  Future<List<CourseMetadata>> _fetchSemesterAndCache(String semesterCode, String cacheKey, {int? serverVersion}) async {
     final safeSem = semesterCode
         .toLowerCase()
         .replaceAll(' ', '')
@@ -229,6 +246,7 @@ class CourseRepository {
       _cache.setMapData('course_catalog', cacheKey, {
         'data': results.map((e) => e.toJson()).toList(),
         'updated_at': DateTime.now().toIso8601String(),
+        'version': serverVersion ?? 0,
       });
 
       return results;

@@ -173,6 +173,11 @@ class _DegreeProgressScreenState extends ConsumerState<DegreeProgressScreen> {
                 const SizedBox(height: 16),
                 _buildCgpaCard(actualCgpa),
                 const SizedBox(height: 16),
+                const PremiumNativeAd(
+                  screenName: 'degree_progress',
+                  margin: EdgeInsets.zero,
+                ),
+                const SizedBox(height: 16),
                 _buildSemesterSummaryCard(context),
                 const SizedBox(height: 32),
                 _buildSemesterListState(summaries),

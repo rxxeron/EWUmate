@@ -390,8 +390,6 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: activeSemAsync.when(
-        skipLoadingOnReload: true,
-        skipLoadingOnRefresh: true,
         loading: () =>
             const Center(child: CircularProgressIndicator(color: Colors.cyan)),
         error: (e, _) => Center(
@@ -500,8 +498,6 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                     // Draft Discovery
                     if (!_isManualMode && _selectedCourses.isEmpty)
                       draftsAsync.when(
-                        skipLoadingOnReload: true,
-                        skipLoadingOnRefresh: true,
                         data: (drafts) {
                           final nextSemDrafts = drafts
                               .where(
@@ -666,23 +662,20 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Beautiful Tabs
-                            SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  _buildTabChip(
-                                    'Available',
-                                    _activeTab == 0,
-                                    () => setState(() => _activeTab = 0),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  _buildTabChip(
-                                    'Selected (${_selectedCourses.length})',
-                                    _activeTab == 1,
-                                    () => setState(() => _activeTab = 1),
-                                  ),
-                                ],
-                              ),
+                            Row(
+                              children: [
+                                _buildTabChip(
+                                  'Available',
+                                  _activeTab == 0,
+                                  () => setState(() => _activeTab = 0),
+                                ),
+                                const SizedBox(width: 12),
+                                _buildTabChip(
+                                  'Selected (${_selectedCourses.length})',
+                                  _activeTab == 1,
+                                  () => setState(() => _activeTab = 1),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 16),
 
@@ -712,8 +705,6 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                             ],
 
                             semesterCoursesAsync.when(
-                              skipLoadingOnReload: true,
-                              skipLoadingOnRefresh: true,
                               loading: () => const Center(
                                 child: CircularProgressIndicator(
                                   color: Colors.cyan,
@@ -857,8 +848,6 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                                 ),
                                               );
                                               return sectionsAsync.when(
-                                                skipLoadingOnReload: true,
-                                                skipLoadingOnRefresh: true,
                                                 loading: () =>
                                                     const LinearProgressIndicator(
                                                       color: Colors.cyan,
@@ -892,76 +881,73 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
                                                               .first
                                                               .faculty
                                                         : null;
-                                                    return Material(
-                                                       color: Colors.transparent,
-                                                       child: ListTile(
-                                                         title: Row(
-                                                           children: [
-                                                             Text(
-                                                               'Section ${sec.section}',
-                                                               style:
-                                                                   const TextStyle(
-                                                                     color: Colors
-                                                                         .white70,
-                                                                     fontSize: 14,
-                                                                   ),
-                                                             ),
-                                                             const SizedBox(
-                                                               width: 8,
-                                                             ),
-                                                             _buildCapacityIndicator(
-                                                               sec.capacity,
-                                                             ),
-                                                             if (faculty !=
-                                                                 null) ...[
-                                                               const SizedBox(
-                                                                 width: 8,
-                                                               ),
-                                                               Flexible(
-                                                                 child: Text(
-                                                                   '• $faculty',
-                                                                   style: TextStyle(
-                                                                     color: Colors
-                                                                         .cyan
-                                                                         .withValues(
-                                                                           alpha:
-                                                                               0.7,
-                                                                         ),
-                                                                     fontSize: 12,
-                                                                   ),
-                                                                   overflow:
-                                                                       TextOverflow
-                                                                           .ellipsis,
-                                                                 ),
-                                                               ),
-                                                             ],
-                                                           ],
-                                                         ),
-                                                         subtitle: Text(
-                                                           sec.sessions
-                                                               .map(
-                                                                 (s) =>
-                                                                     '${s.day} ${s.startTime}-${s.endTime}',
-                                                               )
-                                                               .join(' | '),
-                                                           style: TextStyle(
-                                                             color:
-                                                                 Colors.grey[600],
-                                                             fontSize: 11,
-                                                           ),
-                                                         ),
-                                                         trailing: Switch(
-                                                           value: isThisSelected,
-                                                           activeThumbColor:
-                                                               Colors.cyan,
-                                                           onChanged: (_) =>
-                                                               _toggleSection(
-                                                                 course: course,
-                                                                 section: sec,
-                                                               ),
-                                                         ),
-                                                       ),
-                                                     );
+                                                    return ListTile(
+                                                      title: Row(
+                                                        children: [
+                                                          Text(
+                                                            'Section ${sec.section}',
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white70,
+                                                                  fontSize: 14,
+                                                                ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
+                                                          _buildCapacityIndicator(
+                                                            sec.capacity,
+                                                          ),
+                                                          if (faculty !=
+                                                              null) ...[
+                                                            const SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            Flexible(
+                                                              child: Text(
+                                                                '• $faculty',
+                                                                style: TextStyle(
+                                                                  color: Colors
+                                                                      .cyan
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.7,
+                                                                      ),
+                                                                  fontSize: 12,
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ],
+                                                      ),
+                                                      subtitle: Text(
+                                                        sec.sessions
+                                                            .map(
+                                                              (s) =>
+                                                                  '${s.day} ${s.startTime}-${s.endTime}',
+                                                            )
+                                                            .join(' | '),
+                                                        style: TextStyle(
+                                                          color:
+                                                              Colors.grey[600],
+                                                          fontSize: 11,
+                                                        ),
+                                                      ),
+                                                      trailing: Switch(
+                                                        value: isThisSelected,
+                                                        activeThumbColor:
+                                                            Colors.cyan,
+                                                        onChanged: (_) =>
+                                                            _toggleSection(
+                                                              course: course,
+                                                              section: sec,
+                                                            ),
+                                                      ),
+                                                    );
                                                   }).toList(),
                                                 ),
                                               );

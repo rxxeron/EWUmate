@@ -31,30 +31,27 @@ class ProgressScreen extends ConsumerWidget {
                 color: const Color(0xFF1E1E2E),
                 margin: const EdgeInsets.only(bottom: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(mark.courseCode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text(mark.courseName ?? '', style: const TextStyle(color: Colors.white70)),
-                        const SizedBox(height: 8),
-                        const Text('Tap to view Outline & Obtained marks', style: TextStyle(color: Colors.cyanAccent, fontSize: 12)),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, color: Colors.cyanAccent, size: 16),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CourseMarksEditorScreen(courseMarks: mark),
-                        ),
-                      );
-                    },
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16),
+                  title: Text(mark.courseCode, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(mark.courseName ?? '', style: const TextStyle(color: Colors.white70)),
+                      const SizedBox(height: 8),
+                      const Text('Tap to view Outline & Obtained marks', style: TextStyle(color: Colors.cyanAccent, fontSize: 12)),
+                    ],
                   ),
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.cyanAccent, size: 16),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CourseMarksEditorScreen(courseMarks: mark),
+                      ),
+                    );
+                  },
                 ),
               );
             },

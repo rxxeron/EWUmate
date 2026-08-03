@@ -171,12 +171,14 @@ class _FeaturedVideoCard extends StatelessWidget {
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
                               color: const Color(0xFF1E293B),
-                              child: const Icon(Icons.video_library_rounded, color: Colors.white24, size: 60),
+                              child: const Icon(Icons.video_library_rounded,
+                                  color: Colors.white24, size: 60),
                             ),
                           )
                         : Container(
                             color: const Color(0xFF1E293B),
-                            child: const Icon(Icons.video_library_rounded, color: Colors.white24, size: 60),
+                            child: const Icon(Icons.video_library_rounded,
+                                color: Colors.white24, size: 60),
                           ),
                   ),
                   Positioned.fill(
@@ -185,7 +187,10 @@ class _FeaturedVideoCard extends StatelessWidget {
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
                         ),
                       ),
                     ),
@@ -197,18 +202,30 @@ class _FeaturedVideoCard extends StatelessWidget {
                       color: Colors.cyanAccent.withOpacity(0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Colors.cyanAccent.withOpacity(0.4), blurRadius: 20, spreadRadius: 4),
+                        BoxShadow(
+                          color: Colors.cyanAccent.withOpacity(0.4),
+                          blurRadius: 20,
+                          spreadRadius: 4,
+                        ),
                       ],
                     ),
-                    child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 36),
+                    child: const Icon(Icons.play_arrow_rounded,
+                        color: Colors.black, size: 36),
                   ),
                   Positioned(
-                    bottom: 0, left: 0, right: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
                         tutorial.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, height: 1.3),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          height: 1.3,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -222,7 +239,10 @@ class _FeaturedVideoCard extends StatelessWidget {
         if (tutorial.description != null && tutorial.description!.isNotEmpty) ...
           [
             const SizedBox(height: 10),
-            Text(tutorial.description!, style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.5)),
+            Text(
+              tutorial.description!,
+              style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.5),
+            ),
           ],
       ],
     );
@@ -234,7 +254,11 @@ class _CategorySection extends StatelessWidget {
   final List<Tutorial> tutorials;
   final void Function(String url) onTap;
 
-  const _CategorySection({required this.category, required this.tutorials, required this.onTap});
+  const _CategorySection({
+    required this.category,
+    required this.tutorials,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -246,18 +270,30 @@ class _CategorySection extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: 4, height: 14,
-                decoration: BoxDecoration(color: Colors.blueAccent, borderRadius: BorderRadius.circular(2)),
+                width: 4,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
               const SizedBox(width: 10),
               Text(
                 category.toUpperCase(),
-                style: const TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5,
+                ),
               ),
             ],
           ),
         ),
-        ...tutorials.map((t) => _VideoCard(tutorial: t, onTap: () => onTap(t.youtubeUrl))),
+        ...tutorials.map((t) => _VideoCard(
+              tutorial: t,
+              onTap: () => onTap(t.youtubeUrl),
+            )),
       ],
     );
   }
@@ -283,23 +319,41 @@ class _VideoCard extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(16)),
               child: SizedBox(
-                width: 100, height: 72,
+                width: 100,
+                height: 72,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     tutorial.resolvedThumbnail.isNotEmpty
-                        ? Image.network(tutorial.resolvedThumbnail, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(color: const Color(0xFF0F172A),
-                              child: const Icon(Icons.play_circle_outline, color: Colors.white24, size: 28)))
-                        : Container(color: const Color(0xFF0F172A),
-                            child: const Icon(Icons.play_circle_outline, color: Colors.white24, size: 28)),
-                    Center(child: Container(
-                      width: 28, height: 28,
-                      decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
-                      child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 18),
-                    )),
+                        ? Image.network(
+                            tutorial.resolvedThumbnail,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: const Color(0xFF0F172A),
+                              child: const Icon(Icons.play_circle_outline,
+                                  color: Colors.white24, size: 28),
+                            ),
+                          )
+                        : Container(
+                            color: const Color(0xFF0F172A),
+                            child: const Icon(Icons.play_circle_outline,
+                                color: Colors.white24, size: 28),
+                          ),
+                    Center(
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow_rounded,
+                            color: Colors.white, size: 18),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -310,23 +364,48 @@ class _VideoCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tutorial.title,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600, height: 1.3),
-                      maxLines: 2, overflow: TextOverflow.ellipsis),
-                    if (tutorial.description != null && tutorial.description!.isNotEmpty) ...
-                      [const SizedBox(height: 4),
-                       Text(tutorial.description!, style: const TextStyle(color: Colors.white38, fontSize: 11, height: 1.4),
-                         maxLines: 1, overflow: TextOverflow.ellipsis)],
+                    Text(
+                      tutorial.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (tutorial.description != null &&
+                        tutorial.description!.isNotEmpty) ...
+                      [
+                        const SizedBox(height: 4),
+                        Text(
+                          tutorial.description!,
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 11, height: 1.4),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.blueAccent.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.blueAccent.withOpacity(0.2)),
+                        border: Border.all(
+                            color: Colors.blueAccent.withOpacity(0.2)),
                       ),
-                      child: Text(tutorial.category,
-                        style: const TextStyle(color: Colors.blueAccent, fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+                      child: Text(
+                        tutorial.category,
+                        style: const TextStyle(
+                          color: Colors.blueAccent,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -334,7 +413,8 @@ class _VideoCard extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 14),
+              child: Icon(Icons.arrow_forward_ios_rounded,
+                  color: Colors.white24, size: 14),
             ),
           ],
         ),

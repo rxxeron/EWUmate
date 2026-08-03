@@ -152,18 +152,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
             }
           }
 
-          return Column(
+          return TabBarView(
+            controller: _tabController,
             children: [
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildTaskList("Upcoming", upcomingTasks),
-                    _buildTaskList("Overdue", overdueTasks),
-                    _buildTaskList("Completed", completedTasks),
-                  ],
-                ),
-              ),
+              _buildTaskList("Upcoming", upcomingTasks),
+              _buildTaskList("Overdue", overdueTasks),
+              _buildTaskList("Completed", completedTasks),
             ],
           );
         },
@@ -236,9 +230,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
               padding: const EdgeInsets.all(16),
               itemCount: tasks.length,
               itemBuilder: (context, index) {
-                final task = tasks[index];
-                final isOverdue = type == "Overdue";
-                final isCompleted = type == "Completed";
+        final task = tasks[index];
+        final isOverdue = type == "Overdue";
+        final isCompleted = type == "Completed";
 
         String dateSubtitle = "No due date";
         if (task.dueDate != null) {
@@ -252,125 +246,23 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withOpacity(isCompleted ? 0.04 : 0.08)),
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              onTap: () => _openTaskModal(existingTask: task),
-              leading: Transform.scale(
-                scale: 1.2,
-                child: Checkbox(
-                  value: task.isCompleted,
-                  activeColor: const Color(0xFF22D3EE),
-                  checkColor: const Color(0xFF0F172A),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  side: BorderSide(color: Colors.white.withOpacity(0.3), width: 2),
-                  onChanged: (val) async {
-                    if (val != null) {
-                      final user = ref.read(currentUserProvider);
-                      if (user != null) {
-                        try {
-                          await ref.read(taskRepositoryProvider).updateTaskStatus(user.id, task.id, val);
-                          ref.invalidate(allTasksStreamProvider);
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
-                            );
-                          }
-                        }
-                      }
-                    }
-                  },
-                ),
-              ),
-              title: Text(
-                task.title,
-                style: TextStyle(
-                  color: isCompleted ? Colors.white.withOpacity(0.4) : Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 16,
-                  decoration: isCompleted ? TextDecoration.lineThrough : null,
-                  decorationColor: Colors.white.withOpacity(0.4),
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 6.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (task.courseCode != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22D3EE).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          task.courseCode!,
-                          style: const TextStyle(
-                            color: Color(0xFF22D3EE),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today_rounded, 
-                          size: 12, 
-                          color: isOverdue ? const Color(0xFFF43F5E) : Colors.white.withOpacity(0.4)
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          dateSubtitle,
-                          style: TextStyle(
-                            color: isOverdue ? const Color(0xFFF43F5E) : Colors.white.withOpacity(0.4),
-                            fontSize: 12,
-                            fontWeight: isOverdue ? FontWeight.w900 : FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              trailing: PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert_rounded, color: Colors.white.withOpacity(0.3)),
-                color: const Color(0xFF1E293B),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_rounded, size: 18, color: Colors.white70),
-                        SizedBox(width: 12),
-                        Text('Edit', style: TextStyle(color: Colors.white)),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFF43F5E)),
-                        SizedBox(width: 12),
-                        Text('Delete', style: TextStyle(color: Color(0xFFF43F5E))),
-                      ],
-                    ),
-                  ),
-                ],
-                onSelected: (value) async {
-                  if (value == 'edit') {
-                    _openTaskModal(existingTask: task);
-                  } else if (value == 'delete') {
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            onTap: () => _openTaskModal(existingTask: task),
+            leading: Transform.scale(
+              scale: 1.2,
+              child: Checkbox(
+                value: task.isCompleted,
+                activeColor: const Color(0xFF22D3EE),
+                checkColor: const Color(0xFF0F172A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                side: BorderSide(color: Colors.white.withOpacity(0.3), width: 2),
+                onChanged: (val) async {
+                  if (val != null) {
                     final user = ref.read(currentUserProvider);
                     if (user != null) {
                       try {
-                        await ref.read(taskRepositoryProvider).deleteTask(user.id, task.id);
+                        await ref.read(taskRepositoryProvider).updateTaskStatus(user.id, task.id, val);
                         ref.invalidate(allTasksStreamProvider);
                       } catch (e) {
                         if (context.mounted) {
@@ -383,6 +275,105 @@ class _TasksScreenState extends ConsumerState<TasksScreen> with SingleTickerProv
                   }
                 },
               ),
+            ),
+            title: Text(
+              task.title,
+              style: TextStyle(
+                color: isCompleted ? Colors.white.withOpacity(0.4) : Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 16,
+                decoration: isCompleted ? TextDecoration.lineThrough : null,
+                decorationColor: Colors.white.withOpacity(0.4),
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 6.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (task.courseCode != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF22D3EE).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        task.courseCode!,
+                        style: const TextStyle(
+                          color: Color(0xFF22D3EE),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded, 
+                        size: 12, 
+                        color: isOverdue ? const Color(0xFFF43F5E) : Colors.white.withOpacity(0.4)
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        dateSubtitle,
+                        style: TextStyle(
+                          color: isOverdue ? const Color(0xFFF43F5E) : Colors.white.withOpacity(0.4),
+                          fontSize: 12,
+                          fontWeight: isOverdue ? FontWeight.w900 : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            trailing: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert_rounded, color: Colors.white.withOpacity(0.3)),
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit_rounded, size: 18, color: Colors.white70),
+                      SizedBox(width: 12),
+                      Text('Edit', style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline_rounded, size: 18, color: Color(0xFFF43F5E)),
+                      SizedBox(width: 12),
+                      Text('Delete', style: TextStyle(color: Color(0xFFF43F5E))),
+                    ],
+                  ),
+                ),
+              ],
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  _openTaskModal(existingTask: task);
+                } else if (value == 'delete') {
+                  final user = ref.read(currentUserProvider);
+                  if (user != null) {
+                    try {
+                      await ref.read(taskRepositoryProvider).deleteTask(user.id, task.id);
+                      ref.invalidate(allTasksStreamProvider);
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
+                        );
+                      }
+                    }
+                  }
+                }
+              },
             ),
           ),
         );

@@ -134,20 +134,9 @@ class AppDrawer extends ConsumerWidget {
                     color: Colors.purpleAccent,
                   ),
                   _buildDrawerItem(
-                    context,
-                    Icons.favorite_rounded,
-                    "Support the Developer",
-                    () => context.push('/support-developer'),
-                    color: Colors.pinkAccent,
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    Icons.feedback_outlined,
-                    "Submit Feedback",
-                    () => context.push('/feedback'),
-                    color: Colors.lightGreenAccent,
-                  ),
-                  const Divider(color: Colors.white24),
+                        context, Icons.feedback_outlined, "Feedback & Support",
+                        () => context.push('/feedback'),
+                        color: Colors.lightGreenAccent),                  const Divider(color: Colors.white24),
                   _buildDrawerItem(
                     context,
                     Icons.logout,
@@ -174,19 +163,16 @@ class AppDrawer extends ConsumerWidget {
   Widget _buildDrawerItem(
       BuildContext context, IconData icon, String title, VoidCallback onTap,
       {Color color = Colors.white, bool closeDrawer = true}) {
-    return Material(
-      color: Colors.transparent,
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(title, style: TextStyle(color: color)),
-        onTap: () {
-          if (closeDrawer && context.mounted) {
-            Navigator.pop(context);
-          }
-          onTap();
-        },
-        hoverColor: Colors.white.withValues(alpha: 0.1),
-      ),
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(title, style: TextStyle(color: color)),
+      onTap: () {
+        if (closeDrawer && context.mounted) {
+          Navigator.pop(context);
+        }
+        onTap();
+      },
+      hoverColor: Colors.white.withValues(alpha: 0.1),
     );
   }
 }

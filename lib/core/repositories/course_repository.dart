@@ -111,14 +111,7 @@ class CourseRepository {
         .toLowerCase()
         .replaceAll(' ', '')
         .replaceAll('_', '');
-    String table = 'courses_$safeSem';
-
-    // Add cycle type if needed from legacy logic (bi-semester phrm or law)
-    final isBi = cycleType == 'bi' || cycleType == 'bi_semester';
-    final programSpecifier = (isBi && !table.endsWith('_phrm_llb'))
-        ? '_phrm_llb'
-        : '';
-    final tableName = '$table$programSpecifier';
+    final tableName = 'courses_$safeSem';
 
     try {
       final String base = courseCode.replaceAll(' ', '').toUpperCase();
@@ -173,7 +166,7 @@ class CourseRepository {
     final cacheKey = 'sem_${semesterCode.toLowerCase()}';
     // 1. Try cache first
     final cached = _cache.getMapData('course_catalog', cacheKey);
-    if (cached != null && cached['data'] != null) {
+    if (cached != null && cached['data'] != null && (cached['data'] as List).length >= 50) {
       final updatedAtStr = cached['updated_at'] as String?;
       bool isStale = true;
       if (updatedAtStr != null) {

@@ -142,14 +142,17 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                     : CustomScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           slivers: [
+                            SliverToBoxAdapter(
+                              child: const SizedBox(height: 16),
+                            ),
                             SliverPadding(
                               padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                               sliver: SliverGrid(
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
-                                  childAspectRatio: (0.68 / MediaQuery.textScalerOf(context).scale(1.0)).clamp(0.5, 0.68),
+                                  childAspectRatio: 0.75,
                                 ),
                                 delegate: SliverChildBuilderDelegate(
                                   (context, index) {

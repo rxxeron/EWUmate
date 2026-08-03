@@ -14,17 +14,14 @@ final programDetailsProvider = FutureProvider.family<Map<String, dynamic>?, Stri
 
 final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
   final user = ref.watch(currentUserProvider);
-  final lastUserId = ref.read(cacheServiceProvider).getLastUserId();
-  final effectiveUserId = user?.id ?? lastUserId;
-  
-  if (effectiveUserId == null) {
+  if (user == null) {
     yield null;
     return;
   }
 
   final cacheService = ref.read(cacheServiceProvider);
-  final cachedSem = cacheService.getMapData('dashboard_box', '${effectiveUserId}_academicState');
-  final cachedProfile = cacheService.getCachedProfile(effectiveUserId);
+  final cachedSem = cacheService.getMapData('dashboard_box', '${user.id}_academicState');
+  final cachedProfile = cacheService.getCachedProfile(user.id);
 
   // 1. Yield Cache Immediately (Frame 1)
   if (cachedSem != null) {
@@ -41,7 +38,7 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
 
   try {
     // 2. Try online fetch first with timeout
-    final profile = await ref.watch(profileRepositoryProvider).getProfile(effectiveUserId).timeout(const Duration(seconds: 8));
+    final profile = await ref.watch(profileRepositoryProvider).getProfile(user.id).timeout(const Duration(seconds: 8));
     if (profile != null) {
       final track = profile.track ?? 'tri_semester';
       final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track).timeout(const Duration(seconds: 8));
@@ -50,7 +47,7 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
         'track': track,
         '_cache_updated_at': DateTime.now().toIso8601String(),
       };
-      cacheService.setMapData('dashboard_box', '${effectiveUserId}_academicState', stateDict);
+      cacheService.setMapData('dashboard_box', '${user.id}_academicState', stateDict);
       yield AcademicState.fromJson(stateDict);
     }
   } catch (e) {

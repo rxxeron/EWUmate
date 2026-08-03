@@ -119,204 +119,193 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
             ),
         ],
       ),
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: Column(
+        children: [
+          // 1. Sleek Glassmorphic Header Card
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E2836).withOpacity(0.8),
+                    const Color(0xFF16202A).withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
                 children: [
-                  // 1. Sleek Glassmorphic Header Card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  // High-Res Hero Avatar
+                  Hero(
+                    tag: 'faculty_${widget.faculty.id}',
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      width: 85,
+                      height: 85,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF1E2836).withOpacity(0.8),
-                            const Color(0xFF16202A).withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(20),
+                        color: const Color(0xFF0F172A),
+                        border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
+                        image: isLiveUrl
+                            ? DecorationImage(
+                                image: NetworkImage(photoUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                      child: Row(
-                        children: [
-                          // High-Res Hero Avatar
-                          Hero(
-                            tag: 'faculty_${widget.faculty.id}',
-                            child: Container(
-                              width: 85,
-                              height: 85,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: const Color(0xFF0F172A),
-                                border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
-                                image: isLiveUrl
-                                    ? DecorationImage(
-                                        image: NetworkImage(photoUrl!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                              child: !isLiveUrl
-                                  ? const Icon(Icons.person_rounded, color: Colors.white24, size: 45)
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          
-                          // Profile Detail Lines
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.faculty.fullName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 6),
-                                
-                                if (widget.faculty.designation != null && widget.faculty.designation!.isNotEmpty) ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF00E5FF).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      widget.faculty.designation!,
-                                      style: const TextStyle(
-                                        color: Color(0xFF00E5FF),
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-
-                                if (widget.faculty.officeRoom != null && widget.faculty.officeRoom!.isNotEmpty) ...[
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.room_rounded, color: Color(0xFF00E5FF), size: 14),
-                                      const SizedBox(width: 6),
-                                      Expanded(
-                                        child: Text(
-                                          'Office: ${widget.faculty.officeRoom}',
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 10),
-                                ],
-
-                                // Interactive Email Field
-                                if (widget.faculty.email != null && widget.faculty.email!.isNotEmpty)
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () => _launchEmail(widget.faculty.email!),
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(0.04),
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: Colors.white10),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                const Icon(Icons.email_rounded, color: Color(0xFF00E5FF), size: 14),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    widget.faculty.email!,
-                                                    style: const TextStyle(
-                                                      color: Colors.white70,
-                                                      fontSize: 12,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      InkWell(
-                                        onTap: () => _copyEmail(context, widget.faculty.email!),
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(0.04),
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: Colors.white10),
-                                          ),
-                                          child: const Icon(Icons.copy_rounded, color: Colors.white70, size: 14),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: !isLiveUrl
+                          ? const Icon(Icons.person_rounded, color: Colors.white24, size: 45)
+                          : null,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(width: 20),
+                  
+                  // Profile Detail Lines
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.faculty.fullName,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        
+                        if (widget.faculty.designation != null && widget.faculty.designation!.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E5FF).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              widget.faculty.designation!,
+                              style: const TextStyle(
+                                color: Color(0xFF00E5FF),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+
+                        if (widget.faculty.officeRoom != null && widget.faculty.officeRoom!.isNotEmpty) ...[
+                          Row(
+                            children: [
+                              const Icon(Icons.room_rounded, color: Color(0xFF00E5FF), size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Office: ${widget.faculty.officeRoom}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+
+                        // Interactive Email Field
+                        if (widget.faculty.email != null && widget.faculty.email!.isNotEmpty)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => _launchEmail(widget.faculty.email!),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.04),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.white10),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.email_rounded, color: Color(0xFF00E5FF), size: 14),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            widget.faculty.email!,
+                                            style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () => _copyEmail(context, widget.faculty.email!),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.04),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.white10),
+                                  ),
+                                  child: const Icon(Icons.copy_rounded, color: Colors.white70, size: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverTabBarDelegate(
-                TabBar(
-                  controller: _tabController,
-                  indicatorColor: const Color(0xFF00E5FF),
-                  indicatorWeight: 3.0,
-                  labelColor: const Color(0xFF00E5FF),
-                  unselectedLabelColor: Colors.white38,
-                  labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.8),
-                  tabs: const [
-                    Tab(text: 'CLASS SCHEDULE', icon: Icon(Icons.calendar_month_rounded, size: 20)),
-                    Tab(text: 'OFFICE HOURS', icon: Icon(Icons.history_toggle_off_rounded, size: 20)),
-                  ],
-                ),
-              ),
-            ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
+          ),
+          
+          const SizedBox(height: 12),
+
+          // 2. Animated Premium Custom Tab Bar
+          TabBar(
+            controller: _tabController,
+            indicatorColor: const Color(0xFF00E5FF),
+            indicatorWeight: 3.0,
+            labelColor: const Color(0xFF00E5FF),
+            unselectedLabelColor: Colors.white38,
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 0.8),
+            tabs: const [
+              Tab(text: 'CLASS SCHEDULE', icon: Icon(Icons.calendar_month_rounded, size: 20)),
+              Tab(text: 'OFFICE HOURS', icon: Icon(Icons.history_toggle_off_rounded, size: 20)),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 3. Tab Views Content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
               children: [
                 // TAB 1: Class Schedule (Timetable)
                 activeSemesterAsync.when(
@@ -405,8 +394,10 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
               ],
             ),
           ),
-        );
-      }
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState({
     required IconData icon,
@@ -461,37 +452,33 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.cyanAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        section.code,
-                        style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 12),
-                      ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.cyanAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'SEC: ${section.section}',
-                        style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11),
-                      ),
+                    child: Text(
+                      section.code,
+                      style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'SEC: ${section.section}',
+                      style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
               Text(
                 'CR: ${section.credits}',
                 style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold),
@@ -529,24 +516,16 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                   const SizedBox(width: 12),
                   const Icon(Icons.access_time_rounded, color: Colors.white38, size: 14),
                   const SizedBox(width: 6),
-                  Flexible(
-                    child: Text(
-                      '${session.startTime} - ${session.endTime}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  Text(
+                    '${session.startTime} - ${session.endTime}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(width: 8),
+                  const Spacer(),
                   const Icon(Icons.room_rounded, color: Colors.white38, size: 14),
                   const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      session.room,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  Text(
+                    session.room,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -632,28 +611,5 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
         ],
       ),
     );
-  }
-}
-
-class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabBar tabBar;
-  _SliverTabBarDelegate(this.tabBar);
-
-  @override
-  double get minExtent => tabBar.preferredSize.height;
-  @override
-  double get maxExtent => tabBar.preferredSize.height;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overridesHeader) {
-    return Container(
-      color: const Color(0xFF16202A),
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
-    return false;
   }
 }

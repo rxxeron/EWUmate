@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/faculty_providers.dart';
 import 'widgets/faculty_card.dart';
-import '../../../core/widgets/premium_native_ad.dart';
 import '../../../core/widgets/animations/skeleton_loader.dart';
 
 class FacultyDirectoryScreen extends ConsumerWidget {
@@ -68,11 +67,9 @@ class FacultyDirectoryScreen extends ConsumerWidget {
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: facultyList.length,
-                  itemBuilder: (context, index) {
-                    return FacultyCard(
-                      faculty: facultyList[index],
-                    );
-                  },
+                  itemBuilder: (context, index) => FacultyCard(
+                    faculty: facultyList[index],
+                  ),
                 );
               },
               loading: () => ListView.builder(

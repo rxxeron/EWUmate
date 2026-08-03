@@ -417,9 +417,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Have an account?",
                           style: TextStyle(color: Colors.white70)),

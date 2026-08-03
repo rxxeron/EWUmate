@@ -8,7 +8,6 @@ import '../../../core/repositories/course_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/widgets/animations/skeleton_loader.dart';
 import 'widgets/course_card.dart';
-import '../../../core/widgets/premium_native_ad.dart';
 import 'providers/course_browser_providers.dart';
 import '../../../core/utils/error_utils.dart';
 
@@ -211,12 +210,10 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
           return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: courses.length,
-            itemBuilder: (context, index) {
-              return CourseCard(
-                key: ValueKey(courses[index].code),
-                course: courses[index],
-              );
-            },
+            itemBuilder: (context, index) => CourseCard(
+              key: ValueKey(courses[index].code),
+              course: courses[index],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF))),
@@ -232,12 +229,10 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: courses.length,
-          itemBuilder: (context, index) {
-            return CourseCard(
-              key: ValueKey(courses[index].code),
-              course: courses[index],
-            );
-          },
+          itemBuilder: (context, index) => CourseCard(
+            key: ValueKey(courses[index].code),
+            course: courses[index],
+          ),
         );
       },
       loading: () => ListView.builder(
@@ -275,13 +270,11 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
             return ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: metas.length,
-              itemBuilder: (context, index) {
-                return CourseCard(
-                  key: ValueKey(metas[index].code),
-                  course: metas[index],
-                  isEnrolledView: true,
-                );
-              },
+              itemBuilder: (context, index) => CourseCard(
+                key: ValueKey(metas[index].code),
+                course: metas[index],
+                isEnrolledView: true,
+              ),
             );
           },
         );

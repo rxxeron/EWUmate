@@ -151,63 +151,60 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       onDismissed: (_) {
         ref.read(notificationRepositoryProvider).deleteNotification(notif.id);
       },
-      child: Material(
-        color: Colors.transparent,
-        child: ListTile(
-          onTap: () => _handleNotificationTap(context, notif),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          tileColor: isUnread ? Colors.white.withOpacity(0.05) : Colors.transparent,
-          leading: Stack(
-            children: [
-              CircleAvatar(
-                backgroundColor: iconColor.withOpacity(0.2),
-                child: Icon(iconData, color: iconColor),
-              ),
-              if (isUnread)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: Colors.cyanAccent,
-                      shape: BoxShape.circle,
-                    ),
+      child: ListTile(
+        onTap: () => _handleNotificationTap(context, notif),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        tileColor: isUnread ? Colors.white.withOpacity(0.05) : Colors.transparent,
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              backgroundColor: iconColor.withOpacity(0.2),
+              child: Icon(iconData, color: iconColor),
+            ),
+            if (isUnread)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.cyanAccent,
+                    shape: BoxShape.circle,
                   ),
                 ),
+              ),
+          ],
+        ),
+        title: Text(
+          notif.title,
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: isUnread ? FontWeight.bold : FontWeight.w500,
+              fontSize: 15),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notif.body,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                notif.createdAt != null
+                    ? DateFormat('MMM d, yyyy • h:mm a').format(notif.createdAt!.toLocal())
+                    : 'Just now',
+                style: const TextStyle(color: Colors.white38, fontSize: 11),
+              ),
             ],
           ),
-          title: Text(
-            notif.title,
-            style: TextStyle(
-                color: Colors.white,
-                fontWeight: isUnread ? FontWeight.bold : FontWeight.w500,
-                fontSize: 15),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  notif.body,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  notif.createdAt != null
-                      ? DateFormat('MMM d, yyyy • h:mm a').format(notif.createdAt!.toLocal())
-                      : 'Just now',
-                  style: const TextStyle(color: Colors.white38, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          trailing: (notif.payload != null && notif.payload!.containsKey('url'))
-              ? const Icon(Icons.download, color: Colors.greenAccent, size: 20)
-              : null,
         ),
+        trailing: (notif.payload != null && notif.payload!.containsKey('url'))
+            ? const Icon(Icons.download, color: Colors.greenAccent, size: 20)
+            : null,
       ),
     );
   }

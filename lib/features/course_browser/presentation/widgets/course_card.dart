@@ -136,16 +136,11 @@ class _CourseCardState extends ConsumerState<CourseCard> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
-                  child: Text(
-                    widget.course.code,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Text(
+                  widget.course.code,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),
                 ),
-                if (hasEnrolled) ...[
-                  const SizedBox(width: 8),
+                if (hasEnrolled)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -154,7 +149,6 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                     ),
                     child: const Text('Enrolled', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
-                ],
               ],
             ),
             const SizedBox(height: 2),
@@ -220,22 +214,19 @@ class _CourseCardState extends ConsumerState<CourseCard> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text('Section ${section.section}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                                    const SizedBox(width: 12),
-                                    _buildCapacityIndicator(section.capacity),
-                                  ],
-                                ),
-                                if (!isThisEnrolled && !enrolledInAny) _buildConflictWarning(section, details),
-                              ],
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text('Section ${section.section}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                                  const SizedBox(width: 12),
+                                  _buildCapacityIndicator(section.capacity),
+                                ],
+                              ),
+                              if (!isThisEnrolled && !enrolledInAny) _buildConflictWarning(section, details),
+                            ],
                           ),
-                          const SizedBox(width: 12),
                           _buildActionButton(
                             isThisEnrolled: isThisEnrolled,
                             hasAnyInThisCourse: enrolledInAny,
@@ -349,13 +340,9 @@ class _CourseCardState extends ConsumerState<CourseCard> {
         children: [
           const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent, size: 14),
           const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              'Conflicts with $conflictCourse',
-              style: const TextStyle(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.w500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
+          Text(
+            'Conflicts with $conflictCourse',
+            style: const TextStyle(color: Colors.orangeAccent, fontSize: 11, fontWeight: FontWeight.w500),
           ),
         ],
       ),

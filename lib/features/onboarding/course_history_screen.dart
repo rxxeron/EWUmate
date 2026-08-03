@@ -964,56 +964,53 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                 ? Colors.white.withOpacity(0.02)
                 : Colors.white.withOpacity(0.05),
             margin: const EdgeInsets.only(bottom: 8),
-            child: Material(
-              color: Colors.transparent,
-              child: ListTile(
-                enabled: passedGrade == null,
-                title: Text(
-                  code,
-                  style: TextStyle(
-                    color: passedGrade != null
-                        ? Colors.white38
-                        : Colors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    decoration: passedGrade != null
-                        ? TextDecoration.lineThrough
-                        : null,
-                    decorationColor: Colors.white38,
-                  ),
+            child: ListTile(
+              enabled: passedGrade == null,
+              title: Text(
+                code,
+                style: TextStyle(
+                  color: passedGrade != null
+                      ? Colors.white38
+                      : Colors.cyanAccent,
+                  fontWeight: FontWeight.bold,
+                  decoration: passedGrade != null
+                      ? TextDecoration.lineThrough
+                      : null,
+                  decorationColor: Colors.white38,
                 ),
-                subtitle: Text(
-                  c['name'] ?? '',
-                  style: TextStyle(
-                    color: passedGrade != null ? Colors.white24 : Colors.white70,
-                  ),
-                ),
-                trailing: passedGrade != null
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          "Passed ($passedGrade)",
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        isSelected
-                            ? Icons.check_circle
-                            : Icons.add_circle_outline,
-                        color: isSelected ? Colors.greenAccent : Colors.white38,
-                      ),
-                onTap: passedGrade != null ? null : () => _addCourse(c),
               ),
+              subtitle: Text(
+                c['name'] ?? '',
+                style: TextStyle(
+                  color: passedGrade != null ? Colors.white24 : Colors.white70,
+                ),
+              ),
+              trailing: passedGrade != null
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        "Passed ($passedGrade)",
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      isSelected
+                          ? Icons.check_circle
+                          : Icons.add_circle_outline,
+                      color: isSelected ? Colors.greenAccent : Colors.white38,
+                    ),
+              onTap: passedGrade != null ? null : () => _addCourse(c),
             ),
           );
         },
@@ -1160,43 +1157,40 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                               ),
                             ),
                           ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 4,
-                              ),
-                              title: Text(
-                                "Section $section",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  "Faculty: $faculty\nSchedule: $schedule",
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 11,
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ),
-                              isThreeLine: true,
-                              trailing: Icon(
-                                isSelected
-                                    ? Icons.check_circle
-                                    : Icons.add_circle_outline,
-                                color: isSelected
-                                    ? Colors.greenAccent
-                                    : Colors.white38,
-                              ),
-                              onTap: () => _addCourse(c),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 4,
                             ),
+                            title: Text(
+                              "Section $section",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(
+                                "Faculty: $faculty\nSchedule: $schedule",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            isThreeLine: true,
+                            trailing: Icon(
+                              isSelected
+                                  ? Icons.check_circle
+                                  : Icons.add_circle_outline,
+                              color: isSelected
+                                  ? Colors.greenAccent
+                                  : Colors.white38,
+                            ),
+                            onTap: () => _addCourse(c),
                           ),
                         );
                       }).toList(),

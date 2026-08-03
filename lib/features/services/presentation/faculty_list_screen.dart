@@ -101,37 +101,34 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                       borderRadius: BorderRadius.circular(20),
                       side: BorderSide(color: Colors.white.withOpacity(0.05)),
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 22),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
-                        title: Text(
-                          i == 0 ? 'Current Faculty List' : 'Archive: $dateStr',
-                          style: TextStyle(
-                            fontWeight: i == 0 ? FontWeight.w800 : FontWeight.w500, 
-                            fontSize: 15,
-                            color: i == 0 ? Colors.white : Colors.grey[400],
-                          ),
-                        ),
-                        subtitle: i == 0 ? Text(
-                          'Last updated: $dateStr',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                        ) : null,
-                        trailing: Icon(
-                          i == 0 ? Icons.file_download_outlined : Icons.history_rounded, 
-                          color: i == 0 ? const Color(0xFF00E5FF) : Colors.grey[600], 
-                          size: 20
-                        ),
-                        onTap: () => launchUrl(Uri.parse(s['url']), mode: LaunchMode.externalApplication),
+                        child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.red, size: 22),
                       ),
+                      title: Text(
+                        i == 0 ? 'Current Faculty List' : 'Archive: $dateStr',
+                        style: TextStyle(
+                          fontWeight: i == 0 ? FontWeight.w800 : FontWeight.w500, 
+                          fontSize: 15,
+                          color: i == 0 ? Colors.white : Colors.grey[400],
+                        ),
+                      ),
+                      subtitle: i == 0 ? Text(
+                        'Last updated: $dateStr',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      ) : null,
+                      trailing: Icon(
+                        i == 0 ? Icons.file_download_outlined : Icons.history_rounded, 
+                        color: i == 0 ? const Color(0xFF00E5FF) : Colors.grey[600], 
+                        size: 20
+                      ),
+                      onTap: () => launchUrl(Uri.parse(s['url']), mode: LaunchMode.externalApplication),
                     ),
                   );
                 }).toList(),

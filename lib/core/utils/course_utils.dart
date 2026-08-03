@@ -57,7 +57,7 @@ class CourseUtils {
     final safeSem = cleanSemester(semesterCode);
     final table = '${prefix}_$safeSem';
     final isBi = cycleType == 'bi' || cycleType == 'bi_semester' || cycleType == 'phrm_llb' || cycleType == 'bi-semester';
-    final programSpecifier = (isBi) ? '_phrm_llb' : '';
+    final programSpecifier = (prefix == 'calendar' && isBi) ? '_phrm_llb' : '';
     return '$table$programSpecifier';
   }
 

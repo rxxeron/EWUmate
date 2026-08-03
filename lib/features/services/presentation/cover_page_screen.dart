@@ -182,13 +182,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   void _addStudent() {
     if (_additionalStudents.length < 3) {
       setState(() {
-        _additionalStudents.add({
-          'key': DateTime.now().microsecondsSinceEpoch.toString(),
-          'name': '',
-          'id': '',
-          'program': '',
-          'dept': ''
-        });
+        _additionalStudents.add({'name': '', 'id': '', 'program': '', 'dept': ''});
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -214,14 +208,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
       'dept': _primaryDept,
     };
 
-    final cleanAdditional = _additionalStudents.map((s) => {
-      'name': s['name'] ?? '',
-      'id': s['id'] ?? '',
-      'program': s['program'] ?? '',
-      'dept': s['dept'] ?? '',
-    }).toList();
-
-    List<Map<String, String>> allStudents = [primaryStudent, ...cleanAdditional];
+    List<Map<String, String>> allStudents = [primaryStudent, ..._additionalStudents];
 
     final payload = {
       "template": _selectedTemplate,
@@ -452,10 +439,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                 
                 if (['assignment', 'mps_assignment', 'project_report', 'group_project', 'term_paper'].contains(_selectedTemplate)) ...[
                   TextFormField(
-                    key: const ValueKey('topic_field'),
-                    initialValue: _topic,
                     decoration: const InputDecoration(labelText: 'Topic / Project Name', border: OutlineInputBorder()),
-                    onChanged: (v) => _topic = v,
                     onSaved: (v) => _topic = v ?? '',
                   ),
                   const SizedBox(height: 16),
@@ -466,10 +450,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                     children: [
                       Expanded(
                         child: TextFormField(
-                          key: const ValueKey('experiment_no_field'),
-                          initialValue: _labNo,
                           decoration: const InputDecoration(labelText: 'Experiment No', border: OutlineInputBorder()),
-                          onChanged: (v) => _labNo = v,
                           onSaved: (v) => _labNo = v ?? '',
                         ),
                       ),
@@ -477,10 +458,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                       Expanded(
                         flex: 2,
                         child: TextFormField(
-                          key: const ValueKey('experiment_name_field'),
-                          initialValue: _topic,
                           decoration: const InputDecoration(labelText: 'Experiment Name', border: OutlineInputBorder()),
-                          onChanged: (v) => _topic = v,
                           onSaved: (v) => _topic = v ?? '', // maps to topic in backend
                         ),
                       ),
@@ -491,10 +469,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                 
                 if (['mps_assignment', 'physics_lab', 'group_project', 'term_paper'].contains(_selectedTemplate)) ...[
                   TextFormField(
-                    key: const ValueKey('group_no_field'),
-                    initialValue: _groupNo,
                     decoration: const InputDecoration(labelText: 'Group No', border: OutlineInputBorder()),
-                    onChanged: (v) => _groupNo = v,
                     onSaved: (v) => _groupNo = v ?? '',
                   ),
                   const SizedBox(height: 16),
@@ -606,10 +581,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                   const SizedBox(height: 8),
                   
                   ...List.generate(_additionalStudents.length, (index) {
-                    final student = _additionalStudents[index];
-                    final studentKey = student['key'] ?? index.toString();
                     return Card(
-                      key: ValueKey('member_card_$studentKey'),
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
@@ -625,17 +597,13 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                             Row(
                               children: [
                                 Expanded(child: TextFormField(
-                                  key: ValueKey('member_name_$studentKey'),
-                                  initialValue: student['name'],
                                   decoration: const InputDecoration(labelText: 'Name'),
-                                  onChanged: (v) => student['name'] = v,
+                                  onChanged: (v) => _additionalStudents[index]['name'] = v,
                                 )),
                                 const SizedBox(width: 8),
                                 Expanded(child: TextFormField(
-                                  key: ValueKey('member_id_$studentKey'),
-                                  initialValue: student['id'],
                                   decoration: const InputDecoration(labelText: 'ID'),
-                                  onChanged: (v) => student['id'] = v,
+                                  onChanged: (v) => _additionalStudents[index]['id'] = v,
                                 )),
                               ],
                             ),
@@ -644,11 +612,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                               children: [
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
-                                    key: ValueKey('member_program_dropdown_$studentKey'),
                                     decoration: const InputDecoration(labelText: 'Program'),
-                                    value: _programData.any((p) => p['name'] == student['program']) 
-                                        ? _programData.firstWhere((p) => p['name'] == student['program'])['program_code'] 
-                                        : null,
                                     items: _programData.map((p) => DropdownMenuItem(value: p['program_code'].toString(), child: Text(p['program_code'].toString()))).toList(),
                                     onChanged: (v) => _onProgramChanged(v!, false, index),
                                   ),
@@ -656,9 +620,9 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextFormField(
-                                    key: ValueKey('member_degree_${student['program']}_$studentKey'),
+                                    key: ValueKey('member_${index}_degree_${_additionalStudents[index]['program']}'),
                                     decoration: const InputDecoration(labelText: 'Degree'),
-                                    initialValue: student['program'],
+                                    initialValue: _additionalStudents[index]['program'],
                                     readOnly: true,
                                   ),
                                 ),
@@ -666,11 +630,11 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                             ),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              key: ValueKey('member_dept_${student['dept']}_$studentKey'),
+                              key: ValueKey('member_${index}_dept_${_additionalStudents[index]['dept']}'),
                               decoration: const InputDecoration(labelText: 'Department'),
-                              value: _departments.contains(student['dept']) ? student['dept'] : null,
+                              value: _departments.contains(_additionalStudents[index]['dept']) ? _additionalStudents[index]['dept'] : null,
                               items: _departments.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-                              onChanged: (v) => setState(() => student['dept'] = v!),
+                              onChanged: (v) => setState(() => _additionalStudents[index]['dept'] = v!),
                             ),
                           ],
                         ),

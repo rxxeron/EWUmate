@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -12,8 +13,7 @@ import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
-import '../../../core/utils/ad_helper.dart';
-import '../../../core/providers/feature_flag_provider.dart';
+
 
 class CoverPageScreen extends ConsumerStatefulWidget {
   const CoverPageScreen({super.key});
@@ -24,7 +24,6 @@ class CoverPageScreen extends ConsumerStatefulWidget {
 
 class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final InterstitialAdManager _adManager;
   
   String _selectedTemplate = 'assignment';
   String _topic = '';
@@ -84,13 +83,12 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
   @override
   void initState() {
     super.initState();
-    _adManager = InterstitialAdManager();
+
     _loadDepartments();
   }
 
   @override
   void dispose() {
-    _adManager.dispose();
     super.dispose();
   }
 
@@ -281,12 +279,11 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
           .limit(1)
           .maybeSingle();
 
-      if (res != null) {
         setState(() {
-          _courseTitle = res['course_name']?.toString() ?? '';
-          _teacherName = res['faculty_full_name']?.toString() ?? '';
+          _courseTitle = res?['course_name']?.toString() ?? '';
+          _teacherName = res?['faculty_full_name']?.toString() ?? '';
           
-          final dbDesignation = res['faculty_designation']?.toString() ?? '';
+          final dbDesignation = res?['faculty_designation']?.toString() ?? '';
           if (dbDesignation.isNotEmpty && !RegExp(r'^\d+$').hasMatch(dbDesignation)) {
             // Find closest match in our predefined list
             final match = _designations.firstWhere(
@@ -298,7 +295,12 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
             _designation = 'Lecturer'; // Fallback for numeric IDs like '148'
           }
         });
-      } else {
+
+        // Prompt student to update faculty if marked as TBA or empty
+        final currentTeacher = _teacherName.trim().toUpperCase();
+        if (currentTeacher.isEmpty || currentTeacher == 'TBA' || currentTeacher == 'NONE') {
+          _showTBAAssignDialog(courseCode, section);
+        } else {
         // Fallback to metadata if semester-specific record isn't found
         final metaRes = await supabase
             .from('course_metadata')
@@ -312,6 +314,44 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
     } catch (e) {
       debugPrint('Error fetching semester course details: $e');
     }
+  }
+
+  void _showTBAAssignDialog(String courseCode, String section) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.help_outline, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Faculty Marked as TBA'),
+          ],
+        ),
+        content: Text(
+          'Faculty for $courseCode Sec $section is currently TBA.\n\nWould you like to assign the faculty member now with screenshot proof to update EWUmate?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.push(
+                '/services/faculty-assignment',
+                extra: {
+                  'course_code': courseCode,
+                  'section': section,
+                },
+              );
+            },
+            child: const Text('Update Faculty'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context, bool isSubmission) async {
@@ -342,18 +382,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
     final marksAsync = ref.watch(currentSemesterMarksProvider);
 
-    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('cover_page'));
-    final interstitialFormatEnabled = ref.watch(isAdEnabledForProvider('interstitial'));
-    final adsEnabled = screenAdsEnabled && interstitialFormatEnabled;
-    if (adsEnabled) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _adManager.loadAd(enabled: true);
-        }
-      });
-    } else {
-      _adManager.dispose();
-    }
+
 
     return Scaffold(
       appBar: AppBar(title: const Text('Cover Page Generator')),
@@ -759,58 +788,34 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (['physics_lab', 'project_report', 'lab_report', 'mps_assignment'].contains(_selectedTemplate)) ...[
-                      Expanded(
-                        child: TextFormField(
-                          key: ValueKey('allocation_$_allocationDate'),
-                          readOnly: true,
-                          onTap: () => _selectDate(context, false),
-                          decoration: InputDecoration(
-                            labelText: 'Allocation Date',
-                            suffixIcon: _allocationDate.isNotEmpty 
-                              ? IconButton(icon: const Icon(IconData(0xe16a, fontFamily: 'MaterialIcons')), onPressed: () => setState(() => _allocationDate = '')) 
-                              : const Icon(IconData(0xe111, fontFamily: 'MaterialIcons')),
-                          ),
-                          initialValue: _allocationDate,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
                     Expanded(
-                      child: TextFormField(
-                        key: ValueKey('submission_$_submissionDate'),
-                        readOnly: true,
-                        onTap: () => _selectDate(context, true),
-                        decoration: InputDecoration(
-                          labelText: 'Submission Date',
-                          hintText: 'Defaults to today',
-                          suffixIcon: _submissionDate.isNotEmpty 
-                            ? IconButton(icon: const Icon(IconData(0xe16a, fontFamily: 'MaterialIcons')), onPressed: () => setState(() => _submissionDate = '')) 
-                            : const Icon(IconData(0xe111, fontFamily: 'MaterialIcons')),
-                        ),
-                        initialValue: _submissionDate,
+                      child: OutlinedButton(
+                        onPressed: () => _selectDate(context, false),
+                        child: Text(_allocationDate.isEmpty ? 'Date Assigned' : _allocationDate),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _selectDate(context, true),
+                        child: Text(_submissionDate.isEmpty ? 'Date Submitted' : _submissionDate),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-
+                const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () {
-                    _adManager.showAd(
-                      enabled: adsEnabled,
-                      onAdDismissed: () => _generatePDF({}, _semester),
-                    );
+                  onPressed: () async {
+                    if (profile != null) {
+                      await _generatePDF(profile.toJson(), _semester);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Generate PDF', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  child: const Text('Generate PDF Cover Page', style: TextStyle(fontSize: 16)),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
               ],
             ),
           );

@@ -1,8 +1,15 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/supabase_provider.dart';
 import '../../features/auth/auth_providers.dart';
 
 part 'feature_flag_provider.g.dart';
+
+/// Controls whether ads/banners are enabled for a given screen.
+/// Currently disabled throughout the app.
+final isAdEnabledForProvider = Provider.family<bool, String>((ref, screenName) {
+  return false;
+});
 
 @riverpod
 Future<bool> isAdvisingOpen(IsAdvisingOpenRef ref) async {

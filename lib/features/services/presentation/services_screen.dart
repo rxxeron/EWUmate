@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/widgets/premium_native_ad.dart';
-import '../../../core/providers/feature_flag_provider.dart';
+
 
 class ServicesScreen extends ConsumerWidget {
   const ServicesScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final screenAdsEnabled = ref.watch(isAdEnabledForProvider('services'));
-    final nativeFormatEnabled = ref.watch(isAdEnabledForProvider('native'));
-    final isAdAllowed = screenAdsEnabled && nativeFormatEnabled;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Services'),
@@ -44,11 +41,7 @@ class ServicesScreen extends ConsumerWidget {
                       context.push('/services/cover-page');
                     },
                   ),
-                  if (isAdAllowed)
-                    const PremiumNativeAd(
-                      screenName: 'services',
-                      isTile: true,
-                    ),
+
                   _buildServiceCard(
                     context,
                     title: 'Faculty List (PDF)',
@@ -79,11 +72,17 @@ class ServicesScreen extends ConsumerWidget {
                       context.push('/services/study-vault');
                     },
                   ),
-                  if (isAdAllowed)
-                    const PremiumNativeAd(
-                      screenName: 'services',
-                      isTile: true,
-                    ),
+                  _buildServiceCard(
+                    context,
+                    title: 'Faculty Assignment',
+                    icon: Icons.assignment_ind_outlined,
+                    color: Colors.teal.shade100,
+                    iconColor: Colors.teal.shade700,
+                    onTap: () {
+                      context.push('/services/faculty-assignment');
+                    },
+                  ),
+
               ],
             ),
           ],

@@ -19,10 +19,25 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 subprojects {
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
-        options.compilerArgs.add("-Xlint:-options")
+    if (project.name != "app") {
+        project.afterEvaluate {
+            val androidExt = project.extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)
+            if (androidExt != null) {
+                androidExt.compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+            tasks.withType<JavaCompile>().configureEach {
+                sourceCompatibility = "17"
+                targetCompatibility = "17"
+            }
+        }
+    }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
     configurations.all {
         resolutionStrategy {

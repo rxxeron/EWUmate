@@ -137,19 +137,33 @@ class CourseUtils {
     return hour + (min / 60.0);
   }
 
-  /// Determines if a session is a Lab based on > 90 min duration or course code ending in L (PHRM).
+  /// Determines if a session is a Lab based on > 90 min duration for 100-400 level courses or PHRM...L.
   static bool isLab(String startTime, String endTime, [String? courseCode]) {
     if (courseCode != null && courseCode.isNotEmpty) {
-      final codeUpper = courseCode.toUpperCase();
+      final codeUpper = courseCode.toUpperCase().replaceAll(' ', '');
       if (codeUpper.startsWith('PHRM') && codeUpper.endsWith('L')) {
         return true;
+      }
+
+      // Check course level number
+      final match = RegExp(r'^\D*(\d{3,4})').firstMatch(codeUpper);
+      if (match != null) {
+        int levelNum = int.tryParse(match.group(1)!) ?? 0;
+        if (levelNum >= 1000) {
+          // 4-digit code e.g. CSE7101 -> 101 level
+          levelNum = int.tryParse(match.group(1)!.substring(1)) ?? 0;
+        }
+        // Graduate level courses (500+) are Theory even with 3-hour slots
+        if (levelNum >= 500) {
+          return false;
+        }
       }
     }
     if (startTime.isEmpty || endTime.isEmpty) return false;
     final start = parseTimeToDouble(startTime);
     final end = parseTimeToDouble(endTime);
-    // 90 minutes = 1.5 hours
-    return (end - start) > 1.51; // .51 to avoid floating point precision issues for exactly 90
+    // 100-400 level courses: > 90 minutes (1.5 hours) is Lab
+    return (end - start) > 1.501;
   }
 
   static double _parseTime(String timeStr) => parseTimeToDouble(timeStr);

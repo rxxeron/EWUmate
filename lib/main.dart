@@ -11,7 +11,6 @@ import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
 import 'core/repositories/auth_repository.dart';
 import 'dart:io';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/theme/app_theme.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -26,22 +25,6 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Mobile Ads SDK in background (non-blocking)
-  if (!kIsWeb) {
-    MobileAds.instance.initialize().then((_) {
-      if (kDebugMode) {
-        MobileAds.instance.updateRequestConfiguration(
-          RequestConfiguration(
-            testDeviceIds: [
-              'DB2E2735BE410225768589D0F45D51CB', // Developer test device ID
-            ],
-          ),
-        );
-      }
-    }).catchError((e) {
-      if (kDebugMode) debugPrint('Google Mobile Ads initialization failed: $e');
-    });
-  }
 
   // Initialize Cache Service (Hive), Firebase, and Supabase in parallel
   final cacheService = CacheService();

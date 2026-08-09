@@ -178,7 +178,7 @@ class CourseRepository {
     } catch (_) {}
 
     final cached = _cache.getMapData('course_catalog', cacheKey);
-    if (cached != null && cached['data'] != null && (cached['data'] as List).length >= 50) {
+    if (cached != null && cached['data'] != null && (cached['data'] as List).isNotEmpty) {
       final cachedVersion = (cached['version'] as num?)?.toInt() ?? 0;
       if (serverVersion != null && serverVersion > cachedVersion) {
         return await _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);
@@ -242,12 +242,14 @@ class CourseRepository {
       
       final results = unique.values.toList();
 
-      // Update Cache
-      _cache.setMapData('course_catalog', cacheKey, {
-        'data': results.map((e) => e.toJson()).toList(),
-        'updated_at': DateTime.now().toIso8601String(),
-        'version': serverVersion ?? 0,
-      });
+      // Only cache non-empty results to prevent caching bad/corrupt table loads
+      if (results.isNotEmpty) {
+        _cache.setMapData('course_catalog', cacheKey, {
+          'data': results.map((e) => e.toJson()).toList(),
+          'updated_at': DateTime.now().toIso8601String(),
+          'version': serverVersion ?? 0,
+        });
+      }
 
       return results;
     } catch (e) {

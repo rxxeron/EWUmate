@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
@@ -63,6 +64,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: Colors.cyanAccent),
+            tooltip: 'Class Reminder Settings',
+            onPressed: () => context.push('/notifications/settings'),
+          ),
           IconButton(
             icon: const Icon(Icons.done_all, color: Colors.white70),
             tooltip: 'Mark all as read',

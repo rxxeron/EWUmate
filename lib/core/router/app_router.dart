@@ -27,6 +27,7 @@ import '../../core/widgets/main_shell.dart';
 
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/notifications/presentation/reminder_settings_screen.dart';
 import '../../features/advising/presentation/degree_progress_screen.dart';
 import '../../features/semester_progress/semester_summary_screen.dart';
 import '../../features/course_browser/presentation/course_browser_screen.dart';
@@ -113,6 +114,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // Drawer Pages
       GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+      GoRoute(path: '/notifications/settings', builder: (context, state) => const ReminderSettingsScreen()),
       GoRoute(path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
       GoRoute(path: '/semester-summary', builder: (context, state) => const SemesterSummaryScreen()),
       GoRoute(path: '/courses', builder: (context, state) => const CourseBrowserScreen()),

@@ -1,13 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/utils/grade_helper.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
-import 'package:ewumate/core/repositories/course_repository.dart';
 import 'package:ewumate/core/repositories/dashboard_repository.dart';
 import 'package:ewumate/core/models/semester_analytics.dart';
 import 'package:ewumate/core/utils/error_utils.dart';
@@ -30,7 +28,6 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
     final targetTier = ref.watch(scholarshipTargetProvider);
     final awardsAsync = ref.watch(awardedScholarshipProvider);
 
-      final user = Supabase.instance.client.auth.currentUser;
     final profileAsync = ref.watch(currentProfileFutureProvider);
 
     return Scaffold(
@@ -252,8 +249,8 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               childAspectRatio: 0.9,
             ),
             children: [
-              _buildStatItem('Predicted\nSGPA', (predictedSgpa ?? 0.0).toStringAsFixed(2), const Color(0xFF10B981), Icons.trending_up_rounded),
-              _buildStatItem('Projected\nCGPA', (predictedCgpa ?? 0.0).toStringAsFixed(2), const Color(0xFF06B6D4), Icons.speed_rounded),
+              _buildStatItem('Predicted\nSGPA', predictedSgpa.toStringAsFixed(2), const Color(0xFF10B981), Icons.trending_up_rounded),
+              _buildStatItem('Projected\nCGPA', predictedCgpa.toStringAsFixed(2), const Color(0xFF06B6D4), Icons.speed_rounded),
               _buildStatItem('Last\nCGPA', (profile?.cgpa ?? 0.0).toStringAsFixed(2), Colors.white, Icons.history_rounded),
 
               _buildStatItem('Total\nEarned', (analytics?.completedCredit ?? profile?.totalCreditsEarned ?? 0.0).toStringAsFixed(1), const Color(0xFFF59E0B), Icons.stars_rounded, suffix: ' / ${(policy?.degreeCreditsRequired ?? 130.0).toStringAsFixed(0)}'),
@@ -261,7 +258,7 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
               if ((profile?.enrolledCreditsNext ?? 0) > 0)
                 _buildStatItem('Upcoming', (profile?.enrolledCreditsNext ?? 0.0).toStringAsFixed(1), Colors.cyanAccent, Icons.upcoming_rounded, suffix: ' Cr')
               else
-                _buildStatItem('Year\nEarned', (currentYearEarned ?? 0.0).toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
+                _buildStatItem('Year\nEarned', currentYearEarned.toStringAsFixed(1), const Color(0xFF8B5CF6), Icons.military_tech_rounded, suffix: ' / ${(policy?.annualCreditsRequired ?? 36.0).toStringAsFixed(0)}'),
             ],
           ),
         ],
@@ -381,7 +378,8 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
           itemBuilder: (context, index) {
             final course = marks[index];
             final goals = ref.watch(goalGradesProvider);
-            final currentGoal = goals[course.courseCode] ?? 'A';
+            final cleanCode = course.courseCode.toUpperCase().replaceAll(' ', '');
+            final currentGoal = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
             final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
             final gradeScaleMap = ref.watch(gradeScaleMapProvider(policy)).valueOrNull ?? {};
 
@@ -535,9 +533,25 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
   }
 
   double _getDynamicRequiredMarksFallback(String grade, String policy) {
-    // We already have the default scales in GradeHelper, but there they are points.
-    // For marks, we stick to a reasonable default if DB is missing data.
+    // Official EWU Grading Scale percentage marks:
+    // Legacy (Up to Summer-2023): A+=80, A=75, A-=70, B+=65, B=60, B-=55, C+=50, C=45, C-=40, D+=35, D=30, F=<30
+    // Modern (From Fall-2023): A+=80, A=75, A-=70, B+=65, B=60, B-=55, C+=50, C=45, D=40, F=<40
     if (policy == 'legacy') {
+      switch (grade) {
+        case 'A+': return 80;
+        case 'A': return 75;
+        case 'A-': return 70;
+        case 'B+': return 65;
+        case 'B': return 60;
+        case 'B-': return 55;
+        case 'C+': return 50;
+        case 'C': return 45;
+        case 'C-': return 40;
+        case 'D+': return 35;
+        case 'D': return 30;
+        default: return 0;
+      }
+    } else {
       switch (grade) {
         case 'A+': return 80;
         case 'A': return 75;
@@ -550,24 +564,13 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
         case 'D': return 40;
         default: return 0;
       }
-    } else {
-      switch (grade) {
-        case 'A': return 90;
-        case 'A-': return 85;
-        case 'B+': return 80;
-        case 'B': return 75;
-        case 'B-': return 70;
-        case 'C+': return 65;
-        case 'C': return 60;
-        case 'C-': return 55;
-        case 'D+': return 50;
-        case 'D': return 45;
-        default: return 0;
-      }
     }
   }
 
   Widget _buildAcademicYearsTimeline(AsyncValue<List<AcademicYear>> asyncYears, AsyncValue<List<ScholarshipAward>> awardsAsync) {
+    final runningSemesterCode = ref.watch(academicStateProvider).valueOrNull?.currentSemesterCode;
+    final livePredictedSgpa = ref.watch(projectedSGPAProvider);
+
     return asyncYears.when(
       loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyan)),
       error: (e, _) => Text(
@@ -629,18 +632,41 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen> {
                       )
                     : Row(
                         children: ay.semesters.map((SemesterSummary s) {
+                          final isOngoing = s.id == 'ongoing' || (runningSemesterCode != null && s.semesterCode == runningSemesterCode && (s.tgpa == null || s.tgpa == 0.0));
+                          final displayValue = isOngoing 
+                              ? (livePredictedSgpa > 0 ? livePredictedSgpa.toStringAsFixed(2) : '--')
+                              : (s.tgpa ?? 0.0).toStringAsFixed(2);
+                          final labelBadge = isOngoing ? ' (LIVE)' : '';
+
                           return Expanded(
                             child: Column(
                               children: [
                                 Text(
-                                  (s as dynamic).semesterCode.toString().toUpperCase().replaceAll('_', '').replaceAllMapped(RegExp(r'(\d{4})$'), (m) => " '${m.group(1)!.substring(2)}"), 
-                                  style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 1)
+                                  "${(s as dynamic).semesterCode.toString().toUpperCase().replaceAll('_', '').replaceAllMapped(RegExp(r'(\d{4})$'), (m) => " '${m.group(1)!.substring(2)}")}$labelBadge", 
+                                  style: TextStyle(
+                                    color: isOngoing ? Colors.cyanAccent : Colors.grey[400], 
+                                    fontWeight: FontWeight.bold, 
+                                    fontSize: 10, 
+                                    letterSpacing: 0.8,
+                                  ),
+                                  textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 8),
                                 Container(
                                   padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.05)),
-                                  child: Text((s.tgpa ?? 0.0).toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14)),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle, 
+                                    color: isOngoing ? Colors.cyanAccent.withOpacity(0.1) : Colors.white.withOpacity(0.05),
+                                    border: isOngoing ? Border.all(color: Colors.cyanAccent.withOpacity(0.4), width: 1.5) : null,
+                                  ),
+                                  child: Text(
+                                    displayValue, 
+                                    style: TextStyle(
+                                      color: isOngoing ? Colors.cyanAccent : Colors.white, 
+                                      fontWeight: FontWeight.w900, 
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),

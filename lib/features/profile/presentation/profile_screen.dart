@@ -541,6 +541,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 32),
+                _buildSectionTitle('Preferences'),
+                const SizedBox(height: 16),
+                _buildSettingsCard(
+                  Icons.notifications_active_outlined,
+                  'Class Reminder Settings',
+                  onTap: () => context.push('/notifications/settings'),
+                ),
                 const SizedBox(height: 32),
                 _buildSectionTitle('Security'),
                 const SizedBox(height: 16),

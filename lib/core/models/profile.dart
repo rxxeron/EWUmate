@@ -38,6 +38,9 @@ class Profile with _$Profile {
     @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
     @JsonKey(name: 'app_open_count') @Default(0) int appOpenCount,
     @JsonKey(name: 'app_version') String? appVersion,
+    @JsonKey(name: 'reminder_settings')
+    @Default({})
+    Map<String, dynamic> reminderSettings,
     @JsonKey(name: 'updated_at') DateTime? updatedAt,
     @JsonKey(name: 'created_at') DateTime? createdAt,
   }) = _Profile;

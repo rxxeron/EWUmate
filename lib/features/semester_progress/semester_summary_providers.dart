@@ -3,12 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
-import 'package:ewumate/core/services/cache_service.dart';
-import 'package:ewumate/core/models/profile.dart';
-import 'package:ewumate/core/models/semester_summary.dart';
-import 'package:ewumate/core/repositories/auth_repository.dart';
-import 'package:ewumate/core/services/cache_service.dart';
-import 'package:ewumate/core/utils/course_utils.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/repositories/progress_repository.dart';
 import 'package:ewumate/core/repositories/scholarship_repository.dart';
@@ -250,10 +244,11 @@ class GoalGradesNotifier extends StateNotifier<Map<String, String>> {
   }
 
   Future<void> updateGoal(String courseCode, String grade) async {
-    state = {...state, courseCode: grade};
+    final normalizedCode = courseCode.toUpperCase().replaceAll(' ', '');
+    // Keep both raw and normalized in state to guarantee UI lookups never miss
+    state = {...state, courseCode: grade, normalizedCode: grade};
 
     // Persist to DB
-    final normalizedCode = courseCode.toUpperCase().replaceAll(' ', '');
     final marks = ref.read(currentSemesterMarksProvider).valueOrNull ?? [];
     final courseMark = marks
         .where((m) => m.courseCode.toUpperCase().replaceAll(' ', '') == normalizedCode)
@@ -310,38 +305,29 @@ final projectedSGPAProvider = Provider<double>((ref) {
   final marks = currentMarksAsync.valueOrNull ?? [];
   final allMetadata = allCoursesAsync.valueOrNull ?? [];
 
-  if (marks.isEmpty || goals.isEmpty) return 0.0;
+  if (marks.isEmpty) return 0.0;
 
   double totalPoints = 0.0;
   double totalCredits = 0.0;
 
   for (var course in marks) {
+    final cleanCode = course.courseCode.toUpperCase().replaceAll(' ', '');
     final meta = allMetadata
-        .where((m) => m.code == course.courseCode)
+        .where((m) => m.code.toUpperCase().replaceAll(' ', '') == cleanCode)
         .firstOrNull;
     final credits = meta?.creditVal ?? 3.0;
 
     final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
     final scale = ref.watch(gradePointMapProvider(policy)).valueOrNull;
 
-    String goalGrade = goals[course.courseCode] ?? 'A';
+    // Check both normalized and raw code
+    String goalGrade = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
 
     double gradePoint = 0.0;
-    if (scale != null) {
-      // If the saved goal isn't in the DB-driven scale for this policy
-      // Fallback to highest grade point if it's A+ vs A, or just use Scale's first if missing
-      if (!scale.containsKey(goalGrade)) {
-        if (goalGrade == 'A+' && scale.containsKey('A')) {
-          gradePoint = scale['A']!;
-        } else {
-          // Use the highest point available in the scale
-          gradePoint = scale.values.fold(0.0, (a, b) => a > b ? a : b);
-        }
-      } else {
-        gradePoint = scale[goalGrade]!;
-      }
+    if (scale != null && scale.containsKey(goalGrade)) {
+      gradePoint = scale[goalGrade]!;
     } else {
-      // Temporary fallback to hardcoded helper if DB isn't ready
+      // Fallback to GradeHelper with accurate semester policy
       gradePoint = GradeHelper.getGradePoint(
         goalGrade,
         semesterCode: course.semesterCode,
@@ -356,7 +342,7 @@ final projectedSGPAProvider = Provider<double>((ref) {
   return totalPoints / totalCredits;
 });
 
-/// Calculates the projected CGPA combining past CGPA and predicted SGPA.
+/// Calculates the projected CGPA combining past CGPA and predicted SGPA with retake replacement.
 final currentEnrolledCreditsProvider = Provider<double>((ref) {
   final profile = ref.watch(userProfileProvider).valueOrNull;
   return profile?.enrolledCredits ?? 0.0;
@@ -371,19 +357,98 @@ final projectedCGPAProvider = FutureProvider<double>((ref) async {
       .getProfile(user.id);
   if (profile == null) return 0.0;
 
-  final currentCgpa = profile.cgpa ?? 0.0;
-  final earnedCredits = profile.totalCreditsEarned ?? 0.0;
+  final marks = ref.watch(currentSemesterMarksProvider).valueOrNull ?? [];
+  final goals = ref.watch(goalGradesProvider);
+  final allMetadata = ref.watch(allCoursesProvider).valueOrNull ?? [];
+  final summaries = ref.watch(allSemesterSummariesProvider).valueOrNull ?? [];
 
-  final predictedSgpa = ref.watch(projectedSGPAProvider);
-  final enrolledCredits = profile.enrolledCredits;
+  // If no enrolled marks, return current CGPA
+  if (marks.isEmpty) return profile.cgpa ?? 0.0;
 
-  if (enrolledCredits == 0) return currentCgpa;
+  // 1. Gather all past completed courses across completed semester summaries
+  final academicState = ref.watch(academicStateProvider).valueOrNull;
+  final runningCode = academicState?.currentSemesterCode;
+  final nextCode = academicState?.nextSemesterCode;
 
-  final predictedTotalPoints =
-      (currentCgpa * earnedCredits) + (predictedSgpa * enrolledCredits);
-  final newTotalCredits = earnedCredits + enrolledCredits;
+  final completedSummaries = summaries.where(
+    (s) => s.semesterCode != runningCode && s.semesterCode != nextCode,
+  ).toList();
 
-  return newTotalCredits > 0 ? (predictedTotalPoints / newTotalCredits) : 0.0;
+  // Map of best past attempts for each course: courseCode -> {point, credits, grade}
+  final Map<String, Map<String, dynamic>> pastBestAttempts = {};
+  for (var sem in completedSummaries) {
+    final semCourses = sem.courses;
+    for (var c in semCourses) {
+      if (c is Map) {
+        final code = (c['code'] ?? c['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
+        final grade = (c['grade'] ?? '').toString();
+        final credits = double.tryParse(c['credits']?.toString() ?? '') ?? 3.0;
+        final point = double.tryParse(c['point']?.toString() ?? '') ?? GradeHelper.getGradePoint(grade, semesterCode: sem.semesterCode);
+
+        final isNonGpa = ['W', 'I', 'P', 'S', 'U', 'R', 'Ongoing', 'Planned'].contains(grade);
+        if (!isNonGpa && code.isNotEmpty) {
+          if (!pastBestAttempts.containsKey(code) || point > (pastBestAttempts[code]!['point'] as double)) {
+            pastBestAttempts[code] = {'point': point, 'credits': credits, 'grade': grade};
+          }
+        }
+      }
+    }
+  }
+
+  // 2. Base points and credits from historical data (or profile fallback)
+  double basePoints = 0.0;
+  double baseCredits = 0.0;
+
+  if (pastBestAttempts.isNotEmpty) {
+    for (var entry in pastBestAttempts.values) {
+      basePoints += (entry['point'] as double) * (entry['credits'] as double);
+      baseCredits += (entry['credits'] as double);
+    }
+  } else {
+    // Fallback: derive from profile.cgpa and totalCreditsEarned
+    baseCredits = profile.totalCreditsEarned ?? 0.0;
+    basePoints = (profile.cgpa ?? 0.0) * baseCredits;
+  }
+
+  // 3. Process current enrolled courses with goal grades, applying retake replacement
+  double projectedTotalPoints = basePoints;
+  double projectedTotalCredits = baseCredits;
+
+  for (var course in marks) {
+    final cleanCode = course.courseCode.toUpperCase().replaceAll(' ', '');
+    final meta = allMetadata
+        .where((m) => m.code.toUpperCase().replaceAll(' ', '') == cleanCode)
+        .firstOrNull;
+    final credits = meta?.creditVal ?? 3.0;
+
+    final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
+    final scale = ref.watch(gradePointMapProvider(policy)).valueOrNull;
+
+    final goalGrade = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
+    double gradePoint = 0.0;
+    if (scale != null && scale.containsKey(goalGrade)) {
+      gradePoint = scale[goalGrade]!;
+    } else {
+      gradePoint = GradeHelper.getGradePoint(goalGrade, semesterCode: course.semesterCode);
+    }
+
+    if (pastBestAttempts.containsKey(cleanCode)) {
+      // Course is a retake! Replace old attempt if new grade is better or according to EWU retake policy
+      final oldAttempt = pastBestAttempts[cleanCode]!;
+      final oldPoint = oldAttempt['point'] as double;
+      final oldCredits = oldAttempt['credits'] as double;
+
+      // Subtract old points & credits, add new points & credits
+      projectedTotalPoints = projectedTotalPoints - (oldPoint * oldCredits) + (gradePoint * credits);
+      projectedTotalCredits = projectedTotalCredits - oldCredits + credits;
+    } else {
+      // First time taking this course
+      projectedTotalPoints += (gradePoint * credits);
+      projectedTotalCredits += credits;
+    }
+  }
+
+  return projectedTotalCredits > 0 ? (projectedTotalPoints / projectedTotalCredits) : 0.0;
 });
 
 /// Stable FutureProvider for the current user's profile to prevent StreamBuilder flicker

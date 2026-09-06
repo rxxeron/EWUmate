@@ -64,6 +64,9 @@ mixin _$Profile {
   int get appOpenCount => throw _privateConstructorUsedError;
   @JsonKey(name: 'app_version')
   String? get appVersion => throw _privateConstructorUsedError;
+  @JsonKey(name: 'reminder_settings')
+  Map<String, dynamic> get reminderSettings =>
+      throw _privateConstructorUsedError;
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at')
@@ -105,6 +108,7 @@ abstract class $ProfileCopyWith<$Res> {
       @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
       @JsonKey(name: 'app_open_count') int appOpenCount,
       @JsonKey(name: 'app_version') String? appVersion,
+      @JsonKey(name: 'reminder_settings') Map<String, dynamic> reminderSettings,
       @JsonKey(name: 'updated_at') DateTime? updatedAt,
       @JsonKey(name: 'created_at') DateTime? createdAt});
 }
@@ -146,6 +150,7 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
     Object? lastActiveAt = freezed,
     Object? appOpenCount = null,
     Object? appVersion = freezed,
+    Object? reminderSettings = null,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -246,6 +251,10 @@ class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
           ? _value.appVersion
           : appVersion // ignore: cast_nullable_to_non_nullable
               as String?,
+      reminderSettings: null == reminderSettings
+          ? _value.reminderSettings
+          : reminderSettings // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -291,6 +300,7 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
       @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
       @JsonKey(name: 'app_open_count') int appOpenCount,
       @JsonKey(name: 'app_version') String? appVersion,
+      @JsonKey(name: 'reminder_settings') Map<String, dynamic> reminderSettings,
       @JsonKey(name: 'updated_at') DateTime? updatedAt,
       @JsonKey(name: 'created_at') DateTime? createdAt});
 }
@@ -330,6 +340,7 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? lastActiveAt = freezed,
     Object? appOpenCount = null,
     Object? appVersion = freezed,
+    Object? reminderSettings = null,
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
@@ -430,6 +441,10 @@ class __$$ProfileImplCopyWithImpl<$Res>
           ? _value.appVersion
           : appVersion // ignore: cast_nullable_to_non_nullable
               as String?,
+      reminderSettings: null == reminderSettings
+          ? _value._reminderSettings
+          : reminderSettings // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
       updatedAt: freezed == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -472,11 +487,14 @@ class _$ProfileImpl implements _Profile {
       @JsonKey(name: 'last_active_at') this.lastActiveAt,
       @JsonKey(name: 'app_open_count') this.appOpenCount = 0,
       @JsonKey(name: 'app_version') this.appVersion,
+      @JsonKey(name: 'reminder_settings')
+      final Map<String, dynamic> reminderSettings = const {},
       @JsonKey(name: 'updated_at') this.updatedAt,
       @JsonKey(name: 'created_at') this.createdAt})
       : _enrolledSections = enrolledSections,
         _enrolledSectionsNext = enrolledSectionsNext,
-        _pastHistory = pastHistory;
+        _pastHistory = pastHistory,
+        _reminderSettings = reminderSettings;
 
   factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProfileImplFromJson(json);
@@ -569,6 +587,15 @@ class _$ProfileImpl implements _Profile {
   @override
   @JsonKey(name: 'app_version')
   final String? appVersion;
+  final Map<String, dynamic> _reminderSettings;
+  @override
+  @JsonKey(name: 'reminder_settings')
+  Map<String, dynamic> get reminderSettings {
+    if (_reminderSettings is EqualUnmodifiableMapView) return _reminderSettings;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_reminderSettings);
+  }
+
   @override
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
@@ -578,7 +605,7 @@ class _$ProfileImpl implements _Profile {
 
   @override
   String toString() {
-    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, appVersion: $appVersion, updatedAt: $updatedAt, createdAt: $createdAt)';
+    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, appVersion: $appVersion, reminderSettings: $reminderSettings, updatedAt: $updatedAt, createdAt: $createdAt)';
   }
 
   @override
@@ -631,6 +658,8 @@ class _$ProfileImpl implements _Profile {
                 other.appOpenCount == appOpenCount) &&
             (identical(other.appVersion, appVersion) ||
                 other.appVersion == appVersion) &&
+            const DeepCollectionEquality()
+                .equals(other._reminderSettings, _reminderSettings) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.createdAt, createdAt) ||
@@ -665,6 +694,7 @@ class _$ProfileImpl implements _Profile {
         lastActiveAt,
         appOpenCount,
         appVersion,
+        const DeepCollectionEquality().hash(_reminderSettings),
         updatedAt,
         createdAt
       ]);
@@ -710,6 +740,8 @@ abstract class _Profile implements Profile {
       @JsonKey(name: 'last_active_at') final DateTime? lastActiveAt,
       @JsonKey(name: 'app_open_count') final int appOpenCount,
       @JsonKey(name: 'app_version') final String? appVersion,
+      @JsonKey(name: 'reminder_settings')
+      final Map<String, dynamic> reminderSettings,
       @JsonKey(name: 'updated_at') final DateTime? updatedAt,
       @JsonKey(name: 'created_at') final DateTime? createdAt}) = _$ProfileImpl;
 
@@ -783,6 +815,9 @@ abstract class _Profile implements Profile {
   @override
   @JsonKey(name: 'app_version')
   String? get appVersion;
+  @override
+  @JsonKey(name: 'reminder_settings')
+  Map<String, dynamic> get reminderSettings;
   @override
   @JsonKey(name: 'updated_at')
   DateTime? get updatedAt;

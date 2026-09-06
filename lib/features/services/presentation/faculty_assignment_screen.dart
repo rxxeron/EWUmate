@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
+import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/utils/course_utils.dart';
 import '../repositories/faculty_assignment_repository.dart';
 
@@ -103,7 +104,7 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
             .order('created_at', ascending: false)
             .limit(10);
 
-        if (semRes != null && (semRes as List).isNotEmpty) {
+        if ((semRes as List).isNotEmpty) {
           final fetchedSems = (semRes as List)
               .map((e) => e['title']?.toString().replaceAll(' ', '') ?? '')
               .where((s) => s.isNotEmpty)
@@ -142,20 +143,130 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
     // Fetch Enrolled Courses for User in selected semester
     List<Map<String, dynamic>> enrolled = [];
     if (user != null) {
+      final safeSemLower = cleanSem.toLowerCase();
+      final spaceSem = cleanSem.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+      final possibleCodes = [cleanSem, safeSemLower, spaceSem, semesterCode];
+
+      // 1. Try fetching from enrollments table (matching multiple semester code variations)
       try {
         final enrollRes = await supabase
             .from('enrollments')
             .select('course_code, section, semester_code')
             .eq('user_id', user.id)
-            .eq('semester_code', cleanSem);
+            .inFilter('semester_code', possibleCodes);
 
-        enrolled = List<Map<String, dynamic>>.from(enrollRes as List);
-        for (var c in enrolled) {
-          final key = '${c['course_code']}_${c['section']}';
-          _enrolledInitialControllers[key] = TextEditingController();
+        if ((enrollRes as List).isNotEmpty) {
+          for (var item in enrollRes) {
+            final cCode = (item['course_code'] ?? '').toString().trim().toUpperCase();
+            final secNum = (item['section'] ?? '').toString().trim();
+            if (cCode.isNotEmpty) {
+              enrolled.add({
+                'course_code': cCode,
+                'section': secNum.isEmpty ? '1' : secNum,
+                'semester_code': item['semester_code'] ?? cleanSem,
+              });
+            }
+          }
         }
       } catch (e) {
-        debugPrint('[FacultyAssignment] Enrolled fetch error: $e');
+        debugPrint('[FacultyAssignment] Enrollments fetch error: $e');
+      }
+
+      // 2. Fallback to weekly_grid_cache from user_semester_states
+      if (enrolled.isEmpty) {
+        try {
+          final stateRes = await supabase
+              .from('user_semester_states')
+              .select('weekly_grid_cache')
+              .eq('user_id', user.id)
+              .inFilter('semester_code', possibleCodes)
+              .maybeSingle();
+
+          final grid = stateRes?['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
+          final Set<String> seen = {};
+
+          for (final dayClasses in grid.values) {
+            if (dayClasses is List) {
+              for (final c in dayClasses) {
+                final cCode = (c['courseCode'] ?? c['course_code'] ?? '').toString().trim().toUpperCase();
+                final sec = (c['section'] ?? c['section_number'] ?? c['sec'] ?? '').toString().trim();
+                final key = '${cCode}_$sec';
+                if (cCode.isNotEmpty && !seen.contains(key)) {
+                  seen.add(key);
+                  enrolled.add({
+                    'course_code': cCode,
+                    'section': sec.isEmpty ? '1' : sec,
+                    'semester_code': cleanSem,
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[FacultyAssignment] Weekly grid fallback error: $e');
+        }
+      }
+
+      // 3. Fallback to Profile enrolled_sections array
+      if (enrolled.isEmpty) {
+        try {
+          final profile = ref.read(userProfileProvider).valueOrNull ??
+              await ref.read(profileRepositoryProvider).getProfile(user.id);
+          if (profile != null && profile.enrolledSections.isNotEmpty) {
+            final isNextSemester = cleanSem.toLowerCase().contains('fall');
+            final sectionIds = (isNextSemester && profile.enrolledSectionsNext.isNotEmpty)
+                ? profile.enrolledSectionsNext
+                : profile.enrolledSections;
+
+            final isUuid = sectionIds.any((s) => s.length > 20 && s.contains('-'));
+            if (isUuid) {
+              // Resolve section UUIDs from semester courses table
+              final targetCourseTable = 'courses_${safeSemLower}';
+              try {
+                final resolvedRows = await supabase
+                    .from(targetCourseTable)
+                    .select('course_code, section_number')
+                    .inFilter('id', sectionIds);
+
+                for (var r in (resolvedRows as List)) {
+                  final cCode = (r['course_code'] ?? '').toString().trim().toUpperCase();
+                  final secNum = (r['section_number'] ?? '1').toString().trim();
+                  if (cCode.isNotEmpty) {
+                    enrolled.add({
+                      'course_code': cCode,
+                      'section': secNum,
+                      'semester_code': cleanSem,
+                    });
+                  }
+                }
+              } catch (e) {
+                debugPrint('[FacultyAssignment] Resolving section UUIDs error: $e');
+              }
+            } else {
+              // Standard format e.g. "CSE110-1" or "CSE110"
+              for (final raw in sectionIds) {
+                final parts = raw.split('-');
+                final cCode = parts.first.trim().toUpperCase();
+                final sec = parts.length > 1 ? parts[1].trim() : '1';
+                if (cCode.isNotEmpty) {
+                  enrolled.add({
+                    'course_code': cCode,
+                    'section': sec,
+                    'semester_code': cleanSem,
+                  });
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[FacultyAssignment] Profile enrolled_sections fallback error: $e');
+        }
+      }
+
+      // Initialize text controllers for all detected enrolled courses
+      for (var c in enrolled) {
+        final key = '${c['course_code']}_${c['section']}';
+        _enrolledInitialControllers[key] = TextEditingController();
       }
     }
 
@@ -246,7 +357,7 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
     await _loadDataForSemester(newSemester);
   }
 
-  void _showFacultySearchDialog() {
+  void _showFacultySearchDialog({Function(Map<String, dynamic> selectedFaculty)? onSelect}) {
     setState(() {
       _facultySearchQuery = '';
     });
@@ -386,9 +497,13 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
                                       ),
                                       trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white30),
                                       onTap: () {
-                                        setState(() {
-                                          _selectedFaculty = f;
-                                        });
+                                        if (onSelect != null) {
+                                          onSelect(f);
+                                        } else {
+                                          setState(() {
+                                            _selectedFaculty = f;
+                                          });
+                                        }
                                         Navigator.pop(context);
                                       },
                                     ),
@@ -889,36 +1004,168 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
             final sec = c['section'].toString();
             final key = '${code}_${sec}';
             final ctrl = _enrolledInitialControllers[key]!;
+            final currentInitial = ctrl.text.trim().toUpperCase();
+
+            // Find faculty in master list if present
+            final matchedFaculty = currentInitial.isNotEmpty
+                ? _facultyMaster.cast<Map<String, dynamic>?>().firstWhere(
+                    (f) => (f?['short_name'] ?? '').toString().toUpperCase() == currentInitial,
+                    orElse: () => null,
+                  )
+                : null;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: currentInitial.isNotEmpty
+                      ? const Color(0xFF22D3EE).withOpacity(0.4)
+                      : Colors.white.withOpacity(0.06),
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$code - Sec $sec',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF22D3EE).withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          const Text('Status: TBA', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        ],
-                      ),
+                          child: Text(
+                            code,
+                            style: const TextStyle(
+                              color: Color(0xFF22D3EE),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Section $sec',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Status: TBA',
+                            style: TextStyle(color: Colors.grey, fontSize: 11),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 90,
-                      child: TextField(
-                        controller: ctrl,
-                        textCapitalization: TextCapitalization.characters,
-                        decoration: const InputDecoration(
-                          hintText: 'e.g. NHUDA',
-                          labelText: 'Initial',
-                          isDense: true,
-                          border: OutlineInputBorder(),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () {
+                        _showFacultySearchDialog(
+                          onSelect: (f) {
+                            setState(() {
+                              ctrl.text = (f['short_name'] ?? '').toString().toUpperCase();
+                            });
+                          },
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B).withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: currentInitial.isNotEmpty
+                                ? const Color(0xFF22D3EE)
+                                : Colors.white24,
+                            width: currentInitial.isNotEmpty ? 1.2 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              currentInitial.isNotEmpty
+                                  ? Icons.person_rounded
+                                  : Icons.search_rounded,
+                              color: currentInitial.isNotEmpty
+                                  ? const Color(0xFF22D3EE)
+                                  : Colors.white54,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    currentInitial.isNotEmpty
+                                        ? (matchedFaculty != null
+                                            ? '$currentInitial - ${matchedFaculty['full_name']}'
+                                            : currentInitial)
+                                        : 'Select Faculty Initial (Search DB)...',
+                                    style: TextStyle(
+                                      color: currentInitial.isNotEmpty
+                                          ? Colors.white
+                                          : Colors.white54,
+                                      fontWeight: currentInitial.isNotEmpty
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      fontSize: 13,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (matchedFaculty != null &&
+                                      (matchedFaculty['designation_name'] ?? '').toString().isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      matchedFaculty['designation_name'].toString(),
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.5),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (currentInitial.isNotEmpty) ...[
+                              IconButton(
+                                icon: const Icon(Icons.clear, size: 18, color: Colors.white54),
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () {
+                                  setState(() {
+                                    ctrl.clear();
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF22D3EE).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                currentInitial.isNotEmpty ? 'Change' : 'Pick',
+                                style: const TextStyle(
+                                  color: Color(0xFF22D3EE),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/widgets/sky_animation.dart';
+import '../../core/widgets/animated_startup_cover.dart';
 import 'auth_providers.dart';
 import '../../core/repositories/auth_repository.dart' hide authStateProvider;
 import '../../core/services/cache_service.dart';
@@ -267,25 +268,10 @@ class _ErrorView extends ConsumerWidget {
 
 class CircularProgressBinding extends StatelessWidget {
   final String text;
-  const CircularProgressBinding({super.key, this.text = 'Syncing Universe...'});
+  const CircularProgressBinding({super.key, this.text = 'Syncing universe...'});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const CircularProgressIndicator(color: Colors.white),
-        const SizedBox(height: 16),
-        Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 2,
-          ),
-        ),
-      ],
-    );
+    return AnimatedStartupCover(statusText: text);
   }
 }

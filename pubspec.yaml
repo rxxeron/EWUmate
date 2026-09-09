@@ -67,6 +67,7 @@ dependencies:
   home_widget: ^0.9.1
   google_sign_in: ^6.2.1
   file_picker: ^8.1.4
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:

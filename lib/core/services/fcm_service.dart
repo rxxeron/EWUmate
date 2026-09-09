@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
 import '../repositories/notification_repository.dart';
@@ -18,11 +19,13 @@ class PendingNotificationAction {
   final String title;
   final String body;
   final String? url;
+  final String? imageUrl;
 
   PendingNotificationAction({
     required this.title,
     required this.body,
     this.url,
+    this.imageUrl,
   });
 }
 
@@ -53,10 +56,15 @@ class FCMService {
     if (initialMessage != null) {
       // Add a 2.5 second delay to let the initial GoRouter splash/auth redirects fully settle
       Future.delayed(const Duration(milliseconds: 2500), () {
+        final img = initialMessage.notification?.android?.imageUrl ?? 
+                    initialMessage.notification?.apple?.imageUrl ?? 
+                    (initialMessage.data['image'] as String?) ??
+                    (initialMessage.data['image_url'] as String?);
         _handleIncomingAction(
           initialMessage.notification?.title,
           initialMessage.notification?.body,
           initialMessage.data['url'] as String?,
+          img,
         );
       });
     }
@@ -78,7 +86,7 @@ class FCMService {
             final data = jsonDecode(payload);
             // Slight delay to let any foreground screen state settle
             Future.delayed(const Duration(milliseconds: 200), () {
-              _handleIncomingAction(data['title'], data['body'], data['url']);
+              _handleIncomingAction(data['title'], data['body'], data['url'], data['image']);
             });
           } catch (_) {}
         }
@@ -120,6 +128,10 @@ class FCMService {
         RemoteNotification? notification = message.notification;
         if (notification != null) {
           final routingUrl = message.data['url'] as String?;
+          final notifImage = message.notification?.android?.imageUrl ?? 
+                             message.notification?.apple?.imageUrl ?? 
+                             (message.data['image'] as String?) ??
+                             (message.data['image_url'] as String?);
           
           // Save locally
           try {
@@ -154,7 +166,7 @@ class FCMService {
               ),
               iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
             ),
-            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl}),
+            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage}),
           );
         }
       });
@@ -162,10 +174,15 @@ class FCMService {
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         // Add 800ms delay to let the app resume and route state settle perfectly
         Future.delayed(const Duration(milliseconds: 800), () {
+          final img = message.notification?.android?.imageUrl ?? 
+                      message.notification?.apple?.imageUrl ?? 
+                      (message.data['image'] as String?) ??
+                      (message.data['image_url'] as String?);
           _handleIncomingAction(
             message.notification?.title, 
             message.notification?.body, 
-            message.data['url'] as String?
+            message.data['url'] as String?,
+            img,
           );
         });
       });
@@ -187,19 +204,21 @@ class FCMService {
     }
   }
 
-  void _handleIncomingAction(String? title, String? body, String? url) {
+  void _handleIncomingAction(String? title, String? body, String? url, [String? imageUrl]) {
     if (!isDashboardStable) {
       debugPrint("[FCM] Dashboard not stable yet. Saving pending notification action.");
       _pendingAction = PendingNotificationAction(
         title: title ?? 'Notification Received',
         body: body ?? '',
         url: url,
+        imageUrl: imageUrl,
       );
     } else {
       showNotificationPopup(
         title ?? 'Notification Received',
         body ?? '',
         url,
+        imageUrl,
       );
     }
   }
@@ -214,7 +233,7 @@ class FCMService {
     }
   }
 
-  void showNotificationPopup(String title, String body, String? url) {
+  void showNotificationPopup(String title, String body, String? url, [String? imageUrl]) {
     final context = rootNavigatorKey.currentContext;
     if (context == null) return;
 
@@ -227,54 +246,75 @@ class FCMService {
             borderRadius: 24,
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.notifications_active, color: Colors.cyanAccent, size: 48),
-                  const SizedBox(height: 16),
-                  Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    body,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Dismiss', style: TextStyle(color: Colors.white54)),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (imageUrl != null && imageUrl.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 160,
+                          placeholder: (context, url) => Container(
+                            height: 160,
+                            color: Colors.white.withValues(alpha: 0.05),
+                            child: const Center(child: CircularProgressIndicator(color: Colors.cyanAccent, strokeWidth: 2)),
+                          ),
+                          errorWidget: (context, url, error) => const SizedBox.shrink(),
                         ),
                       ),
-                      if (url != null && url.isNotEmpty)
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      const Icon(Icons.notifications_active, color: Colors.cyanAccent, size: 48),
+                      const SizedBox(height: 16),
+                    ],
+                    Text(
+                      title,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      body,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 15,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
                         Expanded(
-                          child: FilledButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                              _navigateToUrl(url);
-                            },
-                            style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent),
-                            child: const Text('View Action', style: TextStyle(color: Colors.black)),
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Dismiss', style: TextStyle(color: Colors.white54)),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                        if (url != null && url.isNotEmpty)
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _navigateToUrl(url);
+                              },
+                              style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent),
+                              child: const Text('View Action', style: TextStyle(color: Colors.black)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

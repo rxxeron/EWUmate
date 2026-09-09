@@ -16,6 +16,8 @@ class FeedbackScreen extends ConsumerStatefulWidget {
 
 class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTickerProviderStateMixin {
   final _messageController = TextEditingController();
+  final Map<String, TextEditingController> _replyControllers = {};
+  final Set<String> _submittingReplyIds = {};
   bool _isSubmitting = false;
   late TabController _tabController;
 
@@ -92,15 +94,31 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
   }
 
   Future<void> _submitReply(String feedbackId, String message) async {
-    if (message.trim().isEmpty) return;
-    
+    final text = message.trim();
+    if (text.isEmpty) return;
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please sign in to reply.')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _submittingReplyIds.add(feedbackId));
+
     try {
       await Supabase.instance.client.from('feedback_comments').insert({
         'feedback_id': feedbackId,
-        'comment': message,
+        'user_id': user.id,
+        'comment': text,
+        'is_admin': false,
       });
-      
-      _fetchMyFeedbacks();
+
+      _replyControllers[feedbackId]?.clear();
+      await _fetchMyFeedbacks();
     } catch (e) {
       if (kDebugMode) debugPrint('Error submitting reply: $e');
       if (mounted) {
@@ -108,12 +126,19 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
           SnackBar(content: Text(AuthErrorUtils.getFriendlyMessage(e))),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _submittingReplyIds.remove(feedbackId));
+      }
     }
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    for (final c in _replyControllers.values) {
+      c.dispose();
+    }
     _tabController.dispose();
     super.dispose();
   }
@@ -366,47 +391,61 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> with SingleTick
                   }),
                 ],
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: 'Type a follow-up...',
-                          hintStyle: const TextStyle(color: Colors.white24),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.03),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.white10),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Colors.white10),
+                Builder(
+                  builder: (context) {
+                    final feedbackId = item['id'] as String;
+                    final controller = _replyControllers.putIfAbsent(feedbackId, () => TextEditingController());
+                    final isSending = _submittingReplyIds.contains(feedbackId);
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: controller,
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            enabled: !isSending,
+                            decoration: InputDecoration(
+                              hintText: 'Type a reply to admin...',
+                              hintStyle: const TextStyle(color: Colors.white24),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.03),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Colors.white10),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: Colors.white10),
+                              ),
+                            ),
+                            onSubmitted: (val) {
+                              _submitReply(feedbackId, val);
+                            },
                           ),
                         ),
-                        onSubmitted: (val) {
-                          if (val.trim().isNotEmpty) {
-                            _submitReply(item['id'], val);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.send_rounded, color: Colors.blueAccent, size: 20),
-                        onPressed: () {
-                          // Note: In a real app we'd need a controller per item
-                        },
-                      ),
-                    ),
-                  ],
+                        const SizedBox(width: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: isSending 
+                                ? const SizedBox(
+                                    width: 16, 
+                                    height: 16, 
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blueAccent)
+                                  )
+                                : const Icon(Icons.send_rounded, color: Colors.blueAccent, size: 20),
+                            onPressed: isSending 
+                                ? null 
+                                : () => _submitReply(feedbackId, controller.text),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

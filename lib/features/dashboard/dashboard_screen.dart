@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import 'package:hive/hive.dart';
@@ -54,6 +55,7 @@ import '../tasks/presentation/widgets/add_task_bottom_sheet.dart';
 import '../../core/repositories/task_repository.dart';
 import '../../core/providers/scaffold_provider.dart';
 import '../../core/providers/academic_providers.dart';
+import '../../core/providers/feature_flag_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final VoidCallback? onSeeAllTasks;
@@ -83,6 +85,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Map<String, dynamic>? _lastValidScheduleData;
   bool _isSavingAttendance = false;
   List<Map<String, dynamic>> _pendingAttendanceItems = [];
+  bool _promoBannerDismissed = false;
   Timer? _refreshTimer;
   
   
@@ -1194,6 +1197,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                          FadeInSlide(delay: const Duration(milliseconds: 25), child: _buildPromoBanner()),
                           FadeInSlide(delay: const Duration(milliseconds: 100), child: _buildAppUpdateBanner()),
                           FadeInSlide(delay: const Duration(milliseconds: 150), child: _buildTransitionBanner()),
                         FadeInSlide(delay: const Duration(milliseconds: 200), child: _buildAdvisingBanner()),
@@ -1443,6 +1447,88 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 16),
         ],
       ),
+    );
+  }
+
+  Widget _buildPromoBanner() {
+    if (_promoBannerDismissed) return const SizedBox.shrink();
+
+    final bannerAsync = ref.watch(promoBannerProvider);
+    return bannerAsync.maybeWhen(
+      data: (config) {
+        if (config == null) return const SizedBox.shrink();
+        final isActive = config['is_active'] == true;
+        if (!isActive) return const SizedBox.shrink();
+
+        final imageUrl = config['image_url']?.toString() ?? '';
+        final linkUrl = config['link_url']?.toString() ?? '';
+        if (imageUrl.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 600,
+              ),
+              child: Stack(
+                children: [
+                  GestureDetector(
+                    onTap: linkUrl.isNotEmpty
+                        ? () async {
+                            final uri = Uri.tryParse(linkUrl);
+                            if (uri != null) {
+                              await url_launcher.launchUrl(
+                                uri,
+                                mode: url_launcher.LaunchMode.externalApplication,
+                              );
+                            }
+                          }
+                        : null,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        width: double.infinity,
+                        fit: BoxFit.fitWidth,
+                        placeholder: (context, url) => Container(
+                          height: 100,
+                          color: Colors.white.withOpacity(0.05),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF22D3EE),
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                  // Dismiss button
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _promoBannerDismissed = true),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
     );
   }
 

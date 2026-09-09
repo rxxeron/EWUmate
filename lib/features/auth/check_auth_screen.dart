@@ -19,11 +19,25 @@ class CheckAuthScreen extends ConsumerStatefulWidget {
 class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
   Timer? _stallTimer;
   bool _showRetry = false;
+  final DateTime _initTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _startStallTimer();
+  }
+
+  void _navigateWithDelay(String route) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final elapsed = DateTime.now().difference(_initTime);
+      const minDuration = Duration(milliseconds: 3500);
+      if (elapsed < minDuration) {
+        await Future.delayed(minDuration - elapsed);
+      }
+      if (mounted) {
+        context.go(route);
+      }
+    });
   }
 
   void _startStallTimer() {
@@ -61,7 +75,7 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                 final hasSession = Supabase.instance.client.auth.currentSession != null;
                 if (user == null && !hasSession) {
                   debugPrint("[CheckAuth] User is signed out. Redirecting to Login.");
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/login'));
+                  _navigateWithDelay('/login');
                   return const CircularProgressBinding(text: 'Redirecting to login...');
                 }
 
@@ -78,7 +92,7 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                     
                     // Logged in but no record in DB yet
                     debugPrint("[CheckAuth] Redirecting to Onboarding (No Profile Record)");
-                    WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/program'));
+                    _navigateWithDelay('/onboarding/program');
                     return const CircularProgressBinding(text: 'Setting up your profile...');
                   }
 
@@ -102,13 +116,13 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
                     profile.onboardingStatus == 'registered' ||
                     profile.programCode == null) {
                   debugPrint("[CheckAuth] Redirecting to Profile Setup Flow (Incomplete Profile)");
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/profile-setup'));
+                  _navigateWithDelay('/onboarding/profile-setup');
                 } else if (profile.onboardingStatus == 'course_history') {
                   debugPrint("[CheckAuth] Redirecting to Course History (Partial Completion)");
-                  WidgetsBinding.instance.addPostFrameCallback((_) => context.go('/onboarding/course-history'));
+                  _navigateWithDelay('/onboarding/course-history');
                 } else {
                   debugPrint("[CheckAuth] Onboarding Complete. Checking Grade Blocker.");
-                  return const _GradeBlockerWrapper();
+                  return _GradeBlockerWrapper(onNavigate: _navigateWithDelay);
                 }
                 return const CircularProgressBinding(text: 'Restoring session...');
               },
@@ -138,7 +152,8 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
 // Removed _ProfileCheckWrapper as its logic is now integrated into CheckAuthScreen for Zero-Wait Entry
 
 class _GradeBlockerWrapper extends ConsumerWidget {
-  const _GradeBlockerWrapper();
+  final void Function(String route) onNavigate;
+  const _GradeBlockerWrapper({required this.onNavigate});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -147,13 +162,11 @@ class _GradeBlockerWrapper extends ConsumerWidget {
 
     return gradeCheckAsync.when(
       data: (requiresGrade) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (requiresGrade) {
-            context.go('/results/grade-entry');
-          } else {
-            context.go('/dashboard');
-          }
-        });
+        if (requiresGrade) {
+          onNavigate('/results/grade-entry');
+        } else {
+          onNavigate('/dashboard');
+        }
         return const CircularProgressBinding(text: 'Preparing Dashboard...');
       },
       error: (err, stack) => _ErrorView(

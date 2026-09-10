@@ -152,26 +152,29 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
           final cleanCode = c.courseCode.contains(' ') ? c.courseCode.split(' ')[0].toUpperCase() : c.courseCode.toUpperCase();
           final secKey = '$cleanCode:${c.section.trim()}';
 
-          String resolvedInitial = c.facultyInitial;
-          String resolvedName = c.facultyName;
-          String resolvedEmail = c.facultyEmail;
+          String resolvedInitial = c.facultyInitial.trim();
+          String resolvedName = c.facultyName.trim();
+          String resolvedEmail = c.facultyEmail.trim();
 
-          // Priority 1: Verified faculty assignment for this course & section
-          if (assignmentsByKey.containsKey(secKey)) {
-            resolvedInitial = assignmentsByKey[secKey]!['initial']!;
-            if (assignmentsByKey[secKey]!['name']!.isNotEmpty) {
-              resolvedName = assignmentsByKey[secKey]!['name']!;
+          // 1. If portal gave a valid initial, prioritize it!
+          // If portal returned TBA or empty, fallback to community verified faculty_assignments
+          if (resolvedInitial.isEmpty || resolvedInitial.toUpperCase() == 'TBA') {
+            if (assignmentsByKey.containsKey(secKey)) {
+              resolvedInitial = assignmentsByKey[secKey]!['initial']!;
+              if (assignmentsByKey[secKey]!['name']!.isNotEmpty) {
+                resolvedName = assignmentsByKey[secKey]!['name']!;
+              }
             }
           }
 
-          // Priority 2: Canonical faculty_directory matching initial
+          // 2. Canonical faculty_directory matching initial -> fills full name and official email
           final normInit = resolvedInitial.trim().toUpperCase();
           if (facultyByInitial.containsKey(normInit)) {
             final dir = facultyByInitial[normInit]!;
             if (dir['fullName']!.isNotEmpty) {
               resolvedName = dir['fullName']!;
             }
-            if (dir['email']!.isNotEmpty && resolvedEmail.isEmpty) {
+            if (dir['email']!.isNotEmpty && (resolvedEmail.isEmpty || !resolvedEmail.contains('@'))) {
               resolvedEmail = dir['email']!;
             }
           }
@@ -475,7 +478,37 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
           }
         }
 
-        // Build and save the formatted weekly_grid_cache into user_semester_states
+        // 4a. First Crowdsource verified faculty assignments so DB has latest truth
+        if (_syncCrowdsourcedFaculty && result.enrolledCourses.isNotEmpty) {
+          setState(() => _statusMessage = "Crowdsourcing verified faculty assignments...");
+          final facultyUpdates = <Map<String, dynamic>>[];
+          for (final item in result.enrolledCourses) {
+            final cleanCode = item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode;
+            if (item.facultyInitial.isNotEmpty && item.facultyInitial != 'TBA') {
+              facultyUpdates.add({
+                'course_code': cleanCode,
+                'section_number': item.section,
+                'semester': activeSemCode,
+                'faculty_initial': item.facultyInitial,
+                'faculty_name': item.facultyName,
+                'is_verified': true,
+              });
+            }
+          }
+
+          if (facultyUpdates.isNotEmpty) {
+            try {
+              await supabase.from('faculty_assignments').upsert(
+                facultyUpdates,
+                onConflict: 'course_code,section_number,semester',
+              );
+            } catch (e) {
+              debugPrint("[PortalSyncScreen] faculty_assignments note: $e");
+            }
+          }
+        }
+
+        // 4b. Build and save the formatted weekly_grid_cache into user_semester_states
         final weeklyGrid = _buildWeeklyGridCache(result.enrolledCourses, courseNames);
         try {
           await supabase.from('user_semester_states').upsert({
@@ -493,36 +526,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
           final cache = ref.read(cacheServiceProvider);
           await cache.invalidateDashboardSchedule(user.id, activeSemCode);
         } catch (_) {}
-      }
-
-      // 5. Crowdsource faculty assignments
-      if (_syncCrowdsourcedFaculty && result.enrolledCourses.isNotEmpty) {
-        setState(() => _statusMessage = "Crowdsourcing verified faculty assignments...");
-        final facultyUpdates = <Map<String, dynamic>>[];
-        for (final item in result.enrolledCourses) {
-          final cleanCode = item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode;
-          if (item.facultyInitial.isNotEmpty && item.facultyInitial != 'TBA') {
-            facultyUpdates.add({
-              'course_code': cleanCode,
-              'section_number': item.section,
-              'semester': activeSemCode,
-              'faculty_initial': item.facultyInitial,
-              'faculty_name': item.facultyName,
-              'is_verified': true,
-            });
-          }
-        }
-
-        if (facultyUpdates.isNotEmpty) {
-          try {
-            await supabase.from('faculty_assignments').upsert(
-              facultyUpdates,
-              onConflict: 'course_code,section_number,semester',
-            );
-          } catch (e) {
-            debugPrint("[PortalSyncScreen] faculty_assignments note: $e");
-          }
-        }
       }
 
       // 6. Recalculate stats & sync server functions

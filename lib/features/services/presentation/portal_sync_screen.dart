@@ -36,7 +36,7 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
 
   // User Selection Checkboxes
   bool _syncActiveSchedule = true;
-  bool _syncAcademicHistory = true;
+  bool _syncAcademicHistory = false; // Opt-in: Only if user wants
   bool _syncProfileMetadata = false; // Default false for completed users
   bool _syncCrowdsourcedFaculty = true;
 
@@ -850,12 +850,12 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
             onChanged: (v) => setState(() => _syncActiveSchedule = v ?? true),
           ),
           _buildCheckboxOption(
-            title: "Academic History & Grades",
+            title: "Academic History & Grades (Optional)",
             subtitle: _azureParsedGrades.isNotEmpty
-                ? "${_azureParsedGrades.length} verified grades with true semester breakdown"
-                : "Import completed degree courses & letter grades",
+                ? "Optional: Import ${_azureParsedGrades.length} completed courses & grade sheet"
+                : "Optional: Import completed degree courses & letter grades",
             value: _syncAcademicHistory,
-            onChanged: (v) => setState(() => _syncAcademicHistory = v ?? true),
+            onChanged: (v) => setState(() => _syncAcademicHistory = v ?? false),
           ),
           _buildCheckboxOption(
             title: "Crowdsource Faculty Assignments",

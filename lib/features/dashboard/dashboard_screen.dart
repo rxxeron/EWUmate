@@ -270,6 +270,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _updateHomeWidget(dashboardData);
         _checkAndShowPendingNotifications();
         _loadPendingAttendance();
+        _checkPortalSyncGuide();
       }
       
       // 4. Check for app updates and show a soft Play Store redirection banner
@@ -700,6 +701,141 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         }
       }
     } catch (e) {
+    }
+  }
+
+  Future<void> _checkPortalSyncGuide() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      const guideKey = 'has_seen_portal_sync_intro_guide_v1';
+      if (prefs.getBool(guideKey) == true) return;
+
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 1200));
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) => Dialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: const BorderSide(color: Color(0xFF00E5FF), width: 1.5),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00E5FF).withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.sync_saved_locally_rounded,
+                    color: Color(0xFF00E5FF),
+                    size: 38,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  "New Feature: EWU Portal Sync",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "Connect your student portal once to automatically pull your registered course routine, faculty info, academic history, and letter grades directly into EWUmate.",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.45,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    children: const [
+                      _PortalFeatureRow(
+                        icon: Icons.calendar_today_rounded,
+                        text: "Weekly routine & faculty automatically preserved",
+                      ),
+                      SizedBox(height: 8),
+                      _PortalFeatureRow(
+                        icon: Icons.history_edu_rounded,
+                        text: "Complete academic history & grade sheet import",
+                      ),
+                      SizedBox(height: 8),
+                      _PortalFeatureRow(
+                        icon: Icons.security_rounded,
+                        text: "100% Private: Credentials never saved or stored",
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          prefs.setBool(guideKey, true);
+                          Navigator.pop(dialogCtx);
+                        },
+                        child: const Text(
+                          "Maybe Later",
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          prefs.setBool(guideKey, true);
+                          Navigator.pop(dialogCtx);
+                          context.push('/portal-sync');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00E5FF),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 3,
+                        ),
+                        child: const Text(
+                          "Sync Now",
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('[Dashboard] Portal Sync Guide Error: $e');
     }
   }
 
@@ -2100,4 +2236,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
+class _PortalFeatureRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
+  const _PortalFeatureRow({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF00E5FF)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+}

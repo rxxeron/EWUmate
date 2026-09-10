@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/portal_service.dart';
 import '../../core/utils/course_utils.dart';
@@ -92,20 +94,52 @@ class _PortalSyncModalState extends ConsumerState<PortalSyncModal> {
       };
       await supabase.from('profiles').upsert(profilePayload);
 
-      // 3. Save Completed Courses & Grades from Degree Review
-      setState(() => _statusMessage = "Syncing completed grades & degree audit...");
+      // 3. Save Completed Courses & Grades (First try Azure parse_grade_sheet for semester-by-semester, fallback to degreeAreas)
+      setState(() => _statusMessage = "Syncing semester-wise grades & academic history...");
       final List<Map<String, dynamic>> completedRows = [];
-      for (final area in result.degreeAreas) {
-        for (final c in area.courses) {
-          if (c.grade.isNotEmpty) {
+
+      try {
+        final gradeSheetRes = await http.post(
+          Uri.parse('https://ewumate-parser.azurewebsites.net/api/parse_grade_sheet'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'student_id': studentId,
+            'password': password,
+          }),
+        ).timeout(const Duration(seconds: 15));
+
+        if (gradeSheetRes.statusCode == 200) {
+          final data = jsonDecode(gradeSheetRes.body) as Map<String, dynamic>;
+          final parsedCourses = data['courses'] as List? ?? [];
+          for (final c in parsedCourses) {
             completedRows.add({
               'user_id': user.id,
-              'course_code': c.courseCode,
-              'grade': c.grade,
-              'grade_point': c.gradePoint,
-              'credits': c.credits,
-              'semester_code': 'portal_verified',
+              'course_code': c['course_code'],
+              'grade': c['grade'],
+              'grade_point': c['grade_point'],
+              'credits': c['credits'],
+              'semester_code': c['semester_code'],
             });
+          }
+        }
+      } catch (e) {
+        debugPrint("[PortalSync] Azure parse_grade_sheet notice: $e");
+      }
+
+      // Fallback: if server parser unavailable, use degree review courses
+      if (completedRows.isEmpty) {
+        for (final area in result.degreeAreas) {
+          for (final c in area.courses) {
+            if (c.grade.isNotEmpty) {
+              completedRows.add({
+                'user_id': user.id,
+                'course_code': c.courseCode,
+                'grade': c.grade,
+                'grade_point': c.gradePoint,
+                'credits': c.credits,
+                'semester_code': 'portal_verified',
+              });
+            }
           }
         }
       }

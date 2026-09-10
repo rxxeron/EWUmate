@@ -736,7 +736,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.sync_saved_locally_rounded,
+                    Icons.sync_rounded,
                     color: Color(0xFF00E5FF),
                     size: 38,
                   ),

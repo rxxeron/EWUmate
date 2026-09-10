@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -91,6 +90,32 @@ class PortalEnrolledCourse {
       facultyEmail: json['Email']?.toString() ?? '',
       withdrawStatus: json['WithDrawStatus']?.toString() ?? 'No',
       dropStatus: json['DropStatus']?.toString() ?? 'No',
+    );
+  }
+
+  PortalEnrolledCourse copyWith({
+    String? courseCode,
+    String? section,
+    double? credits,
+    String? timing,
+    String? room,
+    String? facultyName,
+    String? facultyInitial,
+    String? facultyEmail,
+    String? withdrawStatus,
+    String? dropStatus,
+  }) {
+    return PortalEnrolledCourse(
+      courseCode: courseCode ?? this.courseCode,
+      section: section ?? this.section,
+      credits: credits ?? this.credits,
+      timing: timing ?? this.timing,
+      room: room ?? this.room,
+      facultyName: facultyName ?? this.facultyName,
+      facultyInitial: facultyInitial ?? this.facultyInitial,
+      facultyEmail: facultyEmail ?? this.facultyEmail,
+      withdrawStatus: withdrawStatus ?? this.withdrawStatus,
+      dropStatus: dropStatus ?? this.dropStatus,
     );
   }
 }

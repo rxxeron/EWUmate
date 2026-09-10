@@ -107,9 +107,97 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
         debugPrint("[PortalSyncScreen] Azure grade-sheet notice: $e");
       }
 
+      // 3. Enrich enrolled courses with verified faculty directory & assignments data
+      setState(() => _statusMessage = "Matching verified faculty directory details...");
+      List<PortalEnrolledCourse> enrichedCourses = [];
+      try {
+        final supabase = Supabase.instance.client;
+        final semCode = CourseUtils.cleanSemester(result.activeSemesterName);
+
+        final facultyDirRes = await supabase
+            .from('faculty_directory')
+            .select('short_name, full_name, email');
+        
+        final Map<String, Map<String, String>> facultyByInitial = {};
+        for (final row in facultyDirRes as List) {
+          final init = (row['short_name'] ?? '').toString().trim().toUpperCase();
+          if (init.isNotEmpty) {
+            facultyByInitial[init] = {
+              'fullName': (row['full_name'] ?? '').toString().trim(),
+              'email': (row['email'] ?? '').toString().trim(),
+            };
+          }
+        }
+
+        final assignmentsRes = await supabase
+            .from('faculty_assignments')
+            .select('course_code, section_number, faculty_initial, faculty_name')
+            .eq('semester', semCode);
+
+        final Map<String, Map<String, String>> assignmentsByKey = {};
+        for (final row in assignmentsRes as List) {
+          final code = (row['course_code'] ?? '').toString().trim().toUpperCase();
+          final sec = (row['section_number'] ?? '').toString().trim();
+          final init = (row['faculty_initial'] ?? '').toString().trim();
+          final name = (row['faculty_name'] ?? '').toString().trim();
+          if (code.isNotEmpty && init.isNotEmpty && init != 'TBA') {
+            assignmentsByKey['$code:$sec'] = {
+              'initial': init,
+              'name': name,
+            };
+          }
+        }
+
+        for (final c in result.enrolledCourses) {
+          final cleanCode = c.courseCode.contains(' ') ? c.courseCode.split(' ')[0].toUpperCase() : c.courseCode.toUpperCase();
+          final secKey = '$cleanCode:${c.section.trim()}';
+
+          String resolvedInitial = c.facultyInitial;
+          String resolvedName = c.facultyName;
+          String resolvedEmail = c.facultyEmail;
+
+          // Priority 1: Verified faculty assignment for this course & section
+          if (assignmentsByKey.containsKey(secKey)) {
+            resolvedInitial = assignmentsByKey[secKey]!['initial']!;
+            if (assignmentsByKey[secKey]!['name']!.isNotEmpty) {
+              resolvedName = assignmentsByKey[secKey]!['name']!;
+            }
+          }
+
+          // Priority 2: Canonical faculty_directory matching initial
+          final normInit = resolvedInitial.trim().toUpperCase();
+          if (facultyByInitial.containsKey(normInit)) {
+            final dir = facultyByInitial[normInit]!;
+            if (dir['fullName']!.isNotEmpty) {
+              resolvedName = dir['fullName']!;
+            }
+            if (dir['email']!.isNotEmpty && resolvedEmail.isEmpty) {
+              resolvedEmail = dir['email']!;
+            }
+          }
+
+          enrichedCourses.add(c.copyWith(
+            facultyInitial: resolvedInitial,
+            facultyName: resolvedName,
+            facultyEmail: resolvedEmail,
+          ));
+        }
+      } catch (e) {
+        debugPrint("[PortalSyncScreen] Faculty directory enrichment note: $e");
+        enrichedCourses = result.enrolledCourses;
+      }
+
+      final finalResult = PortalSyncResult(
+        profile: result.profile,
+        activeSemesterName: result.activeSemesterName,
+        activeSemesterId: result.activeSemesterId,
+        enrolledCourses: enrichedCourses,
+        degreeAreas: result.degreeAreas,
+      );
+
       if (mounted) {
         setState(() {
-          _portalData = result;
+          _portalData = finalResult;
           _azureParsedGrades = parsedCourses;
           _step = 1; // Move to Preview & Selection
           _isLoading = false;

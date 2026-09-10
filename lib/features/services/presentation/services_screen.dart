@@ -74,6 +74,16 @@ class ServicesScreen extends ConsumerWidget {
                   ),
                   _buildServiceCard(
                     context,
+                    title: 'EWU Portal Sync',
+                    icon: Icons.cloud_sync_rounded,
+                    color: Colors.cyan.shade100,
+                    iconColor: Colors.cyan.shade800,
+                    onTap: () {
+                      context.push('/portal-sync');
+                    },
+                  ),
+                  _buildServiceCard(
+                    context,
                     title: 'Faculty Assignment',
                     icon: Icons.assignment_ind_outlined,
                     color: Colors.teal.shade100,

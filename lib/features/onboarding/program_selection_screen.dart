@@ -6,7 +6,6 @@ import 'onboarding_repository.dart';
 import '../auth/auth_providers.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
-import '../../core/widgets/portal_sync_modal.dart';
 import '../../core/utils/error_utils.dart';
 
 class ProgramSelectionScreen extends ConsumerStatefulWidget {
@@ -237,11 +236,7 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () {
-                            PortalSyncModal.show(context, onSyncComplete: () {
-                              if (context.mounted) {
-                                context.go('/dashboard');
-                              }
-                            });
+                            context.push('/portal-sync');
                           },
                           icon: const Icon(Icons.cloud_sync_rounded),
                           label: const Text("Connect EWU Portal", style: TextStyle(fontWeight: FontWeight.bold)),

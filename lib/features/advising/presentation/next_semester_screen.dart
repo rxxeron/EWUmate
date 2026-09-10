@@ -388,6 +388,17 @@ class _NextSemesterScreenState extends ConsumerState<NextSemesterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            tooltip: "Sync from Portal",
+            icon: const Icon(Icons.cloud_sync_rounded, color: Colors.cyan),
+            onPressed: () async {
+              await context.push('/portal-sync');
+              ref.invalidate(activeSemesterProvider);
+              ref.invalidate(userEnrollmentsProvider);
+            },
+          ),
+        ],
       ),
       body: activeSemAsync.when(
         loading: () =>

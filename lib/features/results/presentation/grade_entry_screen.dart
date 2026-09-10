@@ -178,6 +178,16 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false, // Force them to stay
+        actions: [
+          IconButton(
+            tooltip: "Auto-Fetch from Portal",
+            icon: const Icon(Icons.cloud_sync_rounded, color: Color(0xFF38BDF8)),
+            onPressed: () async {
+              await context.push('/portal-sync');
+              ref.invalidate(pendingGradesProvider);
+            },
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -247,11 +257,40 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
                             const SizedBox(width: 12),
                             const Expanded(
                               child: Text(
-                                'The absolute deadline for final grades has passed. Please lock in your results to proceed.',
+                                'The absolute deadline for final grades has passed. Please enter results or auto-sync from portal to proceed.',
                                 style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.4),        
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: () async {
+                          await context.push('/portal-sync');
+                          ref.invalidate(pendingGradesProvider);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.auto_fix_high_rounded, color: Color(0xFF38BDF8), size: 22),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Auto-Fetch Results from Portal',
+                                  style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                              ),
+                              Icon(Icons.chevron_right_rounded, color: Color(0xFF38BDF8)),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),

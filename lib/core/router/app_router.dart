@@ -37,6 +37,7 @@ import '../../features/advising/presentation/next_semester_screen.dart';
 import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
 import '../../features/tutorials/presentation/tutorials_screen.dart';
+import '../../features/services/presentation/portal_sync_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -122,6 +123,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
       GoRoute(path: '/next-semester', builder: (context, state) => const NextSemesterScreen()),
       GoRoute(path: '/results/grade-entry', builder: (context, state) => const GradeEntryScreen()),
+      GoRoute(path: '/portal-sync', builder: (context, state) => const PortalSyncScreen()),
       GoRoute(path: '/feedback', builder: (context, state) => const FeedbackScreen()),
       GoRoute(path: '/tutorials', builder: (context, state) => const TutorialsScreen()),
     ],

@@ -762,6 +762,16 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: "Auto-Fetch from Portal",
+            icon: const Icon(Icons.cloud_sync_rounded, color: Colors.cyanAccent),
+            onPressed: () async {
+              await context.push('/portal-sync');
+              _loadInitialData();
+            },
+          ),
+        ],
       ),
       body: _profileLoading
           ? const Center(

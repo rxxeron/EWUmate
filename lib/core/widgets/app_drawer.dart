@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'portal_sync_modal.dart';
 import 'glass_kit.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/profile_repository.dart';
@@ -124,7 +123,7 @@ class AppDrawer extends ConsumerWidget {
                     context,
                     Icons.cloud_sync_rounded,
                     "Portal Sync",
-                    () => PortalSyncModal.show(context),
+                    () => context.push('/portal-sync'),
                     color: Colors.cyanAccent,
                   ),
                   _buildDrawerItem(

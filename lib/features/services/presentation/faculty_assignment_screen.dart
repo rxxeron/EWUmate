@@ -2,11 +2,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/utils/course_utils.dart';
-import 'package:ewumate/core/widgets/portal_sync_modal.dart';
 import '../repositories/faculty_assignment_repository.dart';
 
 class FacultyAssignmentScreen extends ConsumerStatefulWidget {
@@ -1005,9 +1005,10 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
                         ),
                       ),
                       ElevatedButton(
-                        onPressed: () => PortalSyncModal.show(context, onSyncComplete: () {
+                        onPressed: () async {
+                          await context.push('/portal-sync');
                           _loadInitialData();
-                        }),
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.cyanAccent.shade700,
                           foregroundColor: Colors.white,

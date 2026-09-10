@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:home_widget/home_widget.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../../core/models/task.dart';
@@ -139,6 +140,19 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
             backgroundColor: const Color(0xFF16202A),
             appBar: EWUmateAppBar(
               title: "Manage Schedule",
+              actions: [
+                IconButton(
+                  tooltip: "Sync Routine from Portal",
+                  icon: const Icon(Icons.cloud_sync_rounded, color: Color(0xFF00E5FF)),
+                  onPressed: () async {
+                    await context.push('/portal-sync');
+                    ref.invalidate(currentSemesterCodeProvider);
+                    if (_semesterCode != null) {
+                      _loadDataForSemester(_semesterCode!);
+                    }
+                  },
+                ),
+              ],
               bottom: const TabBar(
                 indicatorColor: Color(0xFF00E5FF),
                 labelColor: Color(0xFF00E5FF),

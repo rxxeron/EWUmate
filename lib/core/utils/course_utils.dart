@@ -31,9 +31,9 @@ class CourseUtils {
     return e1 == n2 || getEquivalent(n2) == n1;
   }
 
-  /// Centralized semester cleaning (removes spaces, underscores, and lowers case)
+  /// Centralized semester cleaning (removes spaces, underscores, dashes, and lowers case)
   static String cleanSemester(String code) {
-    return code.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+    return code.toLowerCase().replaceAll(' ', '').replaceAll('_', '').replaceAll('-', '');
   }
 
   /// Determines if a semester is chronologically before Spring 2025.

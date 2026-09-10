@@ -81,13 +81,14 @@ class _PortalSyncModalState extends ConsumerState<PortalSyncModal> {
 
       // 2. Update Profile metadata
       setState(() => _statusMessage = "Syncing academic profile & program...");
+      final cleanAdmittedSem = CourseUtils.cleanSemester(result.profile.admittedSemester);
       final profilePayload = {
         'id': user.id,
         'student_id': result.profile.studentId,
-        'program_code': result.profile.programCode,
+        'program_code': result.profile.programCode.toUpperCase(),
         'program_name': result.profile.programName,
         'department_name': result.profile.departmentName,
-        'admitted_semester': result.profile.admittedSemester,
+        'admitted_semester': cleanAdmittedSem.isNotEmpty ? cleanAdmittedSem : null,
       };
       await supabase.from('profiles').upsert(profilePayload);
 

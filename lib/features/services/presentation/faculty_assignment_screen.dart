@@ -6,6 +6,7 @@ import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/utils/course_utils.dart';
+import 'package:ewumate/core/widgets/portal_sync_modal.dart';
 import '../repositories/faculty_assignment_repository.dart';
 
 class FacultyAssignmentScreen extends ConsumerStatefulWidget {
@@ -978,20 +979,49 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Card(
-            color: theme.primaryColor.withOpacity(0.08),
+            color: Colors.cyanAccent.withOpacity(0.12),
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: const Padding(
-              padding: EdgeInsets.all(12.0),
-              child: Row(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: Colors.cyanAccent.withOpacity(0.3)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.verified_user, color: Colors.blue),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Enter faculty initials for your enrolled courses & upload your portal routine screenshot.',
-                      style: TextStyle(fontSize: 13),
-                    ),
+                  Row(
+                    children: [
+                      const Icon(Icons.bolt_rounded, color: Colors.cyanAccent, size: 24),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          '⚡ Auto-Fill via Portal Sync',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.cyanAccent,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => PortalSyncModal.show(context, onSyncComplete: () {
+                          _loadInitialData();
+                        }),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.cyanAccent.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Sync Portal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'No need to manually type your enrolled faculty! Portal Sync automatically imports your courses and assigned faculty.',
+                    style: TextStyle(fontSize: 12, color: Colors.white70),
                   ),
                 ],
               ),

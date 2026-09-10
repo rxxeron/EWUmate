@@ -6,6 +6,7 @@ import 'onboarding_repository.dart';
 import '../auth/auth_providers.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
+import '../../core/widgets/portal_sync_modal.dart';
 import '../../core/utils/error_utils.dart';
 
 class ProgramSelectionScreen extends ConsumerStatefulWidget {
@@ -174,11 +175,102 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    "Let's get your profile set up.\nPlease select your department and program to personalize your experience.",
+                    "Choose how you would like to set up your profile:",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.white70),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+
+                  // Option A: Fast-track Portal Sync
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.cyanAccent.shade700.withValues(alpha: 0.25),
+                          Colors.teal.shade900.withValues(alpha: 0.2),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.4), width: 1.5),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.cyanAccent.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.bolt_rounded, color: Colors.cyanAccent, size: 28),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Option 1: Sync with Portal",
+                                    style: TextStyle(
+                                      color: Colors.cyanAccent,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Recommended • 1-Click Instant Setup",
+                                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Instantly import your Department, Program, Admitted Semester, Active Routine, Faculty & Degree Progress in 5 seconds.",
+                          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            PortalSyncModal.show(context, onSyncComplete: () {
+                              if (context.mounted) {
+                                context.go('/dashboard');
+                              }
+                            });
+                          },
+                          icon: const Icon(Icons.cloud_sync_rounded),
+                          label: const Text("Connect EWU Portal", style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.cyanAccent.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "OR OPTION 2: MANUAL SETUP",
+                          style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
                   // Dept Dropdown
                   GlassContainer(

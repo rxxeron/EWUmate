@@ -33,12 +33,13 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
   // Fetched Data from Portal
   PortalSyncResult? _portalData;
   List<Map<String, dynamic>> _azureParsedGrades = [];
+  Map<String, List<Map<String, dynamic>>>? _fetchedWeeklyGrid;
 
   // User Selection Checkboxes
   bool _syncActiveSchedule = true;
   bool _syncAcademicHistory = false; // Opt-in: Only if user wants
   bool _syncProfileMetadata = false; // Default false for completed users
-  bool _syncCrowdsourcedFaculty = true;
+
 
   @override
   void initState() {
@@ -78,130 +79,77 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
     });
 
     try {
-      final portalService = ref.read(portalServiceProvider);
+      // Single unified call to Azure: Azure logs in, parses routine, degree review,
+      // updates database catalog courses_<semester> with verified sessions, and returns all data!
+      final azureRes = await http.post(
+        Uri.parse('https://ewumate-parser.azurewebsites.net/api/portal_sync_student'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'student_id': studentId,
+          'password': password,
+        }),
+      ).timeout(const Duration(seconds: 25));
 
-      // 1. Fetch complete portal data
-      final result = await portalService.syncAll(
-        studentId: studentId,
-        password: password,
+      if (azureRes.statusCode != 200) {
+        final errBody = jsonDecode(azureRes.body);
+        throw Exception(errBody['error'] ?? errBody['message'] ?? 'Failed to connect to EWU portal.');
+      }
+
+      final data = jsonDecode(azureRes.body) as Map<String, dynamic>;
+      final profileMap = data['profile'] as Map<String, dynamic>? ?? {};
+      final enrolledList = (data['enrolled_courses'] as List? ?? []).cast<Map<String, dynamic>>();
+      final gradesList = (data['parsed_grades'] as List? ?? []).cast<Map<String, dynamic>>();
+      final gridData = data['weekly_grid'] as Map<String, dynamic>? ?? {};
+
+      final studentProfile = PortalStudentProfile(
+        studentId: profileMap['studentId']?.toString() ?? studentId,
+        fullName: profileMap['fullName']?.toString() ?? '',
+        email: profileMap['email']?.toString() ?? '',
+        programName: profileMap['programName']?.toString() ?? '',
+        programCode: profileMap['programCode']?.toString() ?? '',
+        departmentName: profileMap['departmentName']?.toString() ?? '',
+        departmentCode: profileMap['departmentCode']?.toString() ?? '',
+        admittedSemester: profileMap['admittedSemester']?.toString() ?? '',
+        cgpa: (profileMap['cgpa'] as num?)?.toDouble() ?? 0.0,
+        creditsEarned: (profileMap['creditsEarned'] as num?)?.toDouble() ?? 0.0,
+        mentor: profileMap['mentor']?.toString() ?? '',
+        mentorEmail: profileMap['mentorEmail']?.toString() ?? '',
       );
 
-      // 2. Concurrently fetch Azure Function PDF grade sheet if available
-      setState(() => _statusMessage = "Fetching official grade sheet records...");
-      List<Map<String, dynamic>> parsedCourses = [];
-      try {
-        final gradeSheetRes = await http.post(
-          Uri.parse('https://ewumate-parser.azurewebsites.net/api/parse_grade_sheet'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'student_id': studentId,
-            'password': password,
-          }),
-        ).timeout(const Duration(seconds: 15));
+      final List<PortalEnrolledCourse> enrolledCourses = enrolledList.map((c) {
+        return PortalEnrolledCourse(
+          courseCode: c['course_code']?.toString() ?? '',
+          section: c['section']?.toString() ?? '',
+          credits: (c['credits'] as num?)?.toDouble() ?? 3.0,
+          timing: c['timing']?.toString() ?? '',
+          room: c['room']?.toString() ?? '',
+          facultyName: c['faculty_name']?.toString() ?? '',
+          facultyInitial: c['faculty_initial']?.toString() ?? '',
+          facultyEmail: c['faculty_email']?.toString() ?? '',
+          withdrawStatus: c['withdraw_status']?.toString() ?? 'No',
+          dropStatus: c['drop_status']?.toString() ?? 'No',
+        );
+      }).toList();
 
-        if (gradeSheetRes.statusCode == 200) {
-          final data = jsonDecode(gradeSheetRes.body) as Map<String, dynamic>;
-          parsedCourses = List<Map<String, dynamic>>.from(data['courses'] ?? []);
-        }
-      } catch (e) {
-        debugPrint("[PortalSyncScreen] Azure grade-sheet notice: $e");
-      }
+      final parsedWeeklyGrid = <String, List<Map<String, dynamic>>>{};
+      gridData.forEach((k, v) {
+        parsedWeeklyGrid[k] = (v as List).cast<Map<String, dynamic>>();
+      });
 
-      // 3. Enrich enrolled courses with verified faculty directory & assignments data
-      setState(() => _statusMessage = "Matching verified faculty directory details...");
-      List<PortalEnrolledCourse> enrichedCourses = [];
-      try {
-        final supabase = Supabase.instance.client;
-        final semCode = CourseUtils.cleanSemester(result.activeSemesterName);
-
-        final facultyDirRes = await supabase
-            .from('faculty_directory')
-            .select('short_name, full_name, email');
-        
-        final Map<String, Map<String, String>> facultyByInitial = {};
-        for (final row in facultyDirRes as List) {
-          final init = (row['short_name'] ?? '').toString().trim().toUpperCase();
-          if (init.isNotEmpty) {
-            facultyByInitial[init] = {
-              'fullName': (row['full_name'] ?? '').toString().trim(),
-              'email': (row['email'] ?? '').toString().trim(),
-            };
-          }
-        }
-
-        final assignmentsRes = await supabase
-            .from('faculty_assignments')
-            .select('course_code, section_number, faculty_initial, faculty_name')
-            .eq('semester', semCode);
-
-        final Map<String, Map<String, String>> assignmentsByKey = {};
-        for (final row in assignmentsRes as List) {
-          final code = (row['course_code'] ?? '').toString().trim().toUpperCase();
-          final sec = (row['section_number'] ?? '').toString().trim();
-          final init = (row['faculty_initial'] ?? '').toString().trim();
-          final name = (row['faculty_name'] ?? '').toString().trim();
-          if (code.isNotEmpty && init.isNotEmpty && init != 'TBA') {
-            assignmentsByKey['$code:$sec'] = {
-              'initial': init,
-              'name': name,
-            };
-          }
-        }
-
-        for (final c in result.enrolledCourses) {
-          final cleanCode = c.courseCode.contains(' ') ? c.courseCode.split(' ')[0].toUpperCase() : c.courseCode.toUpperCase();
-          final secKey = '$cleanCode:${c.section.trim()}';
-
-          String resolvedInitial = c.facultyInitial.trim();
-          String resolvedName = c.facultyName.trim();
-          String resolvedEmail = c.facultyEmail.trim();
-
-          // 1. If portal gave a valid initial, prioritize it!
-          // If portal returned TBA or empty, fallback to community verified faculty_assignments
-          if (resolvedInitial.isEmpty || resolvedInitial.toUpperCase() == 'TBA') {
-            if (assignmentsByKey.containsKey(secKey)) {
-              resolvedInitial = assignmentsByKey[secKey]!['initial']!;
-              if (assignmentsByKey[secKey]!['name']!.isNotEmpty) {
-                resolvedName = assignmentsByKey[secKey]!['name']!;
-              }
-            }
-          }
-
-          // 2. Canonical faculty_directory matching initial -> fills full name and official email
-          final normInit = resolvedInitial.trim().toUpperCase();
-          if (facultyByInitial.containsKey(normInit)) {
-            final dir = facultyByInitial[normInit]!;
-            if (dir['fullName']!.isNotEmpty) {
-              resolvedName = dir['fullName']!;
-            }
-            if (dir['email']!.isNotEmpty && (resolvedEmail.isEmpty || !resolvedEmail.contains('@'))) {
-              resolvedEmail = dir['email']!;
-            }
-          }
-
-          enrichedCourses.add(c.copyWith(
-            facultyInitial: resolvedInitial,
-            facultyName: resolvedName,
-            facultyEmail: resolvedEmail,
-          ));
-        }
-      } catch (e) {
-        debugPrint("[PortalSyncScreen] Faculty directory enrichment note: $e");
-        enrichedCourses = result.enrolledCourses;
-      }
+      _fetchedWeeklyGrid = parsedWeeklyGrid;
 
       final finalResult = PortalSyncResult(
-        profile: result.profile,
-        activeSemesterName: result.activeSemesterName,
-        activeSemesterId: result.activeSemesterId,
-        enrolledCourses: enrichedCourses,
-        degreeAreas: result.degreeAreas,
+        profile: studentProfile,
+        activeSemesterName: data['active_semester_name']?.toString() ?? 'Fall 2026',
+        activeSemesterId: (data['active_semester_id'] as num?)?.toInt() ?? 0,
+        enrolledCourses: enrolledCourses,
+        degreeAreas: [],
       );
 
       if (mounted) {
         setState(() {
           _portalData = finalResult;
-          _azureParsedGrades = parsedCourses;
+          _azureParsedGrades = gradesList;
           _step = 1; // Move to Preview & Selection
           _isLoading = false;
           _statusMessage = null;
@@ -218,7 +166,9 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
     }
   }
 
+
   /// Formats the raw TimeSlotName (e.g. "ST 08:30 AM-10:00 AM" or "T 04:50 PM-06:50 PM") into weekly_grid_cache
+
   Map<String, List<Map<String, dynamic>>> _buildWeeklyGridCache(
     List<PortalEnrolledCourse> courses,
     Map<String, String> courseNamesByCode,
@@ -478,38 +428,8 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
           }
         }
 
-        // 4a. First Crowdsource verified faculty assignments so DB has latest truth
-        if (_syncCrowdsourcedFaculty && result.enrolledCourses.isNotEmpty) {
-          setState(() => _statusMessage = "Crowdsourcing verified faculty assignments...");
-          final facultyUpdates = <Map<String, dynamic>>[];
-          for (final item in result.enrolledCourses) {
-            final cleanCode = item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode;
-            if (item.facultyInitial.isNotEmpty && item.facultyInitial != 'TBA') {
-              facultyUpdates.add({
-                'course_code': cleanCode,
-                'section_number': item.section,
-                'semester': activeSemCode,
-                'faculty_initial': item.facultyInitial,
-                'faculty_name': item.facultyName,
-                'is_verified': true,
-              });
-            }
-          }
-
-          if (facultyUpdates.isNotEmpty) {
-            try {
-              await supabase.from('faculty_assignments').upsert(
-                facultyUpdates,
-                onConflict: 'course_code,section_number,semester',
-              );
-            } catch (e) {
-              debugPrint("[PortalSyncScreen] faculty_assignments note: $e");
-            }
-          }
-        }
-
-        // 4b. Build and save the formatted weekly_grid_cache into user_semester_states
-        final weeklyGrid = _buildWeeklyGridCache(result.enrolledCourses, courseNames);
+        // 4b. Save the formatted weekly_grid_cache into user_semester_states (precomputed by Azure)
+        final weeklyGrid = _fetchedWeeklyGrid ?? _buildWeeklyGridCache(result.enrolledCourses, courseNames);
         try {
           await supabase.from('user_semester_states').upsert({
             'user_id': user.id,
@@ -856,12 +776,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
                 : "Optional: Import completed degree courses & letter grades",
             value: _syncAcademicHistory,
             onChanged: (v) => setState(() => _syncAcademicHistory = v ?? false),
-          ),
-          _buildCheckboxOption(
-            title: "Crowdsource Faculty Assignments",
-            subtitle: "Share verified faculty initials with your classmates",
-            value: _syncCrowdsourcedFaculty,
-            onChanged: (v) => setState(() => _syncCrowdsourcedFaculty = v ?? true),
           ),
           _buildCheckboxOption(
             title: "Update Program & Profile Metadata",

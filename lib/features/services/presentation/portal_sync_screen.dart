@@ -274,17 +274,31 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
       if (_syncProfileMetadata) {
         setState(() => _statusMessage = "Updating profile metadata...");
         final cleanAdmittedSem = CourseUtils.cleanSemester(result.profile.admittedSemester);
+        final isBi = result.profile.departmentName.toLowerCase().contains('pharm') ||
+            result.profile.departmentName.toLowerCase().contains('law') ||
+            result.profile.programCode.toUpperCase().contains('PHRM') ||
+            result.profile.programCode.toUpperCase().contains('LLB');
+        final track = isBi ? 'bi_semester' : 'tri_semester';
+
         final profilePayload = <String, dynamic>{
           'id': user.id,
           'student_id': result.profile.studentId,
           'program_code': result.profile.programCode.toUpperCase(),
           'program_name': result.profile.programName,
           'department_name': result.profile.departmentName,
+          'semester_type': track,
+          'track': track,
+          'onboarding_status': 'completed',
         };
         if (cleanAdmittedSem.isNotEmpty) {
           profilePayload['admitted_semester'] = cleanAdmittedSem;
         }
         await supabase.from('profiles').upsert(profilePayload);
+      } else {
+        // Even if metadata fields are kept as-is, ensure onboarding is marked completed
+        await supabase.from('profiles').update({
+          'onboarding_status': 'completed',
+        }).eq('id', user.id);
       }
 
       // 3. Academic History & Grades
@@ -455,11 +469,8 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
           ),
         );
 
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/dashboard');
-        }
+        // Mark onboarding complete and navigate to dashboard
+        context.go('/dashboard');
       }
     } catch (e) {
       if (mounted) {

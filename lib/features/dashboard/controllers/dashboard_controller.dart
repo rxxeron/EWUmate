@@ -124,17 +124,6 @@ class DashboardController {
             return [];
           }
         }),
-        Future<Map<String, dynamic>?>(() async {
-          try {
-            return await supabase
-                .from('app_config')
-                .select('value, latest_version, download_url')
-                .eq('key', 'update_info')
-                .maybeSingle();
-          } catch (e) {
-            return null;
-          }
-        }),
         PackageInfo.fromPlatform().catchError(
           (_) => PackageInfo(
             appName: '',
@@ -146,13 +135,11 @@ class DashboardController {
       ]);
 
       final scheduleData = results[0] as Map<String, dynamic>;
-      final updateInfo = results[2] as Map<String, dynamic>?;
-      final versionInfo = results[3] as PackageInfo;
+      final versionInfo = results[2] as PackageInfo;
 
       state.lastValidScheduleData = scheduleData;
       state.semesterCode = code;
       state.semConfig = academicState.toJson();
-      state.updateInfo = updateInfo;
       state.loadingInit = false;
 
       // Extract tasks from scheduleData
@@ -164,51 +151,8 @@ class DashboardController {
         return <String, dynamic>{};
       }).where((m) => m.isNotEmpty).toList();
 
-      // Check app update banner
-      try {
-        final currentVersion = versionInfo.version;
-        if (updateInfo != null) {
-          bool isPromptEnabled = true;
-          try {
-            final val = updateInfo['value'];
-            if (val is Map) {
-              isPromptEnabled = val['update_available'] as bool? ?? true;
-            } else if (val is String) {
-              final decoded = jsonDecode(val);
-              if (decoded is Map) {
-                isPromptEnabled = decoded['update_available'] as bool? ?? true;
-              }
-            }
-          } catch (_) {}
-
-          final latestVersion = updateInfo['latest_version']?.toString() ?? '';
-          if (isPromptEnabled && VersionUtils.isUpdateAvailable(currentVersion, latestVersion)) {
-            final installer = versionInfo.installerStore;
-            final isPlayStore = installer == 'com.android.vending';
-            String apkUrl = updateInfo['download_url']?.toString() ?? '';
-            if (apkUrl.isEmpty) {
-              try {
-                final val = updateInfo['value'];
-                if (val is Map) {
-                  apkUrl = val['download_url']?.toString() ?? '';
-                } else if (val is String) {
-                  final decoded = jsonDecode(val);
-                  if (decoded is Map) {
-                    apkUrl = decoded['download_url']?.toString() ?? '';
-                  }
-                }
-              } catch (_) {}
-            }
-            state.showUpdateBanner = true;
-            state.isPlayStoreUser = isPlayStore;
-            state.customApkUrl = apkUrl;
-          } else {
-            state.showUpdateBanner = false;
-          }
-        }
-      } catch (e) {
-        debugPrint('[DashboardController] Update check error: $e');
-      }
+      // Google Play In-App Update is handled automatically on launch via AppUpdateService
+      state.showUpdateBanner = false;
 
       onStateChanged();
 

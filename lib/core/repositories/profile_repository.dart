@@ -249,17 +249,22 @@ class ProfileRepository {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
-      // 2. Increment app_open_count and update last_active_at + app_version
-      await _supabase.rpc('increment_app_open_count', params: {
-        'p_user_id': userId,
-      });
-      
-      // Update app_version separately or via RPC if supported
-      await _supabase.from('profiles').update({
-        'app_version': currentVersion,
-        'last_active_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
-      
+      // 2. Perform atomic single-query update (app_open_count, last_active_at, app_version)
+      try {
+        await _supabase.rpc('record_app_open', params: {
+          'p_user_id': userId,
+          'p_app_version': currentVersion,
+        });
+      } catch (_) {
+        // Fallback for backward compatibility if RPC is not yet executed
+        await _supabase.rpc('increment_app_open_count', params: {
+          'p_user_id': userId,
+        });
+        await _supabase.from('profiles').update({
+          'app_version': currentVersion,
+          'last_active_at': DateTime.now().toIso8601String(),
+        }).eq('id', userId);
+      }
     } catch (e) {
       if (kDebugMode) print('Failed to record activity: $e');
     }

@@ -11,6 +11,7 @@ import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
 import 'core/repositories/auth_repository.dart';
 import 'dart:io';
+import 'core/services/app_update_service.dart';
 import 'core/theme/app_theme.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -73,6 +74,11 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize Session Guardian
     ref.read(sessionGuardianProvider);
+
+    // Check Google Play Store for In-App Updates directly
+    if (!kIsWeb) {
+      AppUpdateService.checkForPlayStoreUpdate();
+    }
     
     // Initialize FCM when user is logged in (mobile only)
     if (!kIsWeb) {

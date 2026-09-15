@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -156,7 +157,7 @@ class SemesterProgressRepository {
       
       _updateProgressCache(userId, semesterCode, res);
       // Trigger background credit recalculation
-      _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
+      unawaited(_supabase.functions.invoke('sync-academic-stats').then<void>((_) {}, onError: (_) {}));
     } catch (e) {
       if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
       _updateProgressCache(userId, semesterCode, data);

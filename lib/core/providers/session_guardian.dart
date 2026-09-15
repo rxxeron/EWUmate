@@ -67,9 +67,6 @@ class SessionGuardian {
         case AuthChangeEvent.initialSession:
           if (kDebugMode) print('[SessionGuardian] 🏁 Initial session loaded: ${session != null}');
           break;
-        case AuthChangeEvent.userDeleted:
-          if (kDebugMode) print('[SessionGuardian] 🗑️ User deleted.');
-          break;
         case AuthChangeEvent.mfaChallengeVerified:
           if (kDebugMode) print('[SessionGuardian] 🔐 MFA Challenge Verified.');
           break;

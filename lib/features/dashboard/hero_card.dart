@@ -23,8 +23,6 @@ class HeroCard extends StatelessWidget {
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(24),
-      opacity: 0.1,
-      borderColor: color.withValues(alpha: 0.3),
       child: Column(
         children: [
           if (iconMode)

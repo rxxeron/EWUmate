@@ -93,3 +93,9 @@ ewumate_production_build/
 
 # Subprojects
 Assignment/
+
+# Agents & Local Design References
+.agents/
+skills-lock.json
+new ui/
+Lottiejson/

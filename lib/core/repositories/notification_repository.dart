@@ -12,9 +12,8 @@ part 'notification_repository.g.dart';
 
 class NotificationRepository {
   final SupabaseClient _supabase;
-  final CacheService _cache;
 
-  NotificationRepository(this._supabase, this._cache);
+  NotificationRepository(this._supabase, [CacheService? cache]);
 
   Stream<List<model.Notification>> streamNotifications(String userId) async* {
     // 1. Yield local data immediately for instant UI

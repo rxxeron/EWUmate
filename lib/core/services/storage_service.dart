@@ -1,14 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:path/path.dart' as path;
-
 class StorageService {
   final _supabase = Supabase.instance.client;
 
   Future<String?> uploadProfileImage(XFile file, String uid) async {
     try {
-      final String fileName = 'profile_$uid${path.extension(file.path)}';
+      final ext = file.path.contains('.') ? '.${file.path.split('.').last}' : '';
+      final String fileName = 'profile_$uid$ext';
       final bytes = await file.readAsBytes();
 
       // Ensure you have a bucket named 'profile-images' with public access

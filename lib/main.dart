@@ -22,7 +22,9 @@ class MyHttpOverrides extends HttpOverrides {
 }
 
 void main() async {
-  HttpOverrides.global = MyHttpOverrides();
+  if (!kIsWeb) {
+    HttpOverrides.global = MyHttpOverrides();
+  }
   WidgetsFlutterBinding.ensureInitialized();
 
 
@@ -34,9 +36,11 @@ void main() async {
       cacheService.init(),
       () async {
         try {
-          await Firebase.initializeApp(
-            options: DefaultFirebaseOptions.currentPlatform,
-          );
+          if (!kIsWeb) {
+            await Firebase.initializeApp(
+              options: DefaultFirebaseOptions.currentPlatform,
+            );
+          }
         } catch (e) {
           if (kDebugMode) debugPrint('Firebase init error: $e');
         }
@@ -70,15 +74,17 @@ class MyApp extends ConsumerWidget {
     // Initialize Session Guardian
     ref.read(sessionGuardianProvider);
     
-    // Initialize FCM when user is logged in
-    ref.listen(authStateProvider, (previous, next) {
-      final event = next.value?.event;
-      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
-        ref.read(fcmServiceProvider).initialize().catchError((err) {
-          if (kDebugMode) debugPrint('FCM Init Error: $err');
-        });
-      }
-    });
+    // Initialize FCM when user is logged in (mobile only)
+    if (!kIsWeb) {
+      ref.listen(authStateProvider, (previous, next) {
+        final event = next.value?.event;
+        if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
+          ref.read(fcmServiceProvider).initialize().catchError((err) {
+            if (kDebugMode) debugPrint('FCM Init Error: $err');
+          });
+        }
+      });
+    }
     
     final router = ref.watch(appRouterProvider);
 

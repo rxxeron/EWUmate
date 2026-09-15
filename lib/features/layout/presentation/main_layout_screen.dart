@@ -17,13 +17,13 @@ class MainLayoutScreen extends StatelessWidget {
               context.go('/dashboard');
               break;
             case 1:
-              context.go('/schedule');
+              context.go('/tasks');
               break;
             case 2:
               context.go('/progress');
               break;
             case 3:
-              context.go('/tasks');
+              context.go('/schedule');
               break;
             case 4:
               context.go('/services');
@@ -38,9 +38,9 @@ class MainLayoutScreen extends StatelessWidget {
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today),
-            label: 'Schedule',
+            icon: Icon(Icons.assignment_outlined),
+            selectedIcon: Icon(Icons.assignment),
+            label: 'Tasks',
           ),
           NavigationDestination(
             icon: Icon(Icons.timeline_outlined),
@@ -48,9 +48,9 @@ class MainLayoutScreen extends StatelessWidget {
             label: 'Progress',
           ),
           NavigationDestination(
-            icon: Icon(Icons.assignment_outlined),
-            selectedIcon: Icon(Icons.assignment),
-            label: 'Tasks',
+            icon: Icon(Icons.calendar_today_outlined),
+            selectedIcon: Icon(Icons.calendar_today),
+            label: 'Schedule',
           ),
           NavigationDestination(
             icon: Icon(Icons.apps_outlined),
@@ -65,9 +65,9 @@ class MainLayoutScreen extends StatelessWidget {
   int _calculateSelectedIndex(BuildContext context) {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/schedule')) return 1;
+    if (location.startsWith('/tasks')) return 1;
     if (location.startsWith('/progress')) return 2;
-    if (location.startsWith('/tasks')) return 3;
+    if (location.startsWith('/schedule')) return 3;
     if (location.startsWith('/services')) return 4;
     return 0;
   }

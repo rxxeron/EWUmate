@@ -6,6 +6,8 @@ import '../providers/scaffold_provider.dart';
 import 'app_drawer.dart';
 import '../../features/auth/auth_providers.dart';
 
+import 'primitives/ewu_floating_nav_bar.dart';
+
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
@@ -16,6 +18,34 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  static const List<EwuNavItem> _navItems = [
+    EwuNavItem(
+      icon: Icons.grid_view_outlined,
+      activeIcon: Icons.grid_view_rounded,
+      label: 'Home',
+    ),
+    EwuNavItem(
+      icon: Icons.check_circle_outline_rounded,
+      activeIcon: Icons.check_circle_rounded,
+      label: 'Tasks',
+    ),
+    EwuNavItem(
+      icon: Icons.auto_graph_outlined,
+      activeIcon: Icons.auto_graph_rounded,
+      label: 'Progress',
+    ),
+    EwuNavItem(
+      icon: Icons.calendar_today_outlined,
+      activeIcon: Icons.calendar_today_rounded,
+      label: 'Schedule',
+    ),
+    EwuNavItem(
+      icon: Icons.widgets_outlined,
+      activeIcon: Icons.widgets_rounded,
+      label: 'Services',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +68,7 @@ class _MainShellState extends ConsumerState<MainShell> {
       child: FullGradientScaffold(
         scaffoldKey: _scaffoldKey,
         body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           switchInCurve: Curves.easeIn,
           switchOutCurve: Curves.easeOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
@@ -51,85 +81,31 @@ class _MainShellState extends ConsumerState<MainShell> {
         ),
         drawer: const AppDrawer(),
         bottomNavigationBar: _shouldShowBottomNav(location)
-          ? Container(
-              height: 64,
-              margin: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B).withOpacity(0.8),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildPillNavItem(context, 0, Icons.home_rounded, 'Home', currentIndex == 0),
-                  _buildPillNavItem(context, 1, Icons.task_alt_rounded, 'Tasks', currentIndex == 1),
-                  _buildPillNavItem(context, 2, Icons.auto_graph_rounded, 'Semester', currentIndex == 2),
-                ],
-              ),
-            )
-          : null,
+            ? EwuFloatingNavBar(
+                currentIndex: currentIndex,
+                onItemSelected: (index) => _onItemTapped(context, index),
+                items: _navItems,
+              )
+            : null,
       ),
     );
   }
 
-  Widget _buildPillNavItem(BuildContext context, int index, IconData icon, String label, bool isSelected) {
-    if (isSelected) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0891B2), Color(0xFF0E7490)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0891B2).withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return IconButton(
-      icon: Icon(icon, color: Colors.white54, size: 24),
-      onPressed: () => _onItemTapped(context, index),
-    );
-  }
-
   int _getSelectedIndex(String location) {
-    if (location == '/dashboard') return 0;
-    if (location == '/tasks') return 1;
-    if (location == '/semester-progress') return 2;
+    if (location.startsWith('/dashboard')) return 0;
+    if (location.startsWith('/tasks')) return 1;
+    if (location.startsWith('/semester-progress')) return 2;
+    if (location.startsWith('/schedule-manager')) return 3;
+    if (location.startsWith('/services')) return 4;
     return 0; // Default or fallback
   }
 
   bool _shouldShowBottomNav(String location) {
-    // Only show bottom nav on main tabs
     return location == '/dashboard' ||
         location == '/tasks' ||
-        location == '/semester-progress';
+        location == '/semester-progress' ||
+        location == '/schedule-manager' ||
+        location == '/services';
   }
 
   void _onItemTapped(BuildContext context, int index) {
@@ -144,6 +120,9 @@ class _MainShellState extends ConsumerState<MainShell> {
         context.go('/semester-progress');
         break;
       case 3:
+        context.go('/schedule-manager');
+        break;
+      case 4:
         context.go('/services');
         break;
     }

@@ -1,202 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/models/faculty.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/ewu_theme_extension.dart';
 
-class FacultyCard extends StatelessWidget {
+class FacultyCard extends StatefulWidget {
   final Faculty faculty;
 
   const FacultyCard({super.key, required this.faculty});
 
   @override
-  Widget build(BuildContext context) {
-    // Handle live photo URLs correctly
-    String? finalPhotoUrl = faculty.photoUrl;
-    bool isLiveUrl = finalPhotoUrl != null && finalPhotoUrl.startsWith('http');
+  State<FacultyCard> createState() => _FacultyCardState();
+}
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1E2836).withOpacity(0.8),
-            const Color(0xFF16202A).withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => context.push('/services/faculty-directory/details', extra: faculty),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  // Premium Avatar
-                  Hero(
-                    tag: 'faculty_${faculty.id}',
-                    child: Container(
-                      width: 75,
-                      height: 75,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: const Color(0xFF16202A),
-                        border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.2)),
-                        image: isLiveUrl
-                            ? DecorationImage(
-                                image: NetworkImage(finalPhotoUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: !isLiveUrl
-                          ? const Icon(Icons.person_rounded, color: Colors.white24, size: 40)
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  
-                  // Info Area
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                faculty.fullName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.05),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                faculty.shortName,
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        
-                        // Designation Badge
-                        if (faculty.designation != null && faculty.designation!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00E5FF).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              faculty.designation!,
-                              style: const TextStyle(
-                                color: Color(0xFF00E5FF),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        
-                        const SizedBox(height: 10),
-                        
-                        // Email Area with Copy
-                        if (faculty.email != null && faculty.email!.isNotEmpty)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _launchEmail(faculty.email!),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.05),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.white.withOpacity(0.05)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.email_rounded, color: Color(0xFF00E5FF), size: 14),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            faculty.email!,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 12,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionIconButton(
-                                icon: Icons.copy_rounded,
-                                label: '',
-                                onTap: () => _copyEmail(context, faculty.email!),
-                              ),
-                            ],
-                          ),
-                        
-                        if (faculty.profileUrl != null) ...[
-                          const SizedBox(height: 8),
-                          _ActionIconButton(
-                            icon: Icons.open_in_new_rounded,
-                            label: 'View Full Profile',
-                            onTap: () => _launchUrl(faculty.profileUrl!),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+class _FacultyCardState extends State<FacultyCard> {
+  bool _isPressed = false;
 
   void _copyEmail(BuildContext context, String email) {
+    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: email));
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Email copied to clipboard'),
-        backgroundColor: const Color(0xFF00E5FF).withOpacity(0.9),
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_rounded, color: AppColors.primaryCyan, size: 16),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Email copied: $email',
+                style: GoogleFonts.sora(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF0D2342),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 8,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+        ),
+        duration: const Duration(milliseconds: 1600),
       ),
     );
   }
@@ -208,47 +70,226 @@ class FacultyCard extends StatelessWidget {
     }
   }
 
-  Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
-}
-
-class _ActionIconButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionIconButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+    final colors = context.ewuColors;
+    final faculty = widget.faculty;
+    final photoUrl = faculty.photoUrl;
+    final isLiveUrl = photoUrl != null && photoUrl.startsWith('http');
+
+    return AnimatedScale(
+      scale: _isPressed ? 0.985 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOutCubic,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white70, size: 14),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w500),
+          color: colors.surfaceNavyBlue,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: colors.borderSubtle,
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.22),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onHighlightChanged: (pressed) => setState(() => _isPressed = pressed),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              context.push('/services/faculty-directory/details', extra: faculty);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Left Initials / Photo Avatar
+                  Hero(
+                    tag: 'faculty_${faculty.id}',
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF102A4A), Color(0xFF08192E)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: Border.all(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.38),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.10),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: isLiveUrl
+                          ? Image.network(
+                              photoUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _buildInitialsFallback(faculty),
+                            )
+                          : _buildInitialsFallback(faculty),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+
+                  // Middle Information Area
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Name and Code Badge
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                faculty.fullName,
+                                style: GoogleFonts.sora(
+                                  color: colors.textPrimary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (faculty.shortName.isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryCyan.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.primaryCyan.withValues(alpha: 0.28),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  faculty.shortName,
+                                  style: GoogleFonts.sora(
+                                    color: AppColors.primaryCyan,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Department / Designation Label
+                        Text(
+                          'Department of ${faculty.department}',
+                          style: GoogleFonts.sora(
+                            color: AppColors.secondarySoftBlue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Email Pill Row
+                        if (faculty.email != null && faculty.email!.isNotEmpty)
+                          InkWell(
+                            onTap: () => _launchEmail(faculty.email!),
+                            borderRadius: BorderRadius.circular(6),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.mail_outline_rounded,
+                                  color: AppColors.primaryCyan,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    faculty.email!,
+                                    style: GoogleFonts.sora(
+                                      color: colors.textSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // Right Quick Action Pill (Email / Copy)
+                  if (faculty.email != null && faculty.email!.isNotEmpty) ...[
+                    const SizedBox(width: 10),
+                    Tooltip(
+                      message: 'Copy Email',
+                      child: InkWell(
+                        onTap: () => _copyEmail(context, faculty.email!),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.primaryCyan.withValues(alpha: 0.20),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.copy_rounded,
+                            size: 16,
+                            color: AppColors.primaryCyan,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitialsFallback(Faculty faculty) {
+    return Center(
+      child: Text(
+        faculty.avatarInitials,
+        style: GoogleFonts.sora(
+          color: AppColors.primaryCyan,
+          fontSize: 17,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
         ),
       ),
     );

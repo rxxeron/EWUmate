@@ -6,7 +6,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/services/portal_service.dart';
 import '../../core/utils/course_utils.dart';
 import '../../features/auth/auth_providers.dart';
-import '../../core/widgets/glass_kit.dart';
 import '../../features/onboarding/onboarding_repository.dart';
 
 class PortalSyncModal extends ConsumerStatefulWidget {

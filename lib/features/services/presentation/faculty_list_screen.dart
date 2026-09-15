@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/academic_providers.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/glass_kit.dart';
 
 class FacultyListScreen extends ConsumerStatefulWidget {
   const FacultyListScreen({super.key});
@@ -15,12 +19,22 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return FullGradientScaffold(
       appBar: AppBar(
-        title: const Text('Faculty List'),
+        title: Text(
+          'Faculty List',
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(facultySnapshotsProvider.future),
+        color: AppColors.primaryCyan,
         child: _buildMainContent(),
       ),
     );
@@ -35,16 +49,19 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
         // Main Prominent Google Drive Folder Card
         Container(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+            gradient: LinearGradient(
+              colors: [
+                AppColors.surfaceNavyBlue,
+                const Color(0xFF0C2B54).withValues(alpha: 0.8),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.4), width: 1.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35), width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF00E5FF).withOpacity(0.1),
+                color: AppColors.primaryCyan.withValues(alpha: 0.15),
                 blurRadius: 16,
                 spreadRadius: 2,
               )
@@ -60,28 +77,28 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00E5FF).withOpacity(0.15),
+                        color: AppColors.primaryCyan.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.folder_shared_rounded, color: Color(0xFF00E5FF), size: 28),
+                      child: const Icon(Icons.folder_shared_rounded, color: AppColors.primaryCyan, size: 28),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Official Faculty List Drive',
-                            style: TextStyle(
-                              fontSize: 18,
+                            style: GoogleFonts.sora(
+                              fontSize: 17,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
                             'Access all faculty PDFs directly in Google Drive',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: GoogleFonts.sora(fontSize: 12, color: AppColors.secondaryText),
                           ),
                         ],
                       ),
@@ -89,20 +106,37 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                SizedBox(
+                Container(
                   width: double.infinity,
                   height: 46,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton.icon(
                     onPressed: () => launchUrl(Uri.parse(driveFolderUrl), mode: LaunchMode.externalApplication),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                    label: const Text(
+                    icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Color(0xFF04101E)),
+                    label: Text(
                       'Open Google Drive Folder',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.sora(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF04101E),
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00E5FF),
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
                 ),
@@ -178,17 +212,17 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
                         elevation: 0,
-                        color: const Color(0xFF1E293B).withOpacity(0.4),
+                        color: const Color(0xFF1E293B).withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(color: Colors.white.withOpacity(0.06)),
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
                         ),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4285F4).withOpacity(0.15),
+                              color: const Color(0xFF4285F4).withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(Icons.add_to_drive_rounded, color: Color(0xFF4285F4), size: 20),
@@ -209,7 +243,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                           onTap: () => launchUrl(Uri.parse(targetUrl), mode: LaunchMode.externalApplication),
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 );
               },

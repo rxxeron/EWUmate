@@ -3,14 +3,22 @@ import '../../../../core/repositories/faculty_repository.dart';
 import '../../../../core/models/faculty.dart';
 
 final facultySearchQueryProvider = StateProvider<String>((ref) => '');
+final facultyDepartmentFilterProvider = StateProvider<String>((ref) => 'All');
 
 final facultyDirectoryProvider = FutureProvider<List<Faculty>>((ref) async {
-  final query = ref.watch(facultySearchQueryProvider);
+  final query = ref.watch(facultySearchQueryProvider).trim();
+  final selectedDept = ref.watch(facultyDepartmentFilterProvider);
   final repo = ref.watch(facultyRepositoryProvider);
   
+  List<Faculty> list;
   if (query.isEmpty) {
-    return repo.getAllFaculty();
+    list = await repo.getAllFaculty();
   } else {
-    return repo.searchFaculty(query);
+    list = await repo.searchFaculty(query);
   }
+
+  if (selectedDept != 'All') {
+    list = list.where((f) => f.department.toUpperCase() == selectedDept.toUpperCase()).toList();
+  }
+  return list;
 });

@@ -229,7 +229,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Successfully submitted office hours for verification!'),
-            backgroundColor: Colors.green.withOpacity(0.9),
+            backgroundColor: Colors.green.withValues(alpha: 0.9),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -263,7 +263,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: SingleChildScrollView(
         child: Form(
@@ -275,40 +275,55 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
               // Bottom sheet handle
               Center(
                 child: Container(
-                  width: 50,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 24),
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2.5),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
 
-              Text(
-                'Report Office Hours for ${widget.facultyInitials}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Add all scheduled office hours for this faculty member in one submission.',
-                style: TextStyle(color: Colors.white38, fontSize: 12),
-                textAlign: TextAlign.center,
+              // Title and Info
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Submit Office Hours',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'FACULTY: ${widget.facultyInitials}',
+                        style: const TextStyle(
+                          color: Colors.cyanAccent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 
-              // DYNAMIC SLOTS LIST
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _slots.length,
-                itemBuilder: (context, index) {
+              // SLOTS LIST
+              ...List.generate(
+                _slots.length,
+                (index) {
                   final slot = _slots[index];
                   final day = slot['day'] as String;
                   final startTime = slot['startTime'] as TimeOfDay?;
@@ -318,9 +333,9 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.02),
+                      color: Colors.white.withValues(alpha: 0.02),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.06)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,7 +373,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.02),
+                            color: Colors.white.withValues(alpha: 0.02),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.white10),
                           ),
@@ -402,7 +417,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.02),
+                                    color: Colors.white.withValues(alpha: 0.02),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: Colors.white10),
                                   ),
@@ -433,7 +448,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.02),
+                                    color: Colors.white.withValues(alpha: 0.02),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(color: Colors.white10),
                                   ),
@@ -472,7 +487,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                 ),
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(color: Colors.cyanAccent.withOpacity(0.4), width: 1.5),
+                  side: BorderSide(color: Colors.cyanAccent.withValues(alpha: 0.4), width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -503,7 +518,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                   hintText: 'e.g., SAC 402, Annex 501',
                   hintStyle: const TextStyle(color: Colors.white30, fontSize: 13),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.02),
+                  fillColor: Colors.white.withValues(alpha: 0.02),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -542,16 +557,16 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.02),
+                    color: Colors.white.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+                    border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.cyanAccent.withOpacity(0.1),
+                          color: Colors.cyanAccent.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -603,10 +618,10 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 20),
                     decoration: BoxDecoration(
-                      color: Colors.cyanAccent.withOpacity(0.01),
+                      color: Colors.cyanAccent.withValues(alpha: 0.01),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Colors.cyanAccent.withOpacity(0.15),
+                        color: Colors.cyanAccent.withValues(alpha: 0.15),
                         width: 1.5,
                         style: BorderStyle.solid,
                       ),

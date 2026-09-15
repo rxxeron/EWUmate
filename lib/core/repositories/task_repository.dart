@@ -7,7 +7,6 @@ import 'package:ewumate/core/providers/supabase_provider.dart';
 import 'package:ewumate/core/services/cache_service.dart';
 import 'package:ewumate/core/utils/course_utils.dart';
 import 'package:ewumate/core/providers/academic_providers.dart';
-import 'package:ewumate/features/auth/auth_providers.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
 
 part 'task_repository.g.dart';

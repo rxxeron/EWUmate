@@ -1,10 +1,15 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../data/models/study_material.dart';
 import '../data/repositories/study_vault_repository.dart';
 import 'providers/study_vault_providers.dart';
+import 'widgets/delete_material_sheet.dart';
+import 'widgets/my_study_material_card.dart';
 
 class MyStudyMaterialsScreen extends ConsumerStatefulWidget {
   const MyStudyMaterialsScreen({super.key});
@@ -14,156 +19,58 @@ class MyStudyMaterialsScreen extends ConsumerStatefulWidget {
 }
 
 class _MyStudyMaterialsScreenState extends ConsumerState<MyStudyMaterialsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  String _selectedDepartment = 'All';
   bool _isSubmitting = false;
 
-  Widget _getFileIcon(String fileName) {
-    final ext = fileName.split('.').last.toLowerCase();
-    IconData iconData;
-    Color color;
+  final List<String> _departments = [
+    'All',
+    'CSE',
+    'BUS',
+    'ENG',
+    'EEE',
+    'MATH',
+    'LAW',
+    'PHR',
+  ];
 
-    if (ext == 'pdf') {
-      iconData = Icons.picture_as_pdf_rounded;
-      color = Colors.redAccent;
-    } else if (ext == 'doc' || ext == 'docx') {
-      iconData = Icons.description_rounded;
-      color = Colors.blueAccent;
-    } else if (['jpg', 'jpeg', 'png', 'gif'].contains(ext)) {
-      iconData = Icons.image_rounded;
-      color = Colors.greenAccent;
-    } else {
-      iconData = Icons.insert_drive_file_rounded;
-      color = Colors.white54;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(iconData, color: color, size: 28),
-    );
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
-  String _formatDate(DateTime dt) {
-    final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m ago';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}h ago';
-    } else if (diff.inDays < 7) {
-      return '${diff.inDays}d ago';
-    } else {
-      return '${dt.day}/${dt.month}/${dt.year}';
-    }
-  }
-
-  Widget _getStatusBadge(String status) {
-    Color badgeColor;
-    String label;
-    IconData icon;
-
-    switch (status) {
-      case 'approved':
-        badgeColor = Colors.greenAccent;
-        label = 'Approved & Active';
-        icon = Icons.check_circle_outline_rounded;
-        break;
-      case 'rejected':
-        badgeColor = Colors.redAccent;
-        label = 'Rejected';
-        icon = Icons.cancel_outlined;
-        break;
-      case 'removal_requested':
-        badgeColor = Colors.orangeAccent;
-        label = 'Removal Requested';
-        icon = Icons.delete_sweep_outlined;
-        break;
-      case 'pending':
-      default:
-        badgeColor = Colors.amberAccent;
-        label = 'Pending Review';
-        icon = Icons.hourglass_empty_rounded;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: badgeColor.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: badgeColor),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: badgeColor,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleRemovalRequest(StudyMaterial item) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1B4B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text(
-            'Request Removal',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          content: Text(
-            'Are you sure you want to request the removal of "${item.fileName}"?\n\nThis will send a request to the system administrators for review. The file will remain visible until an admin approves your request.',
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white38)),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Confirm Request', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
+  Future<void> _showDeleteConfirmationBottomSheet(StudyMaterial item) async {
+    final confirmed = await DeleteMaterialSheet.show(
+      context,
+      item: item,
+      formattedSize: MyStudyMaterialCard.formatFileSize(item.fileSizeBytes),
+      formattedDate: MyStudyMaterialCard.formatDate(item.createdAt),
+      fileTypeBadge: MyStudyMaterialCard.buildFileTypeBadge(item.fileName, fileType: item.fileType),
     );
 
-    if (confirm != true) return;
+    if (confirmed != true) return;
 
     setState(() => _isSubmitting = true);
 
     try {
       final repository = ref.read(studyVaultRepositoryProvider);
-      await repository.requestRemoval(item.id);
-      
-      // Refresh views
+      await repository.deleteOrRequestRemoval(item);
+
+      // Refresh providers
       ref.invalidate(myStudyMaterialsProvider);
       ref.invalidate(studyMaterialsProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Removal request submitted successfully! An admin will review it shortly.'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text(
+              item.status == 'pending'
+                  ? 'Material removed successfully.'
+                  : 'Removal request submitted for administrator review.',
+            ),
+            backgroundColor: const Color(0xFF10B981),
           ),
         );
       }
@@ -171,8 +78,8 @@ class _MyStudyMaterialsScreenState extends ConsumerState<MyStudyMaterialsScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit request: $e'),
-            backgroundColor: Colors.redAccent,
+            content: Text('Action failed: $e'),
+            backgroundColor: const Color(0xFFEF4444),
           ),
         );
       }
@@ -181,6 +88,49 @@ class _MyStudyMaterialsScreenState extends ConsumerState<MyStudyMaterialsScreen>
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  Future<void> _openFile(StudyMaterial item) async {
+    final url = Uri.parse('https://drive.google.com/file/d/${item.driveFileId}/view?usp=drivesdk');
+    try {
+      await launchUrl(url, mode: LaunchMode.platformDefault);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open document: $e'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+  }
+
+  List<StudyMaterial> _filterMaterials(List<StudyMaterial> materials) {
+    return materials.where((item) {
+      // Department filter
+      if (_selectedDepartment != 'All') {
+        final courseCode = (item.courseCode ?? '').toUpperCase();
+        if (!courseCode.contains(_selectedDepartment)) {
+          return false;
+        }
+      }
+
+      // Search query filter
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final matchesName = item.fileName.toLowerCase().contains(q);
+        final matchesCode = (item.courseCode ?? '').toLowerCase().contains(q);
+        final matchesFaculty = (item.facultyInitial ?? '').toLowerCase().contains(q);
+        final matchesType = (item.fileType ?? '').toLowerCase().contains(q);
+
+        if (!matchesName && !matchesCode && !matchesFaculty && !matchesType) {
+          return false;
+        }
+      }
+
+      return true;
+    }).toList();
   }
 
   @override
@@ -194,106 +144,236 @@ class _MyStudyMaterialsScreenState extends ConsumerState<MyStudyMaterialsScreen>
       ),
       body: Stack(
         children: [
-          myMaterialsAsync.when(
-            data: (materials) {
-              if (materials.isEmpty) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_off_rounded, size: 64, color: Colors.white24),
-                      SizedBox(height: 16),
-                      Text(
-                        'You haven\'t uploaded any materials yet.',
-                        style: TextStyle(color: Colors.white38, fontSize: 16),
+          Column(
+            children: [
+              // Glowing Navy Search Bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF071426),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0x3319D9F5),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: materials.length,
-                itemBuilder: (context, index) {
-                  final item = materials[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: GlassContainer(
-                      width: double.infinity,
-                      borderRadius: 16,
-                      borderColor: Colors.white10,
-                      opacity: 0.03,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      child: Row(
-                        children: [
-                          _getFileIcon(item.fileName),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  item.fileName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${item.courseCode ?? 'Unknown'} • ${item.facultyInitial ?? 'Unknown'} • ${item.fileType ?? 'Other'}',
-                                  style: const TextStyle(fontSize: 12, color: Colors.white38),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    _getStatusBadge(item.status),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      _formatDate(item.createdAt),
-                                      style: const TextStyle(fontSize: 10, color: Colors.white24),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                    decoration: InputDecoration(
+                      hintText: 'Search by course, title, or type...',
+                      hintStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFF19D9F5),
+                        size: 20,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear_rounded, color: Colors.white54, size: 18),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                            )
+                          : const Icon(
+                              Icons.tune_rounded,
+                              color: Color(0xFF64748B),
+                              size: 18,
                             ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onChanged: (val) {
+                      setState(() => _searchQuery = val.trim());
+                    },
+                  ),
+                ),
+              ),
+
+              // Department Filter Horizontal Pills
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _departments.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final dept = _departments[index];
+                    final isSelected = dept == _selectedDepartment;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedDepartment = dept);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF19D9F5)
+                              : Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF19D9F5)
+                                : Colors.white.withValues(alpha: 0.1),
+                            width: 1,
                           ),
-                          if (item.status == 'approved')
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                              tooltip: 'Request Removal',
-                              onPressed: () => _handleRemovalRequest(item),
-                            )
-                          else if (item.status == 'removal_requested')
-                            const Tooltip(
-                              message: 'Removal request is under review',
-                              child: Icon(Icons.hourglass_bottom_rounded, color: Colors.orangeAccent, size: 20),
-                            )
-                        ],
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF19D9F5).withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          dept,
+                          style: TextStyle(
+                            color: isSelected ? const Color(0xFF071426) : const Color(0xFF94A3B8),
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // List of Uploaded Materials
+              Expanded(
+                child: myMaterialsAsync.when(
+                  data: (materials) {
+                    final filtered = _filterMaterials(materials);
+
+                    if (materials.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.cloud_off_rounded, size: 56, color: Colors.white24),
+                            SizedBox(height: 16),
+                            Text(
+                              'You haven\'t uploaded any materials yet.',
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (filtered.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No materials matched your filter.',
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      color: const Color(0xFF19D9F5),
+                      backgroundColor: const Color(0xFF071426),
+                      onRefresh: () async {
+                        ref.invalidate(myStudyMaterialsProvider);
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final item = filtered[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: MyStudyMaterialCard(
+                              item: item,
+                              onOpen: () => _openFile(item),
+                              onDelete: () => _showDeleteConfirmationBottomSheet(item),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF19D9F5)),
+                  ),
+                  error: (error, stack) => Center(
+                    child: Text(
+                      'Error: $error',
+                      style: const TextStyle(color: Color(0xFFEF4444)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Bottom Floating "+ Upload Material" Button
+          Positioned(
+            left: 20,
+            right: 20,
+            bottom: 24,
+            child: GestureDetector(
+              onTap: () {
+                context.push('/services/study-vault/upload');
+              },
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF19D9F5),
+                  borderRadius: BorderRadius.circular(26),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF19D9F5).withValues(alpha: 0.45),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_rounded,
+                      color: Color(0xFF071426),
+                      size: 22,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Upload Material',
+                      style: TextStyle(
+                        fontFamily: 'Sora',
+                        color: Color(0xFF071426),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        letterSpacing: -0.2,
                       ),
                     ),
-                  );
-                },
-              );
-            },
-            loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
-            error: (error, stack) => Center(
-              child: Text(
-                'Error: $error',
-                style: const TextStyle(color: Colors.redAccent),
+                  ],
+                ),
               ),
             ),
           ),
+
+          // Submitting Overlay
           if (_isSubmitting)
             Container(
               color: Colors.black54,
               child: const Center(
-                child: CircularProgressIndicator(color: Colors.cyanAccent),
+                child: CircularProgressIndicator(color: Color(0xFF19D9F5)),
               ),
             ),
         ],

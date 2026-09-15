@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/supabase_provider.dart';
 import '../../features/auth/auth_providers.dart';
 

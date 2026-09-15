@@ -92,6 +92,10 @@ final courseSearchResultProvider = FutureProvider<List<CourseMetadata>>((ref) as
   return repo.searchCourses(query);
 });
 
+enum SemesterScope { active, upcoming }
+
+final selectedSemesterScopeProvider = StateProvider<SemesterScope>((ref) => SemesterScope.active);
+
 final currentSemCodeProvider = FutureProvider<String>((ref) async {
   final state = await ref.watch(academicStateProvider.future);
   return state?.currentSemesterCode ?? '';
@@ -102,17 +106,49 @@ final nextSemCodeProvider = FutureProvider<String>((ref) async {
   return state?.nextSemesterCode ?? '';
 });
 
+final selectedBrowserSemesterCodeProvider = FutureProvider<String>((ref) async {
+  final scope = ref.watch(selectedSemesterScopeProvider);
+  final state = await ref.watch(academicStateProvider.future);
+  if (scope == SemesterScope.upcoming) {
+    final next = state?.nextSemesterCode ?? '';
+    if (next.isNotEmpty) return next;
+  }
+  return state?.currentSemesterCode ?? '';
+});
+
 final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
   
-  final activeSem = await ref.watch(currentSemCodeProvider.future);
-  if (activeSem.isEmpty) return [];
+  final targetSem = await ref.watch(selectedBrowserSemesterCodeProvider.future);
+  if (targetSem.isEmpty) return [];
 
+  final scope = ref.watch(selectedSemesterScopeProvider);
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
-  final safeSem = CourseUtils.cleanSemester(activeSem);
-  final spaceSem = activeSem.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+  final safeSem = CourseUtils.cleanSemester(targetSem);
+  final spaceSem = targetSem.replaceAllMapped(RegExp(r'([a-zA-Z]+)(\d+)'), (m) => '${m[1]} ${m[2]}');
+  
+  if (scope == SemesterScope.upcoming) {
+    try {
+      final enrollData = await supabase
+          .from('enrollments')
+          .select('course_code')
+          .eq('user_id', user.id)
+          .eq('status', 'upcoming')
+          .inFilter('semester_code', [targetSem, safeSem, spaceSem, targetSem.toLowerCase(), targetSem.replaceAll(' ', '')]);
+      final enrolled = (enrollData as List).map((e) => e['course_code'] as String).toList();
+      cache.setMapData('dashboard_box', 'upcoming_enrollment_codes_${user.id}_$targetSem', {'codes': enrolled});
+      return enrolled;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[CourseBrowser] Upcoming enrollment fetch failed: $e');
+      final cached = cache.getMapData('dashboard_box', 'upcoming_enrollment_codes_${user.id}_$targetSem');
+      if (cached != null && cached['codes'] != null) {
+        return List<String>.from(cached['codes']);
+      }
+      return [];
+    }
+  }
   
   try {
     // 1. Fetch from Enrollments
@@ -120,7 +156,7 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
         .from('enrollments')
         .select('course_code')
         .eq('user_id', user.id)
-        .inFilter('semester_code', [activeSem, safeSem, spaceSem, activeSem.toLowerCase(), activeSem.replaceAll(' ', '')]);
+        .inFilter('semester_code', [targetSem, safeSem, spaceSem, targetSem.toLowerCase(), targetSem.replaceAll(' ', '')]);
         
     final enrolled = (enrollData as List).map((e) => e['course_code'] as String).toList();
 
@@ -129,7 +165,7 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
         .from('semester_course_marks')
         .select('course_code')
         .eq('user_id', user.id)
-        .inFilter('semester_code', [activeSem, safeSem, spaceSem, activeSem.toLowerCase(), activeSem.replaceAll(' ', '')]);
+        .inFilter('semester_code', [targetSem, safeSem, spaceSem, targetSem.toLowerCase(), targetSem.replaceAll(' ', '')]);
     
     final marked = (marksData as List).map((e) => e['course_code'] as String).toList();
 
@@ -137,11 +173,11 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
     final res = {...enrolled, ...marked}.toList();
     
     // Cache it
-    cache.setMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem', {'codes': res});
+    cache.setMapData('dashboard_box', 'enrollment_codes_${user.id}_$targetSem', {'codes': res});
     return res;
   } catch (e) {
     if (kDebugMode) debugPrint('[CourseBrowser] Enrollment fetch failed, using cache: $e');
-    final cached = cache.getMapData('dashboard_box', 'enrollment_codes_${user.id}_$activeSem');
+    final cached = cache.getMapData('dashboard_box', 'enrollment_codes_${user.id}_$targetSem');
     if (cached != null && cached['codes'] != null) {
       final List<String> codes = List<String>.from(cached['codes']);
       if (codes.isNotEmpty) return codes;
@@ -149,9 +185,9 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
 
     try {
       final sched = cache.getCachedDashboardSchedule(user.id, safeSem) 
-          ?? cache.getCachedDashboardSchedule(user.id, activeSem)
-          ?? cache.getCachedDashboardSchedule(user.id, activeSem.toLowerCase())
-          ?? cache.getCachedDashboardSchedule(user.id, activeSem.replaceAll(' ', ''));
+          ?? cache.getCachedDashboardSchedule(user.id, targetSem)
+          ?? cache.getCachedDashboardSchedule(user.id, targetSem.toLowerCase())
+          ?? cache.getCachedDashboardSchedule(user.id, targetSem.replaceAll(' ', ''));
       if (sched != null) {
         final List<dynamic> template = sched['template'] as List? ?? [];
         final List<dynamic> exceptions = sched['exceptions'] as List? ?? [];
@@ -187,8 +223,8 @@ final userEnrollmentsProvider = FutureProvider<List<String>>((ref) async {
 });
 
 final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((ref) async {
-  final activeSem = await ref.watch(currentSemCodeProvider.future);
-  if (activeSem.isEmpty) return [];
+  final targetSem = await ref.watch(selectedBrowserSemesterCodeProvider.future);
+  if (targetSem.isEmpty) return [];
   
   final completedCourseCodesStr = ref.watch(userProfileProvider.select((profileAsync) {
     return profileAsync.maybeWhen(
@@ -218,7 +254,7 @@ final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((re
   final cache = ref.watch(cacheServiceProvider);
   
   try {
-    final allCourses = await ref.watch(semesterCoursesProvider(activeSem).future);
+    final allCourses = await ref.watch(semesterCoursesProvider(targetSem).future);
     
     // Filter out successfully completed courses
     final res = allCourses.where((course) {
@@ -226,12 +262,12 @@ final browserAvailableCoursesProvider = FutureProvider<List<CourseMetadata>>((re
     }).toList();
 
     // Cache it
-    cache.setMapData('dashboard_box', 'available_courses_$activeSem', 
+    cache.setMapData('dashboard_box', 'available_courses_$targetSem', 
       {'data': res.map((e) => e.toJson()).toList()});
     return res;
   } catch (e) {
     if (kDebugMode) debugPrint('[CourseBrowser] Available courses fallback: $e');
-    final cached = cache.getMapData('dashboard_box', 'available_courses_$activeSem');
+    final cached = cache.getMapData('dashboard_box', 'available_courses_$targetSem');
     if (cached != null && cached['data'] != null) {
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
     }
@@ -269,16 +305,22 @@ final userEnrollmentDetailsProvider = FutureProvider<List<Map<String, dynamic>>>
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
   
-  final activeSem = await ref.watch(currentSemCodeProvider.future);
-  if (activeSem.isEmpty) return [];
+  final targetSem = await ref.watch(selectedBrowserSemesterCodeProvider.future);
+  if (targetSem.isEmpty) return [];
 
+  final scope = ref.watch(selectedSemesterScopeProvider);
   final supabase = ref.watch(supabaseClientProvider);
   
-  final data = await supabase
+  var query = supabase
       .from('enrollments')
       .select()
       .eq('user_id', user.id)
-      .eq('semester_code', activeSem);
+      .eq('semester_code', targetSem);
+
+  if (scope == SemesterScope.upcoming) {
+    query = query.eq('status', 'upcoming');
+  }
       
+  final data = await query;
   return (data as List).cast<Map<String, dynamic>>();
 });

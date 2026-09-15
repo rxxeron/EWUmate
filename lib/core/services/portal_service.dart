@@ -53,8 +53,55 @@ class PortalStudentProfile {
   }
 }
 
+class PortalCourseSession {
+  final String type; // Theory or Lab
+  final String day;
+  final String startTime;
+  final String endTime;
+  final String room;
+  final String faculty;
+  final String facultyName;
+  final String facultyEmail;
+
+  PortalCourseSession({
+    required this.type,
+    required this.day,
+    required this.startTime,
+    required this.endTime,
+    required this.room,
+    required this.faculty,
+    required this.facultyName,
+    required this.facultyEmail,
+  });
+
+  factory PortalCourseSession.fromJson(Map<String, dynamic> json) {
+    return PortalCourseSession(
+      type: json['type']?.toString() ?? 'Theory',
+      day: json['day']?.toString() ?? '',
+      startTime: json['startTime']?.toString() ?? '',
+      endTime: json['endTime']?.toString() ?? '',
+      room: json['room']?.toString() ?? 'TBA',
+      faculty: json['faculty']?.toString() ?? 'TBA',
+      facultyName: json['faculty_name']?.toString() ?? '',
+      facultyEmail: json['faculty_email']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'type': type,
+    'day': day,
+    'startTime': startTime,
+    'endTime': endTime,
+    'room': room,
+    'faculty': faculty,
+    'faculty_name': facultyName,
+    'faculty_email': facultyEmail,
+  };
+}
+
 class PortalEnrolledCourse {
   final String courseCode;
+  final String originalCode;
   final String section;
   final double credits;
   final String timing;
@@ -64,9 +111,12 @@ class PortalEnrolledCourse {
   final String facultyEmail;
   final String withdrawStatus;
   final String dropStatus;
+  final bool isDroppedOrWithdrawn;
+  final List<PortalCourseSession> sessions;
 
   PortalEnrolledCourse({
     required this.courseCode,
+    this.originalCode = '',
     required this.section,
     required this.credits,
     required this.timing,
@@ -76,25 +126,42 @@ class PortalEnrolledCourse {
     required this.facultyEmail,
     required this.withdrawStatus,
     required this.dropStatus,
+    this.isDroppedOrWithdrawn = false,
+    this.sessions = const [],
   });
 
+  bool get isWithdrawn => withdrawStatus.toLowerCase() == 'yes';
+  bool get isDropped => dropStatus.toLowerCase() == 'yes';
+  bool get isInactive => isDroppedOrWithdrawn || isWithdrawn || isDropped;
+
   factory PortalEnrolledCourse.fromJson(Map<String, dynamic> json) {
+    final rawSessions = json['sessions'] as List? ?? [];
+    final wStat = json['withdraw_status']?.toString() ?? json['WithDrawStatus']?.toString() ?? 'No';
+    final dStat = json['drop_status']?.toString() ?? json['DropStatus']?.toString() ?? 'No';
+    final isDroppedOrWithdrawn = json['is_dropped_or_withdrawn'] == true ||
+        wStat.toLowerCase() == 'yes' ||
+        dStat.toLowerCase() == 'yes';
+
     return PortalEnrolledCourse(
-      courseCode: json['CourseCode']?.toString() ?? '',
-      section: json['SectionName']?.toString() ?? '',
-      credits: (json['CreditHour'] as num?)?.toDouble() ?? 0.0,
-      timing: json['TimeSlotName']?.toString() ?? '',
-      room: json['RoomName']?.toString() ?? '',
-      facultyName: json['FacultyName']?.toString() ?? '',
-      facultyInitial: json['ShortName']?.toString() ?? '',
-      facultyEmail: json['Email']?.toString() ?? '',
-      withdrawStatus: json['WithDrawStatus']?.toString() ?? 'No',
-      dropStatus: json['DropStatus']?.toString() ?? 'No',
+      courseCode: json['course_code']?.toString() ?? json['CourseCode']?.toString() ?? '',
+      originalCode: json['original_code']?.toString() ?? json['CourseCode']?.toString() ?? '',
+      section: json['section']?.toString() ?? json['SectionName']?.toString() ?? '',
+      credits: (json['credits'] as num?)?.toDouble() ?? (json['CreditHour'] as num?)?.toDouble() ?? 3.0,
+      timing: json['timing']?.toString() ?? json['TimeSlotName']?.toString() ?? '',
+      room: json['room']?.toString() ?? json['RoomName']?.toString() ?? '',
+      facultyName: json['faculty_name']?.toString() ?? json['FacultyName']?.toString() ?? '',
+      facultyInitial: json['faculty_initial']?.toString() ?? json['ShortName']?.toString() ?? '',
+      facultyEmail: json['faculty_email']?.toString() ?? json['Email']?.toString() ?? '',
+      withdrawStatus: wStat,
+      dropStatus: dStat,
+      isDroppedOrWithdrawn: isDroppedOrWithdrawn,
+      sessions: rawSessions.map((s) => PortalCourseSession.fromJson(s as Map<String, dynamic>)).toList(),
     );
   }
 
   PortalEnrolledCourse copyWith({
     String? courseCode,
+    String? originalCode,
     String? section,
     double? credits,
     String? timing,
@@ -104,9 +171,12 @@ class PortalEnrolledCourse {
     String? facultyEmail,
     String? withdrawStatus,
     String? dropStatus,
+    bool? isDroppedOrWithdrawn,
+    List<PortalCourseSession>? sessions,
   }) {
     return PortalEnrolledCourse(
       courseCode: courseCode ?? this.courseCode,
+      originalCode: originalCode ?? this.originalCode,
       section: section ?? this.section,
       credits: credits ?? this.credits,
       timing: timing ?? this.timing,
@@ -116,6 +186,8 @@ class PortalEnrolledCourse {
       facultyEmail: facultyEmail ?? this.facultyEmail,
       withdrawStatus: withdrawStatus ?? this.withdrawStatus,
       dropStatus: dropStatus ?? this.dropStatus,
+      isDroppedOrWithdrawn: isDroppedOrWithdrawn ?? this.isDroppedOrWithdrawn,
+      sessions: sessions ?? this.sessions,
     );
   }
 }
@@ -177,6 +249,7 @@ class PortalSyncResult {
   final PortalStudentProfile profile;
   final String activeSemesterName;
   final int activeSemesterId;
+  final String semesterCode;
   final List<PortalEnrolledCourse> enrolledCourses;
   final List<PortalDegreeArea> degreeAreas;
 
@@ -184,6 +257,7 @@ class PortalSyncResult {
     required this.profile,
     required this.activeSemesterName,
     required this.activeSemesterId,
+    this.semesterCode = '',
     required this.enrolledCourses,
     required this.degreeAreas,
   });
@@ -230,8 +304,8 @@ class PortalService {
     _extractCookies(loginPageRes);
 
     final html = loginPageRes.body;
-    final firstMatch = RegExp(r'name=["' + "'" + r'"]FirstNo["' + "'" + r'"][^>]*value=["' + "'" + r'"](\d+)["' + "'" + r'"]|value=["' + "'" + r'"](\d+)["' + "'" + r'"][^>]*name=["' + "'" + r'"]FirstNo["' + "'" + r'"]').firstMatch(html);
-    final secondMatch = RegExp(r'name=["' + "'" + r'"]SecondNo["' + "'" + r'"][^>]*value=["' + "'" + r'"](\d+)["' + "'" + r'"]|value=["' + "'" + r'"](\d+)["' + "'" + r'"][^>]*name=["' + "'" + r'"]SecondNo["' + "'" + r'"]').firstMatch(html);
+    final firstMatch = RegExp(r'''name=["']FirstNo["'][^>]*value=["'](\d+)["']|value=["'](\d+)["'][^>]*name=["']FirstNo["']''').firstMatch(html);
+    final secondMatch = RegExp(r'''name=["']SecondNo["'][^>]*value=["'](\d+)["']|value=["'](\d+)["'][^>]*name=["']SecondNo["']''').firstMatch(html);
 
     final fStr = firstMatch?.group(1) ?? firstMatch?.group(2);
     final sStr = secondMatch?.group(1) ?? secondMatch?.group(2);

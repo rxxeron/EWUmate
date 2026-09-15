@@ -22,7 +22,14 @@ class FacultyRepository {
       if (updatedAtStr != null) {
         final updatedAt = DateTime.tryParse(updatedAtStr);
         if (updatedAt != null && DateTime.now().difference(updatedAt).inDays < 7) {
-          return (cached['data'] as List).map((e) => Faculty.fromMap(e)).toList();
+          final list = (cached['data'] as List).map((e) => Faculty.fromMap(e)).toList();
+          final withPhoto = list.where((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty).length;
+          debugPrint('🎓 FACULTY DIRECTORY (CACHE): total=${list.length}, withPhoto=$withPhoto');
+          if (withPhoto > 0) {
+            final sample = list.firstWhere((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty);
+            debugPrint('📸 Sample Photo in cache: ${sample.shortName} -> ${sample.photoUrl}');
+          }
+          return list;
         }
       }
     }
@@ -40,6 +47,12 @@ class FacultyRepository {
 
       final list = data as List;
       final results = list.map((e) => Faculty.fromMap(e)).toList();
+      final withPhoto = results.where((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty).length;
+      debugPrint('🎓 FACULTY DIRECTORY (SUPABASE): total=${results.length}, withPhoto=$withPhoto');
+      if (withPhoto > 0) {
+        final sample = results.firstWhere((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty);
+        debugPrint('📸 Sample Photo from DB: ${sample.shortName} -> ${sample.photoUrl}');
+      }
 
       // Update Cache
       _cache.setMapData('faculty', 'directory', {

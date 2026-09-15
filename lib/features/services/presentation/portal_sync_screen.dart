@@ -1,16 +1,36 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/services/portal_service.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
+import '../../../core/widgets/glass_kit.dart';
 import '../../../core/services/cache_service.dart';
 import '../../auth/auth_providers.dart';
 import '../../onboarding/onboarding_repository.dart';
+import 'portal_sync/widgets/portal_sync_start_view.dart';
+import 'portal_sync/widgets/portal_sync_connecting_view.dart';
+import 'portal_sync/widgets/portal_sync_ready_view.dart';
+import 'portal_sync/widgets/portal_sync_preview_view.dart';
+import 'portal_sync/widgets/portal_sync_syncing_view.dart';
+import 'portal_sync/widgets/portal_sync_complete_view.dart';
+import '../../../core/widgets/onboarding_overlay.dart';
+import '../../../core/constants/onboarding_steps.dart';
+
+enum PortalSyncStep {
+  startSync, // Step 1: User credentials
+  connecting, // Step 2 & 3: Connection & Real-time status checklist
+  syncReady, // Step 4: All data fetched, ready confirmation
+  dataPreview, // Step 5: Routine & courses preview
+  syncing, // Step 6: Saving data to database
+  syncComplete, // Step 7: Final success summary
+}
 
 class PortalSyncScreen extends ConsumerStatefulWidget {
   const PortalSyncScreen({super.key});
@@ -19,16 +39,25 @@ class PortalSyncScreen extends ConsumerStatefulWidget {
   ConsumerState<PortalSyncScreen> createState() => _PortalSyncScreenState();
 }
 
-class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
+class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
+    with TickerProviderStateMixin {
   final _studentIdCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
 
-  // Flow State: 0 = Input form, 1 = Preview & Selection
-  int _step = 0;
-  bool _isLoading = false;
-  String? _statusMessage;
+  PortalSyncStep _currentStep = PortalSyncStep.startSync;
   String? _errorMessage;
+
+  // Local Credential & Semester state
+  bool _rememberCredentials = false;
+  List<Map<String, dynamic>> _availableSemesters = [];
+  Map<String, dynamic>? _selectedSemester;
+  bool _wasOnboarding = false;
+
+  // Connecting animation checklist progress (0 to 5)
+  int _fetchChecklistProgress = 0;
+  // Syncing database checklist progress (0 to 5)
+  int _syncChecklistProgress = 0;
 
   // Fetched Data from Portal
   PortalSyncResult? _portalData;
@@ -37,21 +66,93 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
 
   // User Selection Checkboxes
   bool _syncActiveSchedule = true;
-  bool _syncAcademicHistory = false; // Opt-in: Only if user wants
-  bool _syncProfileMetadata = false; // Default false for completed users
+  bool _syncAcademicHistory = true;
+  bool _syncProfileMetadata = false;
 
+  // Animation Controllers
+  late AnimationController _rotationCtrl;
+  late AnimationController _pulseCtrl;
 
   @override
   void initState() {
     super.initState();
+    _rotationCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
     final profile = ref.read(profileProvider).value;
     final sid = profile?.studentId;
     if (sid != null && sid.isNotEmpty) {
       _studentIdCtrl.text = sid;
     }
-    // If onboarding is not completed, default profile metadata to true
     if (profile?.onboardingStatus != 'completed') {
       _syncProfileMetadata = true;
+      _wasOnboarding = true;
+    }
+
+    _loadSavedCredentials();
+    _loadAvailableSemesters();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        OnboardingOverlay.show(
+          context: context,
+          featureKey: OnboardingSteps.portalSyncKey,
+          steps: OnboardingSteps.portalSync,
+        );
+      }
+    });
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final remember = prefs.getBool('portal_remember_credentials') ?? false;
+      if (remember) {
+        final savedId = prefs.getString('portal_local_saved_id') ?? '';
+        final savedPass = prefs.getString('portal_local_saved_password') ?? '';
+        if (mounted) {
+          setState(() {
+            _rememberCredentials = true;
+            if (savedId.isNotEmpty && _studentIdCtrl.text.isEmpty) {
+              _studentIdCtrl.text = savedId;
+            }
+            if (savedPass.isNotEmpty) {
+              _passwordCtrl.text = savedPass;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[PortalSyncScreen] Error loading saved credentials: $e');
+    }
+  }
+
+  Future<void> _loadAvailableSemesters() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('semesters')
+          .select('code, title, is_active, portal_semester_id')
+          .order('portal_semester_id', ascending: false);
+      final list = List<Map<String, dynamic>>.from(res as List);
+      if (mounted && list.isNotEmpty) {
+        setState(() {
+          _availableSemesters = list;
+          // Default to active semester, or top one
+          _selectedSemester = list.firstWhere(
+            (s) => s['is_active'] == true,
+            orElse: () => list.first,
+          );
+        });
+      }
+    } catch (e) {
+      debugPrint('[PortalSyncScreen] Error loading semesters: $e');
     }
   }
 
@@ -59,11 +160,13 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
   void dispose() {
     _studentIdCtrl.dispose();
     _passwordCtrl.dispose();
+    _rotationCtrl.dispose();
+    _pulseCtrl.dispose();
     super.dispose();
   }
 
-  /// Step 1: Connect to Portal and fetch data for preview
-  Future<void> _fetchPortalData() async {
+  /// Triggered from Step 1: Start Sync
+  Future<void> _handleStartSync() async {
     final studentId = _studentIdCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
@@ -72,23 +175,73 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
       return;
     }
 
+    // Save/clear credentials locally on device according to _rememberCredentials (zero DB transmission)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_rememberCredentials) {
+        await prefs.setBool('portal_remember_credentials', true);
+        await prefs.setString('portal_local_saved_id', studentId);
+        await prefs.setString('portal_local_saved_password', password);
+      } else {
+        await prefs.setBool('portal_remember_credentials', false);
+        await prefs.remove('portal_local_saved_id');
+        await prefs.remove('portal_local_saved_password');
+      }
+    } catch (e) {
+      debugPrint('[PortalSyncScreen] Error saving local credentials: $e');
+    }
+
     setState(() {
-      _isLoading = true;
       _errorMessage = null;
-      _statusMessage = "Logging into EWU Portal & solving arithmetic captcha...";
+      _currentStep = PortalSyncStep.connecting;
+      _fetchChecklistProgress = 1;
+    });
+
+    Timer? t1;
+    Timer? t2;
+    Timer? t3;
+
+    t1 = Timer(const Duration(milliseconds: 900), () {
+      if (mounted && _currentStep == PortalSyncStep.connecting) {
+        setState(() => _fetchChecklistProgress = 2);
+      }
+    });
+
+    t2 = Timer(const Duration(milliseconds: 2200), () {
+      if (mounted && _currentStep == PortalSyncStep.connecting) {
+        setState(() => _fetchChecklistProgress = 3);
+      }
+    });
+
+    t3 = Timer(const Duration(milliseconds: 4000), () {
+      if (mounted && _currentStep == PortalSyncStep.connecting) {
+        setState(() => _fetchChecklistProgress = 4);
+      }
     });
 
     try {
-      // Single unified call to Azure: Azure logs in, parses routine, degree review,
-      // updates database catalog courses_<semester> with verified sessions, and returns all data!
+      final Map<String, dynamic> requestPayload = {
+        'student_id': studentId,
+        'password': password,
+      };
+      if (_selectedSemester != null) {
+        if (_selectedSemester!['portal_semester_id'] != null) {
+          requestPayload['semester_id'] = _selectedSemester!['portal_semester_id'];
+        }
+        if (_selectedSemester!['code'] != null) {
+          requestPayload['semester_code'] = _selectedSemester!['code'];
+        }
+      }
+
       final azureRes = await http.post(
         Uri.parse('https://ewumate-parser.azurewebsites.net/api/portal_sync_student'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'student_id': studentId,
-          'password': password,
-        }),
-      ).timeout(const Duration(seconds: 25));
+        body: jsonEncode(requestPayload),
+      ).timeout(const Duration(seconds: 35));
+
+      t1.cancel();
+      t2.cancel();
+      t3.cancel();
 
       if (azureRes.statusCode != 200) {
         final errBody = jsonDecode(azureRes.body);
@@ -102,33 +255,22 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
       final gridData = data['weekly_grid'] as Map<String, dynamic>? ?? {};
 
       final studentProfile = PortalStudentProfile(
-        studentId: profileMap['studentId']?.toString() ?? studentId,
-        fullName: profileMap['fullName']?.toString() ?? '',
-        email: profileMap['email']?.toString() ?? '',
-        programName: profileMap['programName']?.toString() ?? '',
-        programCode: profileMap['programCode']?.toString() ?? '',
-        departmentName: profileMap['departmentName']?.toString() ?? '',
-        departmentCode: profileMap['departmentCode']?.toString() ?? '',
-        admittedSemester: profileMap['admittedSemester']?.toString() ?? '',
-        cgpa: (profileMap['cgpa'] as num?)?.toDouble() ?? 0.0,
-        creditsEarned: (profileMap['creditsEarned'] as num?)?.toDouble() ?? 0.0,
+        studentId: profileMap['studentId']?.toString() ?? profileMap['StudentId']?.toString() ?? studentId,
+        fullName: profileMap['fullName']?.toString() ?? profileMap['FirstName']?.toString() ?? '',
+        email: profileMap['email']?.toString() ?? profileMap['EmailAddress']?.toString() ?? '',
+        programName: profileMap['programName']?.toString() ?? profileMap['ProgramName']?.toString() ?? '',
+        programCode: profileMap['programCode']?.toString() ?? profileMap['ProgramShortName']?.toString() ?? '',
+        departmentName: profileMap['departmentName']?.toString() ?? profileMap['AcademicDepartmentName']?.toString() ?? '',
+        departmentCode: profileMap['departmentCode']?.toString() ?? profileMap['AcademicDepartmentShortName']?.toString() ?? '',
+        admittedSemester: profileMap['admittedSemester']?.toString() ?? profileMap['StartedSemester']?.toString() ?? '',
+        cgpa: (profileMap['cgpa'] as num?)?.toDouble() ?? (profileMap['CGPA'] as num?)?.toDouble() ?? 0.0,
+        creditsEarned: (profileMap['creditsEarned'] as num?)?.toDouble() ?? (profileMap['CreditsCompleted'] as num?)?.toDouble() ?? 0.0,
         mentor: profileMap['mentor']?.toString() ?? '',
         mentorEmail: profileMap['mentorEmail']?.toString() ?? '',
       );
 
       final List<PortalEnrolledCourse> enrolledCourses = enrolledList.map((c) {
-        return PortalEnrolledCourse(
-          courseCode: c['course_code']?.toString() ?? '',
-          section: c['section']?.toString() ?? '',
-          credits: (c['credits'] as num?)?.toDouble() ?? 3.0,
-          timing: c['timing']?.toString() ?? '',
-          room: c['room']?.toString() ?? '',
-          facultyName: c['faculty_name']?.toString() ?? '',
-          facultyInitial: c['faculty_initial']?.toString() ?? '',
-          facultyEmail: c['faculty_email']?.toString() ?? '',
-          withdrawStatus: c['withdraw_status']?.toString() ?? 'No',
-          dropStatus: c['drop_status']?.toString() ?? 'No',
-        );
+        return PortalEnrolledCourse.fromJson(c);
       }).toList();
 
       final parsedWeeklyGrid = <String, List<Map<String, dynamic>>>{};
@@ -138,10 +280,15 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
 
       _fetchedWeeklyGrid = parsedWeeklyGrid;
 
+      final semCode = data['semester_code']?.toString() ?? _selectedSemester?['code']?.toString() ?? 'fall2026';
+      final semName = data['active_semester_name']?.toString() ?? _selectedSemester?['title']?.toString() ?? 'Fall 2026';
+      final semId = (data['active_semester_id'] as num?)?.toInt() ?? (_selectedSemester?['portal_semester_id'] as num?)?.toInt() ?? 0;
+
       final finalResult = PortalSyncResult(
         profile: studentProfile,
-        activeSemesterName: data['active_semester_name']?.toString() ?? 'Fall 2026',
-        activeSemesterId: (data['active_semester_id'] as num?)?.toInt() ?? 0,
+        activeSemesterName: semName,
+        activeSemesterId: semId,
+        semesterCode: semCode,
         enrolledCourses: enrolledCourses,
         degreeAreas: [],
       );
@@ -150,25 +297,24 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
         setState(() {
           _portalData = finalResult;
           _azureParsedGrades = gradesList;
-          _step = 1; // Move to Preview & Selection
-          _isLoading = false;
-          _statusMessage = null;
+          _fetchChecklistProgress = 5;
+          _currentStep = PortalSyncStep.syncReady;
         });
       }
     } catch (e) {
+      t1.cancel();
+      t2.cancel();
+      t3.cancel();
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _statusMessage = null;
+          _currentStep = PortalSyncStep.startSync;
           _errorMessage = e.toString().replaceAll("Exception: ", "");
         });
       }
     }
   }
 
-
-  /// Formats the raw TimeSlotName (e.g. "ST 08:30 AM-10:00 AM" or "T 04:50 PM-06:50 PM") into weekly_grid_cache
-
+  /// Formats the raw TimeSlotName into weekly_grid_cache
   Map<String, List<Map<String, dynamic>>> _buildWeeklyGridCache(
     List<PortalEnrolledCourse> courses,
     Map<String, String> courseNamesByCode,
@@ -197,7 +343,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
       final timing = item.timing.trim();
       if (timing.isEmpty || timing.toUpperCase() == 'TBA') continue;
 
-      // Extract Day codes and Time range
       final parts = timing.split(' ');
       if (parts.isEmpty) continue;
 
@@ -220,13 +365,14 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
         'startTime': startStr,
         'endTime': endStr,
         'room': item.room.isNotEmpty ? item.room : 'TBA',
-        'faculty': item.facultyInitial.isNotEmpty ? item.facultyInitial : (item.facultyName.isNotEmpty ? item.facultyName : 'TBA'),
+        'faculty': item.facultyInitial.isNotEmpty
+            ? item.facultyInitial
+            : (item.facultyName.isNotEmpty ? item.facultyName : 'TBA'),
         'facultyName': item.facultyName,
         'facultyEmail': item.facultyEmail,
         'type': isLab ? 'Lab' : 'Theory',
       };
 
-      // Handle dual-day codes
       if (dayCodes.toUpperCase() == 'ST') {
         grid['Sunday']?.add(Map.from(classEntry));
         grid['Tuesday']?.add(Map.from(classEntry));
@@ -264,7 +410,7 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
     return grid;
   }
 
-  /// Step 2: Confirm and Apply Selected Sync Options to Database
+  /// Triggered from Step 5: Confirm & Sync
   Future<void> _applySync() async {
     final result = _portalData;
     if (result == null) return;
@@ -277,15 +423,17 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
     }
 
     setState(() {
-      _isLoading = true;
+      _currentStep = PortalSyncStep.syncing;
+      _syncChecklistProgress = 1;
       _errorMessage = null;
-      _statusMessage = "Applying your selections...";
     });
 
     try {
-      final activeSemCode = CourseUtils.cleanSemester(result.activeSemesterName);
+      final activeSemCode = result.semesterCode.isNotEmpty
+          ? CourseUtils.cleanSemester(result.semesterCode)
+          : CourseUtils.cleanSemester(result.activeSemesterName);
 
-      // 1. Fetch official course names from courses_<activeSemCode> or course_metadata
+      // 1. Fetch course names
       final Map<String, String> courseNames = {};
       try {
         final catalogRes = await supabase
@@ -311,43 +459,139 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
         } catch (_) {}
       }
 
-      // 2. Profile Metadata Update
-      if (_syncProfileMetadata) {
-        setState(() => _statusMessage = "Updating profile metadata...");
-        final cleanAdmittedSem = CourseUtils.cleanSemester(result.profile.admittedSemester);
-        final isBi = result.profile.departmentName.toLowerCase().contains('pharm') ||
-            result.profile.departmentName.toLowerCase().contains('law') ||
-            result.profile.programCode.toUpperCase().contains('PHRM') ||
-            result.profile.programCode.toUpperCase().contains('LLB');
-        final track = isBi ? 'bi_semester' : 'tri_semester';
+      // Step 1: Saving course routine
+      if (mounted) setState(() => _syncChecklistProgress = 1);
+      await Future.delayed(const Duration(milliseconds: 350));
 
-        final profilePayload = <String, dynamic>{
-          'id': user.id,
-          'student_id': result.profile.studentId,
-          'program_code': result.profile.programCode.toUpperCase(),
-          'program_name': result.profile.programName,
-          'department_name': result.profile.departmentName,
-          'semester_type': track,
-          'track': track,
-          'onboarding_status': 'completed',
-        };
-        if (cleanAdmittedSem.isNotEmpty) {
-          profilePayload['admitted_semester'] = cleanAdmittedSem;
+      // 2. Active Semester Schedule & Enrollments (Smart Diff to protect user attendance, marks, and exceptions)
+      if (_syncActiveSchedule && result.enrolledCourses.isNotEmpty) {
+        final activeCourses = result.enrolledCourses.where((c) => !c.isInactive).toList();
+
+        // 2a. Fetch existing enrollments
+        final existingEnrollmentsRes = await supabase
+            .from('enrollments')
+            .select('id, course_code, section')
+            .eq('user_id', user.id)
+            .eq('semester_code', activeSemCode);
+
+        final Map<String, dynamic> existingByCode = {};
+        for (final row in (existingEnrollmentsRes as List)) {
+          final code = (row['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
+          existingByCode[code] = row;
         }
-        await supabase.from('profiles').upsert(profilePayload);
-      } else {
-        // Even if metadata fields are kept as-is, ensure onboarding is marked completed
-        await supabase.from('profiles').update({
-          'onboarding_status': 'completed',
-        }).eq('id', user.id);
+
+        final Map<String, PortalEnrolledCourse> portalByCode = {};
+        for (final c in activeCourses) {
+          final clean = (c.courseCode.contains(' ') ? c.courseCode.split(' ')[0] : c.courseCode)
+              .toUpperCase()
+              .replaceAll(' ', '');
+          portalByCode[clean] = c;
+        }
+
+        final Set<String> existingCodes = existingByCode.keys.toSet();
+        final Set<String> portalCodes = portalByCode.keys.toSet();
+
+        final Set<String> toRemove = existingCodes.difference(portalCodes);
+        final Set<String> toAdd = portalCodes.difference(existingCodes);
+        final Set<String> toCheck = existingCodes.intersection(portalCodes);
+
+        // Remove only dropped / withdrawn courses
+        if (toRemove.isNotEmpty) {
+          for (final remCode in toRemove) {
+            await supabase
+                .from('enrollments')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('semester_code', activeSemCode)
+                .eq('course_code', remCode);
+          }
+        }
+
+        // Insert only brand new courses into enrollments and semester_course_marks
+        if (toAdd.isNotEmpty) {
+          final newEnrollments = <Map<String, dynamic>>[];
+          final newProgressRows = <Map<String, dynamic>>[];
+
+          for (final addCode in toAdd) {
+            final item = portalByCode[addCode]!;
+            newEnrollments.add({
+              'user_id': user.id,
+              'course_code': addCode,
+              'section': item.section,
+              'semester_code': activeSemCode,
+              'status': 'enrolled',
+            });
+
+            newProgressRows.add({
+              'user_id': user.id,
+              'course_code': addCode,
+              'course_name': courseNames[addCode] ?? addCode,
+              'section': item.section,
+              'semester_code': activeSemCode,
+            });
+          }
+
+          if (newEnrollments.isNotEmpty) {
+            await supabase.from('enrollments').insert(newEnrollments);
+          }
+          if (newProgressRows.isNotEmpty) {
+            try {
+              await supabase.from('semester_course_marks').insert(newProgressRows);
+            } catch (e) {
+              debugPrint("[PortalSyncScreen] semester_course_marks insert note: $e");
+            }
+          }
+        }
+
+        // For continuing courses, only update section if section changed (PRESERVES existing marks, attendance, and exceptions!)
+        for (final code in toCheck) {
+          final oldSec = (existingByCode[code]['section'] ?? '').toString().trim();
+          final newSec = portalByCode[code]!.section.trim();
+          if (oldSec != newSec) {
+            await supabase
+                .from('enrollments')
+                .update({'section': newSec})
+                .eq('user_id', user.id)
+                .eq('semester_code', activeSemCode)
+                .eq('course_code', code);
+
+            await supabase
+                .from('semester_course_marks')
+                .update({'section': newSec})
+                .eq('user_id', user.id)
+                .eq('semester_code', activeSemCode)
+                .eq('course_code', code);
+          }
+        }
+
+        final weeklyGrid = _fetchedWeeklyGrid ?? _buildWeeklyGridCache(activeCourses, courseNames);
+        try {
+          await supabase.from('user_semester_states').upsert({
+            'user_id': user.id,
+            'semester_code': activeSemCode,
+            'weekly_grid_cache': weeklyGrid,
+            'updated_at': DateTime.now().toIso8601String(),
+          }, onConflict: 'user_id,semester_code');
+        } catch (e) {
+          debugPrint("[PortalSyncScreen] user_semester_states weekly_grid error: $e");
+        }
+
+        try {
+          final cache = ref.read(cacheServiceProvider);
+          await cache.invalidateDashboardSchedule(user.id, activeSemCode);
+        } catch (_) {}
       }
 
-      // 3. Academic History & Grades
-      int importedGradesCount = 0;
-      if (_syncAcademicHistory) {
-        setState(() => _statusMessage = "Saving verified academic history...");
-        final List<Map<String, dynamic>> completedRows = [];
+      // Step 2 & 3: Updating faculty info & room details
+      if (mounted) setState(() => _syncChecklistProgress = 2);
+      await Future.delayed(const Duration(milliseconds: 300));
 
+      if (mounted) setState(() => _syncChecklistProgress = 3);
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // 3. Academic History & Grades
+      if (_syncAcademicHistory) {
+        final List<Map<String, dynamic>> completedRows = [];
         if (_azureParsedGrades.isNotEmpty) {
           for (final c in _azureParsedGrades) {
             completedRows.add({
@@ -359,97 +603,102 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
               'semester_code': CourseUtils.cleanSemester(c['semester_code'] ?? ''),
             });
           }
-        } else {
-          for (final area in result.degreeAreas) {
-            for (final c in area.courses) {
-              if (c.grade.isNotEmpty) {
-                completedRows.add({
-                  'user_id': user.id,
-                  'course_code': c.courseCode,
-                  'grade': c.grade,
-                  'grade_point': c.gradePoint,
-                  'credits': c.credits,
-                  'semester_code': 'portal_verified',
-                });
-              }
-            }
-          }
         }
-
         if (completedRows.isNotEmpty) {
           await supabase.from('completed_courses').delete().eq('user_id', user.id);
           await supabase.from('completed_courses').insert(completedRows);
-          importedGradesCount = completedRows.length;
         }
       }
 
-      // 4. Active Semester Schedule & Enrollments
-      int enrolledCount = 0;
-      if (_syncActiveSchedule && result.enrolledCourses.isNotEmpty) {
-        setState(() => _statusMessage = "Saving routine and weekly schedule grid...");
+      // Step 4: Importing academic history
+      if (mounted) setState(() => _syncChecklistProgress = 4);
+      await Future.delayed(const Duration(milliseconds: 300));
 
-        await supabase.from('enrollments').delete().eq('user_id', user.id).eq('semester_code', activeSemCode);
+      // 4. Profile Metadata Update with 4-Tier Program Resolution
+      if (_syncProfileMetadata) {
+        final cleanAdmittedSem = CourseUtils.cleanSemester(result.profile.admittedSemester);
+        
+        String resolvedProgramCode = result.profile.programCode.trim();
+        String resolvedProgramName = result.profile.programName.trim();
+        String resolvedDeptName = result.profile.departmentName.trim();
+        String resolvedTrack = 'tri_semester';
 
-        final enrollmentRows = <Map<String, dynamic>>[];
-        final progressRows = <Map<String, dynamic>>[];
+        try {
+          final progsRes = await supabase
+              .from('programs')
+              .select('program_code, name, track, department_name');
+          final progs = List<Map<String, dynamic>>.from(progsRes as List);
 
-        for (final item in result.enrolledCourses) {
-          final cleanCode = item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode;
-          enrollmentRows.add({
-            'user_id': user.id,
-            'course_code': cleanCode,
-            'section': item.section,
-            'semester_code': activeSemCode,
-            'status': 'enrolled',
-          });
+          // Tier 1: Exact code match (case-insensitive)
+          Map<String, dynamic>? match = progs.firstWhere(
+            (p) => (p['program_code'] ?? '').toString().toUpperCase() == resolvedProgramCode.toUpperCase(),
+            orElse: () => {},
+          );
 
-          progressRows.add({
-            'user_id': user.id,
-            'course_code': cleanCode,
-            'course_name': courseNames[cleanCode] ?? cleanCode,
-            'section': item.section,
-            'semester_code': activeSemCode,
-          });
-        }
-
-        if (enrollmentRows.isNotEmpty) {
-          await supabase.from('enrollments').insert(enrollmentRows);
-          enrolledCount = enrollmentRows.length;
-        }
-
-        if (progressRows.isNotEmpty) {
-          try {
-            await supabase.from('semester_course_marks').upsert(
-              progressRows,
-              onConflict: 'user_id,course_code,semester_code',
+          // Tier 2: Substring or title match
+          if (match.isEmpty && resolvedProgramName.isNotEmpty) {
+            match = progs.firstWhere(
+              (p) {
+                final pName = (p['name'] ?? '').toString().toLowerCase();
+                final targetName = resolvedProgramName.toLowerCase();
+                return pName.contains(targetName) || targetName.contains(pName);
+              },
+              orElse: () => {},
             );
-          } catch (e) {
-            debugPrint("[PortalSyncScreen] semester_course_marks note: $e");
           }
-        }
 
-        // 4b. Save the formatted weekly_grid_cache into user_semester_states (precomputed by Azure)
-        final weeklyGrid = _fetchedWeeklyGrid ?? _buildWeeklyGridCache(result.enrolledCourses, courseNames);
-        try {
-          await supabase.from('user_semester_states').upsert({
-            'user_id': user.id,
-            'semester_code': activeSemCode,
-            'weekly_grid_cache': weeklyGrid,
-            'updated_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'user_id,semester_code');
-          debugPrint("[PortalSyncScreen] weekly_grid_cache preserved successfully!");
+          // Tier 3: Fallback check on code substring
+          if (match.isEmpty && resolvedProgramCode.isNotEmpty) {
+            match = progs.firstWhere(
+              (p) => (p['program_code'] ?? '').toString().toUpperCase().contains(resolvedProgramCode.toUpperCase()),
+              orElse: () => {},
+            );
+          }
+
+          if (match.isNotEmpty) {
+            resolvedProgramCode = match['program_code']?.toString() ?? resolvedProgramCode;
+            resolvedProgramName = match['name']?.toString() ?? resolvedProgramName;
+            resolvedDeptName = match['department_name']?.toString() ?? resolvedDeptName;
+            resolvedTrack = match['track']?.toString() ?? 'tri_semester';
+          } else {
+            // Fallback: Infer track from pharmacy/law keywords
+            final isBi = resolvedDeptName.toLowerCase().contains('pharm') ||
+                resolvedDeptName.toLowerCase().contains('law') ||
+                resolvedProgramCode.toUpperCase().contains('PHRM') ||
+                resolvedProgramCode.toUpperCase().contains('LLB');
+            resolvedTrack = isBi ? 'bi_semester' : 'tri_semester';
+          }
         } catch (e) {
-          debugPrint("[PortalSyncScreen] user_semester_states weekly_grid error: $e");
+          debugPrint("[PortalSyncScreen] Program matching note: $e");
         }
 
-        try {
-          final cache = ref.read(cacheServiceProvider);
-          await cache.invalidateDashboardSchedule(user.id, activeSemCode);
-        } catch (_) {}
+        final profilePayload = <String, dynamic>{
+          'id': user.id,
+          'student_id': result.profile.studentId,
+          'program_code': resolvedProgramCode.toUpperCase(),
+          'program_name': resolvedProgramName,
+          'department_name': resolvedDeptName,
+          'semester_type': resolvedTrack,
+          'track': resolvedTrack,
+          'onboarding_status': 'completed',
+        };
+        if (result.profile.fullName.isNotEmpty) {
+          profilePayload['full_name'] = result.profile.fullName;
+        }
+        if (cleanAdmittedSem.isNotEmpty) {
+          profilePayload['admitted_semester'] = cleanAdmittedSem;
+        }
+        await supabase.from('profiles').upsert(profilePayload);
+      } else {
+        await supabase.from('profiles').update({
+          'onboarding_status': 'completed',
+        }).eq('id', user.id);
       }
 
-      // 6. Recalculate stats & sync server functions
-      setState(() => _statusMessage = "Finalizing calculations...");
+      // Step 5: Finalizing calculations
+      if (mounted) setState(() => _syncChecklistProgress = 5);
+      await Future.delayed(const Duration(milliseconds: 400));
+
       try {
         await ref.read(onboardingRepositoryProvider).recalculateStats(activeSemCode);
       } catch (_) {}
@@ -458,36 +707,13 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
 
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _statusMessage = null;
+          _currentStep = PortalSyncStep.syncComplete;
         });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.teal.shade800,
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Sync applied! Routine ($enrolledCount courses) and Grades ($importedGradesCount records) preserved successfully.",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-        // Mark onboarding complete and navigate to dashboard
-        context.go('/dashboard');
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _statusMessage = null;
+          _currentStep = PortalSyncStep.dataPreview;
           _errorMessage = e.toString().replaceAll("Exception: ", "");
         });
       }
@@ -496,471 +722,77 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
-      appBar: const EWUmateAppBar(
-        title: "EWU Portal Sync",
+    return FullGradientScaffold(
+      appBar: EWUmateAppBar(
+        title: _currentStep == PortalSyncStep.dataPreview
+            ? "EWU Portal Preview"
+            : (_currentStep == PortalSyncStep.syncComplete ? "Sync Complete" : "EWU Portal Sync"),
         showBack: true,
       ),
       body: SafeArea(
-        child: _step == 0 ? _buildCredentialsForm() : _buildPreviewAndOptions(),
-      ),
-    );
-  }
-
-  Widget _buildCredentialsForm() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.cyanAccent.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3), width: 2),
-              ),
-              child: const Icon(Icons.cloud_sync_rounded, color: Colors.cyanAccent, size: 48),
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "Connect Your EWU Portal",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "Instantly fetch your active semester routine, assigned faculty, room numbers, and academic history.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
-          ),
-          const SizedBox(height: 24),
-
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.shield_outlined, color: Colors.cyanAccent, size: 24),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    "Your portal credentials are used in real-time solely to establish a secure session with portal.ewubd.edu and are NEVER stored on our servers.",
-                    style: TextStyle(fontSize: 11.5, color: Colors.white70, height: 1.3),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          TextField(
-            controller: _studentIdCtrl,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: "Student ID (e.g. 2025-2-50-009)",
-              labelStyle: const TextStyle(color: Colors.white70),
-              prefixIcon: const Icon(Icons.badge_outlined, color: Colors.cyanAccent),
-              filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          TextField(
-            controller: _passwordCtrl,
-            obscureText: _obscurePassword,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: "Portal Password",
-              labelStyle: const TextStyle(color: Colors.white70),
-              prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.cyanAccent),
-              suffixIcon: IconButton(
-                icon: Icon(
-                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white54,
-                ),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              ),
-              filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          if (_errorMessage != null)
-            Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-          if (_isLoading && _statusMessage != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Column(
-                children: [
-                  const CircularProgressIndicator(color: Colors.cyanAccent),
-                  const SizedBox(height: 12),
-                  Text(
-                    _statusMessage!,
-                    style: const TextStyle(color: Colors.cyanAccent, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
-          ElevatedButton(
-            onPressed: _isLoading ? null : _fetchPortalData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00E5FF),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              elevation: 4,
-            ),
-            child: Text(
-              _isLoading ? "Connecting to Portal..." : "Fetch & Preview Data",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPreviewAndOptions() {
-    final res = _portalData;
-    if (res == null) return const Center(child: Text("No data fetched."));
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [const Color(0xFF1E293B), Colors.cyanAccent.withValues(alpha: 0.08)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        res.profile.fullName.isNotEmpty ? res.profile.fullName : res.profile.studentId,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.cyanAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        res.activeSemesterName,
-                        style: const TextStyle(color: Colors.cyanAccent, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "ID: ${res.profile.studentId} • ${res.profile.programName.isNotEmpty ? res.profile.programName : res.profile.programCode}",
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                if (res.profile.admittedSemester.isNotEmpty)
-                  Text(
-                    "Admitted: ${CourseUtils.prettifySemesterCode(CourseUtils.cleanSemester(res.profile.admittedSemester))}",
-                    style: const TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Enrolled Routine (${res.enrolledCourses.length} Courses)",
-                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.greenAccent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  "Verified Live",
-                  style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          if (res.enrolledCourses.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Center(
-                child: Text("No enrolled courses found for this semester on portal.", style: TextStyle(color: Colors.white54)),
-              ),
-            )
-          else
-            ...res.enrolledCourses.map((c) => _buildEnrolledCourseCard(c)),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            "Choose What to Update",
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-
-          _buildCheckboxOption(
-            title: "Active Schedule & Routine",
-            subtitle: "Preserve ${res.enrolledCourses.length} courses, section timings, room & day schedule",
-            value: _syncActiveSchedule,
-            onChanged: (v) => setState(() => _syncActiveSchedule = v ?? true),
-          ),
-          _buildCheckboxOption(
-            title: "Academic History & Grades (Optional)",
-            subtitle: _azureParsedGrades.isNotEmpty
-                ? "Optional: Import ${_azureParsedGrades.length} completed courses & grade sheet"
-                : "Optional: Import completed degree courses & letter grades",
-            value: _syncAcademicHistory,
-            onChanged: (v) => setState(() => _syncAcademicHistory = v ?? false),
-          ),
-          _buildCheckboxOption(
-            title: "Update Program & Profile Metadata",
-            subtitle: "Update Department, Program and Admitted Semester",
-            value: _syncProfileMetadata,
-            onChanged: (v) => setState(() => _syncProfileMetadata = v ?? false),
-          ),
-
-          const SizedBox(height: 16),
-
-          if (_errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-          if (_isLoading && _statusMessage != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Column(
-                children: [
-                  const CircularProgressIndicator(color: Colors.cyanAccent),
-                  const SizedBox(height: 10),
-                  Text(
-                    _statusMessage!,
-                    style: const TextStyle(color: Colors.cyanAccent, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: OutlinedButton(
-                  onPressed: _isLoading ? null : () => setState(() => _step = 0),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: const BorderSide(color: Colors.white24),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text("Re-enter"),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _applySync,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00E5FF),
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    elevation: 4,
-                  ),
-                  child: Text(
-                    _isLoading ? "Applying..." : "Confirm & Save Schedule",
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnrolledCourseCard(PortalEnrolledCourse c) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF334155)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.cyanAccent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      c.courseCode,
-                      style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    "Sec: ${c.section}",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                ],
-              ),
-              if (c.credits > 0)
-                Text(
-                  "${c.credits} Cr",
-                  style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          Row(
-            children: [
-              const Icon(Icons.person_outline_rounded, size: 16, color: Colors.tealAccent),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  c.facultyName.isNotEmpty
-                      ? "${c.facultyName} (${c.facultyInitial})"
-                      : (c.facultyInitial.isNotEmpty ? c.facultyInitial : "TBA"),
-                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-
-          Row(
-            children: [
-              const Icon(Icons.access_time_rounded, size: 16, color: Colors.orangeAccent),
-              const SizedBox(width: 6),
-              Text(
-                c.timing.isNotEmpty ? c.timing : "Timing: TBA",
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              const Spacer(),
-              const Icon(Icons.meeting_room_outlined, size: 16, color: Colors.purpleAccent),
-              const SizedBox(width: 4),
-              Text(
-                c.room.isNotEmpty ? "Room: ${c.room}" : "Room: TBA",
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCheckboxOption({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool?> onChanged,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: value ? Colors.cyanAccent.withValues(alpha: 0.05) : const Color(0xFF1E293B).withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: value ? Colors.cyanAccent.withValues(alpha: 0.3) : const Color(0xFF334155),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          child: _buildCurrentStepWidget(),
         ),
       ),
-      child: CheckboxListTile(
-        value: value,
-        onChanged: onChanged,
-        activeColor: const Color(0xFF00E5FF),
-        checkColor: Colors.black,
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 11.5)),
-        controlAffinity: ListTileControlAffinity.leading,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      ),
     );
+  }
+
+  Widget _buildCurrentStepWidget() {
+    switch (_currentStep) {
+      case PortalSyncStep.startSync:
+        return PortalSyncStartView(
+          studentIdController: _studentIdCtrl,
+          passwordController: _passwordCtrl,
+          obscurePassword: _obscurePassword,
+          onToggleObscurePassword: () => setState(() => _obscurePassword = !_obscurePassword),
+          errorMessage: _errorMessage,
+          onStartSync: _handleStartSync,
+          availableSemesters: _availableSemesters,
+          selectedSemester: _selectedSemester,
+          onSelectSemester: (sem) => setState(() => _selectedSemester = sem),
+          rememberCredentials: _rememberCredentials,
+          onToggleRememberCredentials: (val) => setState(() => _rememberCredentials = val),
+        );
+
+      case PortalSyncStep.connecting:
+        return PortalSyncConnectingView(
+          pulseController: _pulseCtrl,
+          fetchChecklistProgress: _fetchChecklistProgress,
+        );
+
+      case PortalSyncStep.syncReady:
+        return PortalSyncReadyView(
+          onViewPreview: () => setState(() => _currentStep = PortalSyncStep.dataPreview),
+        );
+
+      case PortalSyncStep.dataPreview:
+        final result = _portalData;
+        if (result == null) return const SizedBox.shrink();
+        return PortalSyncPreviewView(
+          result: result,
+          syncActiveSchedule: _syncActiveSchedule,
+          onToggleSyncActiveSchedule: (val) => setState(() => _syncActiveSchedule = val),
+          syncAcademicHistory: _syncAcademicHistory,
+          onToggleSyncAcademicHistory: (val) => setState(() => _syncAcademicHistory = val),
+          azureParsedGradesCount: _azureParsedGrades.length,
+          onConfirmAndSync: _applySync,
+          onBack: () => setState(() => _currentStep = PortalSyncStep.startSync),
+        );
+
+      case PortalSyncStep.syncing:
+        return PortalSyncSyncingView(
+          rotationAnimation: _rotationCtrl,
+          syncChecklistProgress: _syncChecklistProgress,
+        );
+
+      case PortalSyncStep.syncComplete:
+        return PortalSyncCompleteView(
+          coursesCount: _portalData?.enrolledCourses.length ?? 0,
+          onGoToDashboard: () => context.go('/dashboard'),
+          onSyncAgain: () => setState(() => _currentStep = PortalSyncStep.startSync),
+          wasOnboarding: _wasOnboarding,
+        );
+    }
   }
 }

@@ -8,7 +8,7 @@ class AzureFunctionsService {
   final String _baseUrl;
 
   AzureFunctionsService()
-      : _baseUrl = dotenv.env['AZURE_FUNCTION_URL'] ?? 'http://localhost:7071';
+      : _baseUrl = dotenv.env['AZURE_FUNCTION_URL'] ?? 'https://ewumate-parser.azurewebsites.net';
 
   Future<Map<String, dynamic>> _postRequest(
       String endpoint, Map<String, dynamic> body) async {

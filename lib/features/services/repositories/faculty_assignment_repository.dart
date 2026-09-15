@@ -6,19 +6,39 @@ import '../../../../core/providers/supabase_provider.dart';
 class FacultyAssignmentItem {
   final String courseCode;
   final String sectionNumber;
+  final String sessionType; // 'Theory' or 'Lab'
   final String? facultyInitial;
+  final String? facultyFullName;
+  final String? facultyDesignation;
 
   FacultyAssignmentItem({
     required this.courseCode,
     required this.sectionNumber,
+    this.sessionType = 'Theory',
     this.facultyInitial,
+    this.facultyFullName,
+    this.facultyDesignation,
   });
 
   Map<String, dynamic> toJson() => {
         'course_code': courseCode,
         'section_number': sectionNumber,
+        'session_type': sessionType,
         if (facultyInitial != null) 'faculty_initial': facultyInitial,
+        if (facultyFullName != null) 'faculty_full_name': facultyFullName,
+        if (facultyDesignation != null) 'faculty_designation': facultyDesignation,
       };
+
+  factory FacultyAssignmentItem.fromJson(Map<String, dynamic> json) {
+    return FacultyAssignmentItem(
+      courseCode: json['course_code'] ?? '',
+      sectionNumber: json['section_number']?.toString() ?? '',
+      sessionType: json['session_type'] ?? 'Theory',
+      facultyInitial: json['faculty_initial'],
+      facultyFullName: json['faculty_full_name'],
+      facultyDesignation: json['faculty_designation'],
+    );
+  }
 }
 
 class FacultyAssignmentSubmission {
@@ -50,17 +70,13 @@ class FacultyAssignmentSubmission {
 
   factory FacultyAssignmentSubmission.fromJson(Map<String, dynamic> json) {
     final list = (json['assignments'] as List? ?? [])
-        .map((e) => FacultyAssignmentItem(
-              courseCode: e['course_code'] ?? '',
-              sectionNumber: e['section_number'] ?? '',
-              facultyInitial: e['faculty_initial'],
-            ))
+        .map((e) => FacultyAssignmentItem.fromJson(e as Map<String, dynamic>))
         .toList();
 
     return FacultyAssignmentSubmission(
       id: json['id'] ?? '',
       userId: json['user_id'] ?? '',
-      submissionType: json['submission_type'] ?? 'ENROLLED',
+      submissionType: json['submission_type'] ?? 'MULTI',
       semester: json['semester'] ?? '',
       facultyInitial: json['faculty_initial'],
       facultyFullName: json['faculty_full_name'],
@@ -96,7 +112,7 @@ class FacultyAssignmentRepository {
     return _client.storage.from('faculty_assignment_proofs').getPublicUrl(path);
   }
 
-  Future<void> submitEnrolledAssignments({
+  Future<void> submitMultiAssignments({
     required String semester,
     required List<FacultyAssignmentItem> items,
     required Uint8List screenshotBytes,
@@ -109,12 +125,26 @@ class FacultyAssignmentRepository {
 
     await _client.from('faculty_assignment_submissions').insert({
       'user_id': userId,
-      'submission_type': 'ENROLLED',
+      'submission_type': 'MULTI',
       'semester': semester,
       'assignments': items.map((e) => e.toJson()).toList(),
       'screenshot_url': screenshotUrl,
       'status': 'PENDING',
     });
+  }
+
+  Future<void> submitEnrolledAssignments({
+    required String semester,
+    required List<FacultyAssignmentItem> items,
+    required Uint8List screenshotBytes,
+    required String fileName,
+  }) async {
+    return submitMultiAssignments(
+      semester: semester,
+      items: items,
+      screenshotBytes: screenshotBytes,
+      fileName: fileName,
+    );
   }
 
   Future<void> submitBulkAssignments({

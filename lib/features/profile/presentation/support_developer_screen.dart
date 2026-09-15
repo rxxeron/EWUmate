@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/utils/error_utils.dart';
 
@@ -38,7 +40,10 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label copied to clipboard!'),
+        content: Text(
+          '$label copied to clipboard!',
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
@@ -61,9 +66,11 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to pick image: $e')),
+        );
+      }
     }
   }
 
@@ -74,13 +81,17 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
 
     if (trxId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the Transaction ID / Ref No.')),
+        SnackBar(
+          content: Text('Please enter the Transaction ID / Ref No.', style: GoogleFonts.sora()),
+        ),
       );
       return;
     }
     if (sender.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the Sender Number / Account Name')),
+        SnackBar(
+          content: Text('Please enter the Sender Number / Account Name', style: GoogleFonts.sora()),
+        ),
       );
       return;
     }
@@ -128,18 +139,24 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
+            backgroundColor: AppColors.surfaceNavyBlue,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+            ),
+            title: Row(
               children: [
-                Icon(Icons.check_circle_rounded, color: Color(0xFF10B981)),
-                SizedBox(width: 10),
-                Text('Submission Received', style: TextStyle(color: Colors.white)),
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981)),
+                const SizedBox(width: 10),
+                Text(
+                  'Submission Received',
+                  style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
               ],
             ),
             content: Text(
               'Thank you! Your contribution details have been submitted. The developer will verify and acknowledge it shortly.',
-              style: TextStyle(color: Colors.white.withOpacity(0.7)),
+              style: GoogleFonts.sora(color: Colors.white.withValues(alpha: 0.75), fontSize: 13, height: 1.5),
             ),
             actions: [
               TextButton(
@@ -153,7 +170,10 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
                     _screenshotFile = null;
                   });
                 },
-                child: const Text('OK', style: TextStyle(color: Color(0xFF22D3EE), fontWeight: FontWeight.bold)),
+                child: Text(
+                  'OK',
+                  style: GoogleFonts.sora(color: AppColors.primaryCyan, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -163,7 +183,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit details: ${AuthErrorUtils.getFriendlyMessage(e)}'),
+            content: Text('Failed to submit details: ${AuthErrorUtils.getFriendlyMessage(e)}', style: GoogleFonts.sora()),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -181,9 +201,9 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
       appBar: AppBar(
         title: Text(
           _showForm ? 'Verify Contribution' : 'Support the Developer',
-          style: const TextStyle(
+          style: GoogleFonts.sora(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
@@ -219,40 +239,43 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
         // Intro Card
         GlassContainer(
           borderRadius: 24,
-          opacity: 0.08,
-          blur: 15,
-          padding: const EdgeInsets.all(20),
-          borderColor: const Color(0xFF22D3EE).withOpacity(0.2),
+          padding: const EdgeInsets.all(22),
           child: Column(
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22D3EE).withOpacity(0.1),
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primaryCyan.withValues(alpha: 0.2),
+                      AppColors.secondarySoftBlue.withValues(alpha: 0.1),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3), width: 1.5),
                 ),
                 child: const Icon(
                   Icons.favorite_rounded,
-                  color: Color(0xFF22D3EE),
+                  color: AppColors.primaryCyan,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "Keep EWUmate Running",
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                "EWUmate runs on independent servers to sync data, send notifications, and keep your schedules updated. Your generous support directly funds the server hosting fees and helps keep the application completely ad-free and open for everyone.",
+                "EWUmate runs on independent servers to sync data, send notifications, and keep your schedules updated. Your generous support directly funds server hosting fees and keeps the application completely ad-free and open for everyone.",
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   fontSize: 12,
-                  color: Colors.white.withOpacity(0.6),
+                  color: AppColors.secondaryText,
                   height: 1.5,
                 ),
               ),
@@ -288,10 +311,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
         // Bank Account Details Card
         GlassContainer(
           borderRadius: 24,
-          opacity: 0.05,
-          blur: 15,
           padding: const EdgeInsets.all(20),
-          borderColor: Colors.white.withOpacity(0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -300,33 +320,35 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withOpacity(0.1),
+                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
                     ),
                     child: const Icon(
                       Icons.account_balance_rounded,
                       color: Color(0xFF10B981),
-                      size: 20,
+                      size: 22,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
+                  const SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "BRAC Bank PLC",
-                          style: TextStyle(
+                          style: GoogleFonts.sora(
                             fontSize: 15,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),
                         ),
                         Text(
                           "BONOSREE BRANCH",
-                          style: TextStyle(
+                          style: GoogleFonts.sora(
                             fontSize: 11,
-                            color: Colors.white38,
+                            color: AppColors.secondaryText,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
@@ -346,19 +368,38 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF22D3EE),
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          onPressed: () => setState(() => _showForm = true),
-          child: const Text(
-            "Verify Contribution Details",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            onPressed: () => setState(() => _showForm = true),
+            child: Text(
+              "Verify Contribution Details",
+              style: GoogleFonts.sora(
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: AppColors.primaryNavy,
+              ),
+            ),
           ),
         ),
       ],
@@ -372,41 +413,38 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
       children: [
         GlassContainer(
           borderRadius: 24,
-          opacity: 0.05,
-          blur: 15,
           padding: const EdgeInsets.all(20),
-          borderColor: Colors.white.withOpacity(0.05),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 "Contribution Info",
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 "Provide details to verify your payment. Screenshots are highly recommended.",
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   fontSize: 11,
-                  color: Colors.white.withOpacity(0.5),
+                  color: AppColors.secondaryText,
                 ),
               ),
               const SizedBox(height: 20),
 
               // Payment Method
               DropdownButtonFormField<String>(
-                value: _paymentMethod,
-                dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white),
+                initialValue: _paymentMethod,
+                dropdownColor: AppColors.surfaceNavyBlue,
+                style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                 decoration: _getInputDecoration("Payment Method", Icons.payment_rounded),
                 items: ['bKash', 'Nagad', 'BRAC Bank'].map((method) {
                   return DropdownMenuItem<String>(
                     value: method,
-                    child: Text(method),
+                    child: Text(method, style: GoogleFonts.sora(color: Colors.white)),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -420,7 +458,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
               // Transaction ID
               TextField(
                 controller: _trxIdController,
-                style: const TextStyle(color: Colors.white),
+                style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                 decoration: _getInputDecoration(
                   _paymentMethod == 'BRAC Bank' ? "Reference / Document No." : "Transaction ID (TrxID)",
                   Icons.receipt_long_rounded,
@@ -431,7 +469,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
               // Sender Detail
               TextField(
                 controller: _senderController,
-                style: const TextStyle(color: Colors.white),
+                style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                 decoration: _getInputDecoration(
                   _paymentMethod == 'BRAC Bank' ? "Sender Account Name" : "Sender Mobile Number",
                   Icons.person_outline_rounded,
@@ -443,18 +481,18 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
+                style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                 decoration: _getInputDecoration("Amount (BDT - Optional)", Icons.attach_money_rounded),
               ),
               const SizedBox(height: 20),
 
               // Image Picker Box
-              const Text(
+              Text(
                 "Screenshot (Optional)",
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white60,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.secondaryText,
                 ),
               ),
               const SizedBox(height: 8),
@@ -463,9 +501,9 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
                 child: Container(
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.02),
+                    color: Colors.white.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                   ),
                   child: _screenshotFile != null
                       ? Stack(
@@ -495,13 +533,13 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_photo_alternate_outlined, size: 30, color: Colors.white.withOpacity(0.4)),
+                            Icon(Icons.add_photo_alternate_outlined, size: 30, color: AppColors.primaryCyan.withValues(alpha: 0.6)),
                             const SizedBox(height: 8),
                             Text(
                               "Tap to upload receipt screenshot",
-                              style: TextStyle(
+                              style: GoogleFonts.sora(
                                 fontSize: 11,
-                                color: Colors.white.withOpacity(0.4),
+                                color: AppColors.secondaryText,
                               ),
                             ),
                           ],
@@ -513,24 +551,39 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
         ),
         const SizedBox(height: 24),
         
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF10B981),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+        Container(
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF10B981), Color(0xFF059669)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          onPressed: _isSubmitting ? null : _submitVerification,
-          child: _isSubmitting
-              ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
-              : const Text(
-                  "Submit Contribution",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+            onPressed: _isSubmitting ? null : _submitVerification,
+            child: _isSubmitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : Text(
+                    "Submit Contribution",
+                    style: GoogleFonts.sora(fontWeight: FontWeight.w700, fontSize: 14, color: Colors.white),
+                  ),
+          ),
         ),
       ],
     );
@@ -539,18 +592,18 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
   InputDecoration _getInputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13),
-      prefixIcon: Icon(icon, color: const Color(0xFF22D3EE), size: 20),
+      labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
+      prefixIcon: Icon(icon, color: AppColors.primaryCyan, size: 20),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF22D3EE)),
+        borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
       ),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.02),
+      fillColor: Colors.white.withValues(alpha: 0.02),
     );
   }
 
@@ -559,10 +612,10 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         title.toUpperCase(),
-        style: const TextStyle(
+        style: GoogleFonts.sora(
           fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: Colors.white38,
+          fontWeight: FontWeight.w700,
+          color: AppColors.secondaryText,
           letterSpacing: 1.2,
         ),
       ),
@@ -577,26 +630,23 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
   }) {
     return GlassContainer(
       borderRadius: 20,
-      opacity: 0.05,
-      blur: 15,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      borderColor: Colors.white.withOpacity(0.05),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+              border: Border.all(color: color.withValues(alpha: 0.35), width: 1.5),
             ),
             child: Center(
               child: Text(
                 logoText,
-                style: TextStyle(
+                style: GoogleFonts.sora(
                   color: color,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
               ),
@@ -609,28 +659,34 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: GoogleFonts.sora(
                     fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   "+88 $number",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.6),
-                    fontFamily: 'monospace',
+                  style: GoogleFonts.sora(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: () => _copyToClipboard(number, "$title Number"),
-            icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.white38),
-            tooltip: "Copy Number",
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IconButton(
+              onPressed: () => _copyToClipboard(number, "$title Number"),
+              icon: const Icon(Icons.copy_rounded, size: 18, color: AppColors.primaryCyan),
+              tooltip: "Copy Number",
+            ),
           ),
         ],
       ),
@@ -647,9 +703,9 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
             flex: 2,
             child: Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.sora(
                 fontSize: 12,
-                color: Colors.white.withOpacity(0.4),
+                color: AppColors.secondaryText,
               ),
             ),
           ),
@@ -658,7 +714,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
             flex: 3,
             child: SelectableText(
               value,
-              style: const TextStyle(
+              style: GoogleFonts.sora(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -669,10 +725,17 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => _copyToClipboard(value, label),
-              child: const Icon(
-                Icons.copy_rounded,
-                size: 14,
-                color: Colors.white38,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.copy_rounded,
+                  size: 14,
+                  color: AppColors.primaryCyan,
+                ),
               ),
             ),
           ],
@@ -683,7 +746,7 @@ class _SupportDeveloperScreenState extends ConsumerState<SupportDeveloperScreen>
 
   Widget _buildDivider() {
     return Divider(
-      color: Colors.white.withOpacity(0.04),
+      color: Colors.white.withValues(alpha: 0.06),
       height: 16,
     );
   }

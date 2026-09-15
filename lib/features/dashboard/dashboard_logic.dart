@@ -118,10 +118,13 @@ class DashboardLogic {
       return _buildChillState(reason, displayDate, targetDate);
     }
 
+    final nextClass = filteredSchedule.where((s) => !s.isCancelled).firstOrNull;
+
     return {
       'status': 'normal',
       'reason': '',
       'schedule': filteredSchedule,
+      'next_class': nextClass,
       'displayDate': displayDate,
       'targetDate': targetDate
     };
@@ -286,11 +289,13 @@ class DashboardLogic {
 
     _sortByTime(schedule);
     final filteredSchedule = filterPast ? _filterPastClasses(schedule, targetDate) : schedule;
+    final nextClass = filteredSchedule.where((s) => !s.isCancelled).firstOrNull;
 
     return {
       'status': status,
       'reason': reason, // Show the proper reason instead of hardcoded info
       'schedule': filteredSchedule,
+      'next_class': nextClass,
       'displayDate': displayDate,
       'targetDate': targetDate
     };
@@ -369,7 +374,7 @@ class DashboardLogic {
     return "No classes scheduled for today. Time to relax or catch up on tasks!";
   }
 
-  /// Legacy method - uses Map<String, dynamic> objects (kept for backward compatibility)
+  /// Legacy method - uses `Map<String, dynamic>` objects (kept for backward compatibility)
   static Map<String, dynamic> getScheduleForDisplay(
       List<Map<String, dynamic>> courses, List<dynamic> holidays) {
     final now = DateTime.now();
@@ -451,10 +456,13 @@ class DashboardLogic {
           "Prepare yourself in this free time with a chill mind. Rest and prepare for the future.";
     }
 
+    final nextClass = daySchedule.where((s) => !s.isCancelled).firstOrNull;
+
     return {
       'status': status,
       'reason': reason,
       'schedule': daySchedule,
+      'next_class': nextClass,
       'displayDate': displayDate,
       'targetDate': targetDate
     };

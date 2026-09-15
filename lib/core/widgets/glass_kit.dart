@@ -24,21 +24,64 @@ class FullGradientScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 1. Fixed Gradient Background
+        // 1. Base Gradient Background (Deep Midnight Navy)
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Color(0xFF0F172A), // Deep Navy
-                Color(0xFF111827), // Dark Grayish Navy
-                Color(0xFF0F172A),
+                Color(0xFF08172E), // Rich Figma Navy
+                Color(0xFF050E1A), // Deep Navy Void
+                Color(0xFF040A14), // Base Dark
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
         ),
-        // 2. Scaffold on top
+        // 2. Luminous Ambient Radial Glow ("Cyan Flow" - matches Figma 15.21.20 & 15.28.30 (5))
+        Positioned(
+          top: -80,
+          left: -60,
+          right: -60,
+          height: 480,
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, -0.25),
+                  radius: 0.95,
+                  colors: [
+                    const Color(0xFF19D9F5).withValues(alpha: 0.18), // EWU Cyan Glow
+                    const Color(0xFF0D47A1).withValues(alpha: 0.12), // Deep Cobalt
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.55, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // 3. Secondary Soft Blue Ambient Glow in lower screen
+        Positioned(
+          bottom: 40,
+          right: -100,
+          width: 360,
+          height: 360,
+          child: IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF1E3A8A).withValues(alpha: 0.14),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // 4. Scaffold on top
         Scaffold(
           key: scaffoldKey, // Added
           backgroundColor: Colors.transparent,

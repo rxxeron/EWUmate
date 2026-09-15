@@ -9,6 +9,7 @@ import '../../features/auth/forgot_password_screen.dart';
 import '../../features/onboarding/program_selection_screen.dart';
 import '../../features/onboarding/course_history_screen.dart';
 import '../../features/onboarding/presentation/profile_setup_screen.dart';
+import '../../features/onboarding/presentation/welcome_tour_screen.dart';
 
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/tasks/presentation/tasks_screen.dart';
@@ -33,7 +34,6 @@ import '../../features/semester_progress/semester_summary_screen.dart';
 import '../../features/course_browser/presentation/course_browser_screen.dart';
 import '../../features/advising/presentation/advising_screen.dart';
 import '../../features/schedule/presentation/schedule_screen.dart';
-import '../../features/advising/presentation/next_semester_screen.dart';
 import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
 import '../../features/tutorials/presentation/tutorials_screen.dart';
@@ -62,6 +62,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return CourseHistoryScreen(isEditMode: isEdit, admittedSemester: admitted);
       }),
 
+      GoRoute(path: '/onboarding/welcome-tour', builder: (context, state) => const WelcomeTourScreen()),
+
       // Main Pages wrapped in a single ShellRoute
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
@@ -69,6 +71,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
           GoRoute(path: '/tasks', builder: (context, state) => const TasksScreen()),
           GoRoute(path: '/semester-progress', builder: (context, state) => const SemesterProgressScreen()),
+          GoRoute(path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
+          GoRoute(path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
           GoRoute(path: '/services', builder: (context, state) => const ServicesScreen()),
           GoRoute(path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
           GoRoute(path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
@@ -116,12 +120,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
       GoRoute(path: '/notifications/settings', builder: (context, state) => const ReminderSettingsScreen()),
-      GoRoute(path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
       GoRoute(path: '/semester-summary', builder: (context, state) => const SemesterSummaryScreen()),
       GoRoute(path: '/courses', builder: (context, state) => const CourseBrowserScreen()),
       GoRoute(path: '/advising', builder: (context, state) => const AdvisingScreen()),
-      GoRoute(path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
-      GoRoute(path: '/next-semester', builder: (context, state) => const NextSemesterScreen()),
+      GoRoute(path: '/next-semester', redirect: (context, state) => '/courses'),
       GoRoute(path: '/results/grade-entry', builder: (context, state) => const GradeEntryScreen()),
       GoRoute(path: '/portal-sync', builder: (context, state) => const PortalSyncScreen()),
       GoRoute(path: '/feedback', builder: (context, state) => const FeedbackScreen()),
@@ -129,3 +131,4 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+

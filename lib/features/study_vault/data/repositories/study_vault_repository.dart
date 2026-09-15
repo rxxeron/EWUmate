@@ -208,4 +208,23 @@ class StudyVaultRepository {
         .eq('id', materialId)
         .eq('uploader_id', user.id);
   }
+
+  Future<void> deleteOrRequestRemoval(StudyMaterial item) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    if (item.status == 'pending') {
+      try {
+        await _supabase
+            .from('study_materials')
+            .delete()
+            .eq('id', item.id)
+            .eq('uploader_id', user.id);
+        return;
+      } catch (_) {
+        // Fallback to request removal if delete policy prevents hard delete
+      }
+    }
+    await requestRemoval(item.id);
+  }
 }

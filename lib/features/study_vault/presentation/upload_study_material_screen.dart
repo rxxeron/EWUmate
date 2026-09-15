@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/study_vault_providers.dart';
 import '../data/repositories/study_vault_repository.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/widgets/glass_kit.dart';
 import 'widgets/paginated_search_bottom_sheet.dart';
@@ -284,20 +286,45 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
         showBack: true,
       ),
       body: _isLoadingOptions 
-          ? const Center(child: CircularProgressIndicator(color: Colors.cyanAccent))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primaryCyan))
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    "Global Details",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.cyanAccent,
-                      letterSpacing: 1.1,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.25)),
+                        ),
+                        child: const Icon(Icons.info_outline_rounded, color: AppColors.primaryCyan, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Global Details",
+                            style: GoogleFonts.sora(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "Target course, faculty initial, and semester",
+                            style: GoogleFonts.sora(
+                              fontSize: 11,
+                              color: AppColors.secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   
@@ -306,25 +333,31 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                     onTap: _showCourseSearchBottomSheet,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     borderRadius: 16,
-                    borderColor: _courseCode != null ? Colors.cyanAccent.withValues(alpha: 0.3) : Colors.white10,
-                    opacity: 0.03,
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.menu_book_rounded,
-                          color: _courseCode != null ? Colors.cyanAccent : Colors.white38,
-                          size: 24,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.menu_book_rounded,
+                            color: _courseCode != null ? AppColors.primaryCyan : Colors.white38,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Course Code',
-                                style: TextStyle(
-                                  color: Colors.white38,
+                                style: GoogleFonts.sora(
+                                  color: AppColors.secondaryText,
                                   fontSize: 11,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -332,10 +365,10 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                                 _courseCode != null
                                     ? '[$_courseCode] ${_courseName ?? ""}'
                                     : 'Search course code...',
-                                style: TextStyle(
-                                  color: _courseCode != null ? Colors.white : Colors.white70,
-                                  fontSize: 15,
-                                  fontWeight: _courseCode != null ? FontWeight.bold : FontWeight.normal,
+                                style: GoogleFonts.sora(
+                                  color: _courseCode != null ? Colors.white : Colors.white54,
+                                  fontSize: 14,
+                                  fontWeight: _courseCode != null ? FontWeight.w600 : FontWeight.w400,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -350,32 +383,38 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Custom Searchable Selector for Faculty
                   GlassContainer(
                     onTap: _showFacultySearchBottomSheet,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     borderRadius: 16,
-                    borderColor: _facultyInitial != null ? Colors.purpleAccent.withValues(alpha: 0.3) : Colors.white10,
-                    opacity: 0.03,
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.badge_rounded,
-                          color: _facultyInitial != null ? Colors.purpleAccent : Colors.white38,
-                          size: 24,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.secondarySoftBlue.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.badge_rounded,
+                            color: _facultyInitial != null ? AppColors.secondarySoftBlue : Colors.white38,
+                            size: 22,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Faculty Initial',
-                                style: TextStyle(
-                                  color: Colors.white38,
+                                style: GoogleFonts.sora(
+                                  color: AppColors.secondaryText,
                                   fontSize: 11,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -383,10 +422,10 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                                 _facultyInitial != null
                                     ? '[$_facultyInitial] ${_facultyName ?? ""}'
                                     : 'Search faculty initial...',
-                                style: TextStyle(
-                                  color: _facultyInitial != null ? Colors.white : Colors.white70,
-                                  fontSize: 15,
-                                  fontWeight: _facultyInitial != null ? FontWeight.bold : FontWeight.normal,
+                                style: GoogleFonts.sora(
+                                  color: _facultyInitial != null ? Colors.white : Colors.white54,
+                                  fontSize: 14,
+                                  fontWeight: _facultyInitial != null ? FontWeight.w600 : FontWeight.w400,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -401,40 +440,41 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   Theme(
                     data: Theme.of(context).copyWith(
-                      canvasColor: const Color(0xFF0F172A),
+                      canvasColor: AppColors.surfaceNavyBlue,
                     ),
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
                         labelText: 'Semester',
-                        labelStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                        prefixIcon: const Icon(Icons.calendar_today_rounded, color: Colors.cyanAccent, size: 20),
+                        labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
+                        prefixIcon: const Icon(Icons.calendar_today_rounded, color: AppColors.primaryCyan, size: 20),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.02),
+                        fillColor: Colors.white.withValues(alpha: 0.03),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Colors.white10),
+                          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: Colors.cyanAccent),
+                          borderSide: const BorderSide(color: AppColors.primaryCyan, width: 1.5),
                         ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       initialValue: _semester,
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      dropdownColor: AppColors.surfaceNavyBlue,
+                      style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
                       iconEnabledColor: Colors.white60,
                       items: _semesterOptions.map((s) {
                         return DropdownMenuItem<String>(
                           value: s['code'],
                           child: Text(
                             s['title']!,
-                            style: const TextStyle(color: Colors.white),
+                            style: GoogleFonts.sora(color: Colors.white),
                           ),
                         );
                       }).toList(),
@@ -442,15 +482,40 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                     ),
                   ),
 
-                  const SizedBox(height: 32),
-                  const Text(
-                    "Select Files",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.cyanAccent,
-                      letterSpacing: 1.1,
-                    ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.25)),
+                        ),
+                        child: const Icon(Icons.cloud_upload_rounded, color: AppColors.primaryCyan, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Select Files",
+                            style: GoogleFonts.sora(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            "PDFs, images, slides, notes, or code",
+                            style: GoogleFonts.sora(
+                              fontSize: 11,
+                              color: AppColors.secondaryText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
@@ -459,42 +524,42 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
                       decoration: BoxDecoration(
-                        color: Colors.cyanAccent.withValues(alpha: 0.01),
+                        color: AppColors.primaryCyan.withValues(alpha: 0.02),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.cyanAccent.withValues(alpha: 0.15),
+                          color: AppColors.primaryCyan.withValues(alpha: 0.25),
                           width: 1.5,
                         ),
                       ),
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.cyanAccent.withValues(alpha: 0.08),
+                              color: AppColors.primaryCyan.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.cloud_upload_outlined,
-                              color: Colors.cyanAccent,
+                              color: AppColors.primaryCyan,
                               size: 28,
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Text(
+                          Text(
                             'Add Files (Any file type)',
-                            style: TextStyle(
+                            style: GoogleFonts.sora(
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w700,
                               fontSize: 15,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Up to 10 files at a time',
-                            style: TextStyle(
-                              color: Colors.white24,
-                              fontSize: 11,
+                            style: GoogleFonts.sora(
+                              color: AppColors.secondaryText,
+                              fontSize: 12,
                             ),
                           ),
                         ],
@@ -515,10 +580,10 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                         
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
-                          color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+                          color: AppColors.surfaceNavyBlue.withValues(alpha: 0.6),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
-                            side: const BorderSide(color: Colors.white10),
+                            side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
@@ -532,8 +597,8 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                                     Expanded(
                                       child: Text(
                                         file.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                        style: GoogleFonts.sora(
+                                          fontWeight: FontWeight.w600,
                                           color: Colors.white,
                                           fontSize: 14,
                                         ),
@@ -549,27 +614,37 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 14),
                                 Theme(
                                   data: Theme.of(context).copyWith(
-                                    canvasColor: const Color(0xFF1E293B),
+                                    canvasColor: AppColors.surfaceNavyBlue,
                                   ),
                                   child: DropdownButtonFormField<String>(
                                     decoration: InputDecoration(
                                       labelText: 'File Type',
-                                      labelStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                      labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 12),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(alpha: 0.02),
                                       enabledBorder: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
-                                        borderSide: const BorderSide(color: Colors.white10),
+                                        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(color: AppColors.primaryCyan),
                                       ),
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
+                                    dropdownColor: AppColors.surfaceNavyBlue,
                                     initialValue: _fileTypesSelection[key],
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                                    items: _fileTypes.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
+                                    style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
+                                    items: _fileTypes.map((t) => DropdownMenuItem(
+                                      value: t, 
+                                      child: Text(t, style: GoogleFonts.sora()),
+                                    )).toList(),
                                     onChanged: (val) {
                                       if (val != null) {
                                         setState(() {
@@ -586,15 +661,20 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                       },
                     ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   
                   Container(
+                    width: double.infinity,
+                    height: 52,
                     decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                      ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.cyanAccent.withValues(alpha: _isUploading ? 0.0 : 0.25),
-                          blurRadius: 16,
+                          color: AppColors.primaryCyan.withValues(alpha: _isUploading ? 0.0 : 0.25),
+                          blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -602,23 +682,49 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
                     child: ElevatedButton(
                       onPressed: _isUploading ? null : _uploadAll,
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.cyanAccent,
-                        foregroundColor: Colors.black,
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        disabledBackgroundColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 0,
                       ),
                       child: _isUploading
-                          ? const SizedBox(
-                              height: 20, 
-                              width: 20, 
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.black),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  height: 20, 
+                                  width: 20, 
+                                  child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primaryNavy),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Uploading Files...',
+                                  style: GoogleFonts.sora(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    color: AppColors.primaryNavy,
+                                  ),
+                                ),
+                              ],
                             )
-                          : const Text(
-                              'Upload All to Vault', 
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.1),
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.file_upload_outlined, color: AppColors.primaryNavy, size: 22),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Upload All to Vault', 
+                                  style: GoogleFonts.sora(
+                                    fontWeight: FontWeight.w800, 
+                                    fontSize: 15, 
+                                    color: AppColors.primaryNavy,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
                             ),
                     ),
                   ),

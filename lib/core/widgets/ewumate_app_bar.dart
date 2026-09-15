@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/scaffold_provider.dart';
+import '../theme/ewu_theme_extension.dart';
 
 class EWUmateAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final String title;
@@ -23,18 +25,20 @@ class EWUmateAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.ewuColors;
+
     // Logic to determine leading widget
     Widget? leading;
     
     // If showMenu is forced or if we are at a root and showBack isn't forced
     if (showMenu) {
       leading = IconButton(
-        icon: const Icon(Icons.menu, color: Colors.white),
+        icon: Icon(Icons.menu_rounded, color: colors.textPrimary),
         onPressed: () => ref.read(scaffoldKeyProvider).currentState?.openDrawer(),
       );
     } else if (showBack || context.canPop()) {
       leading = IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary),
         onPressed: onBack ??
             () {
               if (context.canPop()) {
@@ -47,7 +51,7 @@ class EWUmateAppBar extends ConsumerWidget implements PreferredSizeWidget {
     } else {
       // Default fallback: show menu if nothing else
       leading = IconButton(
-        icon: const Icon(Icons.menu, color: Colors.white),
+        icon: Icon(Icons.menu_rounded, color: colors.textPrimary),
         onPressed: () => ref.read(scaffoldKeyProvider).currentState?.openDrawer(),
       );
     }
@@ -58,8 +62,8 @@ class EWUmateAppBar extends ConsumerWidget implements PreferredSizeWidget {
       leading: leading,
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
+        style: GoogleFonts.sora(
+          color: colors.textPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 20,
         ),

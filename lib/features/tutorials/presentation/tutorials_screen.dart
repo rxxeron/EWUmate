@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/glass_kit.dart';
+import '../../../core/widgets/onboarding_overlay.dart';
+import '../../../core/constants/onboarding_steps.dart';
 import '../data/tutorial_model.dart';
 import '../data/tutorials_repository.dart';
 
@@ -13,24 +19,56 @@ class TutorialsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        OnboardingOverlay.show(
+          context: context,
+          featureKey: OnboardingSteps.tutorialsKey,
+          steps: OnboardingSteps.tutorials,
+        );
+      }
+    });
+
     final tutorialsAsync = ref.watch(_tutorialsProvider);
-    return Scaffold(
+    return FullGradientScaffold(
       appBar: AppBar(
-        title: const Text('Tutorials'),
+        title: Text(
+          'Video Tutorials',
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Replay Welcome Tour',
+            icon: const Icon(Icons.auto_stories_rounded, color: AppColors.primaryCyan, size: 22),
+            onPressed: () => context.push('/onboarding/welcome-tour'),
+          ),
+        ],
       ),
       body: tutorialsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryCyan)),
         error: (e, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+              const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 48),
               const SizedBox(height: 12),
-              const Text('Failed to load tutorials', style: TextStyle(color: Colors.white70)),
+              Text(
+                'Failed to load tutorials',
+                style: GoogleFonts.sora(color: Colors.white70, fontSize: 14),
+              ),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => ref.refresh(_tutorialsProvider),
-                child: const Text('Retry'),
+                child: Text(
+                  'Retry',
+                  style: GoogleFonts.sora(color: AppColors.primaryCyan, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -147,14 +185,14 @@ class _FeaturedVideoCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.cyanAccent.withOpacity(0.15),
+                  color: Colors.cyanAccent.withValues(alpha: 0.15),
                   blurRadius: 30,
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
                 ),
               ],
               border: Border.all(
-                color: Colors.cyanAccent.withOpacity(0.3),
+                color: Colors.cyanAccent.withValues(alpha: 0.3),
                 width: 1.5,
               ),
             ),
@@ -189,7 +227,7 @@ class _FeaturedVideoCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -199,11 +237,11 @@ class _FeaturedVideoCard extends StatelessWidget {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: Colors.cyanAccent.withOpacity(0.9),
+                      color: Colors.cyanAccent.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.cyanAccent.withOpacity(0.4),
+                          color: Colors.cyanAccent.withValues(alpha: 0.4),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
@@ -312,9 +350,9 @@ class _VideoCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B).withOpacity(0.6),
+          color: const Color(0xFF1E293B).withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.07)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
         ),
         child: Row(
           children: [
@@ -347,7 +385,7 @@ class _VideoCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.play_arrow_rounded,
@@ -392,10 +430,10 @@ class _VideoCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withOpacity(0.1),
+                        color: Colors.blueAccent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                            color: Colors.blueAccent.withOpacity(0.2)),
+                            color: Colors.blueAccent.withValues(alpha: 0.2)),
                       ),
                       child: Text(
                         tutorial.category,

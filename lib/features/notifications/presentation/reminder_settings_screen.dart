@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/glass_kit.dart';
 import '../../../core/models/profile.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../../core/providers/supabase_provider.dart';
+import 'widgets/reminder_duration_picker_dialog.dart';
+import 'widgets/reminder_schedule_preview_sheet.dart';
 
 class ReminderSettingsScreen extends ConsumerStatefulWidget {
   const ReminderSettingsScreen({super.key});
@@ -98,11 +102,9 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
               .select('course_code')
               .eq('user_id', user.id)
               .inFilter('semester_code', possibleCodes);
-          if (enrollments is List) {
-            for (final row in enrollments) {
-              final code = (row['course_code'] ?? '').toString().trim().toUpperCase();
-              if (code.isNotEmpty) coursesSet.add(code);
-            }
+          for (final row in enrollments) {
+            final code = (row['course_code'] ?? '').toString().trim().toUpperCase();
+            if (code.isNotEmpty) coursesSet.add(code);
           }
         } catch (e) {
           debugPrint('[ReminderSettings] enrollments error: $e');
@@ -142,28 +144,30 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+    return FullGradientScaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Class Reminder Settings',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
         ),
-        backgroundColor: const Color(0xFF1A1A2E),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: profileAsync.when(
         data: (profile) {
           if (profile == null) {
-            return const Center(
-              child: Text('Profile not found', style: TextStyle(color: Colors.white54)),
+            return Center(
+              child: Text(
+                'Profile not found',
+                style: GoogleFonts.sora(color: AppColors.secondaryText),
+              ),
             );
           }
 
           if (_isLoadingCourses) {
             return const Center(
-              child: CircularProgressIndicator(color: Colors.cyanAccent),
+              child: CircularProgressIndicator(color: AppColors.primaryCyan),
             );
           }
 
@@ -177,23 +181,24 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(22),
                       decoration: BoxDecoration(
-                        color: Colors.cyan.withOpacity(0.1),
+                        color: AppColors.primaryCyan.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.25), width: 1.5),
                       ),
-                      child: const Icon(Icons.class_outlined, size: 48, color: Colors.cyanAccent),
+                      child: const Icon(Icons.class_outlined, size: 48, color: AppColors.primaryCyan),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
+                    const SizedBox(height: 18),
+                    Text(
                       'No Enrolled Courses Found',
-                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.sora(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Enroll in courses first to customize your reminder notification schedule.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white54, fontSize: 14),
+                      style: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13, height: 1.4),
                     ),
                   ],
                 ),
@@ -208,26 +213,29 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Info banner
-                Container(
+                GlassContainer(
+                  borderRadius: 20,
                   padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E38),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.2)),
-                  ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: Colors.cyanAccent, size: 28),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.info_outline_rounded, color: AppColors.primaryCyan, size: 24),
+                      ),
                       const SizedBox(width: 14),
                       Expanded(
                         child: Text(
                           'Class reminders adapt to your schedule: 1st class of the day notifies at 1h, 30m, & 15m. Between-class gaps > 30m notify at 30m & 15m.',
-                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13, height: 1.4),
+                          style: GoogleFonts.sora(color: Colors.white.withValues(alpha: 0.85), fontSize: 12, height: 1.45),
                         ),
                       ),
                     ],
@@ -239,22 +247,22 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF16202E),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: Colors.amberAccent.withOpacity(0.3)),
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.bolt_rounded, color: Colors.amberAccent, size: 24),
+                      const Icon(Icons.bolt_rounded, color: Color(0xFFF59E0B), size: 24),
                       const SizedBox(width: 12),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(fontSize: 12, height: 1.4, color: Colors.white70),
+                            style: GoogleFonts.sora(fontSize: 12, height: 1.4, color: AppColors.secondaryText),
                             children: [
-                              const TextSpan(
+                              TextSpan(
                                 text: 'Day-Adaptive Safety: ',
-                                style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold),
+                                style: GoogleFonts.sora(color: const Color(0xFFF59E0B), fontWeight: FontWeight.bold),
                               ),
                               const TextSpan(
                                 text: 'On days where this class immediately follows another class (gap \u2264 30 mins), alerts automatically condense to ',
@@ -276,18 +284,18 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                 const SizedBox(height: 24),
 
                 // Step 1: Course Selector
-                const Text(
+                Text(
                   '1. SELECT COURSE',
-                  style: TextStyle(
-                    color: Colors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                  style: GoogleFonts.sora(
+                    color: AppColors.primaryCyan,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
                     letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 48,
+                  height: 44,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: enrolledList.length,
@@ -295,27 +303,48 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                     itemBuilder: (context, index) {
                       final course = enrolledList[index];
                       final isSelected = course == _selectedCourse;
-                      return ChoiceChip(
-                        label: Text(course),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _selectedCourse = course;
-                              _loadOffsetsForCourse(profile, course);
-                            });
-                          }
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCourse = course;
+                            _loadOffsetsForCourse(profile, course);
+                          });
                         },
-                        selectedColor: Colors.cyanAccent,
-                        backgroundColor: const Color(0xFF1A1A2E),
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white70,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: isSelected ? Colors.cyanAccent : Colors.white12,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: isSelected
+                                ? const LinearGradient(
+                                    colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                                  )
+                                : null,
+                            color: isSelected ? null : AppColors.surfaceNavyBlue.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.transparent
+                                  : Colors.white.withValues(alpha: 0.1),
+                            ),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              course,
+                              style: GoogleFonts.sora(
+                                color: isSelected ? AppColors.primaryNavy : Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -328,42 +357,38 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       '2. TOTAL NOTIFICATIONS',
-                      style: TextStyle(
-                        color: Colors.cyanAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                      style: GoogleFonts.sora(
+                        color: AppColors.primaryCyan,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
                         letterSpacing: 1.2,
                       ),
                     ),
                     Text(
                       '${_currentOffsets.length} configured',
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      style: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 12),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A2E),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
-                  ),
+                GlassContainer(
+                  borderRadius: 18,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Total Alerts Count:',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
                       ),
                       DropdownButton<int>(
                         value: _currentOffsets.length.clamp(2, 5),
-                        dropdownColor: const Color(0xFF1E1E38),
-                        style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 16),
+                        dropdownColor: AppColors.surfaceNavyBlue,
+                        style: GoogleFonts.sora(color: AppColors.primaryCyan, fontWeight: FontWeight.bold, fontSize: 15),
                         underline: const SizedBox(),
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.cyanAccent),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryCyan),
                         items: [2, 3, 4, 5].map((int val) {
                           return DropdownMenuItem<int>(
                             value: val,
@@ -381,12 +406,12 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                 const SizedBox(height: 28),
 
                 // Step 3: Notification Slots
-                const Text(
+                Text(
                   '3. REMINDER TIMELINE SLOTS',
-                  style: TextStyle(
-                    color: Colors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                  style: GoogleFonts.sora(
+                    color: AppColors.primaryCyan,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -400,28 +425,25 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                     final offset = _currentOffsets[index];
                     final isFixed = offset == 30 || offset == 15;
 
-                    return Container(
+                    return GlassContainer(
+                      borderRadius: 16,
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1A1A2E),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: isFixed ? Colors.white12 : Colors.cyanAccent.withOpacity(0.3),
-                        ),
-                      ),
+                      borderColor: isFixed
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : AppColors.primaryCyan.withValues(alpha: 0.25),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: isFixed
-                                  ? Colors.white.withOpacity(0.05)
-                                  : Colors.cyanAccent.withOpacity(0.15),
+                                  ? Colors.white.withValues(alpha: 0.05)
+                                  : AppColors.primaryCyan.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               isFixed ? Icons.lock_clock_rounded : Icons.alarm_rounded,
-                              color: isFixed ? Colors.white54 : Colors.cyanAccent,
+                              color: isFixed ? AppColors.secondaryText : AppColors.primaryCyan,
                               size: 20,
                             ),
                           ),
@@ -432,17 +454,17 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                               children: [
                                 Text(
                                   _formatDuration(offset),
-                                  style: const TextStyle(
+                                  style: GoogleFonts.sora(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 15,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   isFixed ? 'Fixed System Anchor' : 'Custom User Slot (tap to adjust)',
-                                  style: TextStyle(
-                                    color: isFixed ? Colors.white38 : Colors.cyanAccent.withOpacity(0.7),
+                                  style: GoogleFonts.sora(
+                                    color: isFixed ? AppColors.secondaryText : AppColors.primaryCyan.withValues(alpha: 0.8),
                                     fontSize: 11,
                                   ),
                                 ),
@@ -452,21 +474,21 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                           if (!isFixed)
                             TextButton.icon(
                               onPressed: () => _showDurationPickerDialog(index),
-                              icon: const Icon(Icons.edit, size: 16, color: Colors.cyanAccent),
-                              label: const Text('Change', style: TextStyle(color: Colors.cyanAccent, fontSize: 13)),
+                              icon: const Icon(Icons.edit, size: 15, color: AppColors.primaryCyan),
+                              label: Text('Change', style: GoogleFonts.sora(color: AppColors.primaryCyan, fontSize: 12, fontWeight: FontWeight.bold)),
                             )
                           else
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.white10,
+                                color: Colors.white.withValues(alpha: 0.06),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'LOCKED',
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 10,
+                                style: GoogleFonts.sora(
+                                  color: AppColors.secondaryText,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1,
                                 ),
@@ -480,26 +502,39 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                 const SizedBox(height: 36),
 
                 // Save & Preview Button
-                SizedBox(
+                Container(
                   width: double.infinity,
                   height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: ElevatedButton.icon(
                     onPressed: _isSaving ? null : () => _showSchedulePreview(profile),
                     icon: _isSaving
                         ? const SizedBox(
                             width: 18,
                             height: 18,
-                            child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                            child: CircularProgressIndicator(color: AppColors.primaryNavy, strokeWidth: 2),
                           )
-                        : const Icon(Icons.remove_red_eye_outlined, color: Colors.black),
+                        : const Icon(Icons.remove_red_eye_outlined, color: AppColors.primaryNavy),
                     label: Text(
                       _isSaving ? 'Saving...' : 'Preview Schedule & Save',
-                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: GoogleFonts.sora(color: AppColors.primaryNavy, fontWeight: FontWeight.w700, fontSize: 15),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.cyanAccent,
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 4,
                     ),
                   ),
                 ),
@@ -511,10 +546,15 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
                         _currentOffsets = [60, 30, 15];
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Reset to standard anchors (60m, 30m, 15m). Save to apply.')),
+                        SnackBar(
+                          content: Text(
+                            'Reset to standard anchors (60m, 30m, 15m). Save to apply.',
+                            style: GoogleFonts.sora(),
+                          ),
+                        ),
                       );
                     },
-                    child: const Text('Reset this course to default', style: TextStyle(color: Colors.white54, fontSize: 13)),
+                    child: Text('Reset this course to default', style: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13)),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -522,8 +562,8 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: Colors.cyanAccent)),
-        error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.redAccent))),
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryCyan)),
+        error: (e, _) => Center(child: Text('Error: $e', style: GoogleFonts.sora(color: Colors.redAccent))),
       ),
     );
   }
@@ -571,293 +611,29 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
   }
 
   Future<void> _showDurationPickerDialog(int index) async {
-    int currentMinutes = _currentOffsets[index];
-    int selectedHours = currentMinutes ~/ 60;
-    int selectedMins = currentMinutes % 60;
-
-    await showDialog(
+    final result = await ReminderDurationPickerDialog.show(
       context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final totalCalculated = selectedHours * 60 + selectedMins;
-            final isTooLong = totalCalculated > 300;
-            final isZero = totalCalculated == 0;
-
-            return AlertDialog(
-              backgroundColor: const Color(0xFF1E1E38),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Row(
-                children: [
-                  Icon(Icons.schedule, color: Colors.cyanAccent),
-                  SizedBox(width: 10),
-                  Text('Custom Reminder Time', style: TextStyle(color: Colors.white, fontSize: 17)),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Choose how much time before class you want this alert:',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Hours Picker
-                      Column(
-                        children: [
-                          const Text('Hours', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                          const SizedBox(height: 6),
-                          DropdownButton<int>(
-                            value: selectedHours,
-                            dropdownColor: const Color(0xFF282846),
-                            style: const TextStyle(color: Colors.cyanAccent, fontSize: 20, fontWeight: FontWeight.bold),
-                            underline: const SizedBox(),
-                            items: List.generate(6, (h) => DropdownMenuItem(value: h, child: Text('$h h'))),
-                            onChanged: (h) {
-                              if (h != null) {
-                                setDialogState(() {
-                                  selectedHours = h;
-                                  if (selectedHours == 5) selectedMins = 0; // Max 5 hours
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 24),
-                      const Text(':', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 24),
-                      // Minutes Picker (5-min intervals)
-                      Column(
-                        children: [
-                          const Text('Minutes', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                          const SizedBox(height: 6),
-                          DropdownButton<int>(
-                            value: (selectedMins ~/ 5) * 5,
-                            dropdownColor: const Color(0xFF282846),
-                            style: const TextStyle(color: Colors.cyanAccent, fontSize: 20, fontWeight: FontWeight.bold),
-                            underline: const SizedBox(),
-                            items: List.generate(12, (m) {
-                              final minVal = m * 5;
-                              return DropdownMenuItem(value: minVal, child: Text('$minVal m'));
-                            }),
-                            onChanged: selectedHours == 5
-                                ? null
-                                : (m) {
-                                    if (m != null) {
-                                      setDialogState(() {
-                                        selectedMins = m;
-                                      });
-                                    }
-                                  },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.cyan.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        'Total: ${_formatDuration(totalCalculated)} before class',
-                        style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ),
-                  if (isTooLong)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('Maximum lead time is 5 hours.', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                    ),
-                  if (isZero)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('Time must be greater than 0.', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-                ),
-                ElevatedButton(
-                  onPressed: (isTooLong || isZero)
-                      ? null
-                      : () {
-                          Navigator.pop(ctx);
-                          final updated = List<int>.from(_currentOffsets);
-                          updated[index] = totalCalculated;
-                          updated.add(30);
-                          updated.add(15);
-                          final deduplicated = updated.toSet().toList()..sort((a, b) => b.compareTo(a));
-                          setState(() {
-                            _currentOffsets = deduplicated;
-                          });
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyanAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: const Text('Apply', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      initialMinutes: _currentOffsets[index],
     );
+    if (result != null) {
+      final updated = List<int>.from(_currentOffsets);
+      updated[index] = result;
+      updated.add(30);
+      updated.add(15);
+      final deduplicated = updated.toSet().toList()..sort((a, b) => b.compareTo(a));
+      setState(() {
+        _currentOffsets = deduplicated;
+      });
+    }
   }
 
   void _showSchedulePreview(Profile profile) {
     if (_selectedCourse == null) return;
-
-    // Simulate an example class at 08:30 AM (Dhaka standard first slot)
-    const exampleHour = 8;
-    const exampleMin = 30;
-
-    showModalBottomSheet(
+    ReminderSchedulePreviewSheet.show(
       context: context,
-      backgroundColor: const Color(0xFF16162A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Icon(Icons.event_available_rounded, color: Colors.cyanAccent, size: 24),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Confirm ${_selectedCourse!} Schedule',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Here is the exact notification timeline that will be scheduled for every ${_selectedCourse!} class:',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-              const SizedBox(height: 20),
-
-              // Simulation Box
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1F1F38),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.cyanAccent.withOpacity(0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Simulation Example:', style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 12)),
-                        Text('Class at 08:30 AM', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                      ],
-                    ),
-                    const Divider(color: Colors.white12, height: 20),
-                    ..._currentOffsets.map((offset) {
-                      final totalClassMins = exampleHour * 60 + exampleMin;
-                      var triggerMins = totalClassMins - offset;
-                      if (triggerMins < 0) triggerMins += 24 * 60; // previous day wrap
-                      final th = triggerMins ~/ 60;
-                      final tm = triggerMins % 60;
-                      final ampm = th >= 12 ? 'PM' : 'AM';
-                      final h12 = th % 12 == 0 ? 12 : th % 12;
-                      final triggerTimeStr = '${h12.toString().padLeft(2, '0')}:${tm.toString().padLeft(2, '0')} $ampm';
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.notifications_active_outlined, color: Colors.cyanAccent, size: 18),
-                            const SizedBox(width: 12),
-                            Text(
-                              triggerTimeStr,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: (offset == 30 || offset == 15)
-                                    ? Colors.white10
-                                    : Colors.cyan.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${_formatDuration(offset)} before',
-                                style: TextStyle(
-                                  color: (offset == 30 || offset == 15) ? Colors.white70 : Colors.cyanAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // Confirm and Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    _savePreferences(profile);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.cyanAccent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text(
-                    'Confirm & Save Schedule',
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+      selectedCourse: _selectedCourse!,
+      currentOffsets: _currentOffsets,
+      onConfirmSave: () => _savePreferences(profile),
     );
   }
 

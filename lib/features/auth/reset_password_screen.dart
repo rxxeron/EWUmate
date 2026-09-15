@@ -63,8 +63,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           padding: const EdgeInsets.all(24.0),
           child: GlassContainer(
             borderRadius: 24,
-            opacity: 0.1,
-            blur: 15,
             padding: const EdgeInsets.all(32.0),
             child: Form(
               key: _formKey,
@@ -148,7 +146,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     child: GlassContainer(
                       onTap: _loading ? null : _updatePassword,
                       color: Colors.cyanAccent.withValues(alpha: 0.2),
-                      borderColor: Colors.cyanAccent,
                       borderRadius: 12,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Center(

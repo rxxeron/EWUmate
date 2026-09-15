@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'onboarding_repository.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/utils/course_utils.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/utils/grade_helper.dart';
-import '../../core/models/grade_scale.dart';
-import '../semester_progress/semester_summary_providers.dart';
 import '../../core/utils/error_utils.dart';
 import '../../core/utils/refresh_utils.dart';
+import 'widgets/course_history/course_history_header_card.dart';
+import 'widgets/course_history/course_history_course_list.dart';
+import 'widgets/course_history/course_history_grade_dialog.dart';
+import 'widgets/course_history/course_history_sync_overlay.dart';
+import 'widgets/course_history/course_history_bottom_bar.dart';
 
 class CourseHistoryScreen extends ConsumerStatefulWidget {
   final bool isEditMode;
@@ -37,7 +41,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   List<Map<String, dynamic>> _catalog = [];
   final Map<String, Map<String, String>> _history = {};
   final Map<String, List<String>> _selectedSectionIds = {};
-  final Map<String, Map<String, dynamic>> _selectedCoursesMetadata = {}; // Persistent metadata
+  final Map<String, Map<String, dynamic>> _selectedCoursesMetadata = {};
   List<String> _allSemesters = [];
   String _runningSemester = "";
 
@@ -47,18 +51,19 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   int _currentIndex = -1;
   String _searchQuery = '';
 
-  List<Map<String, dynamic>> _getFilteredCourses() {
-    return _catalog;
-  }
-
   @override
   void initState() {
     super.initState();
-    // Instant priority for passed semester
     if (widget.admittedSemester != null) {
-       _currentSemester = widget.admittedSemester;
+      _currentSemester = widget.admittedSemester;
     }
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadCatalog() async {
@@ -101,7 +106,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
       _currentSemester = semester;
       _currentIndex = _allSemesters.indexOf(semester);
 
-      // Fuzzy matching for current semester detection
       String clean(String s) =>
           s.replaceAll(' ', '').replaceAll('_', '').toLowerCase();
       _isCurrentSemester = (clean(semester) == clean(_runningSemester));
@@ -140,7 +144,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
     for (final selection in currentSemMap.keys) {
       final meta = _selectedCoursesMetadata[selection];
-      
+
       if (meta != null) {
         details.add({
           'id': meta['id'],
@@ -150,7 +154,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           'time': (meta['time'] ?? meta['schedule_data'] ?? '').toString(),
         });
       } else {
-        // Fallback for very old data or edge cases
         final code = selection.contains('_Sec')
             ? selection.split('_Sec').first
             : selection;
@@ -259,78 +262,71 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           _history.clear();
           _selectedSectionIds.clear();
 
-            // Load History
-            for (var row in completedCourses) {
-              final semRaw = row['semester_code'] as String;
-              final sem = CourseUtils.cleanSemester(semRaw);
+          for (var row in completedCourses) {
+            final semRaw = row['semester_code'] as String;
+            final sem = CourseUtils.cleanSemester(semRaw);
 
-              final code = row['course_code'] as String;
-              final grade = (row['grade'] ?? "Ongoing").toString();
+            final code = row['course_code'] as String;
+            final grade = (row['grade'] ?? "Ongoing").toString();
 
-              if (!_history.containsKey(sem)) _history[sem] = {};
-              _history[sem]![code] = grade;
-            }
+            if (!_history.containsKey(sem)) _history[sem] = {};
+            _history[sem]![code] = grade;
+          }
 
-            // Load Active Enrollments (The "Missing Link")
-            for (var row in activeEnrollments) {
-              final code = row['course_code'] as String;
-              final sectionNum = row['section']?.toString() ?? '';
-              final sectionId = row['section_id']?.toString() ?? '';
-              final semRaw = (row['semester_code'] ?? _runningSemester).toString();
-              final sem = CourseUtils.cleanSemester(semRaw);
+          for (var row in activeEnrollments) {
+            final code = row['course_code'] as String;
+            final sectionNum = row['section']?.toString() ?? '';
+            final sectionId = row['section_id']?.toString() ?? '';
+            final semRaw = (row['semester_code'] ?? _runningSemester).toString();
+            final sem = CourseUtils.cleanSemester(semRaw);
 
-              if (!_history.containsKey(sem)) _history[sem] = {};
-            
-            // Use the SecN format if it's the running semester
+            if (!_history.containsKey(sem)) _history[sem] = {};
+
             if (sem.toLowerCase() == _runningSemester.toLowerCase()) {
               final selectionKey = sectionNum.isNotEmpty ? "${code}_Sec$sectionNum" : code;
               _history[sem]![selectionKey] = "Ongoing";
               if (sectionId.isNotEmpty) {
                 _selectedSectionIds[selectionKey] = [sectionId];
               }
-              // Initialize persistent metadata from existing enrollments
               _selectedCoursesMetadata[selectionKey] = {
                 'id': sectionId,
                 'code': code,
                 'section': sectionNum,
               };
             } else {
-              // Backward compatibility for mis-categorized enrollments
               _history[sem]![code] = "Ongoing";
             }
           }
 
-          // Priority: use passed semester if available (instant handover)
           if (widget.admittedSemester != null && widget.admittedSemester!.isNotEmpty) {
-             _admittedSemester = widget.admittedSemester;
+            _admittedSemester = widget.admittedSemester;
           } else {
-             _admittedSemester = (profileData['admitted_semester'] ?? "").toString();
+            _admittedSemester = (profileData['admitted_semester'] ?? "").toString();
           }
-          
-          // Check if user is a new student (no history to edit)
+
           if (widget.isEditMode && _admittedSemester == _runningSemester) {
             _profileLoading = false;
             Future.delayed(Duration.zero, () {
-               if (mounted) {
-                 showDialog(
-                   context: context,
-                   builder: (ctx) => AlertDialog(
-                     backgroundColor: const Color(0xFF1E293B),
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                     title: const Text("Notice", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                     content: const Text("You have no academic history to edit yet!", style: TextStyle(color: Colors.white70)),
-                     actions: [
-                       TextButton(
-                         onPressed: () {
-                           Navigator.pop(ctx);
-                           Navigator.pop(context);
-                         },
-                         child: const Text("OK", style: TextStyle(color: Colors.cyanAccent)),
-                       )
-                     ],
-                   ),
-                 );
-               }
+              if (mounted) {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: const Color(0xFF1E293B),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    title: const Text("Notice", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    content: const Text("You have no academic history to edit yet!", style: TextStyle(color: Colors.white70)),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          Navigator.pop(context);
+                        },
+                        child: const Text("OK", style: TextStyle(color: Colors.cyanAccent)),
+                      )
+                    ],
+                  ),
+                );
+              }
             });
             return;
           }
@@ -342,11 +338,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                   .toString()
                   .toLowerCase();
 
-          // CRITICAL: Remember the actual admission semester before we bridge it to Summer
           final actualAdmission = _admittedSemester ?? '';
           final isFallAdmitted = actualAdmission.toLowerCase().contains('fall');
 
-          // 1. Pharmacy specific fallback for Fall admissions: Add a one-time Summer session
           if (!widget.isEditMode &&
               programName.contains("pharmacy") &&
               _admittedSemester != null &&
@@ -362,29 +356,24 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                 _allSemesters.add(forcedSummer);
               }
             }
-            _admittedSemester = forcedSummer; // Start onboarding from this Summer
+            _admittedSemester = forcedSummer;
           }
 
-          // 2. Pharmacy/Law (Bi-semester) Admission Normalization
-          // WE SKIP THIS mapping if it's the "Forced Summer" we just created
           final isForcedSummer = programName.contains("pharmacy") && (_admittedSemester?.toLowerCase().contains('summer') ?? false);
 
           if (!isForcedSummer && semesterType == 'bi_semester' && (_admittedSemester?.toLowerCase().contains('summer') ?? false)) {
-            // PHRM/LLB don't have Summer. If they chose Summer, map to the preceding Spring.
             final yearMatch = RegExp(r'\d{4}').firstMatch(_admittedSemester!);
             final year = yearMatch?.group(0) ?? '2026';
-            _admittedSemester = 'Spring$year'; 
+            _admittedSemester = 'Spring$year';
           }
 
-          // 2. Ensure required semesters exist in the list
           if (_admittedSemester != null && !_allSemesters.contains(_admittedSemester)) {
-             _allSemesters.add(_admittedSemester!);
+            _allSemesters.add(_admittedSemester!);
           }
           if (!_allSemesters.contains(_runningSemester)) {
-             _allSemesters.add(_runningSemester);
+            _allSemesters.add(_runningSemester);
           }
 
-          // 2. Sort chronologically (Year first, then season)
           _allSemesters.sort((a, b) {
             final reg = RegExp(r'^([a-zA-Z]+)(\d{4})$');
             final matchA = reg.firstMatch(a);
@@ -405,12 +394,11 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             return a.compareTo(b);
           });
 
-          // 3. Dynamic Semester Filtering
           String clean(String s) => CourseUtils.cleanSemester(s);
-          
+
           final admIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_admittedSemester ?? ''));
           final runIdx = _allSemesters.indexWhere((s) => clean(s) == clean(_runningSemester));
-          
+
           if (runIdx != -1) {
             _runningSemester = _allSemesters[runIdx];
           }
@@ -423,13 +411,10 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             _allSemesters = _allSemesters.sublist(0, runIdx + 1);
           }
 
-          // 4. Bi-semester (PHRM/LLB) Filter: 
-          // Rule: Only Fall-admitted students can access Summer terms, and only ONCE (the first summer after admission).
           if (semesterType == 'bi_semester') {
             if (!isFallAdmitted) {
               _allSemesters = _allSemesters.where((s) => !s.toLowerCase().contains('summer')).toList();
             } else {
-              // Keep only the FIRST summer that appears after admission
               bool summerFound = false;
               _allSemesters = _allSemesters.where((s) {
                 if (s.toLowerCase().contains('summer')) {
@@ -443,9 +428,9 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
           }
 
           if (widget.isEditMode) {
-             if (_allSemesters.isNotEmpty) {
-               _confirmAdmittedSemester(_allSemesters.first);
-             }
+            if (_allSemesters.isNotEmpty) {
+              _confirmAdmittedSemester(_allSemesters.first);
+            }
           } else {
             final matchIdx = _allSemesters.indexWhere((s) {
               final cleaned = clean(s);
@@ -529,13 +514,36 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     return false;
   }
 
+  String? _getPassedGrade(String courseCode) {
+    if (_history.isEmpty) return null;
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    for (final sem in _history.keys) {
+      if (sem == cleanCurrent) continue;
+      final semCourses = _history[sem]!;
+      for (final prevKey in semCourses.keys) {
+        final baseCode = prevKey.contains('_Sec')
+            ? prevKey.split('_Sec').first
+            : prevKey;
+        if (baseCode == courseCode) {
+          final existingGrade = semCourses[prevKey];
+          if (existingGrade != 'F' &&
+              existingGrade != 'W' &&
+              existingGrade != 'I' &&
+              existingGrade != 'R') {
+            return existingGrade.toString();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   void _addCourse(Map<String, dynamic> course) async {
     if (_currentSemester == null) return;
     final code = course['code'] as String;
     final sectionRaw = (course['section'] ?? '').toString();
     final selectionKey = _isCurrentSemester ? "${code}_Sec$sectionRaw" : code;
 
-    // Check if the course is already taken in another semester within onboarding
     for (final sem in _history.keys) {
       if (sem == _currentSemester) continue;
       final semCourses = _history[sem]!;
@@ -545,7 +553,6 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             : prevKey;
         if (baseCode == code) {
           final existingGrade = semCourses[prevKey];
-          // If already passed, warn/prevent taking it again in another semester
           if (existingGrade != 'F' &&
               existingGrade != 'W' &&
               existingGrade != 'I' &&
@@ -619,7 +626,12 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
 
     String grade = "Ongoing";
     if (!_isCurrentSemester) {
-      final g = await _showGradeDialog(code);
+      final g = await CourseHistoryGradeDialog.show(
+        context: context,
+        ref: ref,
+        courseCode: code,
+        currentSemester: _currentSemester ?? '',
+      );
       if (g == null) return;
       grade = g;
     }
@@ -649,77 +661,23 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     });
   }
 
-  Future<String?> _showGradeDialog(String code) {
-    final policy = GradeHelper.getPolicyForSemester(_currentSemester ?? '');
-    final scaleAsync = ref.read(gradeScaleListProvider);
-    final scale = scaleAsync.valueOrNull ?? [];
-    
-    // Fetch grades for the specific policy from the DB-loaded scale
-    List<String> grades = scale
-        .where((s) => s.policy == policy)
-        .map((s) => s.grade)
-        .toSet()
-        .toList();
-    
-    // Fallback if DB is genuinely empty or failed to load
-    if (grades.isEmpty) {
-       grades = (policy == 'legacy')
-        ? ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F"]
-        : ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "F"];
-    }
-
-    // Sort by point descending using the scale data if available
-    if (scale.isNotEmpty) {
-      grades.sort((a, b) {
-        final pa = scale.firstWhere((s) => s.grade == a && s.policy == policy, orElse: () => GradeScale(grade: a, point: 0, policy: policy)).point;
-        final pb = scale.firstWhere((s) => s.grade == b && s.policy == policy, orElse: () => GradeScale(grade: b, point: 0, policy: policy)).point;
-        return pb.compareTo(pa);
-      });
-    }
-
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text("Grade for $code", style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF1E293B),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        children: grades
-            .map(
-              (g) => SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, g),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Center(
-                    child: Text(
-                      g,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.cyanAccent,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+    final currentMap = _history[cleanCurrent] ?? {};
+
     return FullGradientScaffold(
       appBar: AppBar(
         title: widget.isEditMode
             ? DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _currentSemester,
-                  dropdownColor: const Color(0xFF16202A),
-                  style: const TextStyle(
+                  dropdownColor: const Color(0xFF0D2342),
+                  icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryCyan),
+                  style: GoogleFonts.sora(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                    fontSize: 17,
                   ),
                   items: _allSemesters
                       .map(
@@ -736,24 +694,25 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
               )
             : Column(
                 children: [
-                  const Text(
+                  Text(
                     "ACADEMIC HISTORY",
-                    style: TextStyle(
+                    style: GoogleFonts.sora(
                       fontSize: 10,
                       letterSpacing: 2,
-                      color: Colors.cyanAccent,
+                      color: AppColors.primaryCyan,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     CourseUtils.prettifySemesterCode(
                       (_currentSemester == null || _currentSemester!.isEmpty) 
                           ? "Syncing Term..." 
                           : _currentSemester!
                     ),
-                    style: const TextStyle(
+                    style: GoogleFonts.sora(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 17,
                       color: Colors.white,
                     ),
                   ),
@@ -765,7 +724,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
         actions: [
           IconButton(
             tooltip: "Auto-Fetch from Portal",
-            icon: const Icon(Icons.cloud_sync_rounded, color: Colors.cyanAccent),
+            icon: const Icon(Icons.cloud_sync_rounded, color: AppColors.primaryCyan),
             onPressed: () async {
               await context.push('/portal-sync');
               _loadInitialData();
@@ -775,87 +734,54 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
       ),
       body: _profileLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.cyanAccent),
+              child: CircularProgressIndicator(color: AppColors.primaryCyan),
             )
           : Stack(
               children: [
                 Column(
                   children: [
-                    _buildHeaderCard(),
-                    _buildSearchField(),
-                    Expanded(child: _buildCourseList()),
-                  ],
-                ),
-                if (_isSyncing) _buildSyncOverlay(),
-              ],
-            ),
-      bottomNavigationBar: _buildBottomAction(),
-    );
-  }
-
-  Widget _buildHeaderCard() {
-    final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-    final currentMap = _history[cleanCurrent] ?? {};
-    return GlassContainer(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      color: _isCurrentSemester
-          ? Colors.greenAccent.withOpacity(0.1)
-          : Colors.blueAccent.withOpacity(0.1),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _isCurrentSemester ? "Current Enrollment" : "Academic History",
-            style: const TextStyle(
-              color: Colors.cyanAccent,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (currentMap.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  "No courses selected for ${CourseUtils.prettifySemesterCode((_currentSemester == null || _currentSemester!.isEmpty) ? "this semester" : _currentSemester!)}",
-                  style: const TextStyle(color: Colors.white60, fontSize: 13),
-                ),
-              ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: currentMap.entries
-                  .map(
-                    (e) => InputChip(
-                      backgroundColor: Colors.white10,
-                      label: Text(
-                        "${e.key} (${e.value})",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                        ),
-                      ),
-                      onPressed: _isCurrentSemester ? null : () async {
-                        final String code = e.key.contains('_Sec') ? e.key.split('_Sec').first : e.key;
-                        final newGrade = await _showGradeDialog(code);
+                    CourseHistoryHeaderCard(
+                      isCurrentSemester: _isCurrentSemester,
+                      currentSemester: _currentSemester,
+                      currentMap: currentMap,
+                      onTapGrade: (key, code) async {
+                        final newGrade = await CourseHistoryGradeDialog.show(
+                          context: context,
+                          ref: ref,
+                          courseCode: code,
+                          currentSemester: _currentSemester ?? '',
+                        );
                         if (newGrade != null) {
                           setState(() {
-                            // Update grade directly
-                            _history[_currentSemester!]![e.key] = newGrade;
+                            _history[_currentSemester!]![key] = newGrade;
                           });
                         }
                       },
-                      onDeleted: () => _removeCourse(e.key),
-                      deleteIconColor: Colors.white54,
+                      onRemoveCourse: _removeCourse,
                     ),
-                  )
-                  .toList(),
+                    _buildSearchField(),
+                    Expanded(
+                      child: CourseHistoryCourseList(
+                        loading: _loading,
+                        catalog: _catalog,
+                        isCurrentSemester: _isCurrentSemester,
+                        currentSemester: _currentSemester,
+                        history: _history,
+                        getPassedGrade: _getPassedGrade,
+                        onAddCourse: _addCourse,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isSyncing) const CourseHistorySyncOverlay(),
+              ],
             ),
-        ],
+      bottomNavigationBar: CourseHistoryBottomBar(
+        isEditMode: widget.isEditMode,
+        isCurrentSemester: _isCurrentSemester,
+        onAction: widget.isEditMode
+            ? _finishOnboarding
+            : (_isCurrentSemester ? _finishOnboarding : _nextSemester),
       ),
     );
   }
@@ -879,385 +805,10 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                 )
               : const Icon(Icons.search, color: Colors.cyanAccent),
           filled: true,
-          fillColor: Colors.white.withOpacity(0.05),
+          fillColor: Colors.white.withValues(alpha: 0.05),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCourseList() {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.cyanAccent),
-      );
-    }
-    if (_catalog.isEmpty) {
-      return const Center(
-        child: Text(
-          "No courses found.",
-          style: TextStyle(color: Colors.white38),
-        ),
-      );
-    }
-
-    String formatSchedule(dynamic scheduleData) {
-      if (scheduleData == null || scheduleData is! List || scheduleData.isEmpty) {
-        return 'TBA';
-      }
-      final formatted = scheduleData
-          .map((s) {
-            if (s is Map) {
-              final day = s['day'] ?? '';
-              final start = s['startTime'] ?? s['start_time'] ?? '';
-              final end = s['endTime'] ?? s['end_time'] ?? '';
-              final room = s['room'] ?? '';
-              final type = s['type'] != null && s['type'] != 'Theory'
-                  ? '(${s['type']}) '
-                  : '';
-
-              String sessionText = '$type$day $start-$end'.trim();
-              if (room.isNotEmpty) sessionText += ' [$room]';
-              return sessionText;
-            }
-            return '';
-          })
-          .where((e) => e.isNotEmpty)
-          .join(', ');
-
-      return formatted.isEmpty ? 'TBA' : formatted;
-    }
-
-    String? getPassedGrade(String courseCode) {
-      if (_history.isEmpty) return null;
-      final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-      for (final sem in _history.keys) {
-        if (sem == cleanCurrent) continue;
-        final semCourses = _history[sem]!;
-        for (final prevKey in semCourses.keys) {
-          final baseCode = prevKey.contains('_Sec')
-              ? prevKey.split('_Sec').first
-              : prevKey;
-          if (baseCode == courseCode) {
-            final existingGrade = semCourses[prevKey];
-            if (existingGrade != 'F' &&
-                existingGrade != 'W' &&
-                existingGrade != 'I' &&
-                existingGrade != 'R') {
-              return existingGrade.toString();
-            }
-          }
-        }
-      }
-      return null;
-    }
-
-    if (!_isCurrentSemester) {
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _catalog.length,
-        itemBuilder: (ctx, i) {
-          final c = _catalog[i];
-          final code = c['code'] as String;
-          final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-          final isSelected = (_history[cleanCurrent] ?? {}).containsKey(
-            code,
-          );
-
-          final String? passedGrade = getPassedGrade(code);
-
-          return Card(
-            color: passedGrade != null
-                ? Colors.white.withOpacity(0.02)
-                : Colors.white.withOpacity(0.05),
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              enabled: passedGrade == null,
-              title: Text(
-                code,
-                style: TextStyle(
-                  color: passedGrade != null
-                      ? Colors.white38
-                      : Colors.cyanAccent,
-                  fontWeight: FontWeight.bold,
-                  decoration: passedGrade != null
-                      ? TextDecoration.lineThrough
-                      : null,
-                  decorationColor: Colors.white38,
-                ),
-              ),
-              subtitle: Text(
-                c['name'] ?? '',
-                style: TextStyle(
-                  color: passedGrade != null ? Colors.white24 : Colors.white70,
-                ),
-              ),
-              trailing: passedGrade != null
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        "Passed ($passedGrade)",
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                  : Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.add_circle_outline,
-                      color: isSelected ? Colors.greenAccent : Colors.white38,
-                    ),
-              onTap: passedGrade != null ? null : () => _addCourse(c),
-            ),
-          );
-        },
-      );
-    } else {
-      final Map<String, List<Map<String, dynamic>>> grouped = {};
-      for (var c in _catalog) {
-        grouped.putIfAbsent(c['code'], () => []).add(c);
-      }
-      final sortedKeys = grouped.keys.toList()..sort();
-
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: sortedKeys.length,
-        itemBuilder: (ctx, i) {
-          final code = sortedKeys[i];
-          final sections = grouped[code]!;
-          final name = sections.first['name'] ?? '';
-
-          final String? passedGrade = getPassedGrade(code);
-
-          int selectedCount = 0;
-          if (passedGrade == null) {
-            for (var c in sections) {
-              final section = (c['section'] ?? '').toString();
-              final selectionKey = "${code}_Sec$section";
-              final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-              if ((_history[cleanCurrent] ?? {}).containsKey(
-                selectionKey,
-              )) {
-                selectedCount++;
-              }
-            }
-          }
-
-          return Card(
-            color: passedGrade != null
-                ? Colors.white.withOpacity(0.02)
-                : Colors.white.withOpacity(0.05),
-            margin: const EdgeInsets.only(bottom: 8),
-            shape: RoundedRectangleBorder(
-              side: BorderSide(
-                color: selectedCount > 0
-                    ? Colors.cyanAccent.withOpacity(0.5)
-                    : Colors.transparent,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                initiallyExpanded: false,
-                enabled: passedGrade == null,
-                iconColor: passedGrade != null ? Colors.white38 : null,
-                collapsedIconColor: passedGrade != null
-                    ? Colors.transparent
-                    : null,
-                tilePadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
-                ),
-                title: Text(
-                  code,
-                  style: TextStyle(
-                    color: passedGrade != null
-                        ? Colors.white38
-                        : Colors.cyanAccent,
-                    fontWeight: FontWeight.bold,
-                    decoration: passedGrade != null
-                        ? TextDecoration.lineThrough
-                        : null,
-                    decorationColor: Colors.white38,
-                  ),
-                ),
-                subtitle: Text(
-                  name,
-                  style: TextStyle(
-                    color: passedGrade != null
-                        ? Colors.white24
-                        : Colors.white70,
-                  ),
-                ),
-                trailing: passedGrade != null
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          "Passed ($passedGrade)",
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : selectedCount > 0
-                    ? Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          "Enrolled",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : const Icon(
-                        Icons.keyboard_arrow_down,
-                        color: Colors.white38,
-                      ),
-                children: passedGrade != null
-                    ? []
-                    : sections.map((c) {
-                        final section = (c['section'] ?? '').toString();
-                        final selectionKey = "${code}_Sec$section";
-                        final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
-                        final isSelected = (_history[cleanCurrent] ?? {})
-                            .containsKey(selectionKey);
-
-                        final faculty = c['faculty'] ?? 'TBA';
-                        final schedule = formatSchedule(c['schedule']);
-
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.white.withOpacity(0.05),
-                              ),
-                            ),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 4,
-                            ),
-                            title: Text(
-                              "Section $section",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                "Faculty: $faculty\nSchedule: $schedule",
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                            isThreeLine: true,
-                            trailing: Icon(
-                              isSelected
-                                  ? Icons.check_circle
-                                  : Icons.add_circle_outline,
-                              color: isSelected
-                                  ? Colors.greenAccent
-                                  : Colors.white38,
-                            ),
-                            onTap: () => _addCourse(c),
-                          ),
-                        );
-                      }).toList(),
-              ),
-            ),
-          );
-        },
-      );
-    }
-  }
-
-  Widget _buildSyncOverlay() {
-    return Container(
-      color: Colors.black54,
-      child: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Colors.cyanAccent),
-            SizedBox(height: 16),
-            Text(
-              "Syncing stats...",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomAction() {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: GlassContainer(
-          width: double.infinity, // Explicitly span horizontal
-          onTap: widget.isEditMode
-              ? _finishOnboarding
-              : (_isCurrentSemester ? _finishOnboarding : _nextSemester),
-          color: Colors.cyanAccent.withOpacity(0.1),
-          borderColor: Colors.cyanAccent,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              widget.isEditMode
-                  ? "SAVE CHANGES"
-                  : (_isCurrentSemester ? "FINISH" : "CONTINUE"),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.cyanAccent,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-              ),
-            ),
           ),
         ),
       ),

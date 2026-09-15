@@ -125,7 +125,7 @@ class ProgressRepository {
     _cache.setMapData('semester_progress_box', cacheKey, {'data': list});
     
     // Trigger background credit recalculation (only if online)
-    _supabase.functions.invoke('sync-academic-stats').catchError((_) => null);
+    unawaited(_supabase.functions.invoke('sync-academic-stats').then<void>((_) {}, onError: (_) {}));
   }
 
   Future<List<SemesterSummary>> getSemesterSummaries(String userId) async {

@@ -1,9 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../core/utils/course_utils.dart';
 import '../auth/auth_providers.dart';
 
@@ -109,7 +106,7 @@ class OnboardingRepository {
       final oldAdm = CourseUtils.cleanSemester(existing['admitted_semester']?.toString() ?? '');
       
       final newProg = programCode.toUpperCase();
-      final newAdm = CourseUtils.cleanSemester(admittedSemester ?? '');
+      final newAdm = CourseUtils.cleanSemester(admittedSemester);
 
       if (oldProg != newProg || oldDept != department || oldAdm != newAdm) {
         hasChanged = true;
@@ -327,7 +324,7 @@ class OnboardingRepository {
     String searchQuery = '',
   }) async {
     if (isCurrent && semester != null) {
-      final safeSem = CourseUtils.cleanSemester(semester ?? '');
+      final safeSem = CourseUtils.cleanSemester(semester);
       final tableName = 'courses_$safeSem';
       try {
         var query = _client

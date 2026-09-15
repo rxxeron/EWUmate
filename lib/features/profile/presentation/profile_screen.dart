@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/widgets/glass_kit.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/progress_repository.dart';
@@ -14,6 +17,8 @@ import '../../../core/services/cache_service.dart';
 import '../../../core/models/profile.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../../core/utils/refresh_utils.dart';
+import '../../../core/widgets/onboarding_overlay.dart';
+import '../../../core/constants/onboarding_steps.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -36,6 +41,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
       }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        OnboardingOverlay.show(
+          context: context,
+          featureKey: OnboardingSteps.profileKey,
+          steps: OnboardingSteps.profile,
+        );
+      }
+    });
   }
 
   @override
@@ -48,16 +63,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to log out?'),
+        backgroundColor: AppColors.surfaceNavyBlue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: Text(
+          'Sign Out',
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'Are you sure you want to sign out from EWUmate?',
+          style: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: GoogleFonts.sora(color: AppColors.secondaryText)),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Logout'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Sign Out', style: GoogleFonts.sora(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -93,28 +123,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final newValue = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E2836),
-        title: Text('Edit $title', style: const TextStyle(color: Colors.white)),
+        backgroundColor: AppColors.surfaceNavyBlue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        title: Text(
+          'Edit $title',
+          style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: TextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
+          style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Enter new $title',
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.cyan),
+            hintStyle: GoogleFonts.sora(color: Colors.white24, fontSize: 13),
+            filled: true,
+            fillColor: AppColors.primaryNavy.withValues(alpha: 0.5),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.primaryCyan),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: GoogleFonts.sora(color: AppColors.secondaryText)),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            style: FilledButton.styleFrom(backgroundColor: Colors.cyan),
-            child: const Text('Save'),
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primaryCyan,
+              foregroundColor: AppColors.primaryNavy,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text('Save', style: GoogleFonts.sora(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -127,11 +176,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       try {
         await onSave(newValue);
         if (mounted) {
-          setState(() {}); // Force UI refresh
+          setState(() {});
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$title updated successfully!'),
-              backgroundColor: Colors.green,
+              content: Text('$title updated successfully!', style: GoogleFonts.sora()),
+              backgroundColor: AppColors.success,
             ),
           );
         }
@@ -139,8 +188,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AuthErrorUtils.getFriendlyMessage(e)),
-              backgroundColor: Colors.redAccent,
+              content: Text(AuthErrorUtils.getFriendlyMessage(e), style: GoogleFonts.sora()),
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -163,10 +212,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E2836),
-          title: const Text(
+          backgroundColor: AppColors.surfaceNavyBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          title: Text(
             'Change Password',
-            style: TextStyle(color: Colors.white),
+            style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
             child: Form(
@@ -174,7 +227,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Only show current password field if user has an email identity
                   FutureBuilder<List<UserIdentity>>(
                     future: Supabase.instance.client.auth.getUserIdentities(),
                     builder: (context, snapshot) {
@@ -186,19 +238,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             TextFormField(
                               controller: currentController,
                               obscureText: obscureCurrent,
-                              style: const TextStyle(color: Colors.white),
+                              style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                               decoration: InputDecoration(
                                 labelText: 'Current Password',
-                                labelStyle: TextStyle(color: Colors.grey[400]),
-                                enabledBorder: const UnderlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.cyan),
+                                labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 12),
+                                filled: true,
+                                fillColor: AppColors.primaryNavy.withValues(alpha: 0.5),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppColors.primaryCyan),
                                 ),
                                 suffixIcon: IconButton(
                                   icon: Icon(
-                                    obscureCurrent
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: Colors.grey,
+                                    obscureCurrent ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                    color: AppColors.secondaryText,
+                                    size: 18,
                                   ),
                                   onPressed: () =>
                                       setState(() => obscureCurrent = !obscureCurrent),
@@ -212,17 +270,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           TextFormField(
                             controller: newController,
                             obscureText: obscureNew,
-                            style: const TextStyle(color: Colors.white),
+                            style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                             decoration: InputDecoration(
                               labelText: hasPassword ? 'New Password' : 'Set Password',
-                              labelStyle: TextStyle(color: Colors.grey[400]),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.cyan),
+                              labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 12),
+                              filled: true,
+                              fillColor: AppColors.primaryNavy.withValues(alpha: 0.5),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: AppColors.primaryCyan),
                               ),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  obscureNew ? Icons.visibility_off : Icons.visibility,
-                                  color: Colors.grey,
+                                  obscureNew ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                  color: AppColors.secondaryText,
+                                  size: 18,
                                 ),
                                 onPressed: () =>
                                     setState(() => obscureNew = !obscureNew),
@@ -235,19 +301,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           TextFormField(
                             controller: confirmController,
                             obscureText: obscureConfirm,
-                            style: const TextStyle(color: Colors.white),
+                            style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
                             decoration: InputDecoration(
                               labelText: 'Confirm Password',
-                              labelStyle: TextStyle(color: Colors.grey[400]),
-                              enabledBorder: const UnderlineInputBorder(
-                                borderSide: BorderSide(color: Colors.cyan),
+                              labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 12),
+                              filled: true,
+                              fillColor: AppColors.primaryNavy.withValues(alpha: 0.5),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: AppColors.primaryCyan),
                               ),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  obscureConfirm
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: Colors.grey,
+                                  obscureConfirm ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                                  color: AppColors.secondaryText,
+                                  size: 18,
                                 ),
                                 onPressed: () =>
                                     setState(() => obscureConfirm = !obscureConfirm),
@@ -263,7 +335,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ),
                         ],
                       );
-                    }
+                    },
                   ),
                 ],
               ),
@@ -272,7 +344,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child: Text('Cancel', style: GoogleFonts.sora(color: AppColors.secondaryText)),
             ),
             FilledButton(
               onPressed: () async {
@@ -282,7 +354,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   
                   if (user?.email == null) return;
 
-                  // 1. Check if we need to re-authenticate (only if they have a password already)
                   final identities = await supabase.auth.getUserIdentities();
                   final hasPassword = identities.any((id) => id.provider == 'email');
 
@@ -295,9 +366,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     } catch (e) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Current password incorrect.'),
-                            backgroundColor: Colors.redAccent,
+                          SnackBar(
+                            content: Text('Current password incorrect.', style: GoogleFonts.sora()),
+                            backgroundColor: AppColors.error,
                           ),
                         );
                       }
@@ -312,9 +383,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     if (context.mounted) {
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Password updated successfully!'),
-                          backgroundColor: Colors.green,
+                        SnackBar(
+                          content: Text('Password updated successfully!', style: GoogleFonts.sora()),
+                          backgroundColor: AppColors.success,
                         ),
                       );
                     }
@@ -322,16 +393,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(AuthErrorUtils.getFriendlyMessage(e)),
-                          backgroundColor: Colors.redAccent,
+                          content: Text(AuthErrorUtils.getFriendlyMessage(e), style: GoogleFonts.sora()),
+                          backgroundColor: AppColors.error,
                         ),
                       );
                     }
                   }
                 }
               },
-              style: FilledButton.styleFrom(backgroundColor: Colors.cyan),
-              child: const Text('Save'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryCyan,
+                foregroundColor: AppColors.primaryNavy,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text('Save', style: GoogleFonts.sora(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -344,8 +419,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final picker = ImagePicker();
       final xFile = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 60, // Slightly lower quality to ensure small file size
-        maxWidth: 800,    // Limit dimensions to avoid massive files
+        imageQuality: 60,
+        maxWidth: 800,
       );
       
       if (xFile == null) return;
@@ -355,20 +430,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Updating profile picture...'),
-            backgroundColor: Colors.blue,
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('Updating profile picture...', style: GoogleFonts.sora()),
+            backgroundColor: AppColors.secondarySoftBlue,
+            duration: const Duration(seconds: 2),
           ),
         );
       }
 
       final file = File(xFile.path);
-      // Fixed filename to prevent storage bloat (one avatar per user)
       final fileExt = xFile.path.split('.').last.toLowerCase();
       final fileName = '${user.id}/avatar.$fileExt';
 
-      // 1. Upload to Storage
       await Supabase.instance.client.storage
           .from('profile_images')
           .upload(
@@ -377,24 +450,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             fileOptions: const FileOptions(cacheControl: '0', upsert: true),
           );
 
-      // 2. Get Public URL
       final imageUrl = Supabase.instance.client.storage
           .from('profile_images')
           .getPublicUrl(fileName);
 
-      // 3. Add timestamp to URL to bypass image caching in the app
       final timestampedUrl = '$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}';
 
-      // 4. Update Profile Table
       await ref
           .read(profileRepositoryProvider)
           .updateProfile(profile.copyWith(photoUrl: timestampedUrl));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile picture updated!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Profile picture updated!', style: GoogleFonts.sora()),
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -407,8 +477,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.redAccent,
+            content: Text(errorMsg, style: GoogleFonts.sora()),
+            backgroundColor: AppColors.error,
             duration: const Duration(seconds: 4),
           ),
         );
@@ -418,15 +488,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Rely strictly on synchronous cached state, avoiding stream delay edge effects.
     final user = Supabase.instance.client.auth.currentUser;
     final userId = user?.id;
 
     if (userId == null) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF16202A),
+      return FullGradientScaffold(
         body: Center(
-          child: Text('User not found.', style: TextStyle(color: Colors.white)),
+          child: Text('User not found.', style: GoogleFonts.sora(color: Colors.white)),
         ),
       );
     }
@@ -443,133 +511,158 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       }
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF16202A),
-      appBar: AppBar(
-        title: const Text(
-          'My Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          RefreshUtils.refreshAcademicData(ref);
-          // Wait a bit for the stream to emit
-          await Future.delayed(const Duration(milliseconds: 500));
-        },
-        color: Colors.cyan,
-        backgroundColor: const Color(0xFF1E2836),
-        child: StreamBuilder<Profile?>(
-          stream: profileStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.cyan),
-              );
-            }
+    return FullGradientScaffold(
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            RefreshUtils.refreshAcademicData(ref);
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          color: AppColors.primaryCyan,
+          backgroundColor: AppColors.surfaceNavyBlue,
+          child: StreamBuilder<Profile?>(
+            stream: profileStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primaryCyan),
+                );
+              }
 
-            final profile = snapshot.data;
-            if (profile == null) {
-              return const SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: 500,
-                  child: Center(
-                    child: Text(
-                      'Profile not found.',
-                      style: TextStyle(color: Colors.white),
+              final profile = snapshot.data;
+              if (profile == null) {
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: SizedBox(
+                    height: 500,
+                    child: Center(
+                      child: Text(
+                        'Profile not found.',
+                        style: GoogleFonts.sora(color: Colors.white),
+                      ),
                     ),
                   ),
+                );
+              }
+
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top App Bar
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                          onPressed: () => context.pop(),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'My Profile',
+                          style: GoogleFonts.sora(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Header Avatar & Identity
+                    _buildHeader(profile, user?.email),
+                    const SizedBox(height: 24),
+
+                    // 4-Stats Grid
+                    _buildStatsGrid(profile, coursesDone),
+                    const SizedBox(height: 28),
+
+                    // Section: Personal Info
+                    _buildSectionTitle('Personal Info'),
+                    const SizedBox(height: 12),
+                    _buildInfoCard(
+                      Icons.person_outline_rounded,
+                      'Full Name',
+                      profile.fullName ?? 'Not Set',
+                      onTap: () => _editField(
+                        'Full Name',
+                        profile.fullName ?? '',
+                        (val) => ref
+                            .read(profileRepositoryProvider)
+                            .updateProfile(profile.copyWith(fullName: val)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoCard(
+                      Icons.face_rounded,
+                      'Nickname',
+                      profile.nickname ?? 'Not Set',
+                      onTap: () => _editField(
+                        'Nickname',
+                        profile.nickname ?? '',
+                        (val) => ref
+                            .read(profileRepositoryProvider)
+                            .updateProfile(profile.copyWith(nickname: val)),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildInfoCard(
+                      Icons.badge_outlined,
+                      'Student ID',
+                      profile.studentId ?? 'Not Set',
+                      onTap: () => _editField(
+                        'Student ID',
+                        profile.studentId ?? '',
+                        (val) => ref
+                            .read(profileRepositoryProvider)
+                            .updateProfile(profile.copyWith(studentId: val)),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Section: Preferences
+                    _buildSectionTitle('Preferences'),
+                    const SizedBox(height: 12),
+                    _buildSettingsCard(
+                      Icons.notifications_active_outlined,
+                      'Class Reminder Settings',
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.secondaryText,
+                      ),
+                      onTap: () => context.push('/notifications/settings'),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // Section: Security
+                    _buildSectionTitle('Security'),
+                    const SizedBox(height: 12),
+                    _buildSettingsCard(
+                      Icons.lock_outline_rounded,
+                      'Change Password',
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.secondaryText,
+                      ),
+                      onTap: _editPassword,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildSettingsCard(
+                      Icons.logout_rounded,
+                      'Sign Out',
+                      onTap: _logout,
+                      isDestructive: true,
+                    ),
+                    const SizedBox(height: 36),
+                  ],
                 ),
               );
-            }
-
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 24.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(profile, user?.email),
-                const SizedBox(height: 32),
-                _buildStatsGrid(profile, coursesDone),
-                const SizedBox(height: 32),
-                _buildSectionTitle('Personal Info'),
-                const SizedBox(height: 16),
-                _buildInfoCard(
-                  Icons.person_outline,
-                  'Full Name',
-                  profile.fullName ?? 'Not Set',
-                  onTap: () => _editField(
-                    'Full Name',
-                    profile.fullName ?? '',
-                    (val) => ref
-                        .read(profileRepositoryProvider)
-                        .updateProfile(profile.copyWith(fullName: val)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildInfoCard(
-                  Icons.badge_outlined,
-                  'Nickname',
-                  profile.nickname ?? 'Not Set',
-                  onTap: () => _editField(
-                    'Nickname',
-                    profile.nickname ?? '',
-                    (val) => ref
-                        .read(profileRepositoryProvider)
-                        .updateProfile(profile.copyWith(nickname: val)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildInfoCard(
-                  Icons.train_outlined,
-                  'Student ID',
-                  profile.studentId ?? 'Not Set',
-                  onTap: () => _editField(
-                    'Student ID',
-                    profile.studentId ?? '',
-                    (val) => ref
-                        .read(profileRepositoryProvider)
-                        .updateProfile(profile.copyWith(studentId: val)),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                _buildSectionTitle('Preferences'),
-                const SizedBox(height: 16),
-                _buildSettingsCard(
-                  Icons.notifications_active_outlined,
-                  'Class Reminder Settings',
-                  onTap: () => context.push('/notifications/settings'),
-                ),
-                const SizedBox(height: 32),
-                _buildSectionTitle('Security'),
-                const SizedBox(height: 16),
-                _buildSettingsCard(
-                  Icons.lock_outline,
-                  'Change Password',
-                  onTap: _editPassword,
-                ),
-                const SizedBox(height: 12),
-                _buildSettingsCard(
-                  Icons.logout,
-                  'Sign Out',
-                  onTap: _logout,
-                  isDestructive: true,
-                ),
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        },
+            },
+          ),
+        ),
       ),
-    ),
     );
   }
 
@@ -579,64 +672,118 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         Stack(
           alignment: Alignment.bottomRight,
           children: [
+            // Glowing Avatar Ring
             Container(
+              width: 106,
+              height: 106,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.cyan.withOpacity(0.3),
-                    blurRadius: 20,
+                    color: AppColors.primaryCyan.withValues(alpha: 0.35),
+                    blurRadius: 24,
                     spreadRadius: 2,
                   ),
                 ],
               ),
-              child: CircleAvatar(
-                radius: 50,
-                backgroundColor: const Color(0xFF2A364B),
-                backgroundImage: profile.photoUrl != null
-                    ? CachedNetworkImageProvider(profile.photoUrl!)
-                    : null,
-                child: profile.photoUrl == null
-                    ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                    : null,
+              padding: const EdgeInsets.all(3),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.surfaceNavyBlue,
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: profile.photoUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: profile.photoUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primaryCyan,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.person_rounded,
+                          size: 52,
+                          color: AppColors.secondaryText,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        size: 52,
+                        color: AppColors.secondaryText,
+                      ),
               ),
             ),
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.cyan,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.camera_alt,
-                  color: Colors.white,
-                  size: 14,
+            // Camera Edit Button
+            GestureDetector(
+              onTap: () => _uploadProfileImage(profile),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primaryNavy, width: 2.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.4),
+                      blurRadius: 8,
+                    ),
+                  ],
                 ),
-                onPressed: () => _uploadProfileImage(profile),
-                constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                padding: EdgeInsets.zero,
+                child: const Center(
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    color: AppColors.primaryNavy,
+                    size: 16,
+                  ),
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
           profile.fullName ?? 'Not set',
-          style: const TextStyle(
+          style: GoogleFonts.sora(
             fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           email ?? 'No email',
-          style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+          style: GoogleFonts.sora(
+            fontSize: 13,
+            color: AppColors.secondaryText,
+          ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Started: ${_formatSemester(profile.admittedSemester)} • ${(profile.track ?? 'tri_semester').replaceAll('_', ' ').toUpperCase()}',
-          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.primaryCyan.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(100),
+            border: Border.all(
+              color: AppColors.primaryCyan.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Text(
+            'Started: ${_formatSemester(profile.admittedSemester)} • ${(profile.track ?? 'tri_semester').replaceAll('_', ' ').toUpperCase()}',
+            style: GoogleFonts.sora(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryCyan,
+            ),
+          ),
         ),
       ],
     );
@@ -648,59 +795,73 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        mainAxisExtent: 100,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        mainAxisExtent: 96,
       ),
       children: [
         _buildStatCard(
-          Icons.star_border,
+          Icons.star_rounded,
           profile.cgpa?.toStringAsFixed(2) ?? '0.00',
           'CGPA',
+          color: AppColors.warning,
         ),
         _buildStatCard(
-          Icons.school_outlined,
+          Icons.school_rounded,
           profile.totalCreditsEarned?.toStringAsFixed(1) ?? '0.0',
-          'Earned Credits',
+          'Credits',
+          color: AppColors.primaryCyan,
         ),
         _buildStatCard(
-          Icons.check_circle_outline,
+          Icons.check_circle_rounded,
           coursesDone.toString(),
-          'Courses Done',
+          'Completed',
+          color: AppColors.success,
         ),
         _buildStatCard(
-          Icons.phone_android,
+          Icons.menu_book_rounded,
           profile.enrolledCredits.toStringAsFixed(1),
-          'Doing Now',
+          'Now',
+          color: AppColors.secondarySoftBlue,
         ),
       ],
     );
   }
 
-  Widget _buildStatCard(IconData icon, String value, String label) {
+  Widget _buildStatCard(
+    IconData icon,
+    String value,
+    String label, {
+    Color color = AppColors.primaryCyan,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E2836),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
+        color: AppColors.surfaceNavyBlue.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.cyan, size: 24),
+          Icon(icon, color: color, size: 20),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: GoogleFonts.sora(
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+            style: GoogleFonts.sora(
+              fontSize: 10,
+              color: AppColors.secondaryText,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -709,11 +870,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.cyan,
+      title.toUpperCase(),
+      style: GoogleFonts.sora(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: AppColors.primaryCyan,
+        letterSpacing: 1.2,
       ),
     );
   }
@@ -728,38 +890,58 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
-            color: onTap != null
-                ? const Color(0xFF1E2836).withOpacity(0.8)
-                : const Color(0xFF1E2836),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white12),
+            color: AppColors.surfaceNavyBlue.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.grey[400]),
-              const SizedBox(width: 16),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Icon(icon, color: AppColors.primaryCyan, size: 19),
+                ),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       label,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: GoogleFonts.sora(
+                        fontSize: 11,
+                        color: AppColors.secondaryText,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       value,
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                      style: GoogleFonts.sora(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ),
               if (onTap != null)
-                Icon(Icons.edit, color: Colors.grey[600], size: 18),
+                Icon(
+                  Icons.edit_rounded,
+                  color: AppColors.secondaryText.withValues(alpha: 0.6),
+                  size: 17,
+                ),
             ],
           ),
         ),
@@ -774,36 +956,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     VoidCallback? onTap,
     bool isDestructive = false,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E2836),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isDestructive ? Colors.redAccent : Colors.grey[400],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDestructive
+                ? AppColors.error.withValues(alpha: 0.08)
+                : AppColors.surfaceNavyBlue.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDestructive
+                  ? AppColors.error.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.08),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDestructive ? Colors.redAccent : Colors.white,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: isDestructive ? AppColors.error : AppColors.primaryCyan,
+                size: 20,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.sora(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDestructive ? AppColors.error : Colors.white,
+                  ),
                 ),
               ),
-            ),
-            trailing ?? const SizedBox(),
-          ],
+              trailing ?? const SizedBox(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+

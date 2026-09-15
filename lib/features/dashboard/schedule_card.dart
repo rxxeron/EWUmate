@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../core/theme/ewu_theme_extension.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/utils/time_utils.dart';
-import 'dashboard_logic.dart'; // For ScheduleItem
+import 'dashboard_logic.dart';
 
 class ScheduleCard extends StatelessWidget {
   final ScheduleItem item;
@@ -12,58 +14,79 @@ class ScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.ewuColors;
     final bool isLab = item.sessionType == 'Lab';
-    Color accentColor = isLab ? Colors.orangeAccent : Colors.cyanAccent;
+    Color accentColor = isLab ? colors.accentAmber : colors.primaryCyan;
     String badgeText = item.sessionType;
     if (item.isMakeup) {
-      accentColor = Colors.purpleAccent;
+      accentColor = colors.secondarySoftBlue;
       badgeText = "MAKEUP";
     } else if (item.isCancelled) {
-      accentColor = Colors.redAccent;
+      accentColor = colors.accentAlert;
       badgeText = "CANCELLED";
     }
 
-    return compact ? _buildCompact(accentColor, badgeText) : _buildRich(accentColor, badgeText);
+    return compact ? _buildCompact(accentColor, badgeText, colors) : _buildRich(accentColor, badgeText, colors);
   }
 
   // ─── RICH LAYOUT (Dashboard) ───
-  // Course name big on top, type badge + faculty on right, room bold below
-  Widget _buildRich(Color accentColor, String badgeText) {
+  Widget _buildRich(Color accentColor, String badgeText, EwuColors colors) {
     return GlassContainer(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(20),
-      opacity: item.isCancelled ? 0.05 : 0.1,
-      borderColor: accentColor.withValues(alpha: 0.3),
+      color: colors.surfaceNavyBlue,
+      opacity: 0.65,
+      borderColor: accentColor.withValues(alpha: 0.28),
+      borderRadius: 16,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Time column
+          // Time column with vertical connector line
           Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 TimeUtils.extractTimeNumber(item.startTime),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                style: GoogleFonts.sora(fontSize: 13, fontWeight: FontWeight.w800, color: colors.textPrimary),
               ),
               Text(
                 TimeUtils.extractAmPm(item.startTime),
-                style: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold),
+                style: GoogleFonts.sora(fontSize: 9, color: colors.textSecondary, fontWeight: FontWeight.bold),
               ),
               Container(
-                height: 25, width: 3,
-                decoration: BoxDecoration(color: accentColor.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(10)),
-                margin: const EdgeInsets.symmetric(vertical: 6),
+                height: 14,
+                width: 2,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accentColor.withValues(alpha: 0.4),
+                      blurRadius: 3,
+                    ),
+                  ],
+                ),
+                margin: const EdgeInsets.symmetric(vertical: 3),
               ),
               Text(
                 TimeUtils.extractTimeNumber(item.endTime),
-                style: const TextStyle(fontSize: 16, color: Colors.white70, fontWeight: FontWeight.w600),
+                style: GoogleFonts.sora(fontSize: 12, color: colors.textSecondary, fontWeight: FontWeight.w600),
               ),
             ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 12),
+          // Vertical divider
+          Container(
+            height: 38,
+            width: 1,
+            color: colors.borderSubtle,
+          ),
+          const SizedBox(width: 12),
           // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Row 1: Course name + badge on right
                 Row(
@@ -71,65 +94,73 @@ class ScheduleCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         item.courseName.isNotEmpty ? item.courseName : item.courseCode,
-                        style: TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white,
+                        style: GoogleFonts.sora(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
                           decoration: item.isCancelled ? TextDecoration.lineThrough : null,
                           decorationThickness: 2.5,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.2),
+                        color: accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: accentColor.withValues(alpha: 0.5)),
+                        border: Border.all(color: accentColor.withValues(alpha: 0.35)),
                       ),
-                      child: Text(badgeText, style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 10)),
+                      child: Text(
+                        badgeText,
+                        style: GoogleFonts.sora(color: accentColor, fontWeight: FontWeight.bold, fontSize: 8.5),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 3),
                 // Row 2: Course code + faculty on right
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       item.courseCode,
-                      style: TextStyle(
-                        color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 14,
+                      style: GoogleFonts.sora(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
                         decoration: item.isCancelled ? TextDecoration.lineThrough : null,
-                        decorationThickness: 2.5,
                       ),
                     ),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.person_outline, size: 16, color: Colors.white54),
+                        Icon(Icons.person_outline, size: 13, color: colors.textSecondary),
                         const SizedBox(width: 4),
                         Text(
                           item.faculty.isNotEmpty ? item.faculty : "TBA",
-                          style: TextStyle(
-                            color: Colors.white54, fontSize: 13, fontWeight: FontWeight.w500,
+                          style: GoogleFonts.sora(
+                            color: colors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
                             decoration: item.isCancelled ? TextDecoration.lineThrough : null,
-                            decorationThickness: 2.5,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 5),
                 // Row 3: Room (bold, accent)
                 Row(
                   children: [
-                    Icon(Icons.location_on_outlined, size: 16, color: accentColor),
+                    Icon(Icons.location_on_outlined, size: 13, color: accentColor),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         "Room ${item.room.isNotEmpty ? item.room : 'TBA'}",
-                        style: TextStyle(color: accentColor, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.sora(color: accentColor, fontWeight: FontWeight.w600, fontSize: 11),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -144,13 +175,14 @@ class ScheduleCard extends StatelessWidget {
   }
 
   // ─── COMPACT LAYOUT (Schedule Manager) ───
-  // Tight card with trailing action slot for Cancel button
-  Widget _buildCompact(Color accentColor, String badgeText) {
+  Widget _buildCompact(Color accentColor, String badgeText, EwuColors colors) {
     return GlassContainer(
+      color: colors.surfaceNavyBlue,
+      opacity: 0.65,
+      borderColor: accentColor.withValues(alpha: 0.28),
+      borderRadius: 18,
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      opacity: item.isCancelled ? 0.05 : 0.1,
-      borderColor: accentColor.withValues(alpha: 0.3),
+      padding: const EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -160,24 +192,25 @@ class ScheduleCard extends StatelessWidget {
             children: [
               Text(
                 TimeUtils.extractTimeNumber(item.startTime),
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
+                style: GoogleFonts.sora(fontSize: 14, fontWeight: FontWeight.w800, color: colors.textPrimary),
               ),
               Text(
                 TimeUtils.extractAmPm(item.startTime).toUpperCase(),
-                style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.bold),
+                style: GoogleFonts.sora(fontSize: 9, color: colors.textSecondary, fontWeight: FontWeight.bold),
               ),
               Container(
-                height: 15, width: 2,
-                decoration: BoxDecoration(color: accentColor.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(10)),
-                margin: const EdgeInsets.symmetric(vertical: 4),
+                height: 14,
+                width: 2,
+                decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(10)),
+                margin: const EdgeInsets.symmetric(vertical: 3),
               ),
               Text(
                 TimeUtils.extractTimeNumber(item.endTime),
-                style: const TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w600),
+                style: GoogleFonts.sora(fontSize: 13, color: colors.textSecondary, fontWeight: FontWeight.w600),
               ),
             ],
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           // Content
           Expanded(
             child: Column(
@@ -189,8 +222,10 @@ class ScheduleCard extends StatelessWidget {
                   children: [
                     Text(
                       item.courseCode,
-                      style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold, color: accentColor,
+                      style: GoogleFonts.sora(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: accentColor,
                         decoration: item.isCancelled ? TextDecoration.lineThrough : null,
                       ),
                     ),
@@ -202,7 +237,10 @@ class ScheduleCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                       ),
-                      child: Text(badgeText, style: TextStyle(color: accentColor, fontWeight: FontWeight.bold, fontSize: 9)),
+                      child: Text(
+                        badgeText,
+                        style: GoogleFonts.sora(color: accentColor, fontWeight: FontWeight.bold, fontSize: 9),
+                      ),
                     ),
                   ],
                 ),
@@ -210,32 +248,42 @@ class ScheduleCard extends StatelessWidget {
                 // Row 2: Course name
                 Text(
                   item.courseName.isNotEmpty ? item.courseName : 'Session',
-                  style: TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.w600,
-                    color: Colors.white.withValues(alpha: 0.9),
+                  style: GoogleFonts.sora(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textPrimary,
                     decoration: item.isCancelled ? TextDecoration.lineThrough : null,
                   ),
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Row 3: Faculty + Room
                 Row(
                   children: [
-                    const Icon(Icons.person_outline, size: 14, color: Colors.white54),
+                    Icon(Icons.person_outline, size: 13, color: colors.textSecondary),
                     const SizedBox(width: 4),
-                    Text(item.faculty.isNotEmpty ? item.faculty : "TBA", style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                    const SizedBox(width: 12),
-                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.white54),
+                    Text(
+                      item.faculty.isNotEmpty ? item.faculty : "TBA",
+                      style: GoogleFonts.sora(color: colors.textSecondary, fontSize: 11),
+                    ),
+                    const SizedBox(width: 10),
+                    Icon(Icons.location_on_outlined, size: 13, color: accentColor),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(item.room, style: const TextStyle(color: Colors.white54, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        item.room,
+                        style: GoogleFonts.sora(color: accentColor, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // Trailing action (Cancel button)
+          // Trailing action (Cancel/Delete button)
           if (trailing != null) ...[
             const SizedBox(width: 4),
             trailing!,

@@ -122,54 +122,77 @@ class _OnboardingDialogBodyState extends State<_OnboardingDialogBody> {
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 32, left: 32, right: 32),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Step Indicators
                     Row(
-                      children: List.generate(
-                        widget.steps.length,
-                        (index) => Container(
-                          width: 8,
-                          height: 8,
-                          margin: const EdgeInsets.only(right: 6),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentStep == index
-                                ? Colors.cyanAccent
-                                : Colors.white24,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Step Indicators
+                        Row(
+                          children: List.generate(
+                            widget.steps.length,
+                            (index) => Container(
+                              width: 8,
+                              height: 8,
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _currentStep == index
+                                    ? Colors.cyanAccent
+                                    : Colors.white24,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        // Action Button
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (_currentStep < widget.steps.length - 1) {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            } else {
+                              await TutorialService().markAsSeen(widget.featureKey);
+                              if (context.mounted) Navigator.pop(context);
+                              widget.onComplete?.call();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.cyanAccent,
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(
+                            _currentStep < widget.steps.length - 1 ? "Next" : "Got it!",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
-                    // Action Button
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_currentStep < widget.steps.length - 1) {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                          );
-                        } else {
+                    if (widget.steps.length > 1 && _currentStep < widget.steps.length - 1) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () async {
                           await TutorialService().markAsSeen(widget.featureKey);
                           if (context.mounted) Navigator.pop(context);
                           widget.onComplete?.call();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.cyanAccent,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                        },
+                        child: const Text(
+                          'Skip',
+                          style: TextStyle(
+                            color: Colors.white38,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
                       ),
-                      child: Text(
-                        _currentStep < widget.steps.length - 1 ? "Next" : "Got it!",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),

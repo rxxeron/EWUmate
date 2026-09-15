@@ -108,14 +108,12 @@ class DashboardRepository {
             .eq('user_id', effectiveUserId)
             .eq('date', dateStr),
         // [2] Standard (Tri) holiday/swap
-        (standardTable != null)
-            ? _supabase
-                .from(standardTable)
-                .select()
-                .eq('event_date', dateStr)
-                .maybeSingle()
-                .catchError((_) => null)
-            : Future.value(null),
+        _supabase
+            .from(standardTable)
+            .select()
+            .eq('event_date', dateStr)
+            .maybeSingle()
+            .catchError((_) => null),
         // [3] Professional (Bi) holiday/swap
         (phrmTable != null)
             ? _supabase
@@ -236,15 +234,15 @@ class DashboardRepository {
             .toLowerCase();
         if (title.contains('regular sunday')) {
           stdDay = 'Sunday';
-        } else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday')) {
           stdDay = 'Monday';
-        else if (title.contains('regular tuesday'))
+        } else if (title.contains('regular tuesday')) {
           stdDay = 'Tuesday';
-        else if (title.contains('regular wednesday'))
+        } else if (title.contains('regular wednesday')) {
           stdDay = 'Wednesday';
-        else if (title.contains('regular thursday'))
+        } else if (title.contains('regular thursday')) {
           stdDay = 'Thursday';
-        else if (_isActualHoliday(standardEvent, title)) {
+        } else if (_isActualHoliday(standardEvent, title)) {
           stdIsHoliday = true;
           stdReason =
               (standardEvent['title'] ?? standardEvent['name'] ?? 'Holiday')
@@ -262,15 +260,15 @@ class DashboardRepository {
             .toLowerCase();
         if (title.contains('regular sunday')) {
           phrmDay = 'Sunday';
-        } else if (title.contains('regular monday'))
+        } else if (title.contains('regular monday')) {
           phrmDay = 'Monday';
-        else if (title.contains('regular tuesday'))
+        } else if (title.contains('regular tuesday')) {
           phrmDay = 'Tuesday';
-        else if (title.contains('regular wednesday'))
+        } else if (title.contains('regular wednesday')) {
           phrmDay = 'Wednesday';
-        else if (title.contains('regular thursday'))
+        } else if (title.contains('regular thursday')) {
           phrmDay = 'Thursday';
-        else if (_isActualHoliday(phrmEvent, title)) {
+        } else if (_isActualHoliday(phrmEvent, title)) {
           phrmIsHoliday = true;
           phrmReason = (phrmEvent['title'] ?? phrmEvent['name'] ?? 'Holiday')
               .toString();
@@ -758,15 +756,15 @@ class DashboardRepository {
               .toLowerCase();
           if (title.contains('regular sunday')) {
             stdDay = 'Sunday';
-          } else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday')) {
             stdDay = 'Monday';
-          else if (title.contains('regular tuesday'))
+          } else if (title.contains('regular tuesday')) {
             stdDay = 'Tuesday';
-          else if (title.contains('regular wednesday'))
+          } else if (title.contains('regular wednesday')) {
             stdDay = 'Wednesday';
-          else if (title.contains('regular thursday'))
+          } else if (title.contains('regular thursday')) {
             stdDay = 'Thursday';
-          else if (_isActualHoliday(stdHol, title)) {
+          } else if (_isActualHoliday(stdHol, title)) {
             stdIsHoliday = true;
             stdReason = (stdHol['title'] ?? stdHol['name'] ?? 'Holiday')
                 .toString();
@@ -782,15 +780,15 @@ class DashboardRepository {
               .toLowerCase();
           if (title.contains('regular sunday')) {
             phrmDay = 'Sunday';
-          } else if (title.contains('regular monday'))
+          } else if (title.contains('regular monday')) {
             phrmDay = 'Monday';
-          else if (title.contains('regular tuesday'))
+          } else if (title.contains('regular tuesday')) {
             phrmDay = 'Tuesday';
-          else if (title.contains('regular wednesday'))
+          } else if (title.contains('regular wednesday')) {
             phrmDay = 'Wednesday';
-          else if (title.contains('regular thursday'))
+          } else if (title.contains('regular thursday')) {
             phrmDay = 'Thursday';
-          else if (_isActualHoliday(phrmHol, title)) {
+          } else if (_isActualHoliday(phrmHol, title)) {
             phrmIsHoliday = true;
             phrmReason = (phrmHol['title'] ?? phrmHol['name'] ?? 'Holiday')
                 .toString();
@@ -808,15 +806,15 @@ class DashboardRepository {
           if (isSwap || _isActualHoliday(stdHol, title)) {
             if (title.contains('regular sunday')) {
               phrmDay = 'Sunday';
-            } else if (title.contains('regular monday'))
+            } else if (title.contains('regular monday')) {
               phrmDay = 'Monday';
-            else if (title.contains('regular tuesday'))
+            } else if (title.contains('regular tuesday')) {
               phrmDay = 'Tuesday';
-            else if (title.contains('regular wednesday'))
+            } else if (title.contains('regular wednesday')) {
               phrmDay = 'Wednesday';
-            else if (title.contains('regular thursday'))
+            } else if (title.contains('regular thursday')) {
               phrmDay = 'Thursday';
-            else {
+            } else {
               phrmIsHoliday = true;
               phrmReason = (stdHol['title'] ?? stdHol['name'] ?? 'Holiday')
                   .toString();
@@ -834,7 +832,6 @@ class DashboardRepository {
         bool isPhrmNotStarted =
             phrmStartDateStr != null && dateStr.compareTo(phrmStartDateStr) < 0;
 
-        List<Map<String, dynamic>> hybridClasses = [];
         if (!stdIsHoliday && !isStdOver && !isStdNotStarted) {
           final stdClasses = List<Map<String, dynamic>>.from(
             weeklyGrid[stdDay] ?? [],

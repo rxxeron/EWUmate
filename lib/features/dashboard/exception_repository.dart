@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ExceptionRepository {
@@ -13,9 +14,9 @@ class ExceptionRepository {
           .from('schedule_exceptions')
           .select()
           .eq('user_id', _uid!);
-
       return List<Map<String, dynamic>>.from(data);
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] fetchExceptions error: $e');
       return [];
     }
   }
@@ -32,6 +33,7 @@ class ExceptionRepository {
         'metadata': {'pendingMakeup': pendingMakeup},
       });
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] addCancellation error: $e');
     }
   }
 
@@ -60,6 +62,7 @@ class ExceptionRepository {
         'metadata': {},
       });
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] addMakeupClass error: $e');
     }
   }
 
@@ -88,6 +91,7 @@ class ExceptionRepository {
         'metadata': {},
       });
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] addManualClass error: $e');
     }
   }
 
@@ -99,6 +103,7 @@ class ExceptionRepository {
           .update({ 'metadata': {'pendingMakeup': false} })
           .eq('id', originalExceptionId);
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] resolvePendingMakeup error: $e');
     }
   }
 
@@ -108,6 +113,7 @@ class ExceptionRepository {
     try {
       await _supabase.from('schedule_exceptions').delete().eq('id', id);
     } catch (e) {
+      if (kDebugMode) debugPrint('[ExceptionRepository] removeException error: $e');
     }
   }
 

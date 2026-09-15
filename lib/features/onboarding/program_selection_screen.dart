@@ -2,11 +2,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'onboarding_repository.dart';
 import '../auth/auth_providers.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_kit.dart';
 import '../../core/widgets/onboarding_overlay.dart';
-import '../../core/utils/error_utils.dart';
 
 class ProgramSelectionScreen extends ConsumerStatefulWidget {
   const ProgramSelectionScreen({super.key});
@@ -138,19 +139,35 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
   @override
   Widget build(BuildContext context) {
     return FullGradientScaffold(
-      // removing appBar title, making it custom header in body
       body: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: Colors.cyanAccent))
+              child: CircularProgressIndicator(color: AppColors.primaryCyan))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 40),
-                  const Icon(Icons.school_rounded,
-                      size: 80, color: Colors.cyanAccent),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.2),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.school_rounded, color: AppColors.primaryCyan, size: 36),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   Consumer(
                     builder: (context, ref, child) {
                       final profile = ref.watch(profileProvider).value;
@@ -164,33 +181,43 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                                    'Student';
                       return Text(
                         "$name, welcome to EWUmate!",
-                        style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                        style: GoogleFonts.sora(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                         textAlign: TextAlign.center,
                       );
                     },
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
+                  const SizedBox(height: 8),
+                  Text(
                     "Choose how you would like to set up your profile:",
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                    style: GoogleFonts.sora(fontSize: 14, color: AppColors.secondaryText),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
                   // Option A: Fast-track Portal Sync
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.cyanAccent.shade700.withValues(alpha: 0.25),
-                          Colors.teal.shade900.withValues(alpha: 0.2),
+                          AppColors.surfaceNavyBlue,
+                          const Color(0xFF0C2B54).withValues(alpha: 0.8),
                         ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.4), width: 1.5),
+                      border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.35), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -201,27 +228,28 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.cyanAccent.withValues(alpha: 0.2),
+                                color: AppColors.primaryCyan.withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.bolt_rounded, color: Colors.cyanAccent, size: 28),
+                              child: const Icon(Icons.bolt_rounded, color: AppColors.primaryCyan, size: 28),
                             ),
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     "Option 1: Sync with Portal",
-                                    style: TextStyle(
-                                      color: Colors.cyanAccent,
-                                      fontSize: 17,
+                                    style: GoogleFonts.sora(
+                                      color: AppColors.primaryCyan,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  const SizedBox(height: 2),
                                   Text(
                                     "Recommended • 1-Click Instant Setup",
-                                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                                    style: GoogleFonts.sora(color: AppColors.secondarySoftBlue, fontSize: 12, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -229,22 +257,44 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                           ],
                         ),
                         const SizedBox(height: 12),
-                        const Text(
+                        Text(
                           "Instantly import your Department, Program, Admitted Semester, Active Routine, Faculty & Degree Progress in 5 seconds.",
-                          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+                          style: GoogleFonts.sora(color: Colors.white70, fontSize: 13, height: 1.4),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            context.push('/portal-sync');
-                          },
-                          icon: const Icon(Icons.cloud_sync_rounded),
-                          label: const Text("Connect EWU Portal", style: TextStyle(fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.cyanAccent.shade700,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        Container(
+                          height: 46,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.push('/portal-sync');
+                            },
+                            icon: const Icon(Icons.cloud_sync_rounded, color: Color(0xFF04101E)),
+                            label: Text(
+                              "Connect EWU Portal",
+                              style: GoogleFonts.sora(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF04101E),
+                                fontSize: 14,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
                           ),
                         ),
                       ],
@@ -252,82 +302,98 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                   ),
 
                   const SizedBox(height: 28),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          "OR OPTION 2: MANUAL SETUP",
-                          style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceNavyBlue,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                          ),
+                          child: Text(
+                            "OR OPTION 2: MANUAL SETUP",
+                            style: GoogleFonts.sora(
+                              color: AppColors.secondaryText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.12))),
                     ],
                   ),
                   const SizedBox(height: 24),
 
                   // Dept Dropdown
-                  GlassContainer(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    borderRadius: 12,
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderColor: Colors.white.withValues(alpha: 0.2),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceNavyBlue.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButtonFormField<String>(
-                        key: ValueKey(
-                            _selectedDeptName), // Ensure rebuild on change
-                        decoration: const InputDecoration(
+                        key: ValueKey(_selectedDeptName),
+                        decoration: InputDecoration(
                           labelText: "Department",
-                          labelStyle: TextStyle(color: Colors.white70),
+                          labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
                           border: InputBorder.none,
-                          prefixIcon: Icon(Icons.business_rounded,
-                              color: Colors.cyanAccent),
+                          prefixIcon: const Icon(Icons.business_rounded, color: AppColors.primaryCyan, size: 20),
                         ),
-                        dropdownColor: const Color(0xFF1e1e1e),
-                        style: const TextStyle(color: Colors.white),
-                        // value: deprecated, using initialValue
-                        value: _selectedDeptName,
+                        dropdownColor: const Color(0xFF0D2342),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryCyan),
+                        style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                        initialValue: _selectedDeptName,
                         items: _departments.map((dept) {
                           final name = dept['name'] as String;
                           return DropdownMenuItem(
-                              value: name, child: Text(name));
+                            value: name,
+                            child: Text(name, style: GoogleFonts.sora(color: Colors.white, fontSize: 13)),
+                          );
                         }).toList(),
                         onChanged: (val) {
                           setState(() {
                             _selectedDeptName = val;
-                            _selectedProgramId = null; // Reset program
+                            _selectedProgramId = null;
                           });
                         },
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // Program Dropdown
-                  GlassContainer(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    borderRadius: 12,
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderColor: Colors.white.withValues(alpha: 0.2),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceNavyBlue.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButtonFormField<String>(
-                        key: ValueKey(
-                            "$_selectedDeptName-$_selectedProgramId"), // Ensure rebuild
-                        decoration: const InputDecoration(
+                        key: ValueKey("$_selectedDeptName-$_selectedProgramId"),
+                        decoration: InputDecoration(
                           labelText: "Degree Program",
-                          labelStyle: TextStyle(color: Colors.white70),
+                          labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
                           border: InputBorder.none,
-                          prefixIcon: Icon(Icons.school_rounded,
-                              color: Colors.cyanAccent),
+                          prefixIcon: const Icon(Icons.school_rounded, color: AppColors.primaryCyan, size: 20),
                         ),
-                        dropdownColor: const Color(0xFF1e1e1e),
-                        style: const TextStyle(color: Colors.white),
-                        value: _selectedProgramId,
-                        disabledHint: const Text("Select Department First",
-                            style: TextStyle(color: Colors.white38)),
+                        dropdownColor: const Color(0xFF0D2342),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryCyan),
+                        style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                        initialValue: _selectedProgramId,
+                        disabledHint: Text(
+                          "Select Department First",
+                          style: GoogleFonts.sora(color: Colors.white38, fontSize: 13),
+                        ),
                         items: _selectedDeptName == null
                             ? []
                             : List<Map<String, dynamic>>.from(
@@ -337,7 +403,10 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                                         [])
                                 .map((prog) => DropdownMenuItem(
                                     value: prog['id'] as String,
-                                      child: Text(prog['title'] as String)))
+                                    child: Text(
+                                      prog['title'] as String,
+                                      style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
+                                    )))
                                 .toList(),
                         onChanged: _selectedDeptName == null
                             ? null
@@ -347,28 +416,29 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // Semester Dropdown
-                  GlassContainer(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    borderRadius: 12,
-                    color: Colors.white.withValues(alpha: 0.05),
-                    borderColor: Colors.white.withValues(alpha: 0.2),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceNavyBlue.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButtonFormField<String>(
                         key: ValueKey(_selectedAdmittedSemester),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: "Admitted Semester",
-                          labelStyle: TextStyle(color: Colors.white70),
+                          labelStyle: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 13),
                           border: InputBorder.none,
-                          prefixIcon: Icon(Icons.calendar_today_rounded,
-                              color: Colors.cyanAccent),
+                          prefixIcon: const Icon(Icons.calendar_today_rounded, color: AppColors.primaryCyan, size: 20),
                         ),
-                        dropdownColor: const Color(0xFF1e1e1e),
-                        style: const TextStyle(color: Colors.white),
-                        value: _selectedAdmittedSemester,
+                        dropdownColor: const Color(0xFF0D2342),
+                        icon: const Icon(Icons.arrow_drop_down, color: AppColors.primaryCyan),
+                        style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                        initialValue: _selectedAdmittedSemester,
                         items: _semesters.where((sem) {
                           if (_selectedDeptName == null) return true;
                           final dept = _departments.where((d) => d['name'] == _selectedDeptName).firstOrNull;
@@ -377,7 +447,10 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                           }
                           return true;
                         }).map((sem) {
-                          return DropdownMenuItem(value: sem, child: Text(sem));
+                          return DropdownMenuItem(
+                            value: sem,
+                            child: Text(sem, style: GoogleFonts.sora(color: Colors.white, fontSize: 13)),
+                          );
                         }).toList(),
                         onChanged: (val) {
                           setState(() => _selectedAdmittedSemester = val);
@@ -385,38 +458,86 @@ class _ProgramSelectionScreenState extends ConsumerState<ProgramSelectionScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 36),
 
-                  GlassContainer(
-                    onTap: (_selectedProgramId == null ||
-                            _selectedAdmittedSemester == null ||
-                            _saving)
-                        ? null
-                        : _saveAndContinue,
-                    color: Colors.cyanAccent.withValues(alpha: 0.2),
-                    borderColor: Colors.cyanAccent,
-                    borderRadius: 12,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (_saving)
-                          const SizedBox(
+                  Container(
+                    width: double.infinity,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: (_selectedProgramId == null ||
+                              _selectedAdmittedSemester == null ||
+                              _saving)
+                          ? null
+                          : const LinearGradient(
+                              colors: [AppColors.primaryCyan, AppColors.secondarySoftBlue],
+                            ),
+                      color: (_selectedProgramId == null ||
+                              _selectedAdmittedSemester == null ||
+                              _saving)
+                          ? AppColors.surfaceNavyBlue.withValues(alpha: 0.5)
+                          : null,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: (_selectedProgramId != null &&
+                              _selectedAdmittedSemester != null &&
+                              !_saving)
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primaryCyan.withValues(alpha: 0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 3),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: (_selectedProgramId == null ||
+                              _selectedAdmittedSemester == null ||
+                              _saving)
+                          ? null
+                          : _saveAndContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        disabledBackgroundColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (_saving)
+                            const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.cyanAccent))
-                        else
-                          const Icon(Icons.arrow_forward,
-                              color: Colors.cyanAccent),
-                        const SizedBox(width: 8),
-                        const Text("Continue to Course History",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.cyanAccent)),
-                      ],
+                                strokeWidth: 2,
+                                color: Color(0xFF04101E),
+                              ),
+                            )
+                          else ...[
+                            Text(
+                              "Continue to Course History",
+                              style: GoogleFonts.sora(
+                                fontWeight: FontWeight.w800,
+                                color: (_selectedProgramId == null || _selectedAdmittedSemester == null)
+                                    ? Colors.white38
+                                    : const Color(0xFF04101E),
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              color: (_selectedProgramId == null || _selectedAdmittedSemester == null)
+                                  ? Colors.white38
+                                  : const Color(0xFF04101E),
+                              size: 18,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),

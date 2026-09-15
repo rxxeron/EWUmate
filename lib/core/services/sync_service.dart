@@ -40,9 +40,7 @@ class SyncService {
         bool success = false;
 
         try {
-          final payload = mutation['payload'] as Map<String, dynamic>? ?? {};
           final type = mutation['type']?.toString() ?? '';
-          final id = mutation['id']?.toString() ?? '';
 
           if (type == 'progress_update' || mutation['action'] == 'save_course_marks') {
             final data = mutation['data'] ?? mutation['payload'] ?? {};

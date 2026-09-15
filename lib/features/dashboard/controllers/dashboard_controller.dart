@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -15,7 +14,6 @@ import '../../../core/services/cache_service.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/utils/refresh_utils.dart';
 import '../../../core/utils/time_utils.dart';
-import '../../../core/utils/version_utils.dart';
 import '../../auth/auth_providers.dart';
 import '../../semester_progress/semester_progress_repository.dart';
 import '../dashboard_logic.dart';
@@ -124,18 +122,9 @@ class DashboardController {
             return [];
           }
         }),
-        PackageInfo.fromPlatform().catchError(
-          (_) => PackageInfo(
-            appName: '',
-            packageName: '',
-            version: '',
-            buildNumber: '',
-          ),
-        ),
       ]);
 
       final scheduleData = results[0] as Map<String, dynamic>;
-      final versionInfo = results[2] as PackageInfo;
 
       state.lastValidScheduleData = scheduleData;
       state.semesterCode = code;

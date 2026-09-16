@@ -90,6 +90,14 @@ class AzureFunctionsService {
     }
     return [];
   }
+
+  /// Triggers full automated faculty master and directory sync
+  Future<Map<String, dynamic>> triggerFacultySync() async {
+    final response = await _getRequest('/api/scraper/portal_sync', {
+      'action': 'faculty_sync',
+    });
+    return response;
+  }
 }
 
 final azureFunctionsServiceProvider = Provider<AzureFunctionsService>((ref) {

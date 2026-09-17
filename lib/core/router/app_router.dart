@@ -38,12 +38,16 @@ import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
 import '../../features/tutorials/presentation/tutorials_screen.dart';
 import '../../features/services/presentation/portal_sync_screen.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
+    observers: [
+      FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+    ],
     initialLocation: '/',
     routes: [
       GoRoute(path: '/', builder: (context, state) => const CheckAuthScreen()),

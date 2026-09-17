@@ -38,16 +38,25 @@ import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
 import '../../features/tutorials/presentation/tutorials_screen.dart';
 import '../../features/services/presentation/portal_sync_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final List<NavigatorObserver> observers = [];
+  try {
+    if (!kIsWeb && Firebase.apps.isNotEmpty) {
+      observers.add(FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance));
+    }
+  } catch (e) {
+    debugPrint('[AppRouter] Analytics observer notice: $e');
+  }
+
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    observers: [
-      FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-    ],
+    observers: observers,
     initialLocation: '/',
     routes: [
       GoRoute(name: 'CheckAuth', path: '/', builder: (context, state) => const CheckAuthScreen()),

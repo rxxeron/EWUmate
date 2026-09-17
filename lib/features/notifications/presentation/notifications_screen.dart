@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -59,13 +61,28 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ref.read(notificationRepositoryProvider).markAsRead(notification.id);
     }
 
+    final imageUrl = (notification.payload?['image'] as String?) ??
+                     (notification.payload?['image_url'] as String?) ??
+                     (notification.payload?['imageUrl'] as String?);
+    final linkUrl = (notification.payload?['url'] as String?) ??
+                    (notification.payload?['link'] as String?);
+
     // 2. Show the detail popup (Front and Center)
     if (context.mounted) {
       ref.read(fcmServiceProvider).showNotificationPopup(
         notification.title, 
         notification.body, 
-        notification.payload != null ? notification.payload!['url']?.toString() : null
+        linkUrl,
+        imageUrl,
       );
+    }
+  }
+
+  void _launchActionUrl(BuildContext context, String url) {
+    if (url.startsWith('/')) {
+      context.go(url);
+    } else {
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
   }
 
@@ -281,6 +298,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
 
     final isUnread = !notif.isRead;
+    final cardImage = (notif.payload?['image'] as String?) ??
+                      (notif.payload?['image_url'] as String?) ??
+                      (notif.payload?['imageUrl'] as String?);
+    final cardUrl = (notif.payload?['url'] as String?) ??
+                    (notif.payload?['link'] as String?);
 
     return Dismissible(
       key: Key(notif.id),
@@ -412,29 +434,77 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       ),
                     ),
 
-                    if (notif.payload != null && notif.payload!.containsKey('url')) ...[
+                    // Image preview if present
+                    if (cardImage != null && cardImage.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.attachment_rounded, size: 14, color: Color(0xFF10B981)),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Attachment Available',
-                              style: GoogleFonts.sora(
-                                color: const Color(0xFF10B981),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: cardImage,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 150,
+                          placeholder: (context, url) => Container(
+                            height: 150,
+                            color: Colors.white.withValues(alpha: 0.05),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 22,
+                                height: 22,
+                                child: CircularProgressIndicator(color: AppColors.primaryCyan, strokeWidth: 2),
                               ),
                             ),
-                          ],
+                          ),
+                          errorWidget: (context, url, error) => const SizedBox.shrink(),
+                        ),
+                      ),
+                    ],
+
+                    // Clickable link if present
+                    if (cardUrl != null && cardUrl.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      InkWell(
+                        onTap: () {
+                          if (!notif.isRead) {
+                            ref.read(notificationRepositoryProvider).markAsRead(notif.id);
+                          }
+                          _launchActionUrl(context, cardUrl);
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.open_in_new_rounded, size: 14, color: AppColors.primaryCyan),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Open Link',
+                                style: GoogleFonts.sora(
+                                  color: AppColors.primaryCyan,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  cardUrl,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.sora(
+                                    color: AppColors.secondaryText,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

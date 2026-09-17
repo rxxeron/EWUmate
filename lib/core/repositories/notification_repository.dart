@@ -20,6 +20,35 @@ class NotificationRepository {
     final localNotifs = getLocalNotifications(userId);
     yield localNotifs;
 
+    // 2. Immediate REST fetch to load existing server notifications instantly
+    try {
+      final res = await _supabase
+          .from('notifications')
+          .select()
+          .eq('user_id', userId)
+          .eq('is_dispatched', true)
+          .order('created_at', ascending: false)
+          .limit(50);
+
+      final fetched = (res as List).map((json) {
+        final modifiableJson = Map<String, dynamic>.from(json);
+        if (modifiableJson['payload'] is String) {
+          try {
+            modifiableJson['payload'] = jsonDecode(modifiableJson['payload']);
+          } catch (_) {
+            modifiableJson['payload'] = null;
+          }
+        }
+        return model.Notification.fromJson(modifiableJson);
+      }).toList();
+
+      await _syncLocalWithServer(userId, fetched);
+      yield fetched;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Notifications] Initial REST fetch error: $e');
+    }
+
+    // 3. Keep listening to Realtime stream for live incoming notifications
     try {
       await for (final data in _supabase
           .from('notifications')
@@ -42,12 +71,12 @@ class NotificationRepository {
           return model.Notification.fromJson(modifiableJson);
         }).toList();
 
-        // 3. Update local storage with fresh server data
+        // Update local storage with fresh server data
         await _syncLocalWithServer(userId, notifications);
         yield notifications;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[Notifications] Offline mode fallback: $e');
+      if (kDebugMode) debugPrint('[Notifications] Realtime stream error: $e');
     }
   }
 

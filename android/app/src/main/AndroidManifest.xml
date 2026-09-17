@@ -21,7 +21,7 @@
         <!-- Define default FCM Channel for High Priority Heads-up Notifications -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="ewumate_high_priority_reminders_v1" />
+            android:value="ewumate_high_priority_reminders_v2" />
 
         <activity
             android:name=".MainActivity"

@@ -9,6 +9,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
+import '../../firebase_options.dart';
 import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
 import '../repositories/notification_repository.dart';
@@ -47,30 +49,13 @@ class FCMService {
   FCMService(this._ref);
 
   Future<void> initialize() async {
-    // 0. Register Background Handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Handle terminated-state notification tap (app was fully closed)
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      // Add a 2.5 second delay to let the initial GoRouter splash/auth redirects fully settle
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        final img = initialMessage.notification?.android?.imageUrl ?? 
-                    initialMessage.notification?.apple?.imageUrl ?? 
-                    (initialMessage.data['image'] as String?) ??
-                    (initialMessage.data['image_url'] as String?);
-        _handleIncomingAction(
-          initialMessage.notification?.title,
-          initialMessage.notification?.body,
-          initialMessage.data['url'] as String?,
-          img,
-        );
-      });
-    }
-
-    // 1. Setup Local Notifications for Foreground and Channel Creation
+    // 0. Setup Local Notifications for Foreground and Channel Creation
     const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
+    const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
     const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
@@ -83,7 +68,6 @@ class FCMService {
         if (payload != null && payload.isNotEmpty) {
           try {
             final data = jsonDecode(payload);
-            // Slight delay to let any foreground screen state settle
             Future.delayed(const Duration(milliseconds: 200), () {
               _handleIncomingAction(data['title'], data['body'], data['url'], data['image']);
             });
@@ -92,7 +76,18 @@ class FCMService {
       },
     );
 
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    // Register primary channel (v2, matching Edge Functions)
+    const AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
+      'ewumate_high_priority_reminders_v2', 
+      'High Priority Reminders',
+      description: 'Notifications for class, task timing and announcements',
+      importance: Importance.max,
+      playSound: true,
+      enableVibration: true,
+    );
+
+    // Register fallback channel (v1) for backward compatibility
+    const AndroidNotificationChannel channelV1 = AndroidNotificationChannel(
       'ewumate_high_priority_reminders_v1', 
       'Task Reminders',
       description: 'Notifications for class and task timing',
@@ -102,7 +97,13 @@ class FCMService {
     );
 
     final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidImplementation?.createNotificationChannel(channel);
+    await androidImplementation?.createNotificationChannel(channelV2);
+    await androidImplementation?.createNotificationChannel(channelV1);
+    
+    // Explicitly request notification permission on Android 13+ (API 33+)
+    try {
+      await androidImplementation?.requestNotificationsPermission();
+    } catch (_) {}
 
     await _messaging.setForegroundNotificationPresentationOptions(
       alert: true,
@@ -110,81 +111,135 @@ class FCMService {
       sound: true,
     );
 
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    try {
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: true,
+      );
+    } catch (_) {}
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    // Always register FCM message listeners regardless of initial auth status
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final notifTitle = message.notification?.title ?? 
+                         (message.data['title'] as String?) ?? 
+                         'New Notification';
+      final notifBody = message.notification?.body ?? 
+                        (message.data['body'] as String?) ?? 
+                        '';
+      final routingUrl = (message.data['url'] as String?) ?? 
+                         (message.data['link'] as String?);
+      final notifImage = message.notification?.android?.imageUrl ?? 
+                         message.notification?.apple?.imageUrl ?? 
+                         (message.data['image'] as String?) ??
+                         (message.data['image_url'] as String?) ??
+                         (message.data['imageUrl'] as String?);
+
+      // Save locally for in-app notifications feed
+      try {
+        final userId = _supabase.auth.currentUser?.id;
+        if (userId != null) {
+          final newNotif = model.Notification(
+            id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+            userId: userId,
+            title: notifTitle,
+            body: notifBody,
+            type: (message.data['type'] as String?) ?? 'system',
+            isRead: false,
+            createdAt: message.sentTime ?? DateTime.now(),
+            payload: {
+              ...message.data,
+              if (routingUrl != null) 'url': routingUrl,
+              if (notifImage != null) 'image': notifImage,
+            },
+          );
+          _ref.read(notificationRepositoryProvider).saveLocalNotification(newNotif);
+        }
+      } catch (_) {}
+
+      // Display heads-up notification in foreground using v2 channel
+      final int notifId = (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch).remainder(100000).abs();
+      _localNotifications.show(
+        id: notifId,
+        title: notifTitle,
+        body: notifBody,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            channelV2.id,
+            channelV2.name,
+            channelDescription: channelV2.description,
+            icon: '@mipmap/ic_launcher',
+            importance: channelV2.importance,
+            priority: Priority.high,
+          ),
+          iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
+        ),
+        payload: jsonEncode({
+          'title': notifTitle, 
+          'body': notifBody, 
+          'url': routingUrl, 
+          'image': notifImage
+        }),
+      );
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      Future.delayed(const Duration(milliseconds: 800), () {
+        final img = message.notification?.android?.imageUrl ?? 
+                    message.notification?.apple?.imageUrl ?? 
+                    (message.data['image'] as String?) ??
+                    (message.data['image_url'] as String?) ??
+                    (message.data['imageUrl'] as String?);
+        final url = (message.data['url'] as String?) ?? (message.data['link'] as String?);
+        _handleIncomingAction(
+          message.notification?.title ?? message.data['title'], 
+          message.notification?.body ?? message.data['body'], 
+          url,
+          img,
+        );
+      });
+    });
+
+    // Handle terminated-state notification tap (app was fully closed)
+    try {
+      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          final img = initialMessage.notification?.android?.imageUrl ?? 
+                      initialMessage.notification?.apple?.imageUrl ?? 
+                      (initialMessage.data['image'] as String?) ??
+                      (initialMessage.data['image_url'] as String?) ??
+                      (initialMessage.data['imageUrl'] as String?);
+          final url = (initialMessage.data['url'] as String?) ?? (initialMessage.data['link'] as String?);
+          _handleIncomingAction(
+            initialMessage.notification?.title ?? initialMessage.data['title'],
+            initialMessage.notification?.body ?? initialMessage.data['body'],
+            url,
+            img,
+          );
+        });
+      }
+    } catch (_) {}
+
+    // Listen for FCM token refreshes
+    _messaging.onTokenRefresh.listen((token) {
+      _saveTokenToDatabase(token);
+    });
+
+    // Attempt token sync
+    await syncToken();
+  }
+
+  /// Explicitly retrieve the device token and register it with the current user in Supabase
+  Future<void> syncToken() async {
+    try {
       final token = await _messaging.getToken();
       if (token != null) {
         await _saveTokenToDatabase(token);
       }
-      _messaging.onTokenRefresh.listen(_saveTokenToDatabase);
-
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        RemoteNotification? notification = message.notification;
-        if (notification != null) {
-          final routingUrl = message.data['url'] as String?;
-          final notifImage = message.notification?.android?.imageUrl ?? 
-                             message.notification?.apple?.imageUrl ?? 
-                             (message.data['image'] as String?) ??
-                             (message.data['image_url'] as String?);
-          
-          // Save locally
-          try {
-            final userId = _supabase.auth.currentUser?.id;
-            if (userId != null) {
-              final newNotif = model.Notification(
-                id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-                userId: userId,
-                title: notification.title ?? 'No Title',
-                body: notification.body ?? 'No Message',
-                type: message.data['type'] ?? 'system',
-                isRead: false,
-                createdAt: message.sentTime ?? DateTime.now(),
-                payload: message.data.isNotEmpty ? message.data : null,
-              );
-              _ref.read(notificationRepositoryProvider).saveLocalNotification(newNotif);
-            }
-          } catch (_) {}
-
-          _localNotifications.show(
-            id: notification.hashCode,
-            title: notification.title,
-            body: notification.body,
-            notificationDetails: NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
-                icon: '@mipmap/ic_launcher',
-                importance: channel.importance,
-                priority: Priority.high,
-              ),
-              iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
-            ),
-            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage}),
-          );
-        }
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        // Add 800ms delay to let the app resume and route state settle perfectly
-        Future.delayed(const Duration(milliseconds: 800), () {
-          final img = message.notification?.android?.imageUrl ?? 
-                      message.notification?.apple?.imageUrl ?? 
-                      (message.data['image'] as String?) ??
-                      (message.data['image_url'] as String?);
-          _handleIncomingAction(
-            message.notification?.title, 
-            message.notification?.body, 
-            message.data['url'] as String?,
-            img,
-          );
-        });
-      });
+    } catch (e) {
+      debugPrint("[FCM] syncToken error: $e");
     }
   }
 
@@ -195,11 +250,15 @@ class FCMService {
         await _supabase.from('fcm_tokens').upsert({
           'user_id': user.id,
           'token': token,
+          'platform': defaultTargetPlatform.name.toLowerCase(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
+        }, onConflict: 'token');
+        debugPrint("[FCM] Token saved successfully for user ${user.id} on ${defaultTargetPlatform.name}");
       } catch (e) {
         debugPrint("[FCM] Token Registration Failed: $e");
       }
+    } else {
+      debugPrint("[FCM] No current user signed in. Token will sync upon login.");
     }
   }
 
@@ -324,9 +383,13 @@ class FCMService {
 }
 
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
-    await Firebase.initializeApp();
+    if (!kIsWeb) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
     await Hive.initFlutter();
     if (!Hive.isBoxOpen('notifications_box')) {
       await Hive.openBox('notifications_box');

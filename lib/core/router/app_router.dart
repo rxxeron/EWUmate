@@ -50,41 +50,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const CheckAuthScreen()),
-      GoRoute(path: '/login-callback', builder: (context, state) => const CheckAuthScreen()),
+      GoRoute(name: 'CheckAuth', path: '/', builder: (context, state) => const CheckAuthScreen()),
+      GoRoute(name: 'LoginCallback', path: '/login-callback', builder: (context, state) => const CheckAuthScreen()),
 
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-      GoRoute(path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
+      GoRoute(name: 'Login', path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(name: 'Register', path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(name: 'ForgotPassword', path: '/forgot-password', builder: (context, state) => const ForgotPasswordScreen()),
 
-      GoRoute(path: '/onboarding/profile-setup', builder: (context, state) => const ProfileSetupScreen()),
-      GoRoute(path: '/onboarding/program', builder: (context, state) => const ProgramSelectionScreen()),
-      GoRoute(path: '/onboarding/course-history', builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>?;
-        final isEdit = extra?['isEditMode'] as bool? ?? false;
-        final admitted = extra?['admittedSemester'] as String?;
-        return CourseHistoryScreen(isEditMode: isEdit, admittedSemester: admitted);
-      }),
+      GoRoute(name: 'ProfileSetup', path: '/onboarding/profile-setup', builder: (context, state) => const ProfileSetupScreen()),
+      GoRoute(name: 'ProgramSelection', path: '/onboarding/program', builder: (context, state) => const ProgramSelectionScreen()),
+      GoRoute(
+        name: 'CourseHistory',
+        path: '/onboarding/course-history',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final isEdit = extra?['isEditMode'] as bool? ?? false;
+          final admitted = extra?['admittedSemester'] as String?;
+          return CourseHistoryScreen(isEditMode: isEdit, admittedSemester: admitted);
+        },
+      ),
 
-      GoRoute(path: '/onboarding/welcome-tour', builder: (context, state) => const WelcomeTourScreen()),
+      GoRoute(name: 'WelcomeTour', path: '/onboarding/welcome-tour', builder: (context, state) => const WelcomeTourScreen()),
 
       // Main Pages wrapped in a single ShellRoute
       ShellRoute(
         builder: (context, state, child) => MainShell(child: child),
         routes: [
-          GoRoute(path: '/dashboard', builder: (context, state) => const DashboardScreen()),
-          GoRoute(path: '/tasks', builder: (context, state) => const TasksScreen()),
-          GoRoute(path: '/semester-progress', builder: (context, state) => const SemesterProgressScreen()),
-          GoRoute(path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
-          GoRoute(path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
-          GoRoute(path: '/services', builder: (context, state) => const ServicesScreen()),
-          GoRoute(path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
-          GoRoute(path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
+          GoRoute(name: 'Dashboard', path: '/dashboard', builder: (context, state) => const DashboardScreen()),
+          GoRoute(name: 'Tasks', path: '/tasks', builder: (context, state) => const TasksScreen()),
+          GoRoute(name: 'SemesterProgress', path: '/semester-progress', builder: (context, state) => const SemesterProgressScreen()),
+          GoRoute(name: 'DegreeProgress', path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
+          GoRoute(name: 'Schedule', path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
+          GoRoute(name: 'Services', path: '/services', builder: (context, state) => const ServicesScreen()),
+          GoRoute(name: 'CoverPage', path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
+          GoRoute(name: 'FacultyList', path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
           GoRoute(
+            name: 'FacultyDirectory',
             path: '/services/faculty-directory',
             builder: (context, state) => const FacultyDirectoryScreen(),
             routes: [
               GoRoute(
+                name: 'FacultyDetails',
                 path: 'details',
                 builder: (context, state) {
                   final faculty = state.extra as Faculty;
@@ -94,6 +100,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(
+            name: 'FacultyAssignment',
             path: '/services/faculty-assignment',
             builder: (context, state) {
               final extra = state.extra as Map<String, String>?;
@@ -104,14 +111,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
+            name: 'StudyVault',
             path: '/services/study-vault',
             builder: (context, state) => const StudyVaultScreen(),
             routes: [
               GoRoute(
+                name: 'UploadStudyMaterial',
                 path: 'upload',
                 builder: (context, state) => const UploadStudyMaterialScreen(),
               ),
               GoRoute(
+                name: 'MyStudyMaterials',
                 path: 'my-uploads',
                 builder: (context, state) => const MyStudyMaterialsScreen(),
               ),
@@ -121,17 +131,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // Drawer Pages
-      GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
-      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
-      GoRoute(path: '/notifications/settings', builder: (context, state) => const ReminderSettingsScreen()),
-      GoRoute(path: '/semester-summary', builder: (context, state) => const SemesterSummaryScreen()),
-      GoRoute(path: '/courses', builder: (context, state) => const CourseBrowserScreen()),
-      GoRoute(path: '/advising', builder: (context, state) => const AdvisingScreen()),
+      GoRoute(name: 'Profile', path: '/profile', builder: (context, state) => const ProfileScreen()),
+      GoRoute(name: 'Notifications', path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+      GoRoute(name: 'ReminderSettings', path: '/notifications/settings', builder: (context, state) => const ReminderSettingsScreen()),
+      GoRoute(name: 'SemesterSummary', path: '/semester-summary', builder: (context, state) => const SemesterSummaryScreen()),
+      GoRoute(name: 'CourseBrowser', path: '/courses', builder: (context, state) => const CourseBrowserScreen()),
+      GoRoute(name: 'Advising', path: '/advising', builder: (context, state) => const AdvisingScreen()),
       GoRoute(path: '/next-semester', redirect: (context, state) => '/courses'),
-      GoRoute(path: '/results/grade-entry', builder: (context, state) => const GradeEntryScreen()),
-      GoRoute(path: '/portal-sync', builder: (context, state) => const PortalSyncScreen()),
-      GoRoute(path: '/feedback', builder: (context, state) => const FeedbackScreen()),
-      GoRoute(path: '/tutorials', builder: (context, state) => const TutorialsScreen()),
+      GoRoute(name: 'GradeEntry', path: '/results/grade-entry', builder: (context, state) => const GradeEntryScreen()),
+      GoRoute(name: 'PortalSync', path: '/portal-sync', builder: (context, state) => const PortalSyncScreen()),
+      GoRoute(name: 'Feedback', path: '/feedback', builder: (context, state) => const FeedbackScreen()),
+      GoRoute(name: 'Tutorials', path: '/tutorials', builder: (context, state) => const TutorialsScreen()),
     ],
   );
 });

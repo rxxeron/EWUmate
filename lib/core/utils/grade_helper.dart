@@ -55,10 +55,18 @@ class GradeHelper {
     final policy = getPolicyForSemester(semesterCode ?? '');
     if (policy == 'legacy') {
       // Legacy includes C- (1.7) and D+ (1.3) and D (1.0)
-      return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F'].contains(grade);
+      return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'F', 'F*'].contains(grade);
     }
     // Modern has no C-, no D+, and D is 2.0
-    return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F'].contains(grade);
+    return ['A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'D', 'F', 'F*'].contains(grade);
+  }
+
+  /// Determines whether a grade awards earned credits (passing grades).
+  /// F, F*, W, I, X, NC, U, R do not earn credits.
+  static bool isEarnedGrade(String grade) {
+    final clean = grade.trim().toUpperCase();
+    if (clean.isEmpty) return false;
+    return !['F', 'F*', 'W', 'I', 'X', 'NC', 'U', 'R', 'ONGOING', 'PLANNED'].contains(clean);
   }
 
   /// Converts a semester ID like "Spring2026" into a comparable integer.
@@ -108,7 +116,8 @@ class GradeHelper {
     }
 
     double totalPoints = 0;
-    double totalCredits = 0;
+    double totalGpaCredits = 0;
+    double totalEarnedCredits = 0;
 
     courseMap.forEach((code, attempts) {
       for (int i = 0; i < attempts.length; i++) {
@@ -125,7 +134,10 @@ class GradeHelper {
         } else {
           if (isGPAGrade(grade, semesterCode: semId)) {
             totalPoints += (getGradePoint(grade, semesterCode: semId) * credits);
-            totalCredits += credits;
+            totalGpaCredits += credits;
+          }
+          if (isEarnedGrade(grade)) {
+            totalEarnedCredits += credits;
           }
           attempt['displayGrade'] = grade;
           attempt['isRetake'] = false;
@@ -133,10 +145,11 @@ class GradeHelper {
       }
     });
 
-    String cgpa = totalCredits > 0 ? (totalPoints / totalCredits).toStringAsFixed(2) : "0.00";
+    String cgpa = totalGpaCredits > 0 ? (totalPoints / totalGpaCredits).toStringAsFixed(2) : "0.00";
     return {
       'cgpa': cgpa,
-      'totalCredits': totalCredits.toInt(),
+      'totalCredits': totalEarnedCredits.toInt(),
+      'totalGpaCredits': totalGpaCredits,
       'processedResults': processed
     };
   }

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../core/config/supabase_config.dart';
 import '../../core/utils/course_utils.dart';
 import '../../core/services/cache_service.dart';
 
@@ -187,13 +188,13 @@ class DashboardRepository {
           try {
             // Manual HTTP call to bypass the automatic JWT/Authorization header injection
             // which was triggering 401 Invalid JWT errors.
-            final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
+            final functionsUrl = '${AppConfig.getSupabaseUrl}/functions/v1';
             final uri = Uri.parse('$functionsUrl/sync-schedule');
             await http.post(
               uri,
               headers: {
                 'Content-Type': 'application/json',
-                'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+                'apikey': AppConfig.getSupabaseAnonKey,
               },
               body: jsonEncode({
                 'user_id': effectiveUserId,
@@ -386,13 +387,13 @@ class DashboardRepository {
   Future<void> syncWeeklySchedule(String userId) async {
     try {
       debugPrint('[Dashboard] Proactively triggering sync-schedule (No-JWT) for: $userId');
-      final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
+      final functionsUrl = '${AppConfig.getSupabaseUrl}/functions/v1';
       final uri = Uri.parse('$functionsUrl/sync-schedule');
       await http.post(
         uri,
         headers: {
           'Content-Type': 'application/json',
-          'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+          'apikey': AppConfig.getSupabaseAnonKey,
         },
         body: jsonEncode({
           'user_id': userId,
@@ -655,13 +656,13 @@ class DashboardRepository {
 
       if (weeklyGrid.isEmpty) {
         try {
-          final functionsUrl = '${dotenv.env['SUPABASE_URL']!}/functions/v1';
+          final functionsUrl = '${AppConfig.getSupabaseUrl}/functions/v1';
           final uri = Uri.parse('$functionsUrl/sync-schedule');
           await http.post(
             uri,
             headers: {
               'Content-Type': 'application/json',
-              'apikey': dotenv.env['SUPABASE_ANON_KEY']!,
+              'apikey': AppConfig.getSupabaseAnonKey,
             },
             body: jsonEncode({
               'user_id': user.id,

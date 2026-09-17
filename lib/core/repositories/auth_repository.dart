@@ -5,6 +5,7 @@ import '../services/cache_service.dart';
 import '../models/profile.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/supabase_config.dart';
 
 part 'auth_repository.g.dart';
 
@@ -79,7 +80,7 @@ class AuthRepository {
   // Google Sign In
   Future<AuthResponse> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn(
-      serverClientId: dotenv.env['GOOGLE_WEB_CLIENT_ID'],
+      serverClientId: AppConfig.getGoogleWebClientId,
     );
 
     // Force the account picker

@@ -167,12 +167,7 @@ class _SkyAnimationWidgetState extends State<SkyAnimationWidget> {
   }
 
   Widget _buildLottiePhase(SkyPhase phase) {
-    final String primaryPath = switch (phase) {
-      SkyPhase.sunrise => 'Lottiejson/Sunrise.json',
-      SkyPhase.sunny => 'Lottiejson/sunny.json',
-      SkyPhase.night => 'Lottiejson/night.json',
-    };
-    final String fallbackPath = switch (phase) {
+    final String lottiePath = switch (phase) {
       SkyPhase.sunrise => 'assets/lottie/sunrise.json',
       SkyPhase.sunny => 'assets/lottie/sunny.json',
       SkyPhase.night => 'assets/lottie/night.json',
@@ -193,20 +188,11 @@ class _SkyAnimationWidgetState extends State<SkyAnimationWidget> {
     return Padding(
       padding: padding,
       child: Lottie.asset(
-        primaryPath,
+        lottiePath,
         fit: fit,
         animate: true,
         repeat: true,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback to assets/lottie copy or icon scene
-          return Lottie.asset(
-            fallbackPath,
-            fit: fit,
-            animate: true,
-            repeat: true,
-            errorBuilder: (_, __, ___) => _buildFallbackScene(phase),
-          );
-        },
+        errorBuilder: (_, __, ___) => _buildFallbackScene(phase),
       ),
     );
   }

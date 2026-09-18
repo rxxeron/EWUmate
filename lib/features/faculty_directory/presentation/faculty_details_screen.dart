@@ -17,6 +17,7 @@ import 'widgets/details/faculty_hero_card.dart';
 import 'widgets/details/faculty_about_tab.dart';
 import 'widgets/details/faculty_courses_tab.dart';
 import 'widgets/details/faculty_office_hours_tab.dart';
+import 'widgets/details/faculty_reviews_tab.dart';
 import 'widgets/details/faculty_contact_tab.dart';
 import 'widgets/details/faculty_bottom_bar.dart';
 
@@ -45,7 +46,7 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -191,6 +192,7 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                           Tab(text: 'About'),
                           Tab(text: 'Courses'),
                           Tab(text: 'Office Hours'),
+                          Tab(text: 'Reviews'),
                           Tab(text: 'Contact'),
                         ],
                       ),
@@ -222,7 +224,14 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                     onOpenUrl: _launchUrl,
                   ),
 
-                  // TAB 4: Contact (Strictly zero mobile phone numbers)
+                  // TAB 4: Rigorous Student Reviews & Evaluations
+                  FacultyReviewsTab(
+                    faculty: widget.faculty,
+                    colors: colors,
+                    currentSemester: activeSemesterAsync.value?.currentSemesterCode ?? 'Summer 2026',
+                  ),
+
+                  // TAB 5: Contact (Strictly zero mobile phone numbers)
                   FacultyContactTab(
                     faculty: widget.faculty,
                     colors: colors,

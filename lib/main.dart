@@ -28,6 +28,36 @@ void main() async {
   }
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Protect against release-mode white screen if any widget error occurs
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: const Color(0xFF071426),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.refresh_rounded, color: Color(0xFF19D9F5), size: 48),
+                const SizedBox(height: 16),
+                const Text(
+                  'Starting EWUmate...',
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  kDebugMode ? details.exceptionAsString() : 'Connecting services, please wait...',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  };
 
   // Initialize Cache Service (Hive), Firebase, and Supabase in parallel
   final cacheService = CacheService();
@@ -82,19 +112,26 @@ class MyApp extends ConsumerWidget {
     // Initialize Session Guardian
     ref.read(sessionGuardianProvider);
 
-    // Check Google Play Store for In-App Updates directly
+    // Check Google Play Store for In-App Updates directly post-frame
     if (!kIsWeb) {
-      AppUpdateService.checkForPlayStoreUpdate();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        AppUpdateService.checkForPlayStoreUpdate();
+      });
     }
     
-    // Initialize FCM on mobile: setup channels, foreground handlers and permissions immediately
+    // Initialize FCM on mobile safely post-frame so widget build is never blocked
     if (!kIsWeb) {
-      // 1. Initialize channels and listeners on app startup
-      ref.read(fcmServiceProvider).initialize().catchError((err) {
-        if (kDebugMode) debugPrint('FCM Init Error: $err');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          ref.read(fcmServiceProvider).initialize().catchError((err) {
+            if (kDebugMode) debugPrint('FCM Init Error: $err');
+          });
+        } catch (e) {
+          if (kDebugMode) debugPrint('FCM post-frame init notice: $e');
+        }
       });
 
-      // 2. React to auth state changes to keep fcm_tokens synced for current user
+      // React to auth state changes to keep fcm_tokens synced for current user
       ref.listen(authStateProvider, (previous, next) {
         final session = next.value?.session;
         if (session != null) {

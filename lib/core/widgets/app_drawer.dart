@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/profile_repository.dart';
+import 'playstore_review_dialog.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -287,6 +288,17 @@ class AppDrawer extends ConsumerWidget {
                           route: '/feedback',
                           currentPath: currentPath,
                           onTap: () => context.push('/feedback'),
+                        ),
+                        _buildDrawerItem(
+                          context: context,
+                          icon: Icons.star_rate_rounded,
+                          title: "Rate on Google Play",
+                          route: '',
+                          currentPath: currentPath,
+                          onTap: () {
+                            Navigator.pop(context);
+                            PlayStoreReviewDialog.openPlayStore(context);
+                          },
                         ),
 
                         const SizedBox(height: 16),

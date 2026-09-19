@@ -351,8 +351,11 @@ class FCMService {
   }
 
   /// Actively checks notification permission. If denied by OS, requests it.
-  /// If permanently denied or dismissed, shows a clean rationale modal guiding the user to phone Settings.
-  Future<bool> promptNotificationPermission({BuildContext? context}) async {
+  /// If permanently denied or dismissed, shows a clean rationale modal guiding the user to phone Settings when [showSettingsDialog] is true.
+  Future<bool> promptNotificationPermission({
+    BuildContext? context,
+    bool showSettingsDialog = true,
+  }) async {
     if (kIsWeb) return false;
     try {
       final status = await Permission.notification.status;
@@ -377,9 +380,11 @@ class FCMService {
       }
 
       // 3. If still not granted, prompt the user to enable in system settings
-      final targetContext = context ?? rootNavigatorKey.currentContext;
-      if (targetContext != null && targetContext.mounted) {
-        _showPermissionSettingsDialog(targetContext);
+      if (showSettingsDialog) {
+        final targetContext = context ?? rootNavigatorKey.currentContext;
+        if (targetContext != null && targetContext.mounted) {
+          _showPermissionSettingsDialog(targetContext);
+        }
       }
     } catch (e) {
       debugPrint("[FCM] promptNotificationPermission notice: $e");

@@ -61,7 +61,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       if (mounted) {
         FacultyReviewsSpotlightDialog.checkAndShow(context);
         PlayStoreReviewDialog.checkAndShow(context);
-        ref.read(fcmServiceProvider).promptNotificationPermission(context: context);
+        ref.read(fcmServiceProvider).promptNotificationPermission(context: context, showSettingsDialog: false);
       }
     });
 

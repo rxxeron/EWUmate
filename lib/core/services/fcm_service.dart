@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -43,6 +44,7 @@ class FCMService {
   bool isDashboardStable = false;
   PendingNotificationAction? _pendingAction;
   PendingNotificationAction? get pendingAction => _pendingAction;
+  Timer? _periodicRefreshTimer;
 
   void clearPendingAction() {
     _pendingAction = null;
@@ -53,6 +55,12 @@ class FCMService {
   Future<void> initialize() async {
     if (kIsWeb) return;
     try {
+      // Periodically refresh/re-sync token every hour to keep database updated_at fresh
+      _periodicRefreshTimer?.cancel();
+      _periodicRefreshTimer = Timer.periodic(const Duration(hours: 1), (_) {
+        debugPrint("[FCM] Periodic 1-hour token sync running...");
+        syncToken();
+      });
       if (Firebase.apps.isEmpty) {
         debugPrint('[FCM] Firebase not initialized. Skipping FCM setup.');
         return;
@@ -89,12 +97,13 @@ class FCMService {
       },
     );
 
-    // Define tactile dual-pulse vibration pattern: wait 0ms, vibrate 500ms, pause 200ms, vibrate 500ms
-    final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+    // Define tactile alert vibration pattern (total vibration: 2.0s within 1-3s range):
+    // wait 0ms, vibrate 1000ms, pause 300ms, vibrate 1000ms
+    final Int64List vibrationPattern = Int64List.fromList([0, 1000, 300, 1000]);
 
-    // Primary High Priority Channel (v3) with chime audio and tactile vibration
-    final AndroidNotificationChannel channelV3 = AndroidNotificationChannel(
-      'ewumate_high_priority_v3', 
+    // Primary High Priority Channel (v4) with chime audio and 2-second tactile vibration
+    final AndroidNotificationChannel channelV4 = AndroidNotificationChannel(
+      'ewumate_high_priority_v4', 
       'High Priority Alerts',
       description: 'Notifications for class, task timing and announcements',
       importance: Importance.max,
@@ -106,7 +115,18 @@ class FCMService {
       ledColor: const Color(0xFF00E5FF),
     );
 
-    // Fallback channels (v2 and v1) for backward compatibility
+    // Fallback channels (v3, v2 and v1) for backward compatibility
+    final AndroidNotificationChannel channelV3 = AndroidNotificationChannel(
+      'ewumate_high_priority_v3', 
+      'High Priority Alerts v3',
+      description: 'Notifications for class, task timing and announcements',
+      importance: Importance.max,
+      playSound: true,
+      sound: const RawResourceAndroidNotificationSound('notification_sound'),
+      enableVibration: true,
+      vibrationPattern: vibrationPattern,
+    );
+
     final AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
       'ewumate_high_priority_reminders_v2', 
       'Task Reminders',
@@ -128,6 +148,7 @@ class FCMService {
     );
 
     final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidImplementation?.createNotificationChannel(channelV4);
     await androidImplementation?.createNotificationChannel(channelV3);
     await androidImplementation?.createNotificationChannel(channelV2);
     await androidImplementation?.createNotificationChannel(channelV1);
@@ -197,7 +218,7 @@ class FCMService {
         }
       } catch (_) {}
 
-      // Display heads-up notification in foreground using v3 channel with custom sound & tactile vibration
+      // Display heads-up notification in foreground using v4 channel with custom sound & tactile vibration
       final int notifId = (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch).remainder(100000).abs();
       _localNotifications.show(
         id: notifId,
@@ -205,9 +226,9 @@ class FCMService {
         body: notifBody,
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            channelV3.id,
-            channelV3.name,
-            channelDescription: channelV3.description,
+            channelV4.id,
+            channelV4.name,
+            channelDescription: channelV4.description,
             icon: '@mipmap/ic_launcher',
             importance: Importance.max,
             priority: Priority.max,
@@ -309,6 +330,24 @@ class FCMService {
     } catch (e) {
       debugPrint("[FCM] syncToken error: $e");
     }
+  }
+
+  /// Force-refresh the device FCM registration token by deleting the cached instance and acquiring a fresh one from Firebase
+  Future<bool> forceRefreshToken() async {
+    if (kIsWeb) return false;
+    try {
+      debugPrint("[FCM] Force-refreshing device token from Firebase...");
+      await _messaging.deleteToken();
+      final newToken = await _messaging.getToken();
+      if (newToken != null) {
+        final success = await _saveTokenToDatabase(newToken);
+        debugPrint("[FCM] Force-refresh complete. New token acquired: ${newToken.substring(0, 10)}... Success: $success");
+        return success;
+      }
+    } catch (e) {
+      debugPrint("[FCM] forceRefreshToken error: $e");
+    }
+    return false;
   }
 
   Future<bool> _saveTokenToDatabase(String token) async {
@@ -454,7 +493,7 @@ class FCMService {
   /// Trigger an immediate local test notification with chime sound and tactile vibration
   Future<void> triggerTestNotification() async {
     final int notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000).abs();
-    final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+    final Int64List vibrationPattern = Int64List.fromList([0, 1000, 300, 1000]);
 
     await _localNotifications.show(
       id: notifId,
@@ -462,7 +501,7 @@ class FCMService {
       body: 'Sound and vibration are working! You will receive timely alerts for classes and deadlines.',
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
-          'ewumate_high_priority_v3',
+          'ewumate_high_priority_v4',
           'High Priority Alerts',
           channelDescription: 'Notifications for class, task timing and announcements',
           icon: '@mipmap/ic_launcher',
@@ -557,7 +596,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
       final notifTitle = (data['title'] as String?) ?? 'EWUmate Alert';
       final notifBody = (data['body'] as String?) ?? '';
       final int notifId = (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch).remainder(100000).abs();
-      final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+      final Int64List vibrationPattern = Int64List.fromList([0, 1000, 300, 1000]);
 
       await bgNotifs.show(
         id: notifId,
@@ -565,7 +604,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         body: notifBody,
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            'ewumate_high_priority_v3',
+            'ewumate_high_priority_v4',
             'High Priority Alerts',
             channelDescription: 'Notifications for class, task timing and announcements',
             icon: '@mipmap/ic_launcher',

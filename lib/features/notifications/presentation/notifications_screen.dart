@@ -135,6 +135,42 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 color: AppColors.primaryCyan.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(Icons.sync_rounded, color: AppColors.primaryCyan, size: 20),
+            ),
+            tooltip: 'Force Refresh Push Token',
+            onPressed: () async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Refreshing push token from Firebase...', style: GoogleFonts.sora()),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppColors.surfaceNavyBlue,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+              final success = await ref.read(fcmServiceProvider).forceRefreshToken();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Push token refreshed & synced with server!'
+                          : 'Push token refreshed on device.',
+                      style: GoogleFonts.sora(),
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: success ? const Color(0xFF10B981) : AppColors.surfaceNavyBlue,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: const Icon(Icons.tune_rounded, color: AppColors.primaryCyan, size: 20),
             ),
             tooltip: 'Class Reminder Settings',

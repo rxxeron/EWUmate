@@ -21,7 +21,7 @@
         <!-- Define default FCM Channel for High Priority Heads-up Notifications with Sound & Vibration -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="ewumate_high_priority_v3" />
+            android:value="ewumate_high_priority_v4" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />

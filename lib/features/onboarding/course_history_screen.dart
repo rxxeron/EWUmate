@@ -753,7 +753,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
                         );
                         if (newGrade != null) {
                           setState(() {
-                            _history[_currentSemester!]![key] = newGrade;
+                            final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
+                            _history[cleanCurrent]?[key] = newGrade;
                           });
                         }
                       },

@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../firebase_options.dart';
 import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
@@ -41,6 +42,9 @@ class FCMService {
   SupabaseClient get _supabase => Supabase.instance.client;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
+  bool _isInitialized = false;
+  String? _cachedDeviceToken;
+  StreamSubscription<String>? _tokenRefreshSubscription;
   bool isDashboardStable = false;
   PendingNotificationAction? _pendingAction;
   PendingNotificationAction? get pendingAction => _pendingAction;
@@ -54,6 +58,12 @@ class FCMService {
 
   Future<void> initialize() async {
     if (kIsWeb) return;
+    if (_isInitialized) {
+      // If already initialized, just sync token with current user session
+      syncToken();
+      return;
+    }
+    _isInitialized = true;
     try {
       // Periodically refresh/re-sync token every hour to keep database updated_at fresh
       _periodicRefreshTimer?.cancel();
@@ -153,36 +163,35 @@ class FCMService {
     await androidImplementation?.createNotificationChannel(channelV2);
     await androidImplementation?.createNotificationChannel(channelV1);
     
-    // Explicitly request notification permission on Android 13+ (API 33+) via permission_handler and local plugin
-    try {
-      await Permission.notification.request();
-    } catch (_) {}
+    // 1. Keep token refreshed whenever Firebase rotates it
+    _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = _messaging.onTokenRefresh.listen((token) async {
+      debugPrint('[FCM] Token refreshed by Firebase: ${token.substring(0, 10)}...');
+      _cachedDeviceToken = token;
+      await _cacheTokenLocally(token);
+      await _saveTokenToDatabase(token);
+    });
 
+    // 2. Request permissions for display (does not block token acquisition)
     try {
-      await androidImplementation?.requestNotificationsPermission();
-    } catch (_) {}
-
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    try {
-      final notifSettings = await _messaging.requestPermission(
+      await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
-        provisional: false, // Explicit full permission for alerts, sound & vibration
       );
-      debugPrint('[FCM] Notification authorization status: ${notifSettings.authorizationStatus}');
-      // Exact 1.1.12 mechanism: immediately acquire token & register if authorized
+    } catch (_) {}
+
+    // 3. Acquire token immediately on app launch
+    try {
       final token = await _messaging.getToken();
       if (token != null) {
+        debugPrint('[FCM] Immediate token acquisition success: ${token.substring(0, 10)}...');
+        _cachedDeviceToken = token;
+        await _cacheTokenLocally(token);
         await _saveTokenToDatabase(token);
       }
     } catch (e) {
-      debugPrint('[FCM] Permission/Token request notice: $e');
+      debugPrint('[FCM] Immediate token acquisition notice: $e');
     }
 
     // Always register FCM message listeners regardless of initial auth status
@@ -313,11 +322,6 @@ class FCMService {
       }
     } catch (_) {}
 
-    // Listen for FCM token refreshes
-    _messaging.onTokenRefresh.listen((token) {
-      _saveTokenToDatabase(token);
-    });
-
     // Attempt token sync
     await syncToken();
   }
@@ -327,7 +331,14 @@ class FCMService {
     if (kIsWeb) return;
     try {
       if (Firebase.apps.isEmpty) return;
-      final token = await _messaging.getToken();
+      String? token = _cachedDeviceToken ?? await _getLocalCachedToken();
+      if (token == null || token.isEmpty) {
+        token = await _messaging.getToken();
+        if (token != null) {
+          _cachedDeviceToken = token;
+          await _cacheTokenLocally(token);
+        }
+      }
       if (token != null) {
         final saved = await _saveTokenToDatabase(token);
         // If session was still restoring and user was null, retry up to 3 times
@@ -349,6 +360,8 @@ class FCMService {
       debugPrint("[FCM] Force-refreshing device token from Firebase...");
       final newToken = await _messaging.getToken();
       if (newToken != null) {
+        _cachedDeviceToken = newToken;
+        await _cacheTokenLocally(newToken);
         final success = await _saveTokenToDatabase(newToken);
         debugPrint("[FCM] Force-refresh complete. New token acquired: ${newToken.substring(0, 10)}... Success: $success");
         return success;
@@ -501,6 +514,10 @@ class FCMService {
           'updated_at': DateTime.now().toIso8601String(),
         });
         debugPrint("[FCM] Token saved successfully for user ${user.id} on ${defaultTargetPlatform.name}");
+        // Also update profiles.push_token if present in profiles table schema
+        try {
+          await _supabase.from('profiles').update({'push_token': token}).eq('id', user.id);
+        } catch (_) {}
         return true;
       } catch (e) {
         debugPrint("[FCM] Token Registration Failed with platform: $e");
@@ -518,9 +535,25 @@ class FCMService {
         }
       }
     } else {
-      debugPrint("[FCM] No current user signed in. Token will sync upon session restoration.");
+      debugPrint("[FCM] No current user signed in. Token cached locally and will sync upon session restoration.");
     }
     return false;
+  }
+
+  Future<void> _cacheTokenLocally(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('fcm_cached_device_token', token);
+    } catch (_) {}
+  }
+
+  Future<String?> _getLocalCachedToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('fcm_cached_device_token');
+    } catch (_) {
+      return null;
+    }
   }
 
   void _handleIncomingAction(String? title, String? body, String? url, [String? imageUrl]) {

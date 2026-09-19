@@ -13,7 +13,6 @@ import 'core/repositories/auth_repository.dart';
 import 'dart:io';
 import 'core/services/app_update_service.dart';
 import 'core/theme/app_theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -120,28 +119,20 @@ class MyApp extends ConsumerWidget {
       });
     }
     
-    // Initialize FCM on mobile when user session is active (exact 1.1.12 working mechanism)
+    // Initialize FCM on mobile unconditionally post-frame, and sync on auth state changes
     if (!kIsWeb) {
-      // If user session is already restored on startup, initialize immediately post-frame
-      if (Supabase.instance.client.auth.currentSession != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ref.read(fcmServiceProvider).initialize().catchError((err) {
-            if (kDebugMode) debugPrint('FCM Init Error: $err');
-          });
+      // 1. Initialize FCM immediately on startup (registers channels, foreground listeners, and onTokenRefresh)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(fcmServiceProvider).initialize().catchError((err) {
+          if (kDebugMode) debugPrint('FCM Init Error: $err');
         });
-      }
+      });
 
-      // Listen to auth state changes to initialize as soon as user signs in or session is ready
+      // 2. Listen to auth state changes to sync token as soon as user signs in or session is ready
       ref.listen(authStateProvider, (previous, next) {
-        final event = next.value?.event;
         final session = next.value?.session;
-        if (event == AuthChangeEvent.signedIn || 
-            event == AuthChangeEvent.initialSession || 
-            event == AuthChangeEvent.tokenRefreshed ||
-            session != null) {
-          ref.read(fcmServiceProvider).initialize().catchError((err) {
-            if (kDebugMode) debugPrint('FCM Init Error: $err');
-          });
+        if (session != null) {
+          ref.read(fcmServiceProvider).syncToken();
         }
       });
     }

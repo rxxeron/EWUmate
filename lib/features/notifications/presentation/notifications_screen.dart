@@ -161,28 +161,51 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
             tooltip: 'Force Refresh Push Token',
             onPressed: () async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Refreshing push token from Firebase...', style: GoogleFonts.sora()),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppColors.surfaceNavyBlue,
-                  duration: const Duration(seconds: 1),
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (ctx) => const Center(
+                  child: CircularProgressIndicator(color: AppColors.primaryCyan),
                 ),
               );
-              final success = await ref.read(fcmServiceProvider).forceRefreshToken();
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      success
-                          ? 'Push token refreshed & synced with server!'
-                          : 'Push token refreshed on device.',
-                      style: GoogleFonts.sora(),
+              String message = '';
+              bool isSuccess = false;
+              try {
+                final success = await ref
+                    .read(fcmServiceProvider)
+                    .forceRefreshToken()
+                    .timeout(const Duration(seconds: 10), onTimeout: () => false);
+                isSuccess = success;
+                message = success
+                    ? 'Push token refreshed and synced with server!'
+                    : 'Firebase acquired token, but saving to server returned false. Check database connection.';
+              } catch (e) {
+                message = 'Token refresh failed: $e';
+              } finally {
+                if (context.mounted) {
+                  Navigator.of(context, rootNavigator: true).pop(); // dismiss loading
+                  showDialog(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      backgroundColor: const Color(0xFF0D2342),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      title: Text(
+                        isSuccess ? '✅ Token Synced' : '⚠️ Sync Status',
+                        style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      content: Text(
+                        message,
+                        style: GoogleFonts.sora(color: Colors.white70, fontSize: 13),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text('OK', style: GoogleFonts.sora(color: AppColors.primaryCyan)),
+                        ),
+                      ],
                     ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: success ? const Color(0xFF10B981) : AppColors.surfaceNavyBlue,
-                  ),
-                );
+                  );
+                }
               }
             },
           ),

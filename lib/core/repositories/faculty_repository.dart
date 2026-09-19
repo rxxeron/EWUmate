@@ -23,13 +23,13 @@ class FacultyRepository {
         final updatedAt = DateTime.tryParse(updatedAtStr);
         if (updatedAt != null && DateTime.now().difference(updatedAt).inDays < 7) {
           final list = (cached['data'] as List).map((e) => Faculty.fromMap(e)).toList();
-          final withPhoto = list.where((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty).length;
-          debugPrint('🎓 FACULTY DIRECTORY (CACHE): total=${list.length}, withPhoto=$withPhoto');
-          if (withPhoto > 0) {
-            final sample = list.firstWhere((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty);
-            debugPrint('📸 Sample Photo in cache: ${sample.shortName} -> ${sample.photoUrl}');
+          // Ensure cached data contains department metadata
+          final hasDepts = list.any((f) => f.departmentName != null && f.departmentName!.isNotEmpty);
+          if (hasDepts) {
+            final withPhoto = list.where((f) => f.photoUrl != null && f.photoUrl!.isNotEmpty).length;
+            debugPrint('🎓 FACULTY DIRECTORY (CACHE): total=${list.length}, withPhoto=$withPhoto');
+            return list;
           }
-          return list;
         }
       }
     }
@@ -39,10 +39,10 @@ class FacultyRepository {
 
   Future<List<Faculty>> _fetchAndCache() async {
     try {
-      // Fetch from the MASTER table directly
+      // Fetch from the MASTER table directly with authoritative department data
       final data = await _supabase
           .from('faculty_master')
-          .select('id, full_name, short_name, email, designation_name, photo_url, office_room')
+          .select('id, full_name, short_name, email, designation_name, photo_url, office_room, department, department_name')
           .order('full_name', ascending: true);
 
       final list = data as List;
@@ -73,7 +73,7 @@ class FacultyRepository {
     try {
       final data = await _supabase
           .from('faculty_master')
-          .select('id, full_name, short_name, email, designation_name, photo_url, office_room')
+          .select('id, full_name, short_name, email, designation_name, photo_url, office_room, department, department_name')
           .or('full_name.ilike.%$query%,short_name.ilike.%$query%,email.ilike.%$query%')
           .order('full_name', ascending: true);
           

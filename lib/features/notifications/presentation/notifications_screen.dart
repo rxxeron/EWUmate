@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -25,6 +26,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Timer? _refreshTimer;
   String _selectedFilter = 'All';
+  bool _isNotificationPermissionGranted = true;
 
   final List<String> _filterOptions = ['All', 'Unread', 'Schedule', 'Tasks', 'System'];
 
@@ -37,9 +39,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await _checkPermission();
+      if (!mounted) return;
+      if (!_isNotificationPermissionGranted) {
+        await ref.read(fcmServiceProvider).promptNotificationPermission(context: context);
+        if (!mounted) return;
+        await _checkPermission();
+      } else {
         ref.read(fcmServiceProvider).syncToken();
+      }
+      if (mounted) {
         OnboardingOverlay.show(
           context: context,
           featureKey: OnboardingSteps.notificationsKey,
@@ -47,6 +58,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         );
       }
     });
+  }
+
+  Future<void> _checkPermission() async {
+    try {
+      final granted = await Permission.notification.isGranted;
+      if (mounted) {
+        setState(() {
+          _isNotificationPermissionGranted = granted;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -251,12 +273,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
+          await _checkPermission();
           ref.invalidate(userNotificationsProvider);
         },
         color: AppColors.primaryCyan,
         backgroundColor: AppColors.surfaceNavyBlue,
-        child: notificationsAsync.when(
-          data: (notifications) {
+        child: Column(
+          children: [
+            _buildPermissionBanner(),
+            Expanded(
+              child: notificationsAsync.when(
+                data: (notifications) {
             // Apply filter
             final filtered = notifications.where((n) {
               if (_selectedFilter == 'Unread') return !n.isRead;
@@ -332,6 +359,71 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
           ),
         ),
+      ),
+    ],
+  ),
+),
+);
+}
+
+  Widget _buildPermissionBanner() {
+    if (_isNotificationPermissionGranted) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.notifications_off_rounded, color: Color(0xFFF59E0B), size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Notifications are Disabled',
+                  style: GoogleFonts.sora(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Enable to receive class, task, and routine reminders.',
+                  style: GoogleFonts.sora(
+                    color: Colors.white70,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () async {
+              await ref.read(fcmServiceProvider).promptNotificationPermission(context: context);
+              await _checkPermission();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B),
+              foregroundColor: Colors.black,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              minimumSize: const Size(60, 32),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              'Enable',
+              style: GoogleFonts.sora(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }

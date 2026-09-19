@@ -9,6 +9,7 @@ import '../../core/services/tutorial_service.dart';
 import 'auth_providers.dart';
 import '../../core/repositories/auth_repository.dart' hide authStateProvider;
 import '../../core/services/cache_service.dart';
+import '../../core/services/fcm_service.dart';
 
 class CheckAuthScreen extends ConsumerStatefulWidget {
   const CheckAuthScreen({super.key});
@@ -112,6 +113,7 @@ class _CheckAuthScreenState extends ConsumerState<CheckAuthScreen> {
 
                 // 2. We HAVE profile data
                 debugPrint("[CheckAuth] Profile Found: ${profile.id}, Status: ${profile.onboardingStatus}, Program: ${profile.programCode}");
+                ref.read(fcmServiceProvider).syncToken();
 
                 if (profile.onboardingStatus == 'pending' ||
                     profile.onboardingStatus == 'registered' ||

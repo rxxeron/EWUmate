@@ -89,12 +89,13 @@ class Faculty {
 
     if (des.contains('cse') || des.contains('computer science') || em.contains('cse') || em.contains('cs.')) return 'CSE';
     if (des.contains('eee') || des.contains('electrical') || des.contains('electronic') || em.contains('eee')) return 'EEE';
-    if (des.contains('bba') || des.contains('business') || des.contains('management') || des.contains('marketing') || des.contains('accounting') || des.contains('finance') || des.contains('economics') || des.contains('eco') || em.contains('bus') || em.contains('bba') || em.contains('eco')) return 'BUS';
-    if (des.contains('eng') || des.contains('english') || em.contains('eng') || em.contains('english')) return 'ENG';
-    if (des.contains('phr') || des.contains('pharmacy') || em.contains('phr') || em.contains('pharm')) return 'PHR';
-    if (des.contains('law') || em.contains('law')) return 'LAW';
-    if (des.contains('math') || des.contains('physics') || des.contains('mps') || em.contains('math') || em.contains('mps')) return 'MATH';
-    if (des.contains('sociology') || des.contains('soc') || em.contains('soc')) return 'SOC';
+    if (des.contains('bba') || des.contains('business') || des.contains('management') || des.contains('marketing') || des.contains('accounting') || des.contains('finance') || des.contains('economics') || RegExp(r'\b(eco|bba|bus)\b').hasMatch(des) || RegExp(r'\b(eco|bba|bus)\b').hasMatch(em)) return 'BUS';
+    if (des.contains('english') || RegExp(r'\beng\b').hasMatch(des) || RegExp(r'\beng\b').hasMatch(em)) return 'ENG';
+    if (des.contains('pharmacy') || RegExp(r'\b(phr|pharm)\b').hasMatch(des) || RegExp(r'\b(phr|pharm)\b').hasMatch(em)) return 'PHR';
+    if (RegExp(r'\blaw\b').hasMatch(des) || RegExp(r'\blaw\b').hasMatch(em)) return 'LAW';
+    if (des.contains('mathematics') || des.contains('physics') || RegExp(r'\b(math|mps|mds)\b').hasMatch(des) || RegExp(r'\b(math|mps|mds)\b').hasMatch(em)) return 'MDS';
+    if (des.contains('civil') || RegExp(r'\bce\b').hasMatch(des) || RegExp(r'\bce\b').hasMatch(em)) return 'CE';
+    if (des.contains('sociology') || RegExp(r'\bsoc\b').hasMatch(des) || RegExp(r'\bsoc\b').hasMatch(em)) return 'SOC';
 
     return 'CSE';
   }

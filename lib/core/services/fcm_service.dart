@@ -350,6 +350,132 @@ class FCMService {
     return false;
   }
 
+  /// Actively checks notification permission. If denied by OS, requests it.
+  /// If permanently denied or dismissed, shows a clean rationale modal guiding the user to phone Settings.
+  Future<bool> promptNotificationPermission({BuildContext? context}) async {
+    if (kIsWeb) return false;
+    try {
+      final status = await Permission.notification.status;
+      if (status.isGranted) {
+        await syncToken();
+        return true;
+      }
+
+      // 1. Request via permission_handler
+      final reqResult = await Permission.notification.request();
+      if (reqResult.isGranted) {
+        await syncToken();
+        return true;
+      }
+
+      // 2. Also request via Android Local Notifications plugin
+      final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final localGranted = await androidImplementation?.requestNotificationsPermission();
+      if (localGranted == true) {
+        await syncToken();
+        return true;
+      }
+
+      // 3. If still not granted, prompt the user to enable in system settings
+      final targetContext = context ?? rootNavigatorKey.currentContext;
+      if (targetContext != null && targetContext.mounted) {
+        _showPermissionSettingsDialog(targetContext);
+      }
+    } catch (e) {
+      debugPrint("[FCM] promptNotificationPermission notice: $e");
+    }
+    return false;
+  }
+
+  void _showPermissionSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: GlassContainer(
+            borderRadius: 24,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_rounded,
+                      color: Color(0xFF00E5FF),
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Enable Push Notifications',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'EWUmate needs notification permissions to alert you about class routines, exam reminders, room changes, and important announcements.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      height: 1.4,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Not Now', style: TextStyle(color: Colors.white54)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await openAppSettings();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00E5FF),
+                            foregroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: const Text(
+                            'Enable in Settings',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<bool> _saveTokenToDatabase(String token) async {
     try {
       final user = _supabase.auth.currentUser;

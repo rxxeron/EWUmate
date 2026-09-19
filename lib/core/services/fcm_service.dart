@@ -268,6 +268,11 @@ class FCMService {
           'image': notifImage
         }),
       );
+
+      // Trigger the real-time popup on Dashboard when app is open
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _handleIncomingAction(notifTitle, notifBody, routingUrl, notifImage);
+      });
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {

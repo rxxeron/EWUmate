@@ -87,7 +87,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         final pending = fcmService.pendingAction;
         if (pending != null) {
           debugPrint("[FCM] Executing pending notification click inside stable Dashboard Screen");
-          fcmService.showNotificationPopup(pending.title, pending.body, pending.url);
+          fcmService.showNotificationPopup(pending.title, pending.body, pending.url, pending.imageUrl);
           fcmService.clearPendingAction();
         }
       }

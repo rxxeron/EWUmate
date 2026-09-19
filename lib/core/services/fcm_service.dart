@@ -176,8 +176,13 @@ class FCMService {
         provisional: false, // Explicit full permission for alerts, sound & vibration
       );
       debugPrint('[FCM] Notification authorization status: ${notifSettings.authorizationStatus}');
+      // Exact 1.1.12 mechanism: immediately acquire token & register if authorized
+      final token = await _messaging.getToken();
+      if (token != null) {
+        await _saveTokenToDatabase(token);
+      }
     } catch (e) {
-      debugPrint('[FCM] Permission request notice: $e');
+      debugPrint('[FCM] Permission/Token request notice: $e');
     }
 
     // Always register FCM message listeners regardless of initial auth status
@@ -332,12 +337,11 @@ class FCMService {
     }
   }
 
-  /// Force-refresh the device FCM registration token by deleting the cached instance and acquiring a fresh one from Firebase
+  /// Force-refresh the device FCM registration token by acquiring the token and registering with Supabase
   Future<bool> forceRefreshToken() async {
     if (kIsWeb) return false;
     try {
       debugPrint("[FCM] Force-refreshing device token from Firebase...");
-      await _messaging.deleteToken();
       final newToken = await _messaging.getToken();
       if (newToken != null) {
         final success = await _saveTokenToDatabase(newToken);
@@ -482,22 +486,34 @@ class FCMService {
   }
 
   Future<bool> _saveTokenToDatabase(String token) async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user != null) {
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      try {
         await _supabase.from('fcm_tokens').upsert({
           'user_id': user.id,
           'token': token,
           'platform': defaultTargetPlatform.name.toLowerCase(),
           'updated_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'token');
+        });
         debugPrint("[FCM] Token saved successfully for user ${user.id} on ${defaultTargetPlatform.name}");
         return true;
-      } else {
-        debugPrint("[FCM] No current user signed in. Token will sync upon session restoration.");
+      } catch (e) {
+        debugPrint("[FCM] Token Registration Failed with platform: $e");
+        try {
+          // Exact 1.1.12 payload fallback
+          await _supabase.from('fcm_tokens').upsert({
+            'user_id': user.id,
+            'token': token,
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+          debugPrint("[FCM] Token saved successfully (exact 1.1.12 fallback) for user ${user.id}");
+          return true;
+        } catch (e2) {
+          debugPrint("[FCM] Fallback Token Registration Failed: $e2");
+        }
       }
-    } catch (e) {
-      debugPrint("[FCM] Token Registration Failed: $e");
+    } else {
+      debugPrint("[FCM] No current user signed in. Token will sync upon session restoration.");
     }
     return false;
   }

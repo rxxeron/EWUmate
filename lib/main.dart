@@ -13,6 +13,7 @@ import 'core/repositories/auth_repository.dart';
 import 'dart:io';
 import 'core/services/app_update_service.dart';
 import 'core/theme/app_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -119,24 +120,27 @@ class MyApp extends ConsumerWidget {
       });
     }
     
-    // Initialize FCM on mobile safely post-frame so widget build is never blocked
+    // Initialize FCM on mobile when user session is active (exact 1.1.12 working mechanism)
     if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        try {
+      // If user session is already restored on startup, initialize immediately post-frame
+      if (Supabase.instance.client.auth.currentSession != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(fcmServiceProvider).initialize().catchError((err) {
             if (kDebugMode) debugPrint('FCM Init Error: $err');
           });
-        } catch (e) {
-          if (kDebugMode) debugPrint('FCM post-frame init notice: $e');
-        }
-      });
+        });
+      }
 
-      // React to auth state changes to keep fcm_tokens synced for current user
+      // Listen to auth state changes to initialize as soon as user signs in or session is ready
       ref.listen(authStateProvider, (previous, next) {
+        final event = next.value?.event;
         final session = next.value?.session;
-        if (session != null) {
-          ref.read(fcmServiceProvider).syncToken().catchError((err) {
-            if (kDebugMode) debugPrint('FCM Sync Error: $err');
+        if (event == AuthChangeEvent.signedIn || 
+            event == AuthChangeEvent.initialSession || 
+            event == AuthChangeEvent.tokenRefreshed ||
+            session != null) {
+          ref.read(fcmServiceProvider).initialize().catchError((err) {
+            if (kDebugMode) debugPrint('FCM Init Error: $err');
           });
         }
       });

@@ -1,5 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // Improved GlassScaffold with Full Screen Gradient
 class FullGradientScaffold extends StatelessWidget {
@@ -8,7 +11,11 @@ class FullGradientScaffold extends StatelessWidget {
   final Widget? drawer;
   final Widget? bottomNavigationBar;
   final Widget? floatingActionButton;
-  final GlobalKey<ScaffoldState>? scaffoldKey; // Added
+  final GlobalKey<ScaffoldState>? scaffoldKey;
+  final bool autoHandleBack;
+  final VoidCallback? onBackOverride;
+
+  static DateTime? _lastBackPressTime;
 
   const FullGradientScaffold({
     super.key,
@@ -17,41 +24,81 @@ class FullGradientScaffold extends StatelessWidget {
     this.drawer,
     this.bottomNavigationBar,
     this.floatingActionButton,
-    this.scaffoldKey, // Added
+    this.scaffoldKey,
+    this.autoHandleBack = true,
+    this.onBackOverride,
   });
+
+  static void _showExitSnackBar(BuildContext context) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.removeCurrentSnackBar();
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded,
+                color: Color(0xFF00E5FF), size: 18),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Press back again to exit EWUmate',
+                style: GoogleFonts.sora(
+                  fontSize: 13,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF1E293B),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: const Color(0xFF00E5FF).withValues(alpha: 0.2),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // 1. Base Gradient Background (Deep Midnight Navy)
-        Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF08172E), // Rich Figma Navy
-                Color(0xFF050E1A), // Deep Navy Void
-                Color(0xFF040A14), // Base Dark
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+        // 1. Dark Navy Deep Foundation Gradient
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF060B18), // Deep Midnight Slate
+                  Color(0xFF0A1128), // High-depth Navy
+                  Color(0xFF050B16), // Solid Foundation
+                ],
+                stops: [0.0, 0.45, 1.0],
+              ),
             ),
           ),
         ),
-        // 2. Luminous Ambient Radial Glow ("Cyan Flow" - matches Figma 15.21.20 & 15.28.30 (5))
+        // 2. Subtle Cyan/Cobalt Ambient Radial Glow in upper screen
         Positioned(
           top: -80,
           left: -60,
-          right: -60,
-          height: 480,
+          width: 320,
+          height: 320,
           child: IgnorePointer(
             child: Container(
               decoration: BoxDecoration(
+                shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  center: const Alignment(0.0, -0.25),
-                  radius: 0.95,
                   colors: [
-                    const Color(0xFF19D9F5).withValues(alpha: 0.18), // EWU Cyan Glow
+                    const Color(0xFF00E5FF).withValues(alpha: 0.10), // Vibrant Cyan glow
                     const Color(0xFF0D47A1).withValues(alpha: 0.12), // Deep Cobalt
                     Colors.transparent,
                   ],
@@ -81,16 +128,94 @@ class FullGradientScaffold extends StatelessWidget {
             ),
           ),
         ),
-        // 4. Scaffold on top
-        Scaffold(
-          key: scaffoldKey, // Added
-          backgroundColor: Colors.transparent,
-          appBar: appBar,
-          drawer: drawer,
-          bottomNavigationBar: bottomNavigationBar,
-          floatingActionButton: floatingActionButton,
-          body: body, // Body is transparent, so gradient shows through
-        ),
+        // 4. Scaffold on top with smart back handling
+        () {
+          Widget scaffold = Scaffold(
+            key: scaffoldKey,
+            backgroundColor: Colors.transparent,
+            appBar: appBar,
+            drawer: drawer,
+            bottomNavigationBar: bottomNavigationBar,
+            floatingActionButton: floatingActionButton,
+            body: body,
+          );
+
+          if (autoHandleBack) {
+            return PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (bool didPop, dynamic result) {
+                if (didPop) return;
+
+                if (onBackOverride != null) {
+                  onBackOverride!();
+                  return;
+                }
+
+                // 1. If drawer is open on this scaffold or ancestor scaffold, close it
+                if (scaffoldKey?.currentState?.isDrawerOpen == true) {
+                  scaffoldKey?.currentState?.closeDrawer();
+                  return;
+                }
+                final parentScaffold = Scaffold.maybeOf(context);
+                if (parentScaffold?.isDrawerOpen == true) {
+                  parentScaffold?.closeDrawer();
+                  return;
+                }
+
+                // 2. If there are stacked routes to pop, pop it
+                if (context.canPop()) {
+                  context.pop();
+                  return;
+                }
+
+                // 3. Fallback routing based on current path
+                String currentPath = '';
+                try {
+                  currentPath = GoRouterState.of(context).uri.path;
+                } catch (_) {}
+
+                // Auth flow
+                if (currentPath == '/login' || currentPath == '/') {
+                  final now = DateTime.now();
+                  if (_lastBackPressTime != null &&
+                      now.difference(_lastBackPressTime!) < const Duration(seconds: 2)) {
+                    SystemNavigator.pop();
+                  } else {
+                    _lastBackPressTime = now;
+                    _showExitSnackBar(context);
+                  }
+                  return;
+                }
+
+                if (currentPath == '/register' ||
+                    currentPath == '/forgot-password' ||
+                    currentPath == '/reset-password') {
+                  context.go('/login');
+                  return;
+                }
+
+                // Dashboard / Home root: double-tap to exit
+                if (currentPath == '/dashboard' || currentPath.isEmpty) {
+                  final now = DateTime.now();
+                  if (_lastBackPressTime != null &&
+                      now.difference(_lastBackPressTime!) < const Duration(seconds: 2)) {
+                    SystemNavigator.pop();
+                  } else {
+                    _lastBackPressTime = now;
+                    _showExitSnackBar(context);
+                  }
+                  return;
+                }
+
+                // For all other secondary tabs/pages without pop history, return to Dashboard
+                context.go('/dashboard');
+              },
+              child: scaffold,
+            );
+          }
+
+          return scaffold;
+        }(),
       ],
     );
   }

@@ -215,7 +215,53 @@ class _FacultyDirectoryScreenState extends ConsumerState<FacultyDirectoryScreen>
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+
+          // Reviews Feature Announcement Ribbon
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryCyan.withValues(alpha: 0.12),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.08),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.primaryCyan.withValues(alpha: 0.25),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.auto_awesome_rounded, color: AppColors.primaryCyan, size: 14),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      'Tap any faculty to check scorecards, grading fairness & reviews!',
+                      style: GoogleFonts.sora(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
 
           // 3. Faculty List with Pull-to-Refresh
           Expanded(

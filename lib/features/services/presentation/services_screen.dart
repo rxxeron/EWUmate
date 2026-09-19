@@ -35,11 +35,12 @@ class ServicesScreen extends ConsumerWidget {
         route: '/services/cover-page',
       ),
       _ServiceItem(
-        title: 'Faculty Directory',
-        subtitle: 'Search faculty & emails',
+        title: 'Faculty Directory & Reviews',
+        subtitle: 'Search faculty, scorecards & reviews',
         icon: Icons.people_alt_rounded,
         accentColor: colors.primaryCyan,
         route: '/services/faculty-directory',
+        badge: 'NEW',
       ),
       _ServiceItem(
         title: 'Study Materials Vault',
@@ -145,10 +146,34 @@ class ServicesScreen extends ConsumerWidget {
                               color: item.accentColor,
                             ),
                           ),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 13,
-                            color: colors.textTertiary,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (item.badge != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    item.badge!,
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 13,
+                                color: colors.textTertiary,
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -194,6 +219,7 @@ class _ServiceItem {
   final IconData icon;
   final Color accentColor;
   final String route;
+  final String? badge;
 
   const _ServiceItem({
     required this.title,
@@ -201,5 +227,6 @@ class _ServiceItem {
     required this.icon,
     required this.accentColor,
     required this.route,
+    this.badge,
   });
 }

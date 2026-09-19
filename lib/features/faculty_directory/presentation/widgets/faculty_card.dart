@@ -195,6 +195,33 @@ class _FacultyCardState extends State<FacultyCard> {
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star_rounded, color: Color(0xFFF59E0B), size: 12),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'Reviews',
+                                      style: GoogleFonts.sora(
+                                        color: const Color(0xFFF59E0B),
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ],
                         ),

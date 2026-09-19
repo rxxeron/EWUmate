@@ -188,12 +188,36 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
-                        tabs: const [
-                          Tab(text: 'About'),
-                          Tab(text: 'Courses'),
-                          Tab(text: 'Office Hours'),
-                          Tab(text: 'Reviews'),
-                          Tab(text: 'Contact'),
+                        tabs: [
+                          const Tab(text: 'About'),
+                          const Tab(text: 'Courses'),
+                          const Tab(text: 'Office Hours'),
+                          Tab(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('Reviews'),
+                                const SizedBox(width: 5),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: const Text(
+                                    'NEW',
+                                    style: TextStyle(
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Tab(text: 'Contact'),
                         ],
                       ),
                       backgroundColor: colors.surfaceNavyBlue,

@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import 'auth_providers.dart';
 import '../../core/utils/error_utils.dart';
 import '../../core/repositories/auth_repository.dart';
+import '../../core/services/fcm_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -33,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _passwordController.text,
       );
       ref.invalidate(profileProvider);
+      ref.read(fcmServiceProvider).syncToken();
       
       if (mounted) {
         context.go('/');
@@ -56,6 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     try {
       await ref.read(authRepositoryProvider).signInWithGoogle();
       ref.invalidate(profileProvider);
+      ref.read(fcmServiceProvider).syncToken();
       if (mounted) {
         context.go('/');
       }

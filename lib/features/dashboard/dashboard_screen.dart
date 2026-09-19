@@ -59,6 +59,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         PlayStoreReviewDialog.checkAndShow(context);
+        ref.read(fcmServiceProvider).syncToken();
       }
     });
 

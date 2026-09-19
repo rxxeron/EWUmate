@@ -39,6 +39,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        ref.read(fcmServiceProvider).syncToken();
         OnboardingOverlay.show(
           context: context,
           featureKey: OnboardingSteps.notificationsKey,

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/services/cache_service.dart';
@@ -84,14 +84,7 @@ void main() async {
     if (kDebugMode) debugPrint('Parallel initialization error: $e');
   }
 
-  // Register top-level FCM background message handler (required before runApp)
-  if (!kIsWeb) {
-    try {
-      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    } catch (e) {
-      if (kDebugMode) debugPrint('Firebase background handler registration error: $e');
-    }
-  }
+  // FCM setup moved to MyApp for better Riverpod integration
 
   runApp(
     ProviderScope(
@@ -119,23 +112,15 @@ class MyApp extends ConsumerWidget {
       });
     }
     
-    // Initialize FCM on mobile unconditionally post-frame, and sync on auth state changes
-    if (!kIsWeb) {
-      // 1. Initialize FCM immediately on startup (registers channels, foreground listeners, and onTokenRefresh)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Initialize FCM when user is logged in (exact 1.1.12 mechanism)
+    ref.listen(authStateProvider, (previous, next) {
+      final event = next.value?.event;
+      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
         ref.read(fcmServiceProvider).initialize().catchError((err) {
           if (kDebugMode) debugPrint('FCM Init Error: $err');
         });
-      });
-
-      // 2. Listen to auth state changes to sync token as soon as user signs in or session is ready
-      ref.listen(authStateProvider, (previous, next) {
-        final session = next.value?.session;
-        if (session != null) {
-          ref.read(fcmServiceProvider).syncToken();
-        }
-      });
-    }
+      }
+    });
     
     final router = ref.watch(appRouterProvider);
 

@@ -111,6 +111,29 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 color: AppColors.primaryCyan.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(Icons.notifications_active_rounded, color: AppColors.primaryCyan, size: 20),
+            ),
+            tooltip: 'Test Sound & Vibration',
+            onPressed: () async {
+              await ref.read(fcmServiceProvider).triggerTestNotification();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Test notification triggered with sound & vibration!', style: GoogleFonts.sora()),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: AppColors.surfaceNavyBlue,
+                  ),
+                );
+              }
+            },
+          ),
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryCyan.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: const Icon(Icons.tune_rounded, color: AppColors.primaryCyan, size: 20),
             ),
             tooltip: 'Class Reminder Settings',

@@ -4,7 +4,6 @@ import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
 import '../models/profile.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../config/supabase_config.dart';
 
 part 'auth_repository.g.dart';

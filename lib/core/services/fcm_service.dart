@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -88,20 +89,38 @@ class FCMService {
       },
     );
 
-    // Register primary channel (v2, matching Edge Functions)
-    const AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
-      'ewumate_high_priority_reminders_v2', 
-      'High Priority Reminders',
+    // Define tactile dual-pulse vibration pattern: wait 0ms, vibrate 500ms, pause 200ms, vibrate 500ms
+    final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+
+    // Primary High Priority Channel (v3) with chime audio and tactile vibration
+    final AndroidNotificationChannel channelV3 = AndroidNotificationChannel(
+      'ewumate_high_priority_v3', 
+      'High Priority Alerts',
       description: 'Notifications for class, task timing and announcements',
       importance: Importance.max,
       playSound: true,
+      sound: const RawResourceAndroidNotificationSound('notification_sound'),
       enableVibration: true,
+      vibrationPattern: vibrationPattern,
+      enableLights: true,
+      ledColor: const Color(0xFF00E5FF),
     );
 
-    // Register fallback channel (v1) for backward compatibility
+    // Fallback channels (v2 and v1) for backward compatibility
+    final AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
+      'ewumate_high_priority_reminders_v2', 
+      'Task Reminders',
+      description: 'Notifications for class and task timing',
+      importance: Importance.max,
+      playSound: true,
+      sound: const RawResourceAndroidNotificationSound('notification_sound'),
+      enableVibration: true,
+      vibrationPattern: vibrationPattern,
+    );
+
     const AndroidNotificationChannel channelV1 = AndroidNotificationChannel(
       'ewumate_high_priority_reminders_v1', 
-      'Task Reminders',
+      'Task Reminders Legacy',
       description: 'Notifications for class and task timing',
       importance: Importance.max,
       playSound: true,
@@ -109,10 +128,15 @@ class FCMService {
     );
 
     final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await androidImplementation?.createNotificationChannel(channelV3);
     await androidImplementation?.createNotificationChannel(channelV2);
     await androidImplementation?.createNotificationChannel(channelV1);
     
-    // Explicitly request notification permission on Android 13+ (API 33+)
+    // Explicitly request notification permission on Android 13+ (API 33+) via permission_handler and local plugin
+    try {
+      await Permission.notification.request();
+    } catch (_) {}
+
     try {
       await androidImplementation?.requestNotificationsPermission();
     } catch (_) {}
@@ -124,13 +148,16 @@ class FCMService {
     );
 
     try {
-      await _messaging.requestPermission(
+      final notifSettings = await _messaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
-        provisional: true,
+        provisional: false, // Explicit full permission for alerts, sound & vibration
       );
-    } catch (_) {}
+      debugPrint('[FCM] Notification authorization status: ${notifSettings.authorizationStatus}');
+    } catch (e) {
+      debugPrint('[FCM] Permission request notice: $e');
+    }
 
     // Always register FCM message listeners regardless of initial auth status
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -150,7 +177,7 @@ class FCMService {
 
       // Save locally for in-app notifications feed
       try {
-        final userId = _supabase.auth.currentUser?.id;
+        final userId = _supabase.auth.currentUser?.id ?? (message.data['user_id'] as String?);
         if (userId != null) {
           final newNotif = model.Notification(
             id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -170,7 +197,7 @@ class FCMService {
         }
       } catch (_) {}
 
-      // Display heads-up notification in foreground using v2 channel
+      // Display heads-up notification in foreground using v3 channel with custom sound & tactile vibration
       final int notifId = (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch).remainder(100000).abs();
       _localNotifications.show(
         id: notifId,
@@ -178,14 +205,35 @@ class FCMService {
         body: notifBody,
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            channelV2.id,
-            channelV2.name,
-            channelDescription: channelV2.description,
+            channelV3.id,
+            channelV3.name,
+            channelDescription: channelV3.description,
             icon: '@mipmap/ic_launcher',
-            importance: channelV2.importance,
-            priority: Priority.high,
+            importance: Importance.max,
+            priority: Priority.max,
+            playSound: true,
+            sound: const RawResourceAndroidNotificationSound('notification_sound'),
+            enableVibration: true,
+            vibrationPattern: vibrationPattern,
+            enableLights: true,
+            color: const Color(0xFF00E5FF),
+            ledColor: const Color(0xFF00E5FF),
+            ledOnMs: 1000,
+            ledOffMs: 500,
+            ticker: 'EWUmate Alert',
+            styleInformation: BigTextStyleInformation(
+              notifBody,
+              contentTitle: notifTitle,
+            ),
           ),
-          iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true, 
+            presentSound: true,
+            presentBadge: true,
+            presentBanner: true,
+            presentList: true,
+            sound: 'notification_sound.wav',
+          ),
         ),
         payload: jsonEncode({
           'title': notifTitle, 
@@ -402,6 +450,55 @@ class FCMService {
       ),
     );
   }
+
+  /// Trigger an immediate local test notification with chime sound and tactile vibration
+  Future<void> triggerTestNotification() async {
+    final int notifId = DateTime.now().millisecondsSinceEpoch.remainder(100000).abs();
+    final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+
+    await _localNotifications.show(
+      id: notifId,
+      title: '🔔 EWUmate Notification Test',
+      body: 'Sound and vibration are working! You will receive timely alerts for classes and deadlines.',
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          'ewumate_high_priority_v3',
+          'High Priority Alerts',
+          channelDescription: 'Notifications for class, task timing and announcements',
+          icon: '@mipmap/ic_launcher',
+          importance: Importance.max,
+          priority: Priority.max,
+          playSound: true,
+          sound: const RawResourceAndroidNotificationSound('notification_sound'),
+          enableVibration: true,
+          vibrationPattern: vibrationPattern,
+          enableLights: true,
+          color: const Color(0xFF00E5FF),
+          ledColor: const Color(0xFF00E5FF),
+          ledOnMs: 1000,
+          ledOffMs: 500,
+          ticker: 'EWUmate Alert Test',
+          styleInformation: const BigTextStyleInformation(
+            'Sound and vibration are working! You will receive timely alerts for classes and deadlines.',
+            contentTitle: '🔔 EWUmate Notification Test',
+          ),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentSound: true,
+          presentBadge: true,
+          presentBanner: true,
+          presentList: true,
+          sound: 'notification_sound.wav',
+        ),
+      ),
+      payload: jsonEncode({
+        'title': '🔔 EWUmate Notification Test',
+        'body': 'Sound and vibration are working! You will receive timely alerts for classes and deadlines.',
+        'url': '/notifications',
+      }),
+    );
+  }
 }
 
 @pragma('vm:entry-point')
@@ -447,6 +544,52 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         if (list.length > 100) list = list.sublist(0, 100);
         await box.put(key, jsonEncode(list));
       }
+    }
+
+    // If message is data-only (notification field is null), Android system does NOT display it automatically.
+    // We display it using flutter_local_notifications with sound and vibration.
+    if (message.notification == null && data.isNotEmpty && (data['title'] != null || data['body'] != null)) {
+      final FlutterLocalNotificationsPlugin bgNotifs = FlutterLocalNotificationsPlugin();
+      const AndroidInitializationSettings bgAndroidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const InitializationSettings bgSettings = InitializationSettings(android: bgAndroidInit);
+      await bgNotifs.initialize(settings: bgSettings);
+
+      final notifTitle = (data['title'] as String?) ?? 'EWUmate Alert';
+      final notifBody = (data['body'] as String?) ?? '';
+      final int notifId = (message.messageId?.hashCode ?? DateTime.now().millisecondsSinceEpoch).remainder(100000).abs();
+      final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]);
+
+      await bgNotifs.show(
+        id: notifId,
+        title: notifTitle,
+        body: notifBody,
+        notificationDetails: NotificationDetails(
+          android: AndroidNotificationDetails(
+            'ewumate_high_priority_v3',
+            'High Priority Alerts',
+            channelDescription: 'Notifications for class, task timing and announcements',
+            icon: '@mipmap/ic_launcher',
+            importance: Importance.max,
+            priority: Priority.max,
+            playSound: true,
+            sound: const RawResourceAndroidNotificationSound('notification_sound'),
+            enableVibration: true,
+            vibrationPattern: vibrationPattern,
+            styleInformation: BigTextStyleInformation(
+              notifBody,
+              contentTitle: notifTitle,
+            ),
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+            presentBanner: true,
+            presentList: true,
+            sound: 'notification_sound.wav',
+          ),
+        ),
+      );
     }
   } catch (_) {}
 }

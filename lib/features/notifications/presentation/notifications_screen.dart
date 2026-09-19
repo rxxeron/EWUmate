@@ -171,14 +171,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               String message = '';
               bool isSuccess = false;
               try {
-                final success = await ref
+                final (success, resultMsg) = await ref
                     .read(fcmServiceProvider)
                     .forceRefreshToken()
-                    .timeout(const Duration(seconds: 10), onTimeout: () => false);
+                    .timeout(
+                      const Duration(seconds: 25), 
+                      onTimeout: () => (false, "Request timed out after 25 seconds. Please check your internet connection."),
+                    );
                 isSuccess = success;
                 message = success
                     ? 'Push token refreshed and synced with server!'
-                    : 'Firebase acquired token, but saving to server returned false. Check database connection.';
+                    : resultMsg;
               } catch (e) {
                 message = 'Token refresh failed: $e';
               } finally {

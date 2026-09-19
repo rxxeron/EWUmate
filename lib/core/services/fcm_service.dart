@@ -354,22 +354,23 @@ class FCMService {
   }
 
   /// Force-refresh the device FCM registration token by acquiring the token and registering with Supabase
-  Future<bool> forceRefreshToken() async {
-    if (kIsWeb) return false;
+  Future<(bool isSuccess, String message)> forceRefreshToken() async {
+    if (kIsWeb) return (false, "Push notifications not supported on web.");
     try {
       debugPrint("[FCM] Force-refreshing device token from Firebase...");
       final newToken = await _messaging.getToken();
-      if (newToken != null) {
-        _cachedDeviceToken = newToken;
-        await _cacheTokenLocally(newToken);
-        final success = await _saveTokenToDatabase(newToken);
-        debugPrint("[FCM] Force-refresh complete. New token acquired: ${newToken.substring(0, 10)}... Success: $success");
-        return success;
+      if (newToken == null || newToken.isEmpty) {
+        return (false, "Firebase could not generate a token. Please check Google Play Services.");
       }
+      _cachedDeviceToken = newToken;
+      await _cacheTokenLocally(newToken);
+      final (success, msg) = await saveTokenWithDiagnostics(newToken);
+      debugPrint("[FCM] Force-refresh complete. Success: $success ($msg)");
+      return (success, msg);
     } catch (e) {
       debugPrint("[FCM] forceRefreshToken error: $e");
+      return (false, "Token refresh error: $e");
     }
-    return false;
   }
 
   /// Actively checks notification permission. If denied by OS, requests it.
@@ -504,40 +505,49 @@ class FCMService {
   }
 
   Future<bool> _saveTokenToDatabase(String token) async {
+    final (success, _) = await saveTokenWithDiagnostics(token);
+    return success;
+  }
+
+  Future<(bool, String)> saveTokenWithDiagnostics(String token) async {
+    // 1. Refresh auth session if expired or close to expiry
+    try {
+      if (_supabase.auth.currentSession != null && (_supabase.auth.currentSession!.isExpired)) {
+        await _supabase.auth.refreshSession();
+      }
+    } catch (_) {}
+
     final user = _supabase.auth.currentUser;
-    if (user != null) {
+    if (user == null) {
+      debugPrint("[FCM] No current user signed in. Token cached locally and will sync upon session restoration.");
+      return (false, "User session not found. Please log in to sync token.");
+    }
+
+    try {
+      await _supabase.from('fcm_tokens').upsert({
+        'user_id': user.id,
+        'token': token,
+        'platform': defaultTargetPlatform.name.toLowerCase(),
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'token');
+      debugPrint("[FCM] Token saved successfully for user ${user.id} on ${defaultTargetPlatform.name}");
+      return (true, "Token synced successfully on ${defaultTargetPlatform.name}");
+    } catch (e) {
+      debugPrint("[FCM] Token Registration Failed with platform: $e");
       try {
+        // Fallback without platform
         await _supabase.from('fcm_tokens').upsert({
           'user_id': user.id,
           'token': token,
-          'platform': defaultTargetPlatform.name.toLowerCase(),
           'updated_at': DateTime.now().toIso8601String(),
-        });
-        debugPrint("[FCM] Token saved successfully for user ${user.id} on ${defaultTargetPlatform.name}");
-        // Also update profiles.push_token if present in profiles table schema
-        try {
-          await _supabase.from('profiles').update({'push_token': token}).eq('id', user.id);
-        } catch (_) {}
-        return true;
-      } catch (e) {
-        debugPrint("[FCM] Token Registration Failed with platform: $e");
-        try {
-          // Exact 1.1.12 payload fallback
-          await _supabase.from('fcm_tokens').upsert({
-            'user_id': user.id,
-            'token': token,
-            'updated_at': DateTime.now().toIso8601String(),
-          });
-          debugPrint("[FCM] Token saved successfully (exact 1.1.12 fallback) for user ${user.id}");
-          return true;
-        } catch (e2) {
-          debugPrint("[FCM] Fallback Token Registration Failed: $e2");
-        }
+        }, onConflict: 'token');
+        debugPrint("[FCM] Token saved successfully (fallback) for user ${user.id}");
+        return (true, "Token synced successfully (fallback mode)");
+      } catch (e2) {
+        debugPrint("[FCM] Fallback Token Registration Failed: $e2");
+        return (false, "Server rejected token: $e2");
       }
-    } else {
-      debugPrint("[FCM] No current user signed in. Token cached locally and will sync upon session restoration.");
     }
-    return false;
   }
 
   Future<void> _cacheTokenLocally(String token) async {

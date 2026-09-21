@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:home_widget/home_widget.dart';
+
 import '../../../core/utils/error_utils.dart';
 import '../../../core/repositories/task_repository.dart';
 import '../../dashboard/dashboard_logic.dart';
@@ -98,36 +98,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         final cachePayload = {...freshData, 'date': effectiveDate.toIso8601String()};
         await cacheService.cacheDashboardSchedule(user.id, safeSem, cachePayload);
 
-        final processedData = DashboardLogic.processDashboardData(freshData);
-        final Map<String, dynamic> encodableData = {
-          'status': processedData['status'],
-          'reason': processedData['reason'],
-          'displayDate': processedData['displayDate'],
-          'schedule': (processedData['schedule'] as List).map((item) {
-            if (item is ScheduleItem) {
-              return {
-                'courseCode': item.courseCode,
-                'courseName': item.courseName,
-                'sessionType': item.sessionType,
-                'startTime': item.startTime,
-                'endTime': item.endTime,
-                'room': item.room,
-                'faculty': item.faculty,
-                'isCancelled': item.isCancelled,
-                'isMakeup': item.isMakeup,
-              };
-            }
-            return item;
-          }).toList(),
-        };
-
-        await HomeWidget.saveWidgetData('schedule_json', jsonEncode(encodableData));
-        await HomeWidget.updateWidget(
-          androidName: 'ScheduleWidgetProvider',
-        );
 
         if (kDebugMode) {
-          debugPrint('[ScheduleScreen] Successfully updated Cache & Home Screen Widget with fresh schedule.');
+          debugPrint('[ScheduleScreen] Successfully updated Cache with fresh schedule.');
         }
       } catch (e) {
         await cacheService.invalidateDashboardSchedule(user.id, safeSem);

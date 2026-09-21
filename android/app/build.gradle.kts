@@ -32,29 +32,25 @@ android {
 
     val keystorePropertiesFile = rootProject.file("key.properties")
     val keystoreProperties = Properties()
-    val hasKeystore = keystorePropertiesFile.exists()
-    if (hasKeystore) {
+    if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
     }
 
     signingConfigs {
-        if (hasKeystore) {
-            create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String?
-                keyPassword = keystoreProperties["keyPassword"] as String?
-                storeFile = keystoreProperties["storeFile"]?.let { file(it.toString()) }
-                storePassword = keystoreProperties["storePassword"] as String?
-            }
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+            storeFile = keystoreProperties["storeFile"]?.let { file(it.toString()) }
+            storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
         release {
-            signingConfig = if (hasKeystore) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
@@ -65,12 +61,13 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    constraints {
-        implementation("androidx.glance:glance-appwidget:1.1.0") {
-            because("Version 1.3.0-alpha01 requires compileSdk 37 which breaks the build")
-        }
-        implementation("androidx.compose.remote:remote-creation-android:1.0.0-alpha04") {
-            because("Version 1.0.0-alpha11 requires compileSdk 37 which breaks the build")
-        }
-    }
 }
+
+tasks.withType<com.android.build.gradle.internal.tasks.CompileArtProfileTask>().configureEach {
+    enabled = false
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+}
+

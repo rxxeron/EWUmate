@@ -74,14 +74,14 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
 
   Future<void> _pickFile() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
       );
 
-      if (result != null && result.files.isNotEmpty) {
+      if (file != null) {
         setState(() {
-          _selectedFile = result.files.first;
+          _selectedFile = file;
         });
       }
     } catch (e) {
@@ -594,7 +594,7 @@ class _SubmitOfficeHoursSheetState extends ConsumerState<SubmitOfficeHoursSheet>
                              ),
                              const SizedBox(height: 2),
                              Text(
-                               '${((_selectedFile!.size) / 1024 / 1024).toStringAsFixed(2)} MB',
+                               '${((_selectedFile!.lengthSync() ?? 0) / 1024 / 1024).toStringAsFixed(2)} MB',
                                style: const TextStyle(color: Colors.white38, fontSize: 10),
                              ),
                            ],

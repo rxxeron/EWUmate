@@ -2,14 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/supabase_config.dart';
 import 'core/router/app_router.dart';
 import 'core/services/cache_service.dart';
 import 'core/services/fcm_service.dart';
 import 'firebase_options.dart';
 import 'core/providers/session_guardian.dart';
-import 'core/repositories/auth_repository.dart';
 import 'dart:io';
 import 'core/services/app_update_service.dart';
 import 'core/theme/app_theme.dart';
@@ -22,69 +20,43 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-void main() async {
-  if (!kIsWeb) {
-    HttpOverrides.global = MyHttpOverrides();
+String? globalFirebaseInitError;
+
+Future<void> _bootloader(CacheService cache) async {
+  // 1. Cache Layer
+  try { 
+    await cache.init(); 
+  } catch (e) { 
+    if (kDebugMode) debugPrint('[Boot] Cache init error: $e'); 
   }
+  
+
+  // 2. Firebase Layer (Gracefully skipped on Web to prevent JS Object crashes)
+  if (!kIsWeb) {
+    try {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    } catch (e) {
+      globalFirebaseInitError = e.toString();
+      if (kDebugMode) debugPrint('[Boot] Firebase init error: $e');
+    }
+  } else {
+    if (kDebugMode) debugPrint('[Boot] Web detected: Bypassing Firebase init.');
+  }
+
+  // 3. Supabase Layer
+  try {
+    await SupabaseConfig.initialize();
+  } catch (e) {
+    if (kDebugMode) debugPrint('[Boot] Supabase init error: $e');
+  }
+}
+
+void main() async {
+  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Protect against release-mode white screen if any widget error occurs
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Material(
-      color: const Color(0xFF071426),
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.refresh_rounded, color: Color(0xFF19D9F5), size: 48),
-                const SizedBox(height: 16),
-                const Text(
-                  'Starting EWUmate...',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  kDebugMode ? details.exceptionAsString() : 'Connecting services, please wait...',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  };
-
-  // Initialize Cache Service (Hive), Firebase, and Supabase in parallel
   final cacheService = CacheService();
-  
-  try {
-    await Future.wait([
-      cacheService.init(),
-      () async {
-        try {
-          if (!kIsWeb) {
-            await Firebase.initializeApp(
-              options: DefaultFirebaseOptions.currentPlatform,
-            );
-          }
-        } catch (e) {
-          if (kDebugMode) debugPrint('Firebase init error: $e');
-        }
-      }(),
-      SupabaseConfig.initialize().catchError((e) {
-        if (kDebugMode) debugPrint('Supabase init error: $e');
-      }),
-    ]);
-  } catch (e) {
-    if (kDebugMode) debugPrint('Parallel initialization error: $e');
-  }
-
-  // FCM setup moved to MyApp for better Riverpod integration
+  await _bootloader(cacheService);
 
   runApp(
     ProviderScope(
@@ -97,31 +69,34 @@ void main() async {
   );
 }
 
-class MyApp extends ConsumerWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize FCM once during app startup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(fcmServiceProvider).initialize().catchError((err) {
+        if (kDebugMode) debugPrint('FCM Init Error: $err');
+      });
+      if (!kIsWeb) {
+        AppUpdateService.checkForPlayStoreUpdate();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Initialize Session Guardian
     ref.read(sessionGuardianProvider);
 
-    // Check Google Play Store for In-App Updates directly post-frame
-    if (!kIsWeb) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        AppUpdateService.checkForPlayStoreUpdate();
-      });
-    }
-    
-    // Initialize FCM when user is logged in (exact 1.1.12 mechanism)
-    ref.listen(authStateProvider, (previous, next) {
-      final event = next.value?.event;
-      if (event == AuthChangeEvent.signedIn || event == AuthChangeEvent.initialSession) {
-        ref.read(fcmServiceProvider).initialize().catchError((err) {
-          if (kDebugMode) debugPrint('FCM Init Error: $err');
-        });
-      }
-    });
-    
+
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(

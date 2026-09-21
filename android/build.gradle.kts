@@ -21,28 +21,32 @@ subprojects {
 subprojects {
     if (project.name != "app") {
         project.afterEvaluate {
-            val androidExt = project.extensions.findByType(com.android.build.gradle.LibraryExtension::class.java)
+            val androidExt = project.extensions.findByName("android")
             if (androidExt != null) {
-                androidExt.compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
+                try {
+                    androidExt.javaClass.getMethod("setCompileSdkVersion", Int::class.java).invoke(androidExt, 36)
+                } catch (e: Exception) {
+                    try { androidExt.javaClass.getMethod("setCompileSdk", Int::class.java).invoke(androidExt, 36) } catch (e2: Exception) {}
                 }
+                try {
+                    val compileOptions = androidExt.javaClass.getMethod("getCompileOptions").invoke(androidExt)
+                    compileOptions.javaClass.getMethod("setSourceCompatibility", JavaVersion::class.java).invoke(compileOptions, JavaVersion.VERSION_17)
+                    compileOptions.javaClass.getMethod("setTargetCompatibility", JavaVersion::class.java).invoke(compileOptions, JavaVersion.VERSION_17)
+                } catch (e: Exception) {}
             }
             tasks.withType<JavaCompile>().configureEach {
                 sourceCompatibility = "17"
                 targetCompatibility = "17"
             }
-        }
-    }
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                try {
+                    compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+                } catch (e: Exception) {}
+            }
         }
     }
     configurations.all {
         resolutionStrategy {
-            force("androidx.glance:glance-appwidget:1.1.1")
-            force("androidx.glance:glance:1.1.1")
             force("androidx.compose.remote:remote-creation-android:1.0.0-alpha06")
         }
     }

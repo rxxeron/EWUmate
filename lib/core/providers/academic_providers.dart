@@ -21,51 +21,40 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
 
   final cacheService = ref.read(cacheServiceProvider);
   final cachedSem = cacheService.getMapData('dashboard_box', '${user.id}_academicState');
-  final cachedProfile = cacheService.getCachedProfile(user.id);
 
-  // 1. Yield Cache Immediately (Frame 1)
+  // 1. Yield Cache Immediately if available (Frame 1)
   if (cachedSem != null) {
     yield AcademicState.fromJson(cachedSem);
-  } else if (cachedProfile != null) {
-    final track = cachedProfile['track'] ?? 'tri_semester';
-    yield AcademicState(
-      currentSemesterCode: 'Summer2026',
-      nextSemesterCode: 'Fall2026',
-      track: track,
-      advisingEndDate: DateTime.now().add(const Duration(days: 30)),
-    );
   }
 
   try {
-    // 2. Try online fetch first with timeout
+    // 2. Fetch fresh active semester directly from the database
     final profile = await ref.watch(profileRepositoryProvider).getProfile(user.id).timeout(const Duration(seconds: 8));
-    if (profile != null) {
-      final track = profile.track ?? 'tri_semester';
-      final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track).timeout(const Duration(seconds: 8));
-      final stateDict = {
-        ...semesterData,
-        'track': track,
-        '_cache_updated_at': DateTime.now().toIso8601String(),
-      };
-      cacheService.setMapData('dashboard_box', '${user.id}_academicState', stateDict);
-      yield AcademicState.fromJson(stateDict);
-    }
+    final track = profile?.track ?? 'tri_semester';
+    final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track).timeout(const Duration(seconds: 8));
+    final stateDict = {
+      ...semesterData,
+      'track': track,
+      '_cache_updated_at': DateTime.now().toIso8601String(),
+    };
+    cacheService.setMapData('dashboard_box', '${user.id}_academicState', stateDict);
+    yield AcademicState.fromJson(stateDict);
   } catch (e) {
-    // 3. Fallback check: if we have no cache yielded, throw error
-    if (cachedSem == null && cachedProfile == null) {
-      throw Exception("Could not load active semester offline.");
+    // 3. Fallback check: if we have no cache yielded, report error
+    if (cachedSem == null) {
+      throw Exception("Could not load active semester from database: $e");
     }
   }
 });
 
 final currentSemesterCodeProvider = FutureProvider<String?>((ref) async {
-  final state = await ref.watch(academicStateProvider.future);
-  return state?.currentSemesterCode;
+  final asyncState = ref.watch(academicStateProvider);
+  return asyncState.valueOrNull?.currentSemesterCode;
 });
 
 final nextSemesterCodeProvider = FutureProvider<String?>((ref) async {
-  final state = await ref.watch(academicStateProvider.future);
-  return state?.nextSemesterCode;
+  final asyncState = ref.watch(academicStateProvider);
+  return asyncState.valueOrNull?.nextSemesterCode;
 });
 
 final semestersProvider = FutureProvider<List<dynamic>>((ref) async {

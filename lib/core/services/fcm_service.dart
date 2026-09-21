@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +16,10 @@ import '../router/app_router.dart';
 import '../widgets/glass_kit.dart';
 import '../repositories/notification_repository.dart';
 import '../models/notification.dart' as model;
+import '../../firebase_options.dart';
+import '../../main.dart';
+
+import 'package:permission_handler/permission_handler.dart';
 
 class PendingNotificationAction {
   final String title;
@@ -33,13 +39,22 @@ final fcmServiceProvider = Provider<FCMService>((ref) => FCMService(ref));
 
 class FCMService {
   final Ref _ref;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
+  void _showStatusChip(String message, {bool isError = false, bool isSuccess = false}) {
+    if (kDebugMode) {
+      debugPrint('[FCM Status] $message');
+    }
+  }
 
   bool isDashboardStable = false;
   PendingNotificationAction? _pendingAction;
   PendingNotificationAction? get pendingAction => _pendingAction;
+
+  bool _isInitialized = false;
+  final Completer<void> _initCompleter = Completer<void>();
 
   void clearPendingAction() {
     _pendingAction = null;
@@ -48,81 +63,113 @@ class FCMService {
   FCMService(this._ref);
 
   Future<void> initialize() async {
-    // 0. Register Background Handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    if (_isInitialized) return _initCompleter.future;
+    _isInitialized = true;
 
-    // Handle terminated-state notification tap (app was fully closed)
-    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      // Add a 2.5 second delay to let the initial GoRouter splash/auth redirects fully settle
-      Future.delayed(const Duration(milliseconds: 2500), () {
-        final img = initialMessage.notification?.android?.imageUrl ?? 
-                    initialMessage.notification?.apple?.imageUrl ?? 
-                    (initialMessage.data['image'] as String?) ??
-                    (initialMessage.data['image_url'] as String?);
-        _handleIncomingAction(
-          initialMessage.notification?.title,
-          initialMessage.notification?.body,
-          initialMessage.data['url'] as String?,
-          img,
-        );
-      });
-    }
-
-    // 1. Setup Local Notifications for Foreground and Channel Creation
-    const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
-
-    await _localNotifications.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        final payload = response.payload;
-        if (payload != null && payload.isNotEmpty) {
-          try {
-            final data = jsonDecode(payload);
-            // Slight delay to let any foreground screen state settle
-            Future.delayed(const Duration(milliseconds: 200), () {
-              _handleIncomingAction(data['title'], data['body'], data['url'], data['image']);
-            });
-          } catch (_) {}
-        }
-      },
-    );
-
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'ewumate_high_priority_reminders_v1', 
-      'Task Reminders',
-      description: 'Notifications for class and task timing',
-      importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
-    );
-
-    final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    await androidImplementation?.createNotificationChannel(channel);
-
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      final token = await _messaging.getToken();
-      if (token != null) {
-        await _saveTokenToDatabase(token);
+    if (kIsWeb || Firebase.apps.isEmpty) {
+      if (!kIsWeb) {
+        _showStatusChip("FCM Init Bypassed: Firebase crashed. Error: ${globalFirebaseInitError ?? 'Unknown'}", isError: true);
       }
-      _messaging.onTokenRefresh.listen(_saveTokenToDatabase);
+      debugPrint('[FCM] Bypassing initialization (Web or Firebase inactive).');
+      _initCompleter.complete();
+      return;
+    }
+    
+    try {
+      // 0. Register Background Handler
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      // Handle terminated-state notification tap (app was fully closed)
+      final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        // Add a 2.5 second delay to let the initial GoRouter splash/auth redirects fully settle
+        Future.delayed(const Duration(milliseconds: 2500), () {
+          final img = initialMessage.notification?.android?.imageUrl ?? 
+                      initialMessage.notification?.apple?.imageUrl ?? 
+                      (initialMessage.data['image'] as String?) ??
+                      (initialMessage.data['image_url'] as String?);
+          _handleIncomingAction(
+            initialMessage.notification?.title,
+            initialMessage.notification?.body,
+            initialMessage.data['url'] as String?,
+            img,
+          );
+        });
+      }
+
+      // 1. Setup Local Notifications for Foreground and Channel Creation
+      const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsDarwin,
+      );
+
+      try {
+        await _localNotifications.initialize(
+          settings: initializationSettings,
+          onDidReceiveNotificationResponse: (NotificationResponse response) async {
+            final payload = response.payload;
+            if (payload != null && payload.isNotEmpty) {
+              try {
+                final data = jsonDecode(payload);
+                // Slight delay to let any foreground screen state settle
+                Future.delayed(const Duration(milliseconds: 200), () {
+                  _handleIncomingAction(data['title'], data['body'], data['url'], data['image']);
+                });
+              } catch (_) {}
+            }
+          },
+        );
+      } catch (e) {
+        _showStatusChip("Local Notifs Init Error: $e", isError: true);
+        if (kDebugMode) debugPrint('[FCM] Local Notifications Init Error: $e');
+      }
+
+      final androidImplementation = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      
+      // Create both v1 and v2 channels to ensure compatibility with client and server defaults
+      const AndroidNotificationChannel channelV1 = AndroidNotificationChannel(
+        'ewumate_high_priority_reminders_v1', 
+        'Task Reminders',
+        description: 'Notifications for class and task timing',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      );
+      const AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
+        'ewumate_high_priority_reminders_v2', 
+        'Task Reminders (V2)',
+        description: 'Notifications for class and task timing',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      );
+
+      try {
+        await androidImplementation?.createNotificationChannel(channelV1);
+        await androidImplementation?.createNotificationChannel(channelV2);
+      } catch (e) {
+        _showStatusChip("Channel Creation Error: $e", isError: true);
+        if (kDebugMode) debugPrint('[FCM] Channel Creation Error: $e');
+      }
+
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      final settings = await _messaging.getNotificationSettings();
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        final token = await _messaging.getToken();
+        if (token != null) {
+          await _saveTokenToDatabase(token);
+        }
+      }
+      
+      _messaging.onTokenRefresh.listen((t) => _saveTokenToDatabase(t));
 
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         RemoteNotification? notification = message.notification;
@@ -155,16 +202,16 @@ class FCMService {
             id: notification.hashCode,
             title: notification.title,
             body: notification.body,
-            notificationDetails: NotificationDetails(
+            notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(
-                channel.id,
-                channel.name,
-                channelDescription: channel.description,
+                'ewumate_high_priority_reminders_v2',
+                'Task Reminders (V2)',
+                channelDescription: 'Notifications for class and task timing',
                 icon: '@mipmap/ic_launcher',
-                importance: channel.importance,
+                importance: Importance.max,
                 priority: Priority.high,
               ),
-              iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
+              iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
             ),
             payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage}),
           );
@@ -186,6 +233,13 @@ class FCMService {
           );
         });
       });
+    } catch (e) {
+      _showStatusChip("FCM Initialization Failed: $e", isError: true);
+      debugPrint('[FCM] Initialization Error: $e');
+    } finally {
+      if (!_initCompleter.isCompleted) {
+        _initCompleter.complete();
+      }
     }
   }
 
@@ -193,15 +247,73 @@ class FCMService {
     final user = _supabase.auth.currentUser;
     if (user != null) {
       try {
+        final platform = kIsWeb ? 'web' : (Platform.isAndroid ? 'android' : (Platform.isIOS ? 'ios' : 'unknown'));
         await _supabase.from('fcm_tokens').upsert({
           'user_id': user.id,
           'token': token,
+          'platform': platform,
           'updated_at': DateTime.now().toIso8601String(),
-        });
+        }, onConflict: 'token');
+        if (kDebugMode) debugPrint("[FCM] Token successfully saved for platform $platform");
+
       } catch (e) {
-        debugPrint("[FCM] Token Registration Failed: $e");
+        if (kDebugMode) debugPrint("[FCM] Token Registration Failed: $e");
       }
     }
+  }
+
+  Future<void> syncToken() async {
+    if (kIsWeb || Firebase.apps.isEmpty) return;
+    try {
+      _showStatusChip("Waiting for FCM Initialization...");
+      await _initCompleter.future;
+      _showStatusChip("Fetching token from Firebase...");
+      final token = await _messaging.getToken();
+      if (token != null) {
+        _showStatusChip("Token fetched. Saving to database...");
+        await _saveTokenToDatabase(token);
+      } else {
+        _showStatusChip("Firebase returned a null token.", isError: true);
+      }
+    } catch (e) {
+      _showStatusChip("FCM Token Fetch Error: $e", isError: true);
+      if (kDebugMode) debugPrint("[FCM] syncToken error: $e");
+    }
+  }
+
+  Future<bool> promptNotificationPermission({
+    BuildContext? context,
+    bool showSettingsDialog = true,
+  }) async {
+    if (kIsWeb || Firebase.apps.isEmpty) {
+      _showStatusChip("Cannot prompt: Firebase not active. Error: ${globalFirebaseInitError ?? 'Unknown'}", isError: true);
+      return false;
+    }
+    try {
+      _showStatusChip("Requesting notification permission...");
+      NotificationSettings settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        _showStatusChip("Permission granted! Syncing...", isSuccess: true);
+        await syncToken();
+        return true;
+      } else if (showSettingsDialog) {
+        _showStatusChip("Permission denied. Redirecting to settings...", isError: true);
+        await openAppSettings();
+        // Since we don't know immediately if they granted it in settings, 
+        // we leave syncToken to the AppLifecycleState or they can click banner again.
+      } else {
+        _showStatusChip("Permission denied by user.", isError: true);
+      }
+    } catch (e) {
+      _showStatusChip("Permission Request Error: $e", isError: true);
+      if (kDebugMode) debugPrint("[FCM] promptNotificationPermission error: $e");
+    }
+    return false;
   }
 
   void _handleIncomingAction(String? title, String? body, String? url, [String? imageUrl]) {
@@ -325,9 +437,11 @@ class FCMService {
 }
 
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
-    await Firebase.initializeApp();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    }
     await Hive.initFlutter();
     if (!Hive.isBoxOpen('notifications_box')) {
       await Hive.openBox('notifications_box');

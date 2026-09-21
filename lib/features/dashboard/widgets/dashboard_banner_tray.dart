@@ -142,19 +142,7 @@ class _DashboardBannerTrayState extends ConsumerState<DashboardBannerTray> with 
       ));
     }
 
-    // 4. Faculty Reviews Feature Announcement Banner
-    if (!_isFacultyReviewsDismissed) {
-      activeBanners.add(_buildAlertCard(
-        context,
-        icon: Icons.rate_review_rounded,
-        iconColor: const Color(0xFF00E5FF),
-        title: "New: Faculty Reviews & Scorecards",
-        subtitle: "Check authentic student evaluations, grading fairness & exam tips.",
-        actionLabel: "Explore",
-        onAction: () => context.push('/services/faculty-directory'),
-        onDismiss: _dismissFacultyReviewsBanner,
-      ));
-    }
+
 
     // 4. Semester Transition Banner
     if (widget.semConfig != null) {

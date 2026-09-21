@@ -112,14 +112,13 @@ class _UploadStudyMaterialScreenState extends ConsumerState<UploadStudyMaterialS
   }
 
   Future<void> _pickFiles() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.any,
-      allowMultiple: true,
     );
 
-    if (result != null && result.files.isNotEmpty) {
+    if (result.isNotEmpty) {
       setState(() {
-        for (var file in result.files) {
+        for (var file in result) {
           final key = file.path ?? file.name;
           if (!_selectedFiles.any((f) => (f.path ?? f.name) == key)) {
             _selectedFiles.add(file);

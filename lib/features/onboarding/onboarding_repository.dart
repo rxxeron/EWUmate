@@ -116,9 +116,9 @@ class OnboardingRepository {
     // 2. If program details changed, clear previous course history/enrollments for a fresh start
     if (hasChanged) {
       await Future.wait([
-        _client.from('completed_courses').delete().eq('user_id', user.id),
-        _client.from('enrollments').delete().eq('user_id', user.id),
-        _client.from('semester_course_marks').delete().eq('user_id', user.id),
+        _client.from('completed_courses').delete().match({'user_id': user.id}),
+        _client.from('enrollments').delete().match({'user_id': user.id}),
+        _client.from('semester_course_marks').delete().match({'user_id': user.id}),
       ]);
     }
 
@@ -384,22 +384,10 @@ class OnboardingRepository {
   }) async {
     final user = _client.auth.currentUser;
     if (user == null) return;
-    
+
     final cleanRunningSemester = CourseUtils.cleanSemester(runningSemester);
-
-    // Clean up existing data to reflect removals accurately
-    await _client
-        .from('completed_courses')
-        .delete()
-        .eq('user_id', user.id);
     
-    await _client
-        .from('enrollments')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('semester_code', cleanRunningSemester);
-
-    // 1. Prepare data for completed_courses
+    // 1. Prepare data for completed_courses and identify diffs
     final List<Map<String, dynamic>> completedRows = [];
 
     // Helper for basic grade point calculation (The Edge Function will final-verify this)
@@ -439,13 +427,16 @@ class OnboardingRepository {
         (m['code'] as String): (m['credit_val'] as num).toDouble(),
     };
     
+    final newCompletedKeys = <String>{};
     history.forEach((semester, courses) {
-      if (semester.replaceAll(' ', '') == cleanRunningSemester) return;
+      final cleanSem = CourseUtils.cleanSemester(semester);
+      if (cleanSem == cleanRunningSemester) return;
       courses.forEach((code, grade) {
+        newCompletedKeys.add('${cleanSem}_${code.toUpperCase()}');
         completedRows.add({
           'user_id': user.id,
           'course_code': code,
-          'semester_code': semester,
+          'semester_code': cleanSem,
           'grade': grade,
           'grade_point': simpleGradePoint(grade),
           'credits': creditsMap[code] ?? 3.0,
@@ -454,9 +445,58 @@ class OnboardingRepository {
     });
 
     try {
-      // 2. Perform bulk insert on completed_courses
+      // 1. Diff & delete only removed completed courses by primary key
+      final existingCompleted = await _client
+          .from('completed_courses')
+          .select('id, course_code, semester_code')
+          .eq('user_id', user.id);
+
+      for (final row in (existingCompleted as List)) {
+        final sem = CourseUtils.cleanSemester(row['semester_code']?.toString() ?? '');
+        if (sem == cleanRunningSemester) continue;
+        final code = (row['course_code']?.toString() ?? '').toUpperCase();
+        if (!newCompletedKeys.contains('${sem}_$code')) {
+          await _client
+              .from('completed_courses')
+              .delete()
+              .eq('id', row['id'])
+              .eq('user_id', user.id);
+        }
+      }
+
+      // 2. Diff & delete only removed enrollments by primary key & user_id
+      final existingEnrollments = await _client
+          .from('enrollments')
+          .select('id, course_code')
+          .eq('user_id', user.id)
+          .eq('semester_code', cleanRunningSemester);
+
+      final incomingEnrollmentCodes = <String>{};
+      if (enrolledCourseDetails != null) {
+        for (final detail in enrolledCourseDetails) {
+          final rawCode = detail['code'].toString();
+          final cleanCode = rawCode.contains('_') ? rawCode.split('_')[0] : rawCode;
+          incomingEnrollmentCodes.add(cleanCode.toUpperCase());
+        }
+      }
+
+      for (final row in (existingEnrollments as List)) {
+        final code = (row['course_code']?.toString() ?? '').toUpperCase();
+        if (!incomingEnrollmentCodes.contains(code)) {
+          await _client
+              .from('enrollments')
+              .delete()
+              .eq('id', row['id'])
+              .eq('user_id', user.id);
+        }
+      }
+
+      // 3. Upsert completed_courses to keep data in sync
       if (completedRows.isNotEmpty) {
-        await _client.from('completed_courses').insert(completedRows);
+        await _client.from('completed_courses').upsert(
+          completedRows,
+          onConflict: 'user_id,course_code,semester_code',
+        );
       }
 
       // 2.5 Insert ongoing active explicitly into enrollments
@@ -480,7 +520,10 @@ class OnboardingRepository {
         }
         if (enrollmentRows.isNotEmpty) {
           try {
-            await _client.from('enrollments').insert(enrollmentRows);
+            await _client.from('enrollments').upsert(
+              enrollmentRows,
+              onConflict: 'user_id,semester_code,course_code',
+            );
           } catch (e) {
             throw Exception("Failed to save enrollments: $e");
           }

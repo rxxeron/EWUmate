@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:in_app_update/in_app_update.dart';
 
 class AppUpdateService {
@@ -15,12 +15,9 @@ class AppUpdateService {
       final updateInfo = await InAppUpdate.checkForUpdate();
 
       if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
-        // High priority updates (>= 4) prompt Immediate full-screen blocking update
-        if (updateInfo.updatePriority >= 4 && updateInfo.immediateUpdateAllowed) {
+        if (updateInfo.immediateUpdateAllowed) {
           await InAppUpdate.performImmediateUpdate();
-        } 
-        // Regular updates trigger smooth background flexible update
-        else if (updateInfo.flexibleUpdateAllowed) {
+        } else if (updateInfo.flexibleUpdateAllowed) {
           await InAppUpdate.startFlexibleUpdate();
           await InAppUpdate.completeFlexibleUpdate();
         }

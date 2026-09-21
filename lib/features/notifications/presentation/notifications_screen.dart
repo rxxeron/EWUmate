@@ -160,11 +160,11 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       child: ListTile(
         onTap: () => _handleNotificationTap(context, notif),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        tileColor: isUnread ? Colors.white.withOpacity(0.05) : Colors.transparent,
+        tileColor: isUnread ? Colors.white.withValues(alpha: 0.05) : Colors.transparent,
         leading: Stack(
           children: [
             CircleAvatar(
-              backgroundColor: iconColor.withOpacity(0.2),
+              backgroundColor: iconColor.withValues(alpha: 0.2),
               child: Icon(iconData, color: iconColor),
             ),
             if (isUnread)

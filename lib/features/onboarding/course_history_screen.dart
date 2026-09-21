@@ -139,7 +139,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   }
 
   List<Map<String, dynamic>> _collectEnrolledDetails() {
-    final currentSemMap = _history[_runningSemester] ?? {};
+    final cleanRunning = CourseUtils.cleanSemester(_runningSemester);
+    final currentSemMap = _history[cleanRunning] ?? {};
     final details = <Map<String, dynamic>>[];
 
     for (final selection in currentSemMap.keys) {
@@ -166,7 +167,8 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
   Future<void> _finishOnboarding() async {
     setState(() => _isSyncing = true);
     try {
-      final currentSemMap = _history[_runningSemester] ?? {};
+      final cleanRunning = CourseUtils.cleanSemester(_runningSemester);
+    final currentSemMap = _history[cleanRunning] ?? {};
       final List<String> enrolledIds = [];
 
       for (final selection in currentSemMap.keys) {
@@ -666,7 +668,15 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
     final cleanCurrent = CourseUtils.cleanSemester(_currentSemester ?? '');
     final currentMap = _history[cleanCurrent] ?? {};
 
-    return FullGradientScaffold(
+    return PopScope(
+      canPop: !widget.isEditMode || _isSyncing,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (widget.isEditMode && !_isSyncing) {
+          _finishOnboarding();
+        }
+      },
+      child: FullGradientScaffold(
       appBar: AppBar(
         title: widget.isEditMode
             ? DropdownButtonHideUnderline(
@@ -784,6 +794,7 @@ class _CourseHistoryScreenState extends ConsumerState<CourseHistoryScreen> {
             ? _finishOnboarding
             : (_isCurrentSemester ? _finishOnboarding : _nextSemester),
       ),
+    ),
     );
   }
 

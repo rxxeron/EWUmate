@@ -18,16 +18,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
-        <!-- Define default FCM Channel for High Priority Heads-up Notifications with Sound & Vibration -->
+        <!-- Define default FCM Channel for High Priority Heads-up Notifications -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="ewumate_high_priority_v4" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/ic_launcher" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/notification_color" />
+            android:value="ewumate_high_priority_reminders_v1" />
 
         <activity
             android:name=".MainActivity"
@@ -68,14 +62,6 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-7033696898787402~3843793698"/>
 
-        <receiver android:name=".ScheduleWidgetProvider" android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/schedule_widget_info" />
-        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -33,14 +33,14 @@ class _UploadMaterialBottomSheetState extends ConsumerState<UploadMaterialBottom
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(
+    final file = await FilePicker.pickFile(
       type: FileType.any,
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (file != null && file.path != null) {
       setState(() {
-        _selectedFile = File(result.files.single.path!);
-        _fileName = result.files.single.name;
+        _selectedFile = File(file.path!);
+        _fileName = file.name;
       });
     }
   }

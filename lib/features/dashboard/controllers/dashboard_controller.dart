@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:home_widget/home_widget.dart';
+
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -146,7 +146,7 @@ class DashboardController {
       onStateChanged();
 
       // Background parallel routines
-      updateHomeWidget(scheduleData);
+
       loadPendingAttendance(ref: ref);
       checkAdvisingBanner(nextSemesterCode, scheduleData['advising_end']);
       checkPortalSyncGuide();
@@ -547,52 +547,6 @@ class DashboardController {
       onStateChanged();
 
       ref.invalidate(semesterProgressDataProvider(state.semesterCode));
-    }
-  }
-
-  /// Synchronizes today's next class and schedule to HomeWidget
-  Future<void> updateHomeWidget(Map<String, dynamic> rawData) async {
-    try {
-      final processed = DashboardLogic.processDashboardData(rawData);
-      final nextClass = processed['next_class'] as ScheduleItem?;
-
-      if (nextClass != null) {
-        await HomeWidget.saveWidgetData<String>('widget_course_code', nextClass.courseCode);
-        await HomeWidget.saveWidgetData<String>('widget_course_title', nextClass.courseName);
-        await HomeWidget.saveWidgetData<String>('widget_start_time', nextClass.startTime);
-        await HomeWidget.saveWidgetData<String>('widget_room', nextClass.room);
-        await HomeWidget.saveWidgetData<String>('widget_status', 'UPCOMING');
-      } else {
-        await HomeWidget.saveWidgetData<String>('widget_status', 'NO_CLASSES');
-      }
-      await HomeWidget.updateWidget(name: 'EWUmateWidgetProvider', iOSName: 'EWUmateWidget');
-
-      final Map<String, dynamic> encodableData = {
-        'status': processed['status'],
-        'reason': processed['reason'],
-        'displayDate': processed['displayDate'],
-        'schedule': (processed['schedule'] as List? ?? []).map((item) {
-          if (item is ScheduleItem) {
-            return {
-              'courseCode': item.courseCode,
-              'courseName': item.courseName,
-              'sessionType': item.sessionType,
-              'startTime': item.startTime,
-              'endTime': item.endTime,
-              'room': item.room,
-              'faculty': item.faculty,
-              'isCancelled': item.isCancelled,
-              'isMakeup': item.isMakeup,
-            };
-          }
-          return item;
-        }).toList(),
-      };
-
-      await HomeWidget.saveWidgetData('schedule_json', jsonEncode(encodableData));
-      await HomeWidget.updateWidget(androidName: 'ScheduleWidgetProvider');
-    } catch (e) {
-      debugPrint('[DashboardController] HomeWidget sync error: $e');
     }
   }
 

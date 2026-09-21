@@ -29,8 +29,11 @@ final profileProvider = StreamProvider<Profile?>((ref) async* {
     yield Profile.fromJson(cachedData);
   }
 
+  bool isDisposed = false;
+  ref.onDispose(() => isDisposed = true);
+
   // 2. Background retry loop for online updates
-  while (true) {
+  while (!isDisposed) {
     try {
       debugPrint("[ProfileProvider] Attempting Online Fetch for: $userId");
       final profile = await authRepo.getProfile(userId).timeout(
@@ -41,12 +44,17 @@ final profileProvider = StreamProvider<Profile?>((ref) async* {
         cacheService.cacheProfile(userId, profile.toJson());
         yield profile;
         break; 
+      } else {
+        // If profile is null (e.g. new user), break the loop so we don't starve the event loop.
+        yield null;
+        break;
       }
     } catch (e) {
       debugPrint("[ProfileProvider] Online failed: $e");
       
       // Retry every 5 seconds until success
       await Future.delayed(const Duration(seconds: 5));
+      if (isDisposed) break;
     }
   }
 });
@@ -73,6 +81,9 @@ final requiresGradeEntryProvider = StreamProvider<bool>((ref) async* {
   final cacheService = ref.read(cacheServiceProvider);
   final client = Supabase.instance.client;
 
+  // Watch the provider future before yielding anything (fixes Riverpod StateError)
+  final profileFuture = ref.watch(profileProvider.future);
+
   // 1. Emit cached decision instantly (Frame 1)
   final cached = cacheService.getMapData('profile_box', '${user.id}_requires_grade_entry');
   if (cached != null) {
@@ -83,7 +94,7 @@ final requiresGradeEntryProvider = StreamProvider<bool>((ref) async* {
 
   // 2. Fetch fresh decision online
   try {
-    final profile = await ref.watch(profileProvider.future);
+    final profile = await profileFuture;
     if (profile == null) {
       yield false;
       return;
@@ -101,7 +112,8 @@ final requiresGradeEntryProvider = StreamProvider<bool>((ref) async* {
           .eq('track', track)
           .limit(1)
           .maybeSingle()
-          .timeout(const Duration(seconds: 10)),
+          .timeout(const Duration(seconds: 10))
+          .catchError((e) => null), // Added catchError to prevent Future.wait from aborting entirely
       client.from('enrollments')
           .select('id, semester_code, grade')
           .eq('user_id', user.id)

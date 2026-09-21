@@ -98,3 +98,5 @@ Assignment/
 .agents/
 skills-lock.json
 new ui/
+windows_disabled/
+/android/build/

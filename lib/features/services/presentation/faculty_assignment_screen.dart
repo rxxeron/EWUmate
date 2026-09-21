@@ -354,22 +354,19 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
   Future<void> _pickProofFile() async {
     HapticFeedback.lightImpact();
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final file = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-        withData: true,
       );
 
-      if (result != null && result.files.isNotEmpty) {
-        final file = result.files.first;
-        if (file.bytes != null) {
-          setState(() {
-            _proofBytes = file.bytes;
-            _proofFileName = file.name;
-            _proofFileSize = file.size;
-          });
-          return;
-        }
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _proofBytes = bytes;
+          _proofFileName = file.name;
+          _proofFileSize = file.lengthSync() ?? 0;
+        });
+        return;
       }
     } catch (e) {
       debugPrint('[FilePicker] error: $e, falling back to ImagePicker');

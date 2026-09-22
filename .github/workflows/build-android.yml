@@ -59,11 +59,11 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
-          echo "AZURE_FUNCTION_URL=${{ secrets.AZURE_FUNCTION_URL }}" >> .env
-          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID }}" >> .env
-          echo "GOOGLE_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_ANDROID_CLIENT_ID }}" >> .env
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://jwygjihrbwxhehijldiz.supabase.co' }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3eWdqaWhyYnd4aGVoaWpsZGl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMDQxNzQsImV4cCI6MjA4NjY4MDE3NH0.zQc3dq53HBpMeN0rbJA9soF0oYhl7de1_sNnB_9JPoM' }}" >> .env
+          echo "AZURE_FUNCTION_URL=${{ secrets.AZURE_FUNCTION_URL || 'https://ewumate-parser.azurewebsites.net' }}" >> .env
+          echo "GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_WEB_CLIENT_ID || '561956344734-ulqeqls9u4h1hmpec41l9lufk336a9ga.apps.googleusercontent.com' }}" >> .env
+          echo "GOOGLE_ANDROID_CLIENT_ID=${{ secrets.GOOGLE_ANDROID_CLIENT_ID || '561956344734-tserledl1nlsae5g46eaqfmbf31npvaf.apps.googleusercontent.com' }}" >> .env
 
       - name: Setup Android Keystore and Signing
         env:

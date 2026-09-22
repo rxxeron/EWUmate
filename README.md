@@ -2,7 +2,7 @@
 **Academic Companion for East West University Students**
 
 **Package:** `com.rxxeron.ewumate`  
-**Version:** `1.1.14+44`  
+**Version:** `1.1.15+45`  
 **Tech:** Flutter 3.x | Dart 3.x | Android SDK 36 | Supabase | Azure Functions
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.27.0+-02569B?style=for-the-badge&logo=flutter&logoColor=white)

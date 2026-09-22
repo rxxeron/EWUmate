@@ -116,10 +116,7 @@ class FacultyReviewsRepository {
 
       final data = await _supabase
           .from('faculty_reviews')
-          .select('''
-            *,
-            profiles:user_id(full_name, student_id)
-          ''')
+          .select()
           .eq('user_id', user.id)
           .ilike('faculty_initials', normalizedInitials)
           .ilike('course_code', normalizedCourse)
@@ -141,10 +138,7 @@ class FacultyReviewsRepository {
       final normalizedInitials = initials.trim().toUpperCase();
       final data = await _supabase
           .from('faculty_reviews')
-          .select('''
-            *,
-            profiles:user_id(full_name, student_id)
-          ''')
+          .select()
           .eq('user_id', user.id)
           .ilike('faculty_initials', normalizedInitials)
           .order('created_at', ascending: false);
@@ -155,10 +149,45 @@ class FacultyReviewsRepository {
     }
   }
 
-  // Submit a new faculty review
+  // Submit a new faculty review or update existing one
   Future<void> submitReview(FacultyReview review) async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('Must be logged in to submit a review.');
+
+    // Ensure strictly one review per student per faculty member
+    final existingReviews = await getUserReviewsForFaculty(review.facultyInitials);
+    if (existingReviews.isNotEmpty) {
+      final existing = existingReviews.first;
+      final updated = FacultyReview(
+        id: existing.id,
+        userId: user.id,
+        facultyInitials: review.facultyInitials,
+        facultyName: review.facultyName,
+        courseCode: review.courseCode,
+        semester: review.semester,
+        semesterCode: review.semesterCode,
+        status: 'pending',
+        deliveryType: review.deliveryType,
+        gradeReceived: review.gradeReceived,
+        clarityRating: review.clarityRating,
+        gradingFairness: review.gradingFairness,
+        examAlignment: review.examAlignment,
+        officeHoursAccessibility: review.officeHoursAccessibility,
+        attendanceStrictness: review.attendanceStrictness,
+        workloadLevel: review.workloadLevel,
+        slideReliance: review.slideReliance,
+        quizFrequency: review.quizFrequency,
+        textbookNeed: review.textbookNeed,
+        traits: review.traits,
+        examPrepTips: review.examPrepTips,
+        reviewNote: review.reviewNote,
+        wouldTakeAgain: review.wouldTakeAgain,
+        createdAt: existing.createdAt,
+        updatedAt: DateTime.now(),
+      );
+      await resubmitReview(updated);
+      return;
+    }
 
     final data = review.toMap();
     data['user_id'] = user.id;
@@ -171,12 +200,13 @@ class FacultyReviewsRepository {
         );
   }
 
-  // Edit and resubmit a rejected review (or update an existing one)
+  // Edit and resubmit a review (resets status to pending and clears rejection note)
   Future<void> resubmitReview(FacultyReview review) async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('Must be logged in.');
 
     final data = review.toMap();
+    data['user_id'] = user.id;
     data['status'] = 'pending';
     data['admin_rejection_note'] = null;
     data['updated_at'] = DateTime.now().toIso8601String();

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/models/faculty.dart';
 import '../../../../../core/models/faculty_review.dart';
+import '../../../../../core/providers/supabase_provider.dart';
 import '../../../../../core/repositories/faculty_reviews_repository.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/ewu_theme_extension.dart';
@@ -40,15 +41,41 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
   String _selectedCourseFilter = 'ALL';
 
   void _openSubmitSheet(BuildContext context, [FacultyReview? existing]) {
+    final user = ref.read(supabaseClientProvider).auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please sign in to submit a review.',
+            style: GoogleFonts.sora(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: const Color(0xFF0D2342),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+
+    // Auto-detect existing review if not explicitly provided to enforce one evaluation per student
+    FacultyReview? targetReview = existing;
+    if (targetReview == null) {
+      final myReviews = ref.read(facultyMyReviewsProvider(widget.faculty.shortName)).value;
+      if (myReviews != null && myReviews.isNotEmpty) {
+        targetReview = myReviews.first;
+      }
+    }
+
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (_) => SubmitFacultyReviewSheet(
         facultyInitials: widget.faculty.shortName,
         facultyName: widget.faculty.fullName,
         currentSemester: widget.currentSemester,
-        existingReview: existing,
+        existingReview: targetReview,
       ),
     ).then((result) {
       if (result == true) {
@@ -105,8 +132,11 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
             // Approved Reviews Section
             approvedAsync.when(
               data: (reviews) {
+                final myReviews = myReviewsAsync.value ?? [];
+                final myReview = myReviews.isNotEmpty ? myReviews.first : null;
+
                 if (reviews.isEmpty) {
-                  return _buildEmptyState(context);
+                  return _buildEmptyState(context, myReview);
                 }
 
                 final distinctCourses = [
@@ -183,7 +213,7 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
                       const SizedBox(height: 14),
                     ],
 
-                    // "Write Review" bar
+                    // "Write Review" / "Edit Review" bar
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -197,14 +227,26 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
                           ),
                         ),
                         TextButton.icon(
-                          onPressed: () => _openSubmitSheet(context),
-                          icon: const Icon(Icons.rate_review_rounded, size: 16, color: Colors.cyanAccent),
+                          onPressed: () => _openSubmitSheet(context, myReview),
+                          icon: Icon(
+                            myReview != null
+                                ? (myReview.status == 'rejected' ? Icons.replay_rounded : Icons.edit_note_rounded)
+                                : Icons.rate_review_rounded,
+                            size: 16,
+                            color: myReview != null && myReview.status == 'rejected'
+                                ? Colors.redAccent
+                                : Colors.cyanAccent,
+                          ),
                           label: Text(
-                            'Add Evaluation',
+                            myReview != null
+                                ? (myReview.status == 'rejected' ? 'Edit & Resubmit' : 'Edit Your Evaluation')
+                                : 'Add Evaluation',
                             style: GoogleFonts.sora(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.cyanAccent,
+                              color: myReview != null && myReview.status == 'rejected'
+                                  ? Colors.redAccent
+                                  : Colors.cyanAccent,
                             ),
                           ),
                         ),
@@ -534,26 +576,36 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
             ],
           ),
 
-          // If rejected, show admin note
-          if (isRejected && review.adminRejectionNote != null) ...[
+          // If rejected, show admin rejection reason prominently
+          if (isRejected) ...[
             const SizedBox(height: 10),
             Container(
-              padding: const EdgeInsets.all(10),
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                color: Colors.redAccent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.35)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'MODERATOR NOTE:',
-                    style: GoogleFonts.sora(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.redAccent),
+                  Row(
+                    children: [
+                      const Icon(Icons.gavel_rounded, color: Colors.redAccent, size: 15),
+                      const SizedBox(width: 6),
+                      Text(
+                        'REJECTION REASON',
+                        style: GoogleFonts.sora(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.redAccent, letterSpacing: 0.5),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text(
-                    review.adminRejectionNote!,
-                    style: GoogleFonts.sora(fontSize: 11, color: Colors.white, height: 1.3),
+                    review.adminRejectionNote?.isNotEmpty == true
+                        ? review.adminRejectionNote!
+                        : 'Your evaluation was rejected by moderator guidelines. Please click "Edit & Resubmit" below to revise and submit again.',
+                    style: GoogleFonts.sora(fontSize: 12, color: Colors.white, height: 1.35),
                   ),
                 ],
               ),
@@ -568,15 +620,22 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
                 'Submitted: ${review.semester}',
                 style: GoogleFonts.sora(fontSize: 11, color: Colors.white54),
               ),
-              if (isRejected || isPending)
-                TextButton.icon(
-                  onPressed: () => _openSubmitSheet(context, review),
-                  icon: const Icon(Icons.edit_note_rounded, size: 16, color: Colors.cyanAccent),
-                  label: Text(
-                    'Edit & Resubmit',
-                    style: GoogleFonts.sora(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.cyanAccent),
+              TextButton.icon(
+                onPressed: () => _openSubmitSheet(context, review),
+                icon: Icon(
+                  isRejected ? Icons.replay_rounded : Icons.edit_note_rounded,
+                  size: 16,
+                  color: isRejected ? Colors.redAccent : Colors.cyanAccent,
+                ),
+                label: Text(
+                  isRejected ? 'Edit & Resubmit' : 'Edit Review',
+                  style: GoogleFonts.sora(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isRejected ? Colors.redAccent : Colors.cyanAccent,
                   ),
                 ),
+              ),
             ],
           ),
         ],
@@ -686,7 +745,7 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
               _buildBadge(review.deliveryType.toUpperCase(), Colors.white60),
               _buildBadge('Workload: ${_formatAttr(review.workloadLevel)}', Colors.white60),
               _buildBadge('Style: ${_formatAttr(review.slideReliance)}', Colors.white60),
-              _buildBadge('Quizzes: ${_formatAttr(review.quizFrequency)}', Colors.white60),
+              _buildBadge(review.quizFrequency.contains('Quiz') ? review.quizFrequency : 'Quizzes: ${_formatAttr(review.quizFrequency)}', Colors.white60),
               if (review.wouldTakeAgain)
                 _buildBadge('Would retake ✓', Colors.greenAccent)
               else
@@ -785,10 +844,16 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
   }
 
   String _formatAttr(String s) {
+    if (s.contains('•') || s.contains('Quizzes') || s.contains('Quiz')) {
+      return s;
+    }
     return s.split('_').map((w) => w.isEmpty ? '' : w[0].toUpperCase() + w.substring(1)).join(' ');
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  Widget _buildEmptyState(BuildContext context, [FacultyReview? myReview]) {
+    final hasMyReview = myReview != null;
+    final isRejected = myReview?.status == 'rejected';
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 40),
@@ -797,33 +862,50 @@ class _FacultyReviewsTabState extends ConsumerState<FacultyReviewsTab> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.cyanAccent.withValues(alpha: 0.08),
+                color: (isRejected ? Colors.redAccent : Colors.cyanAccent).withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.rate_review_outlined, color: Colors.cyanAccent, size: 44),
+              child: Icon(
+                isRejected ? Icons.warning_amber_rounded : Icons.rate_review_outlined,
+                color: isRejected ? Colors.redAccent : Colors.cyanAccent,
+                size: 44,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
-              'No Evaluations Yet',
+              hasMyReview
+                  ? (isRejected ? 'Action Required on Your Review' : 'Your Evaluation is Recorded')
+                  : 'No Evaluations Yet',
               style: GoogleFonts.sora(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const SizedBox(height: 6),
             Text(
-              'Be the first student to review ${widget.faculty.shortName}!\nHelp your fellow peers with exam advice & clarity insights.',
+              hasMyReview
+                  ? (isRejected
+                      ? 'Your evaluation for ${widget.faculty.shortName} was rejected. Please review the moderator feedback above and edit/resubmit.'
+                      : 'You have submitted an evaluation for ${widget.faculty.shortName}. Once approved by moderators, it will be published here.')
+                  : 'Be the first student to review ${widget.faculty.shortName}!\nHelp your fellow peers with exam advice & clarity insights.',
               textAlign: TextAlign.center,
               style: GoogleFonts.sora(fontSize: 12, color: Colors.white54, height: 1.4),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () => _openSubmitSheet(context),
-              icon: const Icon(Icons.add_rounded, size: 18),
+              onPressed: () => _openSubmitSheet(context, myReview),
+              icon: Icon(
+                hasMyReview
+                    ? (isRejected ? Icons.replay_rounded : Icons.edit_note_rounded)
+                    : Icons.add_rounded,
+                size: 18,
+              ),
               label: Text(
-                'Write First Review',
+                hasMyReview
+                    ? (isRejected ? 'Edit & Resubmit' : 'Edit Your Evaluation')
+                    : 'Write First Review',
                 style: GoogleFonts.sora(fontSize: 13, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.cyanAccent,
-                foregroundColor: const Color(0xFF071426),
+                backgroundColor: isRejected ? Colors.redAccent : Colors.cyanAccent,
+                foregroundColor: isRejected ? Colors.white : const Color(0xFF071426),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

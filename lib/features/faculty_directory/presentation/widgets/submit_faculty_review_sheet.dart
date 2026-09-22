@@ -43,6 +43,8 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
   late String _workloadLevel;
   late String _slideReliance;
   late String _quizFrequency;
+  late String _quizCount;
+  late String _quizGradingStyle;
   late String _textbookNeed;
   late bool _wouldTakeAgain;
   late Set<String> _selectedTraits;
@@ -91,6 +93,41 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
     _workloadLevel = r?.workloadLevel ?? 'manageable';
     _slideReliance = r?.slideReliance ?? 'slides_with_whiteboard';
     _quizFrequency = r?.quizFrequency ?? 'bi_weekly';
+
+    // Parse existing quiz structure or set standard EWU defaults (4 quizzes, Best N-1)
+    final existingQuiz = r?.quizFrequency ?? '';
+    if (existingQuiz.contains('best_1') || existingQuiz.contains('Best 1')) {
+      _quizGradingStyle = 'best_1';
+    } else if (existingQuiz.contains('average_all') || existingQuiz.contains('Average of All')) {
+      _quizGradingStyle = 'average_all';
+    } else if (existingQuiz.contains('sum_all') || existingQuiz.contains('Sum of All')) {
+      _quizGradingStyle = 'sum_all';
+    } else {
+      _quizGradingStyle = 'best_n_minus_1';
+    }
+
+    if (existingQuiz.startsWith('0') || existingQuiz.toLowerCase() == 'none' || existingQuiz.toLowerCase() == 'no quizzes') {
+      _quizCount = '0';
+    } else if (existingQuiz.startsWith('1')) {
+      _quizCount = '1';
+    } else if (existingQuiz.startsWith('2')) {
+      _quizCount = '2';
+    } else if (existingQuiz.startsWith('3')) {
+      _quizCount = '3';
+    } else if (existingQuiz.startsWith('5')) {
+      _quizCount = '5';
+    } else if (existingQuiz.startsWith('6')) {
+      _quizCount = '6+';
+    } else {
+      _quizCount = '4';
+    }
+
+    if (r?.quizFrequency != null && r!.quizFrequency.isNotEmpty && !r.quizFrequency.startsWith('bi_weekly')) {
+      _quizFrequency = r.quizFrequency;
+    } else {
+      _syncQuizFrequency();
+    }
+
     _textbookNeed = r?.textbookNeed ?? 'supplementary';
     _wouldTakeAgain = r?.wouldTakeAgain ?? true;
     _selectedTraits = Set<String>.from(r?.traits ?? []);
@@ -107,6 +144,7 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         return _CourseSearchModal(
@@ -128,6 +166,7 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         return _SemesterSearchModal(
@@ -142,6 +181,45 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
         );
       },
     );
+  }
+
+  String _getBestNMinusOneLabel(String count) {
+    if (count == '2') return 'Best 1 of 2 (Best N-1)';
+    if (count == '3') return 'Best 2 of 3 (Best N-1)';
+    if (count == '4') return 'Best 3 of 4 (Best N-1)';
+    if (count == '5') return 'Best 4 of 5 (Best N-1)';
+    return 'Average of Best (N-1) of N';
+  }
+
+  void _syncQuizFrequency() {
+    if (_quizCount == '0') {
+      _quizFrequency = 'No Quizzes';
+      return;
+    }
+    if (_quizCount == '1') {
+      _quizFrequency = '1 Quiz • Counted Directly';
+      return;
+    }
+
+    String styleText;
+    switch (_quizGradingStyle) {
+      case 'best_n_minus_1':
+        styleText = _getBestNMinusOneLabel(_quizCount);
+        break;
+      case 'best_1':
+        styleText = 'Best 1 of $_quizCount';
+        break;
+      case 'average_all':
+        styleText = 'Average of All';
+        break;
+      case 'sum_all':
+        styleText = 'Sum of All';
+        break;
+      default:
+        styleText = 'Average of Best (N-1) of N';
+    }
+
+    _quizFrequency = '$_quizCount Quizzes • $styleText';
   }
 
   Future<void> _submit() async {
@@ -206,7 +284,11 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Evaluation submitted for moderation!',
+                    widget.existingReview != null
+                        ? (widget.existingReview!.status == 'rejected'
+                            ? 'Revised evaluation resubmitted for moderation!'
+                            : 'Evaluation updated & resubmitted for review!')
+                        : 'Evaluation submitted for moderation!',
                     style: GoogleFonts.sora(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -357,116 +439,198 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
 
     // Auto-resolve course title if not set yet
     if (_selectedCourseCode != null && _selectedCourseName == null && coursesAsync.hasValue) {
-      final match = coursesAsync.value!.firstWhere(
-        (c) => c['code'] == _selectedCourseCode,
-        orElse: () => {},
-      );
-      if (match.isNotEmpty && match['name'] != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted && _selectedCourseName == null) {
-            setState(() => _selectedCourseName = match['name']);
+      final courses = coursesAsync.value;
+      if (courses != null) {
+        for (final c in courses) {
+          if (c['code'] == _selectedCourseCode) {
+            final courseName = c['name'];
+            if (courseName != null && courseName.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted && _selectedCourseName == null) {
+                  setState(() => _selectedCourseName = courseName);
+                }
+              });
+            }
+            break;
           }
-        });
+        }
       }
     }
 
     // Auto-resolve semesterCode if not set yet
     if (_selectedSemesterCode == null && semestersAsync.hasValue) {
-      final match = semestersAsync.value!.firstWhere(
-        (s) => (s['title'] ?? '').toString().toLowerCase() == _selectedSemesterTitle.toLowerCase() ||
-               (s['code'] ?? '').toString().toLowerCase() == _selectedSemesterTitle.replaceAll(' ', '').toLowerCase(),
-        orElse: () => {},
-      );
-      if (match.isNotEmpty && match['code'] != null) {
-        _selectedSemesterCode = match['code']?.toString();
+      final semesters = semestersAsync.value;
+      if (semesters != null) {
+        final targetTitle = _selectedSemesterTitle.trim().toLowerCase();
+        final targetNoSpace = _selectedSemesterTitle.replaceAll(' ', '').toLowerCase();
+        for (final s in semesters) {
+          final title = (s['title'] ?? '').toString().trim().toLowerCase();
+          final code = (s['code'] ?? '').toString().trim().toLowerCase();
+          if (title == targetTitle || code == targetNoSpace) {
+            final codeVal = s['code']?.toString();
+            if (codeVal != null && codeVal.isNotEmpty) {
+              _selectedSemesterCode = codeVal;
+            }
+            break;
+          }
+        }
       }
     }
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.90),
-      decoration: const BoxDecoration(
-        color: Color(0xFF08192E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        boxShadow: [
-          BoxShadow(color: Colors.black54, blurRadius: 30, spreadRadius: 10),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(10),
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        height: screenHeight * 0.90,
+        decoration: const BoxDecoration(
+          color: Color(0xFF08192E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(color: Colors.black54, blurRadius: 30, spreadRadius: 10),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
-          ),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.existingReview != null ? 'Edit Evaluation' : 'Rigorous Faculty Review',
-                      style: GoogleFonts.sora(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'For ${widget.facultyInitials} • One review per course',
-                      style: GoogleFonts.sora(fontSize: 12, color: Colors.cyanAccent, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.white54),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(height: 1, color: Colors.white10),
-
-          // Form body
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Warning or info banner
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.cyanAccent.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2)),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.existingReview != null
+                            ? (widget.existingReview!.status == 'rejected'
+                                ? 'Edit & Resubmit Evaluation'
+                                : 'Edit Evaluation')
+                            : 'Rigorous Faculty Review',
+                        style: GoogleFonts.sora(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
-                      child: Row(
+                      const SizedBox(height: 3),
+                      Row(
                         children: [
-                          const Icon(Icons.verified_user_rounded, color: Colors.cyanAccent, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Reviews are moderated to prevent harassment and ensure honest, helpful academic advice.',
-                              style: GoogleFonts.sora(fontSize: 11, color: Colors.white70, height: 1.4),
+                          Text(
+                            'For ${widget.facultyInitials}',
+                            style: GoogleFonts.sora(fontSize: 12, color: Colors.cyanAccent, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock_outline_rounded, size: 11, color: Colors.greenAccent),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '100% Anonymous',
+                                  style: GoogleFonts.sora(fontSize: 10, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 18),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1, color: Colors.white10),
+
+            // Form body
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, bottomInset + 30),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Anonymity & Moderation Banner
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.cyanAccent.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.verified_user_rounded, color: Colors.cyanAccent, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                '100% Anonymous: Your name and student ID are strictly hidden from peers & faculty. Reviews are moderated to prevent harassment and ensure honest academic guidance.',
+                                style: GoogleFonts.sora(fontSize: 11, color: Colors.white70, height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // If editing a rejected review, show moderator rejection reason
+                      if (widget.existingReview?.status == 'rejected') ...[
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.gavel_rounded, color: Colors.redAccent, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'PREVIOUS REJECTION REASON',
+                                    style: GoogleFonts.sora(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.redAccent, letterSpacing: 0.5),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                widget.existingReview?.adminRejectionNote?.isNotEmpty == true
+                                    ? widget.existingReview!.adminRejectionNote!
+                                    : 'Your review was rejected by moderator guidelines. Please make necessary revisions and resubmit.',
+                                style: GoogleFonts.sora(fontSize: 12, color: Colors.white, height: 1.35),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
 
                     // Course Selector Card (Searchable Dropdown)
                     Container(
@@ -769,16 +933,191 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
                       onSelected: (v) => setState(() => _slideReliance = v),
                     ),
 
-                    _buildRadioGroup<String>(
-                      label: 'Quiz Frequency',
-                      options: const [
-                        {'label': 'None / Rare', 'value': 'none'},
-                        {'label': 'Bi-Weekly', 'value': 'bi_weekly'},
-                        {'label': 'Every Week', 'value': 'every_week'},
-                        {'label': 'Surprise Quizzes', 'value': 'surprise_quizzes'},
-                      ],
-                      selectedValue: _quizFrequency,
-                      onSelected: (v) => setState(() => _quizFrequency = v),
+                    // Quiz Assessment Policy Card (Number of Quizzes + Grading Style)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.03),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.quiz_rounded, color: Colors.cyanAccent, size: 16),
+                              const SizedBox(width: 8),
+                              Text(
+                                'QUIZ ASSESSMENT POLICY',
+                                style: GoogleFonts.sora(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.cyanAccent,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 1. Number of Quizzes (N)
+                          Text(
+                            'NUMBER OF QUIZZES (N)',
+                            style: GoogleFonts.sora(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white54,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              {'label': '0 (None)', 'value': '0'},
+                              {'label': '1', 'value': '1'},
+                              {'label': '2', 'value': '2'},
+                              {'label': '3', 'value': '3'},
+                              {'label': '4', 'value': '4'},
+                              {'label': '5', 'value': '5'},
+                              {'label': '6+', 'value': '6+'},
+                            ].map((opt) {
+                              final isSelected = _quizCount == opt['value'];
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _quizCount = opt['value']!;
+                                    _syncQuizFrequency();
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(10),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Colors.cyanAccent.withValues(alpha: 0.2)
+                                        : Colors.white.withValues(alpha: 0.04),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: isSelected ? Colors.cyanAccent : Colors.white.withValues(alpha: 0.08),
+                                      width: isSelected ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    opt['label']!,
+                                    style: GoogleFonts.sora(
+                                      fontSize: 12,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSelected ? Colors.cyanAccent : Colors.white70,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+
+                          // 2. Grading Style (Only if N >= 2)
+                          if (_quizCount != '0' && _quizCount != '1') ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              'GRADING STYLE / CRITERIA',
+                              style: GoogleFonts.sora(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white54,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                {
+                                  'label': _getBestNMinusOneLabel(_quizCount),
+                                  'value': 'best_n_minus_1',
+                                },
+                                {
+                                  'label': 'Best 1 (Highest Score)',
+                                  'value': 'best_1',
+                                },
+                                {
+                                  'label': 'Average of All',
+                                  'value': 'average_all',
+                                },
+                                {
+                                  'label': 'Sum of All (Cumulative)',
+                                  'value': 'sum_all',
+                                },
+                              ].map((opt) {
+                                final isSelected = _quizGradingStyle == opt['value'];
+                                return InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _quizGradingStyle = opt['value']!;
+                                      _syncQuizFrequency();
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? Colors.cyanAccent.withValues(alpha: 0.2)
+                                          : Colors.white.withValues(alpha: 0.04),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSelected ? Colors.cyanAccent : Colors.white.withValues(alpha: 0.08),
+                                        width: isSelected ? 1.5 : 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      opt['label']!,
+                                      style: GoogleFonts.sora(
+                                        fontSize: 12,
+                                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                        color: isSelected ? Colors.cyanAccent : Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+
+                          const SizedBox(height: 12),
+                          // Summary badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.cyanAccent.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.info_outline_rounded, color: Colors.cyanAccent, size: 13),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Selected: $_quizFrequency',
+                                    style: GoogleFonts.sora(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.cyanAccent,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
                     _buildRadioGroup<String>(
@@ -949,7 +1288,9 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
                               )
                             : Text(
                                 widget.existingReview != null
-                                    ? 'Update & Resubmit Review'
+                                    ? (widget.existingReview!.status == 'rejected'
+                                        ? 'Resubmit Evaluation'
+                                        : 'Update Evaluation')
                                     : 'Submit Evaluation for Approval',
                                 style: GoogleFonts.sora(fontSize: 14, fontWeight: FontWeight.bold),
                               ),
@@ -963,7 +1304,8 @@ class _SubmitFacultyReviewSheetState extends ConsumerState<SubmitFacultyReviewSh
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -1008,15 +1350,19 @@ class _CourseSearchModalState extends State<_CourseSearchModal> {
             return code.contains(_query) || name.contains(_query);
           }).toList();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
-      decoration: const BoxDecoration(
-        color: Color(0xFF08192E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(color: Colors.black54, blurRadius: 25, spreadRadius: 5),
-        ],
-      ),
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        height: screenHeight * 0.85,
+        decoration: const BoxDecoration(
+          color: Color(0xFF08192E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(color: Colors.black54, blurRadius: 25, spreadRadius: 5),
+          ],
+        ),
       child: Column(
         children: [
           // Handle
@@ -1193,7 +1539,8 @@ class _CourseSearchModalState extends State<_CourseSearchModal> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -1238,15 +1585,19 @@ class _SemesterSearchModalState extends State<_SemesterSearchModal> {
             return title.contains(_query) || code.contains(_query);
           }).toList();
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.70),
-      decoration: const BoxDecoration(
-        color: Color(0xFF08192E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(color: Colors.black54, blurRadius: 25, spreadRadius: 5),
-        ],
-      ),
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        height: screenHeight * 0.70,
+        decoration: const BoxDecoration(
+          color: Color(0xFF08192E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(color: Colors.black54, blurRadius: 25, spreadRadius: 5),
+          ],
+        ),
       child: Column(
         children: [
           // Handle
@@ -1429,6 +1780,7 @@ class _SemesterSearchModalState extends State<_SemesterSearchModal> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

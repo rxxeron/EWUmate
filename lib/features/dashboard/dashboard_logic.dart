@@ -165,27 +165,39 @@ class DashboardLogic {
 
     final List<ScheduleItem> list = [];
     for (var cls in dayClasses) {
-      final code = cls['courseCode']?.toString() ?? '';
+      final code = (cls['courseCode'] ?? cls['course_code'] ?? '').toString();
       if (lastClassDates != null && lastClassDates.containsKey(code)) {
         final lastDate = lastClassDates[code];
         if (lastDate is DateTime && targetDate.isAfter(lastDate)) continue;
       }
 
-      final startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? '';
-      final endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? '';
-        final isLab = CourseUtils.isLab(startTime, endTime, code);
-          final backendType = cls['type']?.toString();
+      var startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? '';
+      var endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? '';
+      if ((startTime.isEmpty || endTime.isEmpty) && cls['time'] != null) {
+        final tParts = cls['time'].toString().split('-');
+        if (tParts.length >= 2) {
+          startTime = tParts[0].trim();
+          endTime = tParts[1].trim();
+        }
+      }
 
-        list.add(ScheduleItem(
-          id: "base_${code}_${dayName}_$startTime".replaceAll(' ', ''),
-          courseCode: code,
-          courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
-          sessionType: backendType ?? (isLab ? 'Lab' : 'Theory'),
+      final isLab = CourseUtils.isLab(startTime, endTime, code);
+      final backendType = cls['type']?.toString();
+      final rawFaculty = (cls['faculty'] ?? cls['faculty_initial'] ?? cls['facultyInitial'] ?? '').toString().trim();
+      final faculty = (rawFaculty.isEmpty || rawFaculty.toUpperCase() == 'NONE' || rawFaculty.toUpperCase() == 'NULL')
+          ? 'TBA'
+          : rawFaculty;
+
+      list.add(ScheduleItem(
+        id: "base_${code}_${dayName}_$startTime".replaceAll(' ', ''),
+        courseCode: code,
+        courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
+        sessionType: backendType ?? (isLab ? 'Lab' : 'Theory'),
         day: dayName,
         startTime: startTime,
         endTime: endTime,
         room: (cls['room'] ?? cls['room_number'])?.toString() ?? 'TBA',
-        faculty: cls['faculty']?.toString() ?? '',
+        faculty: faculty,
       ));
     }
     return list;
@@ -232,7 +244,7 @@ class DashboardLogic {
           startTime: startTime,
           endTime: endTime,
           room: (ex['room'] ?? 'TBA').toString(),
-          faculty: (ex['faculty'] ?? '').toString(),
+          faculty: (ex['faculty'] ?? ex['faculty_initial'] ?? 'TBA').toString(),
           isMakeup: type == 'makeup',
           isManual: isManual,
           statusLabel: isManual ? 'MANUAL' : (type == 'makeup' ? 'MAKEUP' : 'EXTRA'),
@@ -243,7 +255,7 @@ class DashboardLogic {
     // 2. Process Template Classes (Only if NOT a holiday)
     if (status != 'holiday') {
       for (var cls in template) {
-        final code = cls['courseCode']?.toString() ?? '';
+        final code = (cls['courseCode'] ?? cls['course_code'] ?? '').toString();
         
         // Check for 'cancel' exception
         final cancelEx = exceptions.where((ex) => 
@@ -252,23 +264,36 @@ class DashboardLogic {
           ex['type'] == 'cancel'
         ).firstOrNull;
 
+        var startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? 'TBA';
+        var endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? 'TBA';
+        if ((startTime == 'TBA' || endTime == 'TBA') && cls['time'] != null) {
+          final tParts = cls['time'].toString().split('-');
+          if (tParts.length >= 2) {
+            startTime = tParts[0].trim();
+            endTime = tParts[1].trim();
+          }
+        }
+
+        final rawFaculty = (cls['faculty'] ?? cls['faculty_initial'] ?? cls['facultyInitial'] ?? '').toString().trim();
+        final faculty = (rawFaculty.isEmpty || rawFaculty.toUpperCase() == 'NONE' || rawFaculty.toUpperCase() == 'NULL')
+            ? 'TBA'
+            : rawFaculty;
+
         if (cancelEx != null) {
           schedule.add(ScheduleItem(
-            id: cancelEx['id']?.toString() ?? "template_${code}_${cls['startTime']}".replaceAll(' ', ''),
+            id: cancelEx['id']?.toString() ?? "template_${code}_$startTime".replaceAll(' ', ''),
             courseCode: code,
-            courseName: cls['courseName']?.toString() ?? '',
+            courseName: (cls['courseName'] ?? cls['course_name'])?.toString() ?? '',
             sessionType: cls['type']?.toString() ?? 'Theory',
             day: dayName,
-            startTime: cls['startTime']?.toString() ?? 'TBA',
-            endTime: cls['endTime']?.toString() ?? 'TBA',
-            room: cls['room']?.toString() ?? 'TBA',
-            faculty: cls['faculty']?.toString() ?? '',
+            startTime: startTime,
+            endTime: endTime,
+            room: (cls['room'] ?? cls['room_number'])?.toString() ?? 'TBA',
+            faculty: faculty,
             isCancelled: true,
             statusLabel: 'CANCELLED',
           ));
         } else {
-          final startTime = (cls['startTime'] ?? cls['start_time'])?.toString() ?? 'TBA';
-          final endTime = (cls['endTime'] ?? cls['end_time'])?.toString() ?? 'TBA';
           final isLabFallback = CourseUtils.isLab(startTime, endTime, code);
           final backendType = cls['type']?.toString();
 
@@ -281,7 +306,7 @@ class DashboardLogic {
             startTime: startTime,
             endTime: endTime,
             room: (cls['room'] ?? cls['room_number'])?.toString() ?? 'TBA',
-            faculty: cls['faculty']?.toString() ?? '',
+            faculty: faculty,
           ));
         }
       }

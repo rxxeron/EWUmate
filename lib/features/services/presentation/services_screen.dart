@@ -28,6 +28,14 @@ class ServicesScreen extends ConsumerWidget {
 
     final services = [
       _ServiceItem(
+        title: 'Course Advising Guide',
+        subtitle: 'Eligible & prerequisite courses',
+        icon: Icons.auto_stories_rounded,
+        accentColor: colors.primaryCyan,
+        route: '/services/advising-guide',
+        badge: 'NEW',
+      ),
+      _ServiceItem(
         title: 'Cover Page Generator',
         subtitle: 'Create assignment PDFs',
         icon: Icons.picture_as_pdf_rounded,

@@ -12,6 +12,7 @@ import '../../../core/utils/course_utils.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/services/cache_service.dart';
+import '../../../core/providers/academic_providers.dart';
 import '../../auth/auth_providers.dart';
 import '../../onboarding/onboarding_repository.dart';
 import 'portal_sync/widgets/portal_sync_start_view.dart';
@@ -62,7 +63,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
   // Fetched Data from Portal
   PortalSyncResult? _portalData;
   List<Map<String, dynamic>> _azureParsedGrades = [];
-  Map<String, List<Map<String, dynamic>>>? _fetchedWeeklyGrid;
 
   // User Selection Checkboxes
   bool _syncActiveSchedule = true;
@@ -252,7 +252,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
       final profileMap = data['profile'] as Map<String, dynamic>? ?? {};
       final enrolledList = (data['enrolled_courses'] as List? ?? []).cast<Map<String, dynamic>>();
       final gradesList = (data['parsed_grades'] as List? ?? []).cast<Map<String, dynamic>>();
-      final gridData = data['weekly_grid'] as Map<String, dynamic>? ?? {};
 
       final studentProfile = PortalStudentProfile(
         studentId: profileMap['studentId']?.toString() ?? profileMap['StudentId']?.toString() ?? studentId,
@@ -272,13 +271,6 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
       final List<PortalEnrolledCourse> enrolledCourses = enrolledList.map((c) {
         return PortalEnrolledCourse.fromJson(c);
       }).toList();
-
-      final parsedWeeklyGrid = <String, List<Map<String, dynamic>>>{};
-      gridData.forEach((k, v) {
-        parsedWeeklyGrid[k] = (v as List).cast<Map<String, dynamic>>();
-      });
-
-      _fetchedWeeklyGrid = parsedWeeklyGrid;
 
       final semCode = data['semester_code']?.toString() ?? _selectedSemester?['code']?.toString() ?? 'fall2026';
       final semName = data['active_semester_name']?.toString() ?? _selectedSemester?['title']?.toString() ?? 'Fall 2026';
@@ -314,7 +306,7 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
     }
   }
 
-  /// Formats the raw TimeSlotName into weekly_grid_cache
+  /// Formats courses and sessions into weekly_grid_cache
   Map<String, List<Map<String, dynamic>>> _buildWeeklyGridCache(
     List<PortalEnrolledCourse> courses,
     Map<String, String> courseNamesByCode,
@@ -340,6 +332,50 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
     };
 
     for (final item in courses) {
+      final cleanCode = (item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode).toUpperCase().trim();
+      final courseName = courseNamesByCode[cleanCode] ?? item.courseCode;
+
+      // 1. If parsed sessions are present from Azure scraper, use them directly for 100% precision!
+      if (item.sessions.isNotEmpty) {
+        for (final s in item.sessions) {
+          final day = s.day.trim();
+          if (!grid.containsKey(day)) continue;
+
+          final sFacultyRaw = s.faculty.trim().toUpperCase();
+          final itemFacultyRaw = item.facultyInitial.trim().toUpperCase();
+
+          String resolvedFaculty = 'TBA';
+          if (sFacultyRaw.isNotEmpty && sFacultyRaw != 'NONE' && sFacultyRaw != 'NULL' && sFacultyRaw != 'TBA') {
+            resolvedFaculty = sFacultyRaw;
+          } else if (itemFacultyRaw.isNotEmpty && itemFacultyRaw != 'NONE' && itemFacultyRaw != 'NULL' && itemFacultyRaw != 'TBA') {
+            resolvedFaculty = itemFacultyRaw;
+          }
+
+          final sFacName = s.facultyName.isNotEmpty ? s.facultyName : item.facultyName;
+          final sFacEmail = s.facultyEmail.isNotEmpty ? s.facultyEmail : item.facultyEmail;
+
+          grid[day]?.add({
+            'courseCode': cleanCode,
+            'course_code': cleanCode,
+            'courseName': courseName,
+            'course_name': courseName,
+            'section': item.section,
+            'startTime': s.startTime,
+            'endTime': s.endTime,
+            'time': '${s.startTime}-${s.endTime}',
+            'room': s.room.isNotEmpty ? s.room : (item.room.isNotEmpty ? item.room : 'TBA'),
+            'faculty': resolvedFaculty,
+            'facultyName': sFacName,
+            'faculty_name': sFacName,
+            'facultyEmail': sFacEmail,
+            'faculty_email': sFacEmail,
+            'type': s.type,
+          });
+        }
+        continue;
+      }
+
+      // 2. Fallback if sessions array was empty: parse timing string
       final timing = item.timing.trim();
       if (timing.isEmpty || timing.toUpperCase() == 'TBA') continue;
 
@@ -353,23 +389,28 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
 
       final startStr = timeSplit[0].trim();
       final endStr = timeSplit[1].trim();
-
-      final cleanCode = item.courseCode.contains(' ') ? item.courseCode.split(' ')[0] : item.courseCode;
-      final courseName = courseNamesByCode[cleanCode] ?? item.courseCode;
       final isLab = CourseUtils.isLab(startStr, endStr, cleanCode);
+
+      final itemFacultyRaw = item.facultyInitial.trim().toUpperCase();
+      final resolvedFaculty = (itemFacultyRaw.isNotEmpty && itemFacultyRaw != 'NONE' && itemFacultyRaw != 'NULL' && itemFacultyRaw != 'TBA')
+          ? itemFacultyRaw
+          : 'TBA';
 
       final classEntry = {
         'courseCode': cleanCode,
+        'course_code': cleanCode,
         'courseName': courseName,
+        'course_name': courseName,
         'section': item.section,
         'startTime': startStr,
         'endTime': endStr,
+        'time': '$startStr-$endStr',
         'room': item.room.isNotEmpty ? item.room : 'TBA',
-        'faculty': item.facultyInitial.isNotEmpty
-            ? item.facultyInitial
-            : (item.facultyName.isNotEmpty ? item.facultyName : 'TBA'),
+        'faculty': resolvedFaculty,
         'facultyName': item.facultyName,
+        'faculty_name': item.facultyName,
         'facultyEmail': item.facultyEmail,
+        'faculty_email': item.facultyEmail,
         'type': isLab ? 'Lab' : 'Theory',
       };
 
@@ -564,7 +605,7 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
           }
         }
 
-        final weeklyGrid = _fetchedWeeklyGrid ?? _buildWeeklyGridCache(activeCourses, courseNames);
+        final weeklyGrid = _buildWeeklyGridCache(activeCourses, courseNames);
         try {
           await supabase.from('user_semester_states').upsert({
             'user_id': user.id,
@@ -579,6 +620,8 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
         try {
           final cache = ref.read(cacheServiceProvider);
           await cache.invalidateDashboardSchedule(user.id, activeSemCode);
+          ref.invalidate(academicStateProvider);
+          ref.invalidate(currentSemesterCodeProvider);
         } catch (_) {}
       }
 

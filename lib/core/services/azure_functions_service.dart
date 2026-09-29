@@ -99,6 +99,20 @@ class AzureFunctionsService {
     });
     return response;
   }
+
+  /// Fetches degree curriculum advising recommendation data
+  Future<Map<String, dynamic>> getAdvisingCourses({
+    required String userId,
+    String? semester,
+    String? programCode,
+  }) async {
+    final response = await _postRequest('/api/get_advising_courses', {
+      'user_id': userId,
+      if (semester != null) 'semester': semester,
+      if (programCode != null) 'program_code': programCode,
+    });
+    return response;
+  }
 }
 
 final azureFunctionsServiceProvider = Provider<AzureFunctionsService>((ref) {

@@ -60,20 +60,30 @@ class DashboardController {
     // PHASE 0: Instant Cache Load from Hive
     if (state.lastValidScheduleData == null) {
       try {
+        final now = DateTime.now();
+        final targetDate = effectiveDate ??
+            (now.hour >= 20
+                ? DateTime(now.year, now.month, now.day).add(const Duration(days: 1))
+                : now);
+        final targetDateStr = DateFormat('yyyy-MM-dd').format(targetDate);
+
         final box = Hive.box('dashboard_box');
         for (final key in box.keys) {
           if (key is String && key.startsWith('${currentUser.id}_') && key.endsWith('_schedule')) {
             final data = box.get(key);
             if (data != null) {
               final cached = Map<String, dynamic>.from(jsonDecode(data as String) as Map);
-              final parts = key.split('_');
-              state.lastValidScheduleData = cached;
-              if (parts.length >= 3 && state.semesterCode.isEmpty) {
-                state.semesterCode = parts[1];
+              final cachedDateStr = cached['dateStr'] ?? cached['date']?.toString().split('T').first;
+              if (cachedDateStr == targetDateStr) {
+                final parts = key.split('_');
+                state.lastValidScheduleData = cached;
+                if (parts.length >= 3 && state.semesterCode.isEmpty) {
+                  state.semesterCode = parts[1];
+                }
+                state.loadingInit = false;
+                onStateChanged();
+                break;
               }
-              state.loadingInit = false;
-              onStateChanged();
-              break;
             }
           }
         }
@@ -164,7 +174,8 @@ class DashboardController {
 
     try {
       final profile = ref.read(profileProvider).value;
-      final bool isBiSemester = profile?.track == 'bi';
+      final userTrack = (profile?.track ?? '').toLowerCase();
+      final bool isBiSemester = userTrack.contains('bi') || userTrack.contains('phrm') || userTrack.contains('law') || userTrack.contains('llb');
 
       final results = await Future.wait<dynamic>([
         supabase
@@ -215,7 +226,12 @@ class DashboardController {
             title.contains('break') ||
             title.contains('leave') ||
             title.contains('off day') ||
-            title.contains('no classes');
+            title.contains('day off') ||
+            title.contains('no classes') ||
+            title.contains('university closed') ||
+            title.contains('closed') ||
+            title.contains('eid') ||
+            title.contains('puja');
         if (isHoliday && dateStr.isNotEmpty) {
           holidayDates.add(dateStr);
         }

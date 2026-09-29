@@ -59,7 +59,7 @@ class DashboardScheduleTimeline extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (nextClassItem != null) ...[
+        if (nextClassItem != null && status != 'holiday') ...[
           NextClassCard(
             item: nextClassItem,
             isToday: isToday,
@@ -94,14 +94,105 @@ class DashboardScheduleTimeline extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        if (status == 'holiday')
-          HeroCard(
-            iconInfo: Icons.celebration_rounded,
-            title: "Holiday",
-            subtitle: reason.isNotEmpty ? reason : "It's a holiday! Enjoy your day off.",
-            color: Colors.amberAccent,
-            iconMode: true,
-          )
+        if (status == 'holiday') ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFF59E0B).withValues(alpha: 0.18),
+                  const Color(0xFFD97706).withValues(alpha: 0.08),
+                  colors.surfaceNavyBlue.withValues(alpha: 0.6),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    border: Border.all(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.celebration_rounded,
+                    size: 38,
+                    color: Color(0xFFFBBF24),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "CAMPUS CLOSED",
+                    style: GoogleFonts.sora(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFFBBF24),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  reason.isNotEmpty ? reason : "University Holiday",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.sora(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  "No regular classes scheduled today. Relax, unwind & recharge! ✨",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.sora(
+                    fontSize: 13,
+                    color: Colors.white70,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (schedule.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Text(
+              "Scheduled Makeup Classes",
+              style: GoogleFonts.sora(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: colors.primaryCyan,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...schedule.map((item) => ScheduleCard(item: item)),
+          ],
+        ]
         else if (status == 'chill')
           HeroCard(
             iconInfo: Icons.self_improvement_rounded,

@@ -259,6 +259,15 @@ class AppDrawer extends ConsumerWidget {
                         ),
                         _buildDrawerItem(
                           context: context,
+                          icon: Icons.people_alt_outlined,
+                          title: "Faculty Reviews",
+                          route: '/services/faculty-directory',
+                          currentPath: currentPath,
+                          badge: "NEW",
+                          onTap: () => context.push('/services/faculty-directory'),
+                        ),
+                        _buildDrawerItem(
+                          context: context,
                           icon: Icons.assignment_ind_outlined,
                           title: "Faculty Assignment",
                           route: '/services/faculty-assignment',
@@ -380,6 +389,7 @@ class AppDrawer extends ConsumerWidget {
     required VoidCallback onTap,
     String? route,
     String? currentPath,
+    String? badge,
   }) {
     final bool isActive = route != null &&
         currentPath != null &&
@@ -445,6 +455,26 @@ class AppDrawer extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (badge != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.primaryCyan.withValues(alpha: 0.4), width: 0.8),
+                    ),
+                    child: Text(
+                      badge,
+                      style: GoogleFonts.sora(
+                        color: AppColors.primaryCyan,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 Icon(
                   Icons.chevron_right_rounded,
                   color: isActive

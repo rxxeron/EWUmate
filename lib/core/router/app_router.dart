@@ -38,6 +38,7 @@ import '../../features/results/presentation/grade_entry_screen.dart';
 import '../../features/profile/presentation/feedback_screen.dart';
 import '../../features/tutorials/presentation/tutorials_screen.dart';
 import '../../features/services/presentation/portal_sync_screen.dart';
+import '../../features/advising/presentation/advising_guide_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -78,6 +79,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(name: 'DegreeProgress', path: '/degree-progress', builder: (context, state) => const DegreeProgressScreen()),
           GoRoute(name: 'Schedule', path: '/schedule-manager', builder: (context, state) => const ScheduleScreen()),
           GoRoute(name: 'Services', path: '/services', builder: (context, state) => const ServicesScreen()),
+          GoRoute(name: 'AdvisingGuide', path: '/services/advising-guide', builder: (context, state) => const AdvisingGuideScreen()),
           GoRoute(name: 'CoverPage', path: '/services/cover-page', builder: (context, state) => const CoverPageScreen()),
           GoRoute(name: 'FacultyList', path: '/services/faculty-list', builder: (context, state) => const FacultyListScreen()),
           GoRoute(

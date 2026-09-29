@@ -43,7 +43,10 @@ class DashboardRepository {
 
     // Determine student track (PHRM/LAW vs Standard)
     final programName = track?.toUpperCase() ?? '';
-    final bool isBiSemester = programName.contains('PHRM') || programName.contains('LAW') || programName.contains('LLB');
+    final bool isBiSemester = programName.contains('PHRM') ||
+        programName.contains('LAW') ||
+        programName.contains('LLB') ||
+        programName.contains('BI');
 
     // Smart Invalidation Cache Check
     final cache = _cache;
@@ -107,22 +110,20 @@ class DashboardRepository {
             .select()
             .eq('user_id', effectiveUserId)
             .eq('date', dateStr),
-        // [2] Standard (Tri) holiday/swap
+        // [2] Standard (Tri) events for dateStr
         _supabase
             .from(standardTable)
             .select()
             .eq('event_date', dateStr)
-            .maybeSingle()
-            .catchError((_) => null),
-        // [3] Professional (Bi) holiday/swap
+            .catchError((_) => <dynamic>[]),
+        // [3] Professional (Bi) events for dateStr
         (phrmTable != null)
             ? _supabase
                 .from(phrmTable)
                 .select()
                 .eq('event_date', dateStr)
-                .maybeSingle()
-                .catchError((_) => null)
-            : Future.value(null),
+                .catchError((_) => <dynamic>[])
+            : Future.value(<dynamic>[]),
         // [4] Tasks
         _supabase
             .from('tasks')
@@ -159,8 +160,12 @@ class DashboardRepository {
       final exceptions = List<Map<String, dynamic>>.from(
         results[1] as List? ?? [],
       );
-      final standardEvent = results[2] as Map<String, dynamic>?;
-      final phrmEvent = results[3] as Map<String, dynamic>?;
+      final standardEvents = List<Map<String, dynamic>>.from(
+        (results[2] as List? ?? []).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
+      final phrmEvents = List<Map<String, dynamic>>.from(
+        (results[3] as List? ?? []).map((e) => Map<String, dynamic>.from(e as Map)),
+      );
       final tasksRaw = List<Map<String, dynamic>>.from(
         results[4] as List? ?? [],
       );
@@ -228,25 +233,24 @@ class DashboardRepository {
       String stdDay = dayName;
       bool stdIsHoliday = false;
       String stdReason = '';
-      if (standardEvent != null) {
-        String title = (standardEvent['title'] ?? standardEvent['name'] ?? '')
-            .toString()
-            .toLowerCase();
-        if (title.contains('regular sunday')) {
+      for (final event in standardEvents) {
+        final title = (event['title'] ?? event['name'] ?? '').toString();
+        final lowerTitle = title.toLowerCase();
+        if (lowerTitle.contains('regular sunday')) {
           stdDay = 'Sunday';
-        } else if (title.contains('regular monday')) {
+        } else if (lowerTitle.contains('regular monday')) {
           stdDay = 'Monday';
-        } else if (title.contains('regular tuesday')) {
+        } else if (lowerTitle.contains('regular tuesday')) {
           stdDay = 'Tuesday';
-        } else if (title.contains('regular wednesday')) {
+        } else if (lowerTitle.contains('regular wednesday')) {
           stdDay = 'Wednesday';
-        } else if (title.contains('regular thursday')) {
+        } else if (lowerTitle.contains('regular thursday')) {
           stdDay = 'Thursday';
-        } else if (_isActualHoliday(standardEvent, title)) {
+        }
+
+        if (_isActualHoliday(event, lowerTitle)) {
           stdIsHoliday = true;
-          stdReason =
-              (standardEvent['title'] ?? standardEvent['name'] ?? 'Holiday')
-                  .toString();
+          stdReason = title.isNotEmpty ? title : 'Holiday';
         }
       }
 
@@ -254,28 +258,57 @@ class DashboardRepository {
       String phrmDay = dayName;
       bool phrmIsHoliday = false;
       String phrmReason = '';
-      if (phrmEvent != null) {
-        String title = (phrmEvent['title'] ?? phrmEvent['name'] ?? '')
-            .toString()
-            .toLowerCase();
-        if (title.contains('regular sunday')) {
+      for (final event in phrmEvents) {
+        final title = (event['title'] ?? event['name'] ?? '').toString();
+        final lowerTitle = title.toLowerCase();
+        if (lowerTitle.contains('regular sunday')) {
           phrmDay = 'Sunday';
-        } else if (title.contains('regular monday')) {
+        } else if (lowerTitle.contains('regular monday')) {
           phrmDay = 'Monday';
-        } else if (title.contains('regular tuesday')) {
+        } else if (lowerTitle.contains('regular tuesday')) {
           phrmDay = 'Tuesday';
-        } else if (title.contains('regular wednesday')) {
+        } else if (lowerTitle.contains('regular wednesday')) {
           phrmDay = 'Wednesday';
-        } else if (title.contains('regular thursday')) {
+        } else if (lowerTitle.contains('regular thursday')) {
           phrmDay = 'Thursday';
-        } else if (_isActualHoliday(phrmEvent, title)) {
+        }
+
+        if (_isActualHoliday(event, lowerTitle)) {
           phrmIsHoliday = true;
-          phrmReason = (phrmEvent['title'] ?? phrmEvent['name'] ?? 'Holiday')
-              .toString();
+          phrmReason = title.isNotEmpty ? title : 'Holiday';
         }
       }
 
-      // 4. Build combined classes with Independent Tracking
+      // 4. Check if student's track is on Holiday (University-wide or Track-specific)
+      final bool isTodayHoliday = isBiSemester
+          ? (phrmIsHoliday || stdIsHoliday)
+          : stdIsHoliday;
+      final String holidayReason = isBiSemester
+          ? (phrmReason.isNotEmpty ? phrmReason : stdReason)
+          : (stdReason.isNotEmpty ? stdReason : phrmReason);
+
+      if (isTodayHoliday) {
+        final payload = {
+          'status': 'holiday',
+          'reason': holidayReason.isNotEmpty ? holidayReason : 'Holiday',
+          'template': <Map<String, dynamic>>[], // Zero template classes on a holiday!
+          'exceptions': exceptions,
+          'tasks': tasksRaw,
+          'date': date,
+          'dateStr': dateStr,
+        };
+
+        final cache = _cache;
+        if (cache != null) {
+          final cachePayload = {...payload, 'date': date.toIso8601String()};
+          final safeSem = CourseUtils.cleanSemester(semesterCode);
+          cache.cacheDashboardSchedule(effectiveUserId, safeSem, cachePayload);
+        }
+
+        return payload;
+      }
+
+      // 5. Build combined classes with Independent Tracking
       List<Map<String, dynamic>> hybridClasses = [];
 
       bool isStdOver =
@@ -323,22 +356,14 @@ class DashboardRepository {
             .compareTo((b['startTime'] ?? b['start_time'] ?? '').toString()),
       );
 
-      // 5. Status Calculation: Holiday only if ALL relevant tracks are on holiday
-      // Status shown to user in the Banner
+      // 6. Status Calculation for non-holiday
       String status = (hybridClasses.isEmpty && exceptions.isEmpty)
           ? 'chill'
           : 'normal';
       String reason = '';
 
-      // If there are NO template classes and the day is a holiday for one of the tracks
       if (hybridClasses.isEmpty) {
-        if (phrmIsHoliday && phrmReason.isNotEmpty) {
-          status = 'holiday';
-          reason = phrmReason;
-        } else if (stdIsHoliday && stdReason.isNotEmpty) {
-          status = 'holiday';
-          reason = stdReason;
-        } else if (isPhrmOver && isStdOver) {
+        if (isPhrmOver && isStdOver) {
           status = 'chill';
           reason = 'The semester classes have officially concluded.';
         } else if (isPhrmNotStarted && isStdNotStarted) {
@@ -413,7 +438,12 @@ class DashboardRepository {
         lowerTitle.contains('break') ||
         lowerTitle.contains('leave') ||
         lowerTitle.contains('off day') ||
-        lowerTitle.contains('no classes')) {
+        lowerTitle.contains('day off') ||
+        lowerTitle.contains('no classes') ||
+        lowerTitle.contains('university closed') ||
+        lowerTitle.contains('closed') ||
+        lowerTitle.contains('eid') ||
+        lowerTitle.contains('puja')) {
       return true;
     }
     return false;
@@ -451,6 +481,14 @@ class DashboardRepository {
         }).toList();
 
         if (matches.isNotEmpty) {
+          // Prioritize holiday match if multiple events exist for this date
+          for (final m in matches) {
+            final ev = m as Map<String, dynamic>;
+            final title = (ev['title'] ?? ev['name'] ?? '').toString().toLowerCase();
+            if (_isActualHoliday(ev, title)) {
+              return ev;
+            }
+          }
           return matches.first as Map<String, dynamic>;
         }
       }

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import '../../../core/services/fcm_service.dart';
 import '../../../core/theme/ewu_theme_extension.dart';
@@ -16,6 +15,7 @@ class DashboardBannerTray extends ConsumerStatefulWidget {
   final bool showAdvisingBanner;
   final VoidCallback onAdvisingTap;
   final Map<String, dynamic>? semConfig;
+  final String? holidayTitle;
 
   const DashboardBannerTray({
     super.key,
@@ -25,6 +25,7 @@ class DashboardBannerTray extends ConsumerStatefulWidget {
     required this.showAdvisingBanner,
     required this.onAdvisingTap,
     this.semConfig,
+    this.holidayTitle,
   });
 
   @override
@@ -32,9 +33,7 @@ class DashboardBannerTray extends ConsumerStatefulWidget {
 }
 
 class _DashboardBannerTrayState extends ConsumerState<DashboardBannerTray> with WidgetsBindingObserver {
-  static const String _kFacultyReviewsBannerKey = 'faculty_reviews_banner_dismissed_v1';
   bool _isExpanded = false;
-  bool _isFacultyReviewsDismissed = true;
   bool _isNotificationPermissionGranted = true;
   bool _isNotificationBannerDismissed = false;
 
@@ -42,7 +41,6 @@ class _DashboardBannerTrayState extends ConsumerState<DashboardBannerTray> with 
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkFacultyReviewsBanner();
     _checkNotificationPermission();
   }
 
@@ -74,26 +72,23 @@ class _DashboardBannerTrayState extends ConsumerState<DashboardBannerTray> with 
     } catch (_) {}
   }
 
-  Future<void> _checkFacultyReviewsBanner() async {
-    final prefs = await SharedPreferences.getInstance();
-    final dismissed = prefs.getBool(_kFacultyReviewsBannerKey) ?? false;
-    if (mounted) {
-      setState(() => _isFacultyReviewsDismissed = dismissed);
-    }
-  }
-
-  Future<void> _dismissFacultyReviewsBanner() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kFacultyReviewsBannerKey, true);
-    if (mounted) {
-      setState(() => _isFacultyReviewsDismissed = true);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.ewuColors;
     final List<Widget> activeBanners = [];
+
+    // 0. Holiday Announcement Banner (Prominent celebratory alert)
+    if (widget.holidayTitle != null && widget.holidayTitle!.isNotEmpty) {
+      activeBanners.add(_buildAlertCard(
+        context,
+        icon: Icons.celebration_rounded,
+        iconColor: const Color(0xFFFBBF24),
+        title: "University Holiday Today",
+        subtitle: "${widget.holidayTitle!} • Campus is closed & regular classes are suspended.",
+        actionLabel: "Calendar",
+        onAction: () => context.push('/academic-calendar'),
+      ));
+    }
 
     // 0. Notification Permission Banner (Top priority alert if disabled)
     if (!_isNotificationPermissionGranted && !_isNotificationBannerDismissed) {

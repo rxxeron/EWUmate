@@ -77,19 +77,38 @@ class CacheService {
   Future<void> cacheDashboardSchedule(
     String userId,
     String semesterCode,
-    Map<String, dynamic> data,
-  ) {
+    Map<String, dynamic> data, {
+    String? dateStr,
+  }) {
     data['_cache_updated_at'] = DateTime.now().toIso8601String();
+    if (dateStr != null) {
+      setMapData(_dashboardBox, '${userId}_${semesterCode}_${dateStr}_schedule', data);
+    }
     return setMapData(_dashboardBox, '${userId}_${semesterCode}_schedule', data);
   }
 
-  Map<String, dynamic>? getCachedDashboardSchedule(String userId, String semesterCode) =>
-      getMapData(_dashboardBox, '${userId}_${semesterCode}_schedule');
+  Map<String, dynamic>? getCachedDashboardSchedule(
+    String userId, 
+    String semesterCode, {
+    String? dateStr,
+  }) {
+    if (dateStr != null) {
+      final dateSpecific = getMapData(_dashboardBox, '${userId}_${semesterCode}_${dateStr}_schedule');
+      if (dateSpecific != null) return dateSpecific;
+    }
+    return getMapData(_dashboardBox, '${userId}_${semesterCode}_schedule');
+  }
 
   Future<void> invalidateDashboardSchedule(String userId, String semesterCode) async {
     try {
       final box = Hive.box(_dashboardBox);
-      await box.delete('${userId}_${semesterCode}_schedule');
+      final keysToDelete = box.keys.where((k) =>
+          k is String &&
+          k.startsWith('${userId}_$semesterCode') &&
+          k.endsWith('_schedule')).toList();
+      for (final k in keysToDelete) {
+        await box.delete(k);
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[CacheService] invalidateDashboardSchedule error: $e');
     }

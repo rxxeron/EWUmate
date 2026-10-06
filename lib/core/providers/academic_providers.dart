@@ -25,6 +25,15 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
   // 1. Yield Cache Immediately if available (Frame 1)
   if (cachedSem != null) {
     yield AcademicState.fromJson(cachedSem);
+
+    // If cache is fresh (< 1 day old), do not hit database
+    final cacheUpdatedAtStr = cachedSem['_cache_updated_at'] as String?;
+    if (cacheUpdatedAtStr != null) {
+      final cachedTime = DateTime.tryParse(cacheUpdatedAtStr);
+      if (cachedTime != null && DateTime.now().difference(cachedTime) < const Duration(days: 1)) {
+        return;
+      }
+    }
   }
 
   try {

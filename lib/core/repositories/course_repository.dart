@@ -5,17 +5,20 @@ import '../models/course_metadata.dart';
 import '../models/course_section.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
+import '../services/redis_service.dart';
 
 part 'course_repository.g.dart';
 
 class CourseRepository {
   final SupabaseClient _supabase;
   final CacheService _cache;
+  final RedisService _redis;
+  final Map<String, List<Map<String, dynamic>>> _memorySemesterSections = {};
 
-  CourseRepository(this._supabase, this._cache);
+  CourseRepository(this._supabase, this._cache, this._redis);
 
   Future<List<CourseMetadata>> getAllCourses({int offset = 0, int limit = 3000}) async {
-    // 1. Try cache first
+    // 1. Try local cache first (L1)
     final cached = _cache.getMapData('course_catalog', 'full_list');
     if (cached != null && cached['data'] != null) {
       final updatedAtStr = cached['updated_at'] as String?;
@@ -27,7 +30,6 @@ class CourseRepository {
         }
       }
       if (isStale) {
-        // Trigger background sync if cache is older than 7 days
         _fetchAllAndCache(offset, limit);
       }
       return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
@@ -37,6 +39,22 @@ class CourseRepository {
   }
 
   Future<List<CourseMetadata>> _fetchAllAndCache(int offset, int limit) async {
+    // 2. Try Redis cache (L2)
+    try {
+      final redisList = await _redis.getList('global:course_metadata');
+      if (redisList != null && redisList.isNotEmpty) {
+        final results = redisList.map((e) => CourseMetadata.fromJson(Map<String, dynamic>.from(e))).toList();
+        _cache.setMapData('course_catalog', 'full_list', {
+          'data': results.map((e) => e.toJson()).toList(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+        return results;
+      }
+    } catch (e) {
+      if (kDebugMode) print('Redis course_metadata lookup failed: $e');
+    }
+
+    // 3. Fallback to Supabase Postgres (L3)
     try {
       List<CourseMetadata> allResults = [];
       int currentOffset = offset;
@@ -129,6 +147,32 @@ class CourseRepository {
         alt = '${match.group(1)}${match.group(2)}';
       }
 
+      // Check Redis cache for full semester course sections if available
+      try {
+        List<Map<String, dynamic>>? semesterData = _memorySemesterSections[safeSem];
+        if (semesterData == null) {
+          final redisCourses = await _redis.getList('global:courses:$safeSem');
+          if (redisCourses != null && redisCourses.isNotEmpty) {
+            semesterData = redisCourses.map((e) => Map<String, dynamic>.from(e)).toList();
+            _memorySemesterSections[safeSem] = semesterData;
+          }
+        }
+
+        if (semesterData != null && semesterData.isNotEmpty) {
+          final matched = semesterData.where((e) {
+            final cCode = (e['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
+            if (cCode == base || (alt.isNotEmpty && cCode == alt)) return true;
+            return cCode.contains(base);
+          }).toList();
+
+          if (matched.isNotEmpty) {
+            return matched.map((e) => _mapToCourseSection(Map<String, dynamic>.from(e))).toList();
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) print('Redis section lookup error: $e');
+      }
+
       final String fuzzyBase = base.split('').join('%');
       final String orClause = alt.isNotEmpty 
           ? 'course_code.ilike.%$fuzzyBase%,course_code.ilike.%${alt.split('').join('%')}%'
@@ -139,29 +183,29 @@ class CourseRepository {
           .select()
           .or(orClause);
 
-      return (data as List).map((e) {
-        final map = Map<String, dynamic>.from(e);
-        // Fallback ids if they don't exactly map
-        map['id'] = map['id']?.toString() ?? e['course_code'];
-        map['code'] = map['course_code'] ?? map['code'];
-        map['section'] = map['section_number'] ?? map['section'];
-        map['sessions'] = (map['schedule_data'] as List? ?? []).map((s) {
-          final sessionMap = Map<String, dynamic>.from(s);
-          // Standardize for the current model generator (which expects snake_case)
-          sessionMap['start_time'] = sessionMap['startTime'] ?? sessionMap['start_time'];
-          sessionMap['end_time'] = sessionMap['endTime'] ?? sessionMap['end_time'];
-          return sessionMap;
-        }).toList();
-        
-        map['capacity'] = map['capacity']?.toString() ?? '0/0';
-        map['credits'] = map['credit_val']?.toString() ?? '3.0';
-        return CourseSection.fromJson(map);
-      }).toList();
+      return (data as List).map((e) => _mapToCourseSection(Map<String, dynamic>.from(e))).toList();
     } catch (e) {
       // Legacy app returned empty list on missing table/error
       return [];
     }
   }
+
+  CourseSection _mapToCourseSection(Map<String, dynamic> map) {
+    map['id'] = map['id']?.toString() ?? map['course_code'];
+    map['code'] = map['course_code'] ?? map['code'];
+    map['section'] = map['section_number'] ?? map['section'];
+    map['sessions'] = (map['schedule_data'] as List? ?? []).map((s) {
+      final sessionMap = Map<String, dynamic>.from(s);
+      sessionMap['start_time'] = sessionMap['startTime'] ?? sessionMap['start_time'];
+      sessionMap['end_time'] = sessionMap['endTime'] ?? sessionMap['end_time'];
+      return sessionMap;
+    }).toList();
+    
+    map['capacity'] = map['capacity']?.toString() ?? '0/0';
+    map['credits'] = map['credit_val']?.toString() ?? '3.0';
+    return CourseSection.fromJson(map);
+  }
+
   Future<List<CourseMetadata>> getSemesterCourses(String semesterCode) async {
     final cacheKey = 'sem_${semesterCode.toLowerCase()}';
     
@@ -207,6 +251,35 @@ class CourseRepository {
         .toLowerCase()
         .replaceAll(' ', '')
         .replaceAll('_', '');
+
+    // Check Redis for full semester course list first
+    try {
+      final redisCourses = await _redis.getList('global:courses:$safeSem');
+      if (redisCourses != null && redisCourses.isNotEmpty) {
+        final Map<String, CourseMetadata> unique = {};
+        for (final e in redisCourses) {
+          final code = (e['course_code'] ?? '').toString();
+          if (code.isEmpty || unique.containsKey(code)) continue;
+          unique[code] = CourseMetadata(
+            code: code,
+            name: (e['course_name'] ?? e['name'] ?? 'Unknown').toString(),
+            creditVal: (e['credit_val'] as num?)?.toDouble() ?? 3.0,
+          );
+        }
+        final results = unique.values.toList();
+        if (results.isNotEmpty) {
+          _cache.setMapData('course_catalog', cacheKey, {
+            'data': results.map((e) => e.toJson()).toList(),
+            'updated_at': DateTime.now().toIso8601String(),
+            'version': serverVersion ?? 0,
+          });
+          return results;
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) print('Redis semester courses lookup error: $e');
+    }
+
     final tableName = 'courses_$safeSem';
 
     try {
@@ -264,6 +337,7 @@ CourseRepository courseRepository(CourseRepositoryRef ref) {
   return CourseRepository(
     ref.watch(supabaseClientProvider),
     ref.watch(cacheServiceProvider),
+    ref.watch(redisServiceProvider),
   );
 }
 

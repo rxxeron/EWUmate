@@ -156,8 +156,6 @@ class SemesterProgressRepository {
           .single();
       
       _updateProgressCache(userId, semesterCode, res);
-      // Trigger background credit recalculation
-      unawaited(_supabase.functions.invoke('sync-academic-stats').then<void>((_) {}, onError: (_) {}));
     } catch (e) {
       if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
       _updateProgressCache(userId, semesterCode, data);

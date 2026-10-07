@@ -18,6 +18,7 @@ import '../../auth/auth_providers.dart';
 import '../../semester_progress/semester_progress_repository.dart';
 import '../dashboard_logic.dart';
 import '../dashboard_repository.dart';
+import '../exception_repository.dart';
 
 class DashboardState {
   Map<String, dynamic>? lastValidScheduleData;
@@ -174,44 +175,71 @@ class DashboardController {
 
     try {
       final profile = ref.read(profileProvider).value;
-      final userTrack = (profile?.track ?? '').toLowerCase();
-      final bool isBiSemester = userTrack.contains('bi') || userTrack.contains('phrm') || userTrack.contains('law') || userTrack.contains('llb');
+      final bool isBiSemester = CourseUtils.normalizeTrack(profile?.track) == 'bi_semester';
+      final cacheService = ref.read(cacheServiceProvider);
+
+      // Fast check: retrieve weeklyGrid and semConfig already in memory / cache
+      Map<String, dynamic> grid = {};
+      final cachedSchedule = state.lastValidScheduleData;
+      if (cachedSchedule != null && cachedSchedule['weekly_grid'] is Map<String, dynamic>) {
+        grid = cachedSchedule['weekly_grid'] as Map<String, dynamic>;
+      }
+
+      // If weeklyGrid was not preserved in scheduleData, check user_semester_states
+      final Future<dynamic> gridFuture = grid.isNotEmpty
+          ? Future.value({'weekly_grid_cache': grid})
+          : supabase
+              .from('user_semester_states')
+              .select('weekly_grid_cache')
+              .eq('user_id', currentUser.id)
+              .eq('semester_code', state.semesterCode)
+              .maybeSingle();
+
+      // Read calendar holidays with local CacheService or Redis fallback
+      final cleanSem = CourseUtils.cleanSemester(state.semesterCode).toLowerCase();
+      final calendarTable = CourseUtils.semesterTable(
+        'calendar',
+        state.semesterCode,
+        cycleType: isBiSemester ? 'bi_semester' : 'tri_semester',
+      );
+
+      final Future<dynamic> holidaysFuture = Future<dynamic>(() async {
+        // Try Hive cache first
+        final cachedHolidays = cacheService.getMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays');
+        if (cachedHolidays != null && cachedHolidays['events'] is List) {
+          return cachedHolidays['events'] as List;
+        }
+        try {
+          final res = await supabase.from(calendarTable).select();
+          if (res.isNotEmpty) {
+            cacheService.setMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays', {'events': res});
+          }
+          return res;
+        } catch (_) {
+          return <dynamic>[];
+        }
+      });
 
       final results = await Future.wait<dynamic>([
-        supabase
-            .from('user_semester_states')
-            .select('weekly_grid_cache')
-            .eq('user_id', currentUser.id)
-            .eq('semester_code', state.semesterCode)
-            .maybeSingle(),
-        supabase
-            .from('active_semester')
-            .select('classes_start_date, classes_end_date')
-            .eq('track', isBiSemester ? 'bi_semester' : 'tri_semester')
-            .maybeSingle(),
-        supabase
-            .from(CourseUtils.semesterTable(
-              'calendar',
-              state.semesterCode,
-              cycleType: isBiSemester ? 'bi_semester' : 'tri_semester',
-            ))
-            .select()
-            .catchError((_) => []),
-        supabase
-            .from('schedule_exceptions')
-            .select()
-            .eq('user_id', currentUser.id),
+        gridFuture,
+        holidaysFuture,
+        ExceptionRepository().fetchExceptions(),
         ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(currentUser.id, state.semesterCode),
       ]);
 
-      final grid = (results[0] as Map<String, dynamic>?)?['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
-      final activeSem = results[1] as Map<String, dynamic>?;
-      final holidays = results[2] as List;
-      final exceptions = results[3] as List;
-      final progressData = results[4] as List<Map<String, dynamic>>;
+      grid = (results[0] as Map<String, dynamic>?)?['weekly_grid_cache'] as Map<String, dynamic>? ?? grid;
+      final holidays = results[1] as List;
+      final exceptions = results[2] as List;
+      final progressData = results[3] as List<Map<String, dynamic>>;
 
-      DateTime? startDate = DateTime.tryParse(activeSem?['classes_start_date']?.toString() ?? '');
-      DateTime? endDate = DateTime.tryParse(activeSem?['classes_end_date']?.toString() ?? '');
+      // Resolve classes_start_date & classes_end_date from Riverpod academicState / semConfig
+      DateTime? startDate;
+      DateTime? endDate;
+      final semConfig = state.semConfig;
+      if (semConfig != null) {
+        startDate = DateTime.tryParse(semConfig['classes_start_date']?.toString() ?? '');
+        endDate = DateTime.tryParse(semConfig['classes_end_date']?.toString() ?? '');
+      }
       startDate ??= DateTime.now().subtract(const Duration(days: 45));
       endDate ??= DateTime.now().add(const Duration(days: 45));
 

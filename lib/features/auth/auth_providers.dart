@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/profile.dart';
 import '../../core/services/cache_service.dart';
 import '../../core/repositories/auth_repository.dart';
+import '../../core/utils/course_utils.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final profileProvider = StreamProvider<Profile?>((ref) async* {
@@ -100,15 +101,13 @@ final requiresGradeEntryProvider = StreamProvider<bool>((ref) async* {
       return;
     }
 
-    // NORMALIZE: Map 'tri' -> 'tri_semester' to match DB Enum constraints
-    String track = profile.track ?? profile.semesterType;
-    if (track == 'tri') track = 'tri_semester';
-    if (track == 'bi') track = 'bi_semester';
+    // NORMALIZE: Ensure track matches DB Enum ('bi_semester' or 'tri_semester')
+    final track = CourseUtils.normalizeTrack(profile.track ?? profile.semesterType);
 
     // Fetch active semester and unsubmitted enrollments concurrently
     final results = await Future.wait([
       client.from('active_semester')
-          .select()
+          .select('current_semester_code, grade_submission_start')
           .eq('track', track)
           .limit(1)
           .maybeSingle()

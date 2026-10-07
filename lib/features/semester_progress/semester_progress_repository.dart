@@ -16,15 +16,36 @@ class SemesterProgressRepository {
   final CacheService _cache;
   SemesterProgressRepository(this._supabase, this._cache);
 
+  static String? _cachedActiveSemCode;
+  static DateTime? _cachedActiveSemCodeTime;
+
   Future<String> getActiveSemesterCode() async {
+    if (_cachedActiveSemCode != null &&
+        _cachedActiveSemCodeTime != null &&
+        DateTime.now().difference(_cachedActiveSemCodeTime!).inHours < 12) {
+      return _cachedActiveSemCode!;
+    }
+
+    final local = _cache.getMapData('semester_progress_box', 'active_semester_code');
+    if (local != null && local['code'] != null) {
+      _cachedActiveSemCode = local['code'] as String;
+      _cachedActiveSemCodeTime = DateTime.now();
+      return _cachedActiveSemCode!;
+    }
+
     try {
-      final config = await _supabase.from('active_semester').select().limit(1).maybeSingle();
-      final code = config?['current_semester_code'] ?? 'Spring2026';
+      final config = await _supabase
+          .from('active_semester')
+          .select('current_semester_code')
+          .limit(1)
+          .maybeSingle();
+      final code = config?['current_semester_code'] as String? ?? 'Spring2026';
+      _cachedActiveSemCode = code;
+      _cachedActiveSemCodeTime = DateTime.now();
       _cache.setMapData('semester_progress_box', 'active_semester_code', {'code': code});
       return code;
-    } catch(e) {
-      final cached = _cache.getMapData('semester_progress_box', 'active_semester_code');
-      return cached?['code'] ?? 'Spring2026';
+    } catch (e) {
+      return local?['code'] ?? 'Spring2026';
     }
   }
 
@@ -34,8 +55,8 @@ class SemesterProgressRepository {
     // 1. Try cache first
     final cached = _cache.getMapData('semester_progress_box', cacheKey);
     if (cached != null && cached['data'] != null) {
-      // Trigger background sync
-      _fetchProgressAndCache(userId, semesterCode, cacheKey);
+      // Trigger background sync safely
+      _fetchProgressAndCache(userId, semesterCode, cacheKey).catchError((_) => <Map<String, dynamic>>[]);
       return List<Map<String, dynamic>>.from(cached['data']);
     }
 

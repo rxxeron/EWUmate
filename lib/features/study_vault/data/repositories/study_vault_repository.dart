@@ -22,7 +22,9 @@ class StudyVaultRepository {
     String? fileType,
     String? searchQuery,
   }) async {
-    var query = _supabase.from('study_materials').select('*, profiles:uploader_id(full_name)');
+    var query = _supabase.from('study_materials').select(
+          'id, uploader_id, faculty_initial, course_code, semester, file_type, drive_file_id, file_name, file_size_bytes, created_at, updated_at, status, profiles:uploader_id(full_name)',
+        );
 
     // Only show approved materials publicly
     query = query.eq('status', 'approved');
@@ -46,7 +48,7 @@ class StudyVaultRepository {
       query = query.or('file_name.ilike.%$q%,course_code.ilike.%$q%,faculty_initial.ilike.%$q%');
     }
 
-    final data = await query.order('created_at', ascending: false);
+    final data = await query.order('created_at', ascending: false).limit(100);
     return data.map((e) => StudyMaterial.fromJson(e)).toList();
   }
 
@@ -191,9 +193,12 @@ class StudyVaultRepository {
 
     final data = await _supabase
         .from('study_materials')
-        .select('*, profiles:uploader_id(full_name)')
+        .select(
+          'id, uploader_id, faculty_initial, course_code, semester, file_type, drive_file_id, file_name, file_size_bytes, created_at, updated_at, status, profiles:uploader_id(full_name)',
+        )
         .eq('uploader_id', user.id)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(50);
 
     return data.map((e) => StudyMaterial.fromJson(e)).toList();
   }

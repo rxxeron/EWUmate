@@ -15,7 +15,9 @@ final sessionGuardianProvider = Provider<SessionGuardian>((ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final profileRepo = ref.watch(profileRepositoryProvider);
   final fcmService = ref.watch(fcmServiceProvider);
-  return SessionGuardian(supabase, profileRepo, fcmService);
+  final guardian = SessionGuardian(supabase, profileRepo, fcmService);
+  ref.onDispose(() => guardian.dispose());
+  return guardian;
 });
 
 class SessionGuardian {

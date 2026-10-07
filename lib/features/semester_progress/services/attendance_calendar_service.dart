@@ -19,6 +19,9 @@ class AttendanceCalendarResult {
 }
 
 class AttendanceCalendarService {
+  static final Map<String, (DateTime startDate, DateTime endDate, DateTime cachedAt)> _datesCache = {};
+  static const Duration _datesCacheTtl = Duration(hours: 12);
+
   /// Generates the semester class session timeline by cross-referencing:
   /// 1. Semester start & end dates from active_semester
   /// 2. User's routine grid cache (class weekdays and session types)
@@ -35,19 +38,36 @@ class AttendanceCalendarService {
       throw Exception("User not logged in");
     }
 
-    final resolvedTrack = userTrack == 'bi' ? 'bi_semester' : 'tri_semester';
+    final resolvedTrack = CourseUtils.normalizeTrack(userTrack);
 
-    // 1. Fetch active semester start/end dates
-    final activeSemRes = await Supabase.instance.client
-        .from('active_semester')
-        .select('classes_start_date, classes_end_date')
-        .eq('track', resolvedTrack)
-        .maybeSingle();
+    // 1. Fetch active semester start/end dates (with 12h in-memory cache)
+    DateTime startDate;
+    DateTime endDate;
 
-    DateTime? startDate = DateTime.tryParse(activeSemRes?['classes_start_date']?.toString() ?? '');
-    DateTime? endDate = DateTime.tryParse(activeSemRes?['classes_end_date']?.toString() ?? '');
-    startDate ??= DateTime.now().subtract(const Duration(days: 45));
-    endDate ??= DateTime.now().add(const Duration(days: 45));
+    final cachedEntry = _datesCache[resolvedTrack];
+    if (cachedEntry != null && DateTime.now().difference(cachedEntry.$3) < _datesCacheTtl) {
+      startDate = cachedEntry.$1;
+      endDate = cachedEntry.$2;
+    } else {
+      try {
+        final activeSemRes = await Supabase.instance.client
+            .from('active_semester')
+            .select('classes_start_date, classes_end_date')
+            .eq('track', resolvedTrack)
+            .maybeSingle();
+
+        final parsedStart = DateTime.tryParse(activeSemRes?['classes_start_date']?.toString() ?? '');
+        final parsedEnd = DateTime.tryParse(activeSemRes?['classes_end_date']?.toString() ?? '');
+        startDate = parsedStart ?? DateTime.now().subtract(const Duration(days: 45));
+        endDate = parsedEnd ?? DateTime.now().add(const Duration(days: 45));
+
+        _datesCache[resolvedTrack] = (startDate, endDate, DateTime.now());
+      } catch (e) {
+        debugPrint('[Attendance] active_semester fetch error: $e');
+        startDate = cachedEntry?.$1 ?? DateTime.now().subtract(const Duration(days: 45));
+        endDate = cachedEntry?.$2 ?? DateTime.now().add(const Duration(days: 45));
+      }
+    }
 
     // 2. Fetch weekly grid template to identify class weekdays
     final stateData = await Supabase.instance.client

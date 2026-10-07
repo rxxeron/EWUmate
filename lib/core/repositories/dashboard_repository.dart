@@ -23,7 +23,7 @@ class DashboardRepository {
     final safeSem = CourseUtils.cleanSemester(semesterCode);
     final cached = _cache.getCachedDashboardAnalytics(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheAnalytics(userId, safeSem);
+      _fetchAndCacheAnalytics(userId, safeSem).catchError((_) => null);
       return SemesterAnalytics.fromJson(cached);
     }
     return await _fetchAndCacheAnalytics(userId, safeSem);
@@ -57,7 +57,7 @@ class DashboardRepository {
     final safeSem = CourseUtils.cleanSemester(semesterCode);
     final cached = _cache.getCachedDashboardSchedule(userId, safeSem);
     if (cached != null) {
-      _fetchAndCacheState(userId, safeSem);
+      _fetchAndCacheState(userId, safeSem).catchError((_) => null);
       return UserSemesterState.fromJson(cached);
     }
     return await _fetchAndCacheState(userId, safeSem);

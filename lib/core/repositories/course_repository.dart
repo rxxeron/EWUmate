@@ -55,8 +55,8 @@ class CourseRepository {
     }
 
     // 3. Fallback to Supabase Postgres (L3)
+    List<CourseMetadata> allResults = [];
     try {
-      List<CourseMetadata> allResults = [];
       int currentOffset = offset;
       const int pageSize = 1000;
       
@@ -78,16 +78,24 @@ class CourseRepository {
         if (list.length < fetchSize) break;
       }
 
-      // Update Cache
+      // Update Local Cache
       _cache.setMapData('course_catalog', 'full_list', {
         'data': allResults.map((e) => e.toJson()).toList(),
         'updated_at': DateTime.now().toIso8601String(),
       });
 
+      // Populate Redis L2 Cache asynchronously with 7-day TTL
+      _redis.set(
+        'global:course_metadata',
+        allResults.map((e) => e.toJson()).toList(),
+        ttl: const Duration(days: 7),
+      );
+
       return allResults;
     } catch (e) {
       if (kDebugMode) print('Failed to load courses from network: $e');
-      return [];
+      // If we managed to fetch partial results, return them instead of discarding
+      return allResults;
     }
   }
 
@@ -154,6 +162,9 @@ class CourseRepository {
           final redisCourses = await _redis.getList('global:courses:$safeSem');
           if (redisCourses != null && redisCourses.isNotEmpty) {
             semesterData = redisCourses.map((e) => Map<String, dynamic>.from(e)).toList();
+            if (_memorySemesterSections.length >= 3) {
+              _memorySemesterSections.remove(_memorySemesterSections.keys.first);
+            }
             _memorySemesterSections[safeSem] = semesterData;
           }
         }

@@ -178,9 +178,12 @@ class FacultyAssignmentRepository {
 
     final res = await _client
         .from('faculty_assignment_submissions')
-        .select('*')
+        .select(
+          'id, user_id, course_code, section, faculty_initial, semester, screenshot_url, status, admin_note, created_at, updated_at',
+        )
         .eq('user_id', userId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(50);
 
     return (res as List)
         .map((e) => FacultyAssignmentSubmission.fromJson(e as Map<String, dynamic>))

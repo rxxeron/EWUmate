@@ -35,13 +35,21 @@ class PendingNotificationAction {
   });
 }
 
-final fcmServiceProvider = Provider<FCMService>((ref) => FCMService(ref));
+final fcmServiceProvider = Provider<FCMService>((ref) {
+  final service = FCMService(ref);
+  ref.onDispose(() => service.dispose());
+  return service;
+});
 
 class FCMService {
   final Ref _ref;
   FirebaseMessaging get _messaging => FirebaseMessaging.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  
+  StreamSubscription<String>? _tokenRefreshSub;
+  StreamSubscription<RemoteMessage>? _onMessageSub;
+  StreamSubscription<RemoteMessage>? _onMessageOpenedAppSub;
 
   void _showStatusChip(String message, {bool isError = false, bool isSuccess = false}) {
     if (kDebugMode) {
@@ -169,9 +177,9 @@ class FCMService {
         }
       }
       
-      _messaging.onTokenRefresh.listen((t) => _saveTokenToDatabase(t));
+      _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _saveTokenToDatabase(t));
 
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _onMessageSub = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         RemoteNotification? notification = message.notification;
         if (notification != null) {
           final routingUrl = message.data['url'] as String?;
@@ -218,7 +226,7 @@ class FCMService {
         }
       });
 
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _onMessageOpenedAppSub = FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         // Add 800ms delay to let the app resume and route state settle perfectly
         Future.delayed(const Duration(milliseconds: 800), () {
           final img = message.notification?.android?.imageUrl ?? 
@@ -433,6 +441,12 @@ class FCMService {
         ),
       ),
     );
+  }
+
+  void dispose() {
+    _tokenRefreshSub?.cancel();
+    _onMessageSub?.cancel();
+    _onMessageOpenedAppSub?.cancel();
   }
 }
 

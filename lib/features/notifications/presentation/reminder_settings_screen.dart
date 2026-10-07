@@ -7,6 +7,7 @@ import '../../../core/models/profile.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../../core/providers/supabase_provider.dart';
+import '../../../core/utils/course_utils.dart';
 import 'widgets/reminder_duration_picker_dialog.dart';
 import 'widgets/reminder_schedule_preview_sheet.dart';
 
@@ -55,11 +56,11 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
       if (activeSem == null) {
         try {
           final profile = ref.read(userProfileProvider).valueOrNull;
-          final track = profile?.track ?? 'tri_semester';
+          final track = CourseUtils.normalizeTrack(profile?.track);
           final semRes = await supabase
               .from('active_semester')
               .select('current_semester_code')
-              .eq('track', track == 'bi' ? 'bi_semester' : (track == 'tri' ? 'tri_semester' : track))
+              .eq('track', track)
               .maybeSingle();
           activeSem = semRes?['current_semester_code']?.toString();
         } catch (e) {

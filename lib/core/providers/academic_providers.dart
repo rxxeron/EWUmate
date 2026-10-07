@@ -6,6 +6,7 @@ import 'package:ewumate/core/repositories/active_semester_repository.dart';
 import 'package:ewumate/core/services/cache_service.dart';
 import 'package:ewumate/core/models/academic_state.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 
 final programDetailsProvider = FutureProvider.family<Map<String, dynamic>?, String>((ref, programCode) async {
   final repo = ref.watch(progressRepositoryProvider);
@@ -39,7 +40,7 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
   try {
     // 2. Fetch fresh active semester directly from the database
     final profile = await ref.watch(profileRepositoryProvider).getProfile(user.id).timeout(const Duration(seconds: 8));
-    final track = profile?.track ?? 'tri_semester';
+    final track = CourseUtils.normalizeTrack(profile?.track);
     final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track).timeout(const Duration(seconds: 8));
     final stateDict = {
       ...semesterData,

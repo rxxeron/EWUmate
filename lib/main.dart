@@ -52,7 +52,9 @@ Future<void> _bootloader(CacheService cache) async {
 }
 
 void main() async {
-  HttpOverrides.global = MyHttpOverrides();
+  if (kDebugMode) {
+    HttpOverrides.global = MyHttpOverrides();
+  }
   WidgetsFlutterBinding.ensureInitialized();
 
   final cacheService = CacheService();

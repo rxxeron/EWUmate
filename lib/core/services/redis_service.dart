@@ -54,6 +54,35 @@ class RedisService {
     return null;
   }
 
+  /// Sets a key-value pair in Redis with optional TTL (Time To Live).
+  Future<bool> set(String key, dynamic value, {Duration? ttl}) async {
+    if (!isConfigured) return false;
+    try {
+      final uri = Uri.parse(_url);
+      final encodedValue = value is String ? value : jsonEncode(value);
+      
+      final List<dynamic> command = ['SET', key, encodedValue];
+      if (ttl != null && ttl.inSeconds > 0) {
+        command.addAll(['EX', ttl.inSeconds]);
+      }
+
+      final body = jsonEncode(command);
+      final res = await _client.post(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $_token',
+          'Content-Type': 'application/json',
+        },
+        body: body,
+      ).timeout(const Duration(seconds: 3));
+
+      return res.statusCode == 200;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[RedisService] SET $key failed: $e');
+      return false;
+    }
+  }
+
   /// Convenience method to retrieve a JSON Map directly.
   Future<Map<String, dynamic>?> getMap(String key) async {
     final data = await get(key);
@@ -68,8 +97,15 @@ class RedisService {
     if (data is List) return data;
     return null;
   }
+
+  /// Closes the HTTP client to release underlying network sockets.
+  void dispose() {
+    _client.close();
+  }
 }
 
 final redisServiceProvider = Provider<RedisService>((ref) {
-  return RedisService();
+  final service = RedisService();
+  ref.onDispose(() => service.dispose());
+  return service;
 });

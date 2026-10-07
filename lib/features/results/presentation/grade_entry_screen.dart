@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
 import '../../../core/repositories/auth_repository.dart';
@@ -14,6 +13,7 @@ import '../../semester_progress/semester_summary_providers.dart';
 import '../../../core/models/grade_scale.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../auth/auth_providers.dart';
+import '../../../core/providers/supabase_provider.dart';
 
 // Provides the list of enrollments needing grades (filtered by blocking logic)
 final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
@@ -30,14 +30,14 @@ final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
 
   try {
     // 1. Fetch Active Semester configuration
-    String track = profile.track ?? profile.semesterType;
-    if (track == 'tri') track = 'tri_semester';
-    if (track == 'bi') track = 'bi_semester';
+    final trackStr = (profile.track ?? '').toLowerCase();
+    final isBi = trackStr.contains('bi') || trackStr.contains('phrm') || trackStr.contains('law') || trackStr.contains('llb');
+    final track = isBi ? 'bi_semester' : 'tri_semester';
 
-    final client = Supabase.instance.client;
+    final client = ref.read(supabaseClientProvider);
     final activeSemRes = await client
         .from('active_semester')
-        .select()
+        .select('current_semester_code, grade_submission_start')
         .eq('track', track)
         .maybeSingle();
 
@@ -55,7 +55,7 @@ final pendingGradesProvider = FutureProvider<List<Map<String, dynamic>>>((
     // 2. Query ALL enrollments with 'enrolled' status that have no grade
     final res = await client
         .from('enrollments')
-        .select()
+        .select('id, course_code, section, semester_code, status, grade')
         .eq('user_id', user.id)
         .eq('status', 'enrolled')
         .isFilter('grade', null);
@@ -141,7 +141,7 @@ class _GradeEntryScreenState extends ConsumerState<GradeEntryScreen> {
         final grade = _selectedGrades[eid];
         if (grade == null) continue;
 
-        await Supabase.instance.client
+        await ref.read(supabaseClientProvider)
             .from('enrollments')
             .update({
               'grade': grade,

@@ -27,10 +27,18 @@ class StudyMaterial with _$StudyMaterial {
   static Map<String, dynamic> _preprocessJson(Map<String, dynamic> json) {
     final profiles = json['profiles'] as Map<String, dynamic>?;
     final uploaderName = profiles?['full_name'] as String?;
-    return {
-      ...json,
-      if (uploaderName != null) 'uploader_name': uploaderName,
-    };
+    final mod = Map<String, dynamic>.from(json);
+    if (uploaderName != null) {
+      mod['uploader_name'] = uploaderName;
+    }
+    mod['id'] = (mod['id'] ?? '').toString();
+    mod['uploader_id'] = (mod['uploader_id'] ?? '').toString();
+    mod['drive_file_id'] = (mod['drive_file_id'] ?? '').toString();
+    mod['file_name'] = (mod['file_name'] ?? 'Untitled').toString();
+    final rawSize = mod['file_size_bytes'];
+    mod['file_size_bytes'] = rawSize is int ? rawSize : int.tryParse(rawSize?.toString() ?? '0') ?? 0;
+    mod['created_at'] = mod['created_at']?.toString() ?? DateTime.now().toIso8601String();
+    return mod;
   }
 }
 

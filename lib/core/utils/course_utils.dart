@@ -103,11 +103,21 @@ class CourseUtils {
     return true;
   }
 
+  /// Normalizes track to match the database values ('bi_semester' or 'tri_semester').
+  static String normalizeTrack(String? track) {
+    if (track == null || track.isEmpty) return 'tri_semester';
+    final s = track.trim().toLowerCase();
+    if (s == 'bi_semester' || s == 'bi' || s.contains('phrm') || s.contains('pharm') || s.contains('law') || s.contains('llb')) {
+      return 'bi_semester';
+    }
+    return 'tri_semester';
+  }
+
   /// RESTORED: Resolves dynamic table names (e.g., calendar_spring2026_phrm_llb)
   static String semesterTable(String prefix, String semesterCode, {String? cycleType}) {
     final safeSem = cleanSemester(semesterCode);
     final table = '${prefix}_$safeSem';
-    final isBi = cycleType == 'bi' || cycleType == 'bi_semester' || cycleType == 'phrm_llb' || cycleType == 'bi-semester';
+    final isBi = normalizeTrack(cycleType) == 'bi_semester';
     final programSpecifier = (prefix == 'calendar' && isBi) ? '_phrm_llb' : '';
     return '$table$programSpecifier';
   }

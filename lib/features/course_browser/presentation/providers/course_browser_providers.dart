@@ -313,7 +313,7 @@ final userEnrollmentDetailsProvider = FutureProvider<List<Map<String, dynamic>>>
   
   var query = supabase
       .from('enrollments')
-      .select()
+      .select('id, user_id, semester_code, course_code, section, section_id, time, room, status, faculty_initial')
       .eq('user_id', user.id)
       .eq('semester_code', targetSem);
 

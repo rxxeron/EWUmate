@@ -129,8 +129,6 @@ class OnboardingRepository {
       'program_name': programName,
       'department_name': department,
       'admitted_semester': admittedSemester, // Keep original for display but comparison is clean
-      'semester_type': semType,
-      'track': semType,
       'onboarding_status': 'course_history',
     };
 
@@ -170,12 +168,8 @@ class OnboardingRepository {
         .eq('id', user.id)
         .maybeSingle();
     
-    final rawTrack = profile?['track'] ?? profile?['semester_type'] ?? 'tri_semester';
-    String track = rawTrack.toString().toLowerCase();
-    
-    // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
-    if (track == 'tri') track = 'tri_semester';
-    if (track == 'bi') track = 'bi_semester';
+    final rawTrack = profile?['track'] ?? profile?['semester_type'];
+    final track = CourseUtils.normalizeTrack(rawTrack?.toString());
 
     // 2. Get the active semester configuration for that track
     final activeSem = await _client

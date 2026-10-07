@@ -6,18 +6,33 @@ class ExceptionRepository {
 
   String? get _uid => _supabase.auth.currentUser?.id;
 
+  static List<Map<String, dynamic>>? _cachedExceptions;
+  static DateTime? _cacheTime;
+  static const Duration _cacheTtl = Duration(minutes: 5);
+
+  void invalidateCache() {
+    _cachedExceptions = null;
+    _cacheTime = null;
+  }
+
   /// Fetch all active exceptions for the user for the current semester
-  Future<List<Map<String, dynamic>>> fetchExceptions() async {
+  Future<List<Map<String, dynamic>>> fetchExceptions({bool forceRefresh = false}) async {
     if (_uid == null) return [];
+    if (!forceRefresh && _cachedExceptions != null && _cacheTime != null && DateTime.now().difference(_cacheTime!) < _cacheTtl) {
+      return _cachedExceptions!;
+    }
     try {
       final data = await _supabase
           .from('schedule_exceptions')
-          .select()
+          .select('id, user_id, type, date, course_code, course_name, start_time, end_time, room, faculty, metadata')
           .eq('user_id', _uid!);
-      return List<Map<String, dynamic>>.from(data);
+      final list = List<Map<String, dynamic>>.from(data);
+      _cachedExceptions = list;
+      _cacheTime = DateTime.now();
+      return list;
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] fetchExceptions error: $e');
-      return [];
+      return _cachedExceptions ?? [];
     }
   }
 
@@ -32,6 +47,7 @@ class ExceptionRepository {
         'course_code': courseCode,
         'metadata': {'pendingMakeup': pendingMakeup},
       });
+      invalidateCache();
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] addCancellation error: $e');
     }
@@ -61,6 +77,7 @@ class ExceptionRepository {
         'faculty': faculty,
         'metadata': {},
       });
+      invalidateCache();
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] addMakeupClass error: $e');
     }
@@ -90,6 +107,7 @@ class ExceptionRepository {
         'faculty': faculty,
         'metadata': {},
       });
+      invalidateCache();
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] addManualClass error: $e');
     }
@@ -102,6 +120,7 @@ class ExceptionRepository {
       await _supabase.from('schedule_exceptions')
           .update({ 'metadata': {'pendingMakeup': false} })
           .eq('id', originalExceptionId);
+      invalidateCache();
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] resolvePendingMakeup error: $e');
     }
@@ -112,6 +131,7 @@ class ExceptionRepository {
     if (_uid == null) return;
     try {
       await _supabase.from('schedule_exceptions').delete().eq('id', id);
+      invalidateCache();
     } catch (e) {
       if (kDebugMode) debugPrint('[ExceptionRepository] removeException error: $e');
     }

@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/supabase_provider.dart';
 import '../services/redis_service.dart';
+import '../utils/course_utils.dart';
 
 part 'active_semester_repository.g.dart';
 
@@ -16,10 +17,8 @@ class ActiveSemesterRepository {
   ActiveSemesterRepository(this._supabase, this._redis);
 
   Future<Map<String, dynamic>> getActiveSemester(String track, {bool forceRefresh = false}) async {
-    // NORMALIZE: Ensure track matches DB Enum ('tri' -> 'tri_semester')
-    String normalizedTrack = track;
-    if (normalizedTrack == 'tri') normalizedTrack = 'tri_semester';
-    if (normalizedTrack == 'bi') normalizedTrack = 'bi_semester';
+    // NORMALIZE: Strict 'bi_semester' or 'tri_semester'
+    final normalizedTrack = CourseUtils.normalizeTrack(track);
 
     // 1. Check L1 Memory Cache
     if (!forceRefresh && _activeSemesterCache.containsKey(normalizedTrack)) {

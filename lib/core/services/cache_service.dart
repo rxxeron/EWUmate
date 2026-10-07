@@ -126,19 +126,28 @@ class CacheService {
   }
 
   // --- Offline Sync Queue ---
+  Future<void> _enqueueLock = Future.value();
+
   Future<void> enqueueMutation(String userId, Map<String, dynamic> mutation) async {
-    final box = Hive.box(_syncQueueBox);
-    final key = '${userId}_queue';
-    final existingDataStr = box.get(key) as String?;
-    
-    List<dynamic> queue = [];
-    if (existingDataStr != null) {
-      queue = jsonDecode(existingDataStr) as List<dynamic>;
-    }
-    
-    queue.add(mutation);
-    await box.put(key, jsonEncode(queue));
-    if (kDebugMode) debugPrint('[CacheService] Enqueued mutation: ${mutation['action']}');
+    _enqueueLock = _enqueueLock.then((_) async {
+      final box = Hive.box(_syncQueueBox);
+      final key = '${userId}_queue';
+      final existingDataStr = box.get(key) as String?;
+      
+      List<dynamic> queue = [];
+      if (existingDataStr != null) {
+        try {
+          queue = jsonDecode(existingDataStr) as List<dynamic>;
+        } catch (_) {}
+      }
+      
+      queue.add(mutation);
+      await box.put(key, jsonEncode(queue));
+      if (kDebugMode) debugPrint('[CacheService] Enqueued mutation: ${mutation['action']}');
+    }).catchError((e) {
+      if (kDebugMode) debugPrint('[CacheService] Enqueue error: $e');
+    });
+    return _enqueueLock;
   }
 
   List<Map<String, dynamic>> getSyncQueue(String userId) {

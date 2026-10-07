@@ -33,6 +33,32 @@ class DashboardRepository {
         _cache = cache,
         _redis = redis;
 
+  // In-memory cache for active_semester date ranges (12-hour TTL) to prevent repeated DB reads
+  static final Map<String, (Map<String, dynamic> dates, DateTime cachedAt)> _activeSemesterDatesCache = {};
+  static const Duration _datesCacheTtl = Duration(hours: 12);
+
+  Future<Map<String, dynamic>?> _getCachedActiveSemesterDates(String track) async {
+    final normalizedTrack = CourseUtils.normalizeTrack(track);
+    final entry = _activeSemesterDatesCache[normalizedTrack];
+    if (entry != null && DateTime.now().difference(entry.$2) < _datesCacheTtl) {
+      return entry.$1;
+    }
+    try {
+      final res = await _supabase
+          .from('active_semester')
+          .select('classes_end_date, classes_start_date')
+          .eq('track', normalizedTrack)
+          .maybeSingle();
+      if (res != null) {
+        _activeSemesterDatesCache[normalizedTrack] = (res, DateTime.now());
+      }
+      return res;
+    } catch (e) {
+      debugPrint('[DashboardRepository] Error fetching active_semester dates for $normalizedTrack: $e');
+      return entry?.$1;
+    }
+  }
+
   /// The New Simplified Dashboard Fetch
   /// 1. Weekly Grid (user_semester_states)
   /// 2. Schedule Exceptions (schedule_exceptions)
@@ -173,17 +199,9 @@ class DashboardRepository {
             )
             .order('due_date', ascending: true)
             .limit(10),
-        // [5, 6] Classes End/Start Dates
-        _supabase
-            .from('active_semester')
-            .select('classes_end_date, classes_start_date')
-            .eq('track', 'tri_semester')
-            .maybeSingle(),
-        _supabase
-            .from('active_semester')
-            .select('classes_end_date, classes_start_date')
-            .eq('track', 'bi_semester')
-            .maybeSingle(),
+        // [5, 6] Classes End/Start Dates (cached with 12h TTL)
+        _getCachedActiveSemesterDates('tri_semester'),
+        _getCachedActiveSemesterDates('bi_semester'),
       ]);
 
       var weeklyGrid =
@@ -327,6 +345,7 @@ class DashboardRepository {
           'template': <Map<String, dynamic>>[], // Zero template classes on a holiday!
           'exceptions': exceptions,
           'tasks': tasksRaw,
+          'weekly_grid': weeklyGrid,
           'date': date,
           'dateStr': dateStr,
         };
@@ -411,6 +430,7 @@ class DashboardRepository {
         'template': hybridClasses,
         'exceptions': exceptions,
         'tasks': tasksRaw,
+        'weekly_grid': weeklyGrid,
         'date': date,
         'dateStr': dateStr,
       };
@@ -705,18 +725,8 @@ class DashboardRepository {
                 return [];
               })
             : Future.value([]),
-        _supabase
-            .from('active_semester')
-            .select('classes_end_date, classes_start_date')
-            .eq('track', 'tri_semester')
-            .maybeSingle()
-            .catchError((e) { debugPrint('Error in tri end_date fetch: $e'); return null; }),
-        _supabase
-            .from('active_semester')
-            .select('classes_end_date, classes_start_date')
-            .eq('track', 'bi_semester')
-            .maybeSingle()
-            .catchError((e) { debugPrint('Error in bi end_date fetch: $e'); return null; }),
+        _getCachedActiveSemesterDates('tri_semester'),
+        _getCachedActiveSemesterDates('bi_semester'),
       ]);
 
       var weeklyGrid =

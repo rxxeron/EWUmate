@@ -15,6 +15,7 @@ import '../../../core/services/cache_service.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../auth/auth_providers.dart';
 import '../../onboarding/onboarding_repository.dart';
+import '../repositories/portal_sync_repository.dart';
 import 'portal_sync/widgets/portal_sync_start_view.dart';
 import 'portal_sync/widgets/portal_sync_connecting_view.dart';
 import 'portal_sync/widgets/portal_sync_ready_view.dart';
@@ -475,30 +476,8 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
           : CourseUtils.cleanSemester(result.activeSemesterName);
 
       // 1. Fetch course names
-      final Map<String, String> courseNames = {};
-      try {
-        final catalogRes = await supabase
-            .from('courses_$activeSemCode')
-            .select('course_code, course_name');
-        for (final row in catalogRes as List) {
-          final code = (row['course_code'] ?? '').toString();
-          final name = (row['course_name'] ?? '').toString();
-          if (code.isNotEmpty && name.isNotEmpty) {
-            courseNames[code] = name;
-          }
-        }
-      } catch (_) {
-        try {
-          final metaRes = await supabase.from('course_metadata').select('code, name');
-          for (final row in metaRes as List) {
-            final code = (row['code'] ?? '').toString();
-            final name = (row['name'] ?? '').toString();
-            if (code.isNotEmpty && name.isNotEmpty) {
-              courseNames[code] = name;
-            }
-          }
-        } catch (_) {}
-      }
+      final portalSyncRepo = ref.read(portalSyncRepositoryProvider);
+      final courseNames = await portalSyncRepo.fetchCourseNames(activeSemCode);
 
       // Step 1: Saving course routine
       if (mounted) setState(() => _syncChecklistProgress = 1);
@@ -507,115 +486,15 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
       // 2. Active Semester Schedule & Enrollments (Smart Diff to protect user attendance, marks, and exceptions)
       if (_syncActiveSchedule && result.enrolledCourses.isNotEmpty) {
         final activeCourses = result.enrolledCourses.where((c) => !c.isInactive).toList();
-
-        // 2a. Fetch existing enrollments
-        final existingEnrollmentsRes = await supabase
-            .from('enrollments')
-            .select('id, course_code, section')
-            .eq('user_id', user.id)
-            .eq('semester_code', activeSemCode);
-
-        final Map<String, dynamic> existingByCode = {};
-        for (final row in (existingEnrollmentsRes as List)) {
-          final code = (row['course_code'] ?? '').toString().toUpperCase().replaceAll(' ', '');
-          existingByCode[code] = row;
-        }
-
-        final Map<String, PortalEnrolledCourse> portalByCode = {};
-        for (final c in activeCourses) {
-          final clean = (c.courseCode.contains(' ') ? c.courseCode.split(' ')[0] : c.courseCode)
-              .toUpperCase()
-              .replaceAll(' ', '');
-          portalByCode[clean] = c;
-        }
-
-        final Set<String> existingCodes = existingByCode.keys.toSet();
-        final Set<String> portalCodes = portalByCode.keys.toSet();
-
-        final Set<String> toRemove = existingCodes.difference(portalCodes);
-        final Set<String> toAdd = portalCodes.difference(existingCodes);
-        final Set<String> toCheck = existingCodes.intersection(portalCodes);
-
-        // Remove only dropped / withdrawn courses
-        if (toRemove.isNotEmpty) {
-          for (final remCode in toRemove) {
-            await supabase
-                .from('enrollments')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('semester_code', activeSemCode)
-                .eq('course_code', remCode);
-          }
-        }
-
-        // Insert only brand new courses into enrollments and semester_course_marks
-        if (toAdd.isNotEmpty) {
-          final newEnrollments = <Map<String, dynamic>>[];
-          final newProgressRows = <Map<String, dynamic>>[];
-
-          for (final addCode in toAdd) {
-            final item = portalByCode[addCode]!;
-            newEnrollments.add({
-              'user_id': user.id,
-              'course_code': addCode,
-              'section': item.section,
-              'semester_code': activeSemCode,
-              'status': 'enrolled',
-            });
-
-            newProgressRows.add({
-              'user_id': user.id,
-              'course_code': addCode,
-              'course_name': courseNames[addCode] ?? addCode,
-              'section': item.section,
-              'semester_code': activeSemCode,
-            });
-          }
-
-          if (newEnrollments.isNotEmpty) {
-            await supabase.from('enrollments').insert(newEnrollments);
-          }
-          if (newProgressRows.isNotEmpty) {
-            try {
-              await supabase.from('semester_course_marks').insert(newProgressRows);
-            } catch (e) {
-              debugPrint("[PortalSyncScreen] semester_course_marks insert note: $e");
-            }
-          }
-        }
-
-        // For continuing courses, only update section if section changed (PRESERVES existing marks, attendance, and exceptions!)
-        for (final code in toCheck) {
-          final oldSec = (existingByCode[code]['section'] ?? '').toString().trim();
-          final newSec = portalByCode[code]!.section.trim();
-          if (oldSec != newSec) {
-            await supabase
-                .from('enrollments')
-                .update({'section': newSec})
-                .eq('user_id', user.id)
-                .eq('semester_code', activeSemCode)
-                .eq('course_code', code);
-
-            await supabase
-                .from('semester_course_marks')
-                .update({'section': newSec})
-                .eq('user_id', user.id)
-                .eq('semester_code', activeSemCode)
-                .eq('course_code', code);
-          }
-        }
-
         final weeklyGrid = _buildWeeklyGridCache(activeCourses, courseNames);
-        try {
-          await supabase.from('user_semester_states').upsert({
-            'user_id': user.id,
-            'semester_code': activeSemCode,
-            'weekly_grid_cache': weeklyGrid,
-            'updated_at': DateTime.now().toIso8601String(),
-          }, onConflict: 'user_id,semester_code');
-        } catch (e) {
-          debugPrint("[PortalSyncScreen] user_semester_states weekly_grid error: $e");
-        }
+
+        await portalSyncRepo.syncActiveSchedule(
+          userId: user.id,
+          activeSemCode: activeSemCode,
+          activeCourses: activeCourses,
+          courseNames: courseNames,
+          weeklyGrid: weeklyGrid,
+        );
 
         try {
           final cache = ref.read(cacheServiceProvider);
@@ -633,24 +512,11 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
       await Future.delayed(const Duration(milliseconds: 300));
 
       // 3. Academic History & Grades
-      if (_syncAcademicHistory) {
-        final List<Map<String, dynamic>> completedRows = [];
-        if (_azureParsedGrades.isNotEmpty) {
-          for (final c in _azureParsedGrades) {
-            completedRows.add({
-              'user_id': user.id,
-              'course_code': c['course_code'],
-              'grade': c['grade'],
-              'grade_point': c['grade_point'],
-              'credits': c['credits'],
-              'semester_code': CourseUtils.cleanSemester(c['semester_code'] ?? ''),
-            });
-          }
-        }
-        if (completedRows.isNotEmpty) {
-          await supabase.from('completed_courses').delete().eq('user_id', user.id);
-          await supabase.from('completed_courses').insert(completedRows);
-        }
+      if (_syncAcademicHistory && _azureParsedGrades.isNotEmpty) {
+        await portalSyncRepo.syncAcademicHistory(
+          userId: user.id,
+          parsedGrades: _azureParsedGrades,
+        );
       }
 
       // Step 4: Importing academic history
@@ -659,83 +525,12 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
 
       // 4. Profile Metadata Update with 4-Tier Program Resolution
       if (_syncProfileMetadata) {
-        final cleanAdmittedSem = CourseUtils.cleanSemester(result.profile.admittedSemester);
-        
-        String resolvedProgramCode = result.profile.programCode.trim();
-        String resolvedProgramName = result.profile.programName.trim();
-        String resolvedDeptName = result.profile.departmentName.trim();
-        String resolvedTrack = 'tri_semester';
-
-        try {
-          final progsRes = await supabase
-              .from('programs')
-              .select('program_code, name, track, department_name');
-          final progs = List<Map<String, dynamic>>.from(progsRes as List);
-
-          // Tier 1: Exact code match (case-insensitive)
-          Map<String, dynamic>? match = progs.firstWhere(
-            (p) => (p['program_code'] ?? '').toString().toUpperCase() == resolvedProgramCode.toUpperCase(),
-            orElse: () => {},
-          );
-
-          // Tier 2: Substring or title match
-          if (match.isEmpty && resolvedProgramName.isNotEmpty) {
-            match = progs.firstWhere(
-              (p) {
-                final pName = (p['name'] ?? '').toString().toLowerCase();
-                final targetName = resolvedProgramName.toLowerCase();
-                return pName.contains(targetName) || targetName.contains(pName);
-              },
-              orElse: () => {},
-            );
-          }
-
-          // Tier 3: Fallback check on code substring
-          if (match.isEmpty && resolvedProgramCode.isNotEmpty) {
-            match = progs.firstWhere(
-              (p) => (p['program_code'] ?? '').toString().toUpperCase().contains(resolvedProgramCode.toUpperCase()),
-              orElse: () => {},
-            );
-          }
-
-          if (match.isNotEmpty) {
-            resolvedProgramCode = match['program_code']?.toString() ?? resolvedProgramCode;
-            resolvedProgramName = match['name']?.toString() ?? resolvedProgramName;
-            resolvedDeptName = match['department_name']?.toString() ?? resolvedDeptName;
-            resolvedTrack = match['track']?.toString() ?? 'tri_semester';
-          } else {
-            // Fallback: Infer track from pharmacy/law keywords
-            final isBi = resolvedDeptName.toLowerCase().contains('pharm') ||
-                resolvedDeptName.toLowerCase().contains('law') ||
-                resolvedProgramCode.toUpperCase().contains('PHRM') ||
-                resolvedProgramCode.toUpperCase().contains('LLB');
-            resolvedTrack = isBi ? 'bi_semester' : 'tri_semester';
-          }
-        } catch (e) {
-          debugPrint("[PortalSyncScreen] Program matching note: $e");
-        }
-
-        final profilePayload = <String, dynamic>{
-          'id': user.id,
-          'student_id': result.profile.studentId,
-          'program_code': resolvedProgramCode.toUpperCase(),
-          'program_name': resolvedProgramName,
-          'department_name': resolvedDeptName,
-          'semester_type': resolvedTrack,
-          'track': resolvedTrack,
-          'onboarding_status': 'completed',
-        };
-        if (result.profile.fullName.isNotEmpty) {
-          profilePayload['full_name'] = result.profile.fullName;
-        }
-        if (cleanAdmittedSem.isNotEmpty) {
-          profilePayload['admitted_semester'] = cleanAdmittedSem;
-        }
-        await supabase.from('profiles').upsert(profilePayload);
+        await portalSyncRepo.syncProfileMetadata(
+          userId: user.id,
+          profile: result.profile,
+        );
       } else {
-        await supabase.from('profiles').update({
-          'onboarding_status': 'completed',
-        }).eq('id', user.id);
+        await portalSyncRepo.markOnboardingCompleted(user.id);
       }
 
       // Step 5: Finalizing calculations

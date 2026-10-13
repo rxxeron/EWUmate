@@ -48,6 +48,6 @@ The local `schema.sql` contains **no** logic definitions. The following are miss
 
 ## Recommendations
 
-1.  **Update Local Schema**: Use the [live_schema_dump.json](file:///d:/EWUmate/EWUmate_Clean/ewumate_v2/docs/knowledge/live_schema_dump.json) to generate a new, comprehensive `schema.sql`.
-2.  **Manual Sync**: Use the `extract_live_schema.py` script periodically to ensure local documentation stays in sync with production.
+1.  **Update Local Schema**: Use the [live_schema_dump.json](live_schema_dump.json) to generate a new, comprehensive `schema.sql`.
+2.  **Manual Sync**: Use the `scripts/extract_live_schema.py` script periodically to ensure local documentation stays in sync with production.
 3.  **Logic Export**: Consider exporting the live functions and triggers to individual `.sql` files in the `supabase/` directory for better version control.

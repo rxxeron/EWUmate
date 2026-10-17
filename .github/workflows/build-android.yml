@@ -101,26 +101,12 @@ jobs:
             flutter build appbundle --release
           fi
 
-      - name: Prepare Named Android Artifacts
-        run: |
-          VERSION="${{ steps.app_version.outputs.version }}"
-          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
-            cp "build/app/outputs/flutter-apk/app-release.apk" "build/app/outputs/flutter-apk/EWUmate-v${VERSION}.apk"
-            echo "Created EWUmate-v${VERSION}.apk"
-          fi
-          if [ -f "build/app/outputs/bundle/release/app-release.aab" ]; then
-            cp "build/app/outputs/bundle/release/app-release.aab" "build/app/outputs/bundle/release/EWUmate-v${VERSION}.aab"
-            echo "Created EWUmate-v${VERSION}.aab"
-          fi
-
       - name: Upload Release APK
         if: ${{ inputs.build_apk }}
         uses: actions/upload-artifact@v4
         with:
           name: EWUmate-v${{ steps.app_version.outputs.version }}-APK
-          path: |
-            build/app/outputs/flutter-apk/EWUmate-v${{ steps.app_version.outputs.version }}.apk
-            build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           retention-days: 14
 
@@ -129,8 +115,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: EWUmate-v${{ steps.app_version.outputs.version }}-AAB
-          path: |
-            build/app/outputs/bundle/release/EWUmate-v${{ steps.app_version.outputs.version }}.aab
-            build/app/outputs/bundle/release/app-release.aab
+          path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 14

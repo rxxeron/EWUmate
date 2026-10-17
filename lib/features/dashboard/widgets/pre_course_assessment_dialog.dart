@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/ewu_theme_extension.dart';
 
@@ -21,11 +22,17 @@ class PreCourseAssessmentDialog extends StatefulWidget {
     this.maxImpressions = 3,
   });
 
+  /// In-memory guard to ensure the popup is evaluated and shown at most ONCE per app run session
+  static bool _hasShownThisSession = false;
+
   /// Evaluates remote configuration from Supabase `app_config`, impression count,
   /// and gap days cooldown before showing the dialog.
   /// All parameters (active status, campaign ID, max impressions, gap days, texts)
   /// are remotely controllable from the Admin Panel.
   static Future<void> checkAndShow(BuildContext context) async {
+    // 0. Session guard: never show twice in one active session
+    if (_hasShownThisSession) return;
+
     // 1. Fetch remote config from Supabase app_config (or fall back to defaults)
     Map<String, dynamic> config = {
       'is_active': true,
@@ -65,8 +72,13 @@ class PreCourseAssessmentDialog extends StatefulWidget {
 
     final String countKey = 'popup_impressions_$campaignId';
     final String lastShownKey = 'popup_last_shown_$campaignId';
+    final String dismissedKey = 'popup_dismissed_$campaignId';
 
     final prefs = await SharedPreferences.getInstance();
+    
+    // If the user previously dismissed or reached impressions, never show again
+    if (prefs.getBool(dismissedKey) == true) return;
+
     final int count = prefs.getInt(countKey) ?? 0;
     if (count >= maxImpressions) return;
 
@@ -81,6 +93,9 @@ class PreCourseAssessmentDialog extends StatefulWidget {
         return;
       }
     }
+
+    // Mark shown for this session immediately to prevent race conditions
+    _hasShownThisSession = true;
 
     // Delay slightly to let the dashboard render and settle
     await Future.delayed(const Duration(milliseconds: 900));
@@ -119,6 +134,11 @@ class PreCourseAssessmentDialog extends StatefulWidget {
   static Future<void> markNeverShowAgain(String countKey, int maxImpressions) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(countKey, maxImpressions);
+    // Also record dismissal on campaign basis if key matches
+    final campaignId = countKey.replaceFirst('popup_impressions_', '');
+    if (campaignId.isNotEmpty) {
+      await prefs.setBool('popup_dismissed_$campaignId', true);
+    }
   }
 
   @override
@@ -128,6 +148,18 @@ class PreCourseAssessmentDialog extends StatefulWidget {
 class _PreCourseAssessmentDialogState extends State<PreCourseAssessmentDialog> {
   bool _showFullNotice = false;
 
+  void _navigateToRoute(BuildContext context, String route) {
+    if (route.isEmpty) return;
+    if (route.startsWith('http://') || route.startsWith('https://')) {
+      final uri = Uri.tryParse(route);
+      if (uri != null) {
+        launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } else {
+      context.push(route);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.ewuColors;
@@ -135,20 +167,20 @@ class _PreCourseAssessmentDialogState extends State<PreCourseAssessmentDialog> {
     final cfg = widget.remoteConfig;
 
     final badgeText = cfg?['badge_text']?.toString() ?? "MANDATORY PRE-COURSE ASSESSMENT";
-    final titleText = cfg?['title']?.toString() ?? "Advising Guide & Faculty Reviews Are Live!";
+    final titleText = cfg?['title']?.toString() ?? "Faculty Reviews & Pre-Advising Are Live!";
     final descText = cfg?['description']?.toString() ??
-        "Per the Registrar's notice, courses selected in Pre-Course Assessment are final. There is NO add period after registration. Use EWUMate's new tools to verify prerequisites and faculty ratings before submitting.";
+        "Per the Registrar's notice, courses selected in Pre-Course Assessment are final. There is NO add period after registration. Use EWUMate's tools to verify faculty ratings and course prerequisites before submitting.";
 
-    final cta1Label = cfg?['cta1_text']?.toString() ?? "Open Advising Guide";
-    final cta1Path = cfg?['cta1_route']?.toString() ?? "/services/advising-guide";
-    final cta2Label = cfg?['cta2_text']?.toString() ?? "Browse Faculty Reviews";
-    final cta2Path = cfg?['cta2_route']?.toString() ?? "/services/faculty-directory";
+    final cta1Label = cfg?['cta1_text']?.toString() ?? "Browse Faculty Reviews";
+    final cta1Path = cfg?['cta1_route']?.toString() ?? "/services/faculty-directory";
+    final cta2Label = cfg?['cta2_text']?.toString() ?? "Explore Services";
+    final cta2Path = cfg?['cta2_route']?.toString() ?? "/services";
 
-    final bool showFeatures = cfg?['show_features'] != false;
-    final feature1Title = cfg?['feature1_title']?.toString() ?? "Course Advising & Prerequisites";
-    final feature1Desc = cfg?['feature1_description']?.toString() ?? "Check course eligibility in real time, view locked courses with prerequisite reasons, and follow your curriculum pathway.";
-    final feature1Badge = cfg?['feature1_badge']?.toString() ?? "ELIGIBILITY ENGINE";
-    final feature1Action = cfg?['feature1_action']?.toString() ?? "Open Guide";
+    final bool showFeatures = cfg?['show_features'] == true;
+    final feature1Title = cfg?['feature1_title']?.toString() ?? "Course Prerequisites";
+    final feature1Desc = cfg?['feature1_description']?.toString() ?? "Check course eligibility in real time and follow your curriculum pathway.";
+    final feature1Badge = cfg?['feature1_badge']?.toString() ?? "ELIGIBILITY";
+    final feature1Action = cfg?['feature1_action']?.toString() ?? "Explore";
     final feature1Route = cfg?['feature1_route']?.toString() ?? cta1Path;
 
     final feature2Title = cfg?['feature2_title']?.toString() ?? "Faculty Ratings & Reviews";
@@ -457,72 +489,76 @@ class _PreCourseAssessmentDialogState extends State<PreCourseAssessmentDialog> {
                       const SizedBox(height: 18),
 
                       // 8. Action Buttons
-                      ElevatedButton(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).pop();
-                          context.push(cta1Path);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryCyan,
-                          foregroundColor: const Color(0xFF070E1C),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                      if (cta1Path.isNotEmpty && cta1Label.isNotEmpty) ...[
+                        ElevatedButton(
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).pop();
+                            _navigateToRoute(context, cta1Path);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryCyan,
+                            foregroundColor: const Color(0xFF070E1C),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.explore_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                cta1Label,
+                                style: GoogleFonts.sora(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.explore_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(
-                              cta1Label,
-                              style: GoogleFonts.sora(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
+                      ],
 
-                      OutlinedButton(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).pop();
-                          context.push(cta2Path);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: BorderSide(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 1,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.rate_review_rounded, size: 16, color: Color(0xFFFBBF24)),
-                            const SizedBox(width: 8),
-                            Text(
-                              cta2Label,
-                              style: GoogleFonts.sora(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
+                      if (cta2Path.isNotEmpty && cta2Label.isNotEmpty) ...[
+                        OutlinedButton(
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.of(context).pop();
+                            _navigateToRoute(context, cta2Path);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1,
                             ),
-                          ],
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.arrow_forward_rounded, size: 16, color: Color(0xFFFBBF24)),
+                              const SizedBox(width: 8),
+                              Text(
+                                cta2Label,
+                                style: GoogleFonts.sora(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
+                        const SizedBox(height: 10),
+                      ],
 
                       // 9. Dismiss Options
                       Row(
@@ -548,7 +584,13 @@ class _PreCourseAssessmentDialogState extends State<PreCourseAssessmentDialog> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () {
+                              PreCourseAssessmentDialog.markNeverShowAgain(
+                                widget.countKey,
+                                widget.maxImpressions,
+                              );
+                              Navigator.of(context).pop();
+                            },
                             style: TextButton.styleFrom(
                               foregroundColor: colors.secondaryText,
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -575,7 +617,13 @@ class _PreCourseAssessmentDialogState extends State<PreCourseAssessmentDialog> {
                   right: 12,
                   child: IconButton(
                     icon: const Icon(Icons.close_rounded, color: Colors.white60, size: 20),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      PreCourseAssessmentDialog.markNeverShowAgain(
+                        widget.countKey,
+                        widget.maxImpressions,
+                      );
+                      Navigator.of(context).pop();
+                    },
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white.withValues(alpha: 0.05),
                       padding: const EdgeInsets.all(6),

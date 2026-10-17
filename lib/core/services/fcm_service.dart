@@ -18,6 +18,7 @@ import '../repositories/notification_repository.dart';
 import '../models/notification.dart' as model;
 import '../../firebase_options.dart';
 import '../../main.dart';
+import 'local_notification_scheduler.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 
@@ -187,6 +188,18 @@ class FCMService {
                              message.notification?.apple?.imageUrl ?? 
                              (message.data['image'] as String?) ??
                              (message.data['image_url'] as String?);
+          final alertKey = (message.data['alert_key'] ?? '').toString();
+
+          // Anti-Duplication: If this exact alert was handled locally, suppress duplicate push!
+          if (alertKey.isNotEmpty) {
+            final scheduler = _ref.read(localNotificationSchedulerProvider);
+            if (scheduler.isRecentlyScheduledOrDelivered(alertKey)) {
+              if (kDebugMode) {
+                debugPrint('[FCM] Suppressed duplicate push alert: $alertKey (local alarm active/handled)');
+              }
+              return;
+            }
+          }
           
           // Save locally
           try {
@@ -206,11 +219,14 @@ class FCMService {
             }
           } catch (_) {}
 
+          final scheduler = _ref.read(localNotificationSchedulerProvider);
+          final notifId = alertKey.isNotEmpty ? scheduler.getNotificationId(alertKey) : notification.hashCode;
+
           _localNotifications.show(
-            id: notification.hashCode,
+            id: notifId,
             title: notification.title,
             body: notification.body,
-            notificationDetails: const NotificationDetails(
+            notificationDetails: NotificationDetails(
               android: AndroidNotificationDetails(
                 'ewumate_high_priority_reminders_v2',
                 'Task Reminders (V2)',
@@ -218,8 +234,9 @@ class FCMService {
                 icon: '@mipmap/ic_launcher',
                 importance: Importance.max,
                 priority: Priority.high,
+                tag: alertKey.isNotEmpty ? alertKey : null,
               ),
-              iOS: DarwinNotificationDetails(presentAlert: true, presentSound: true),
+              iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
             ),
             payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage}),
           );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,12 +8,15 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
 import 'dart:io';
+import 'package:universal_html/html.dart' as html;
 import 'package:ewumate/core/providers/academic_providers.dart';
 import 'package:ewumate/core/repositories/auth_repository.dart';
 import 'package:ewumate/core/repositories/profile_repository.dart';
 import 'package:ewumate/core/providers/supabase_provider.dart';
+import 'package:ewumate/core/utils/course_utils.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
+import '../../../core/config/supabase_config.dart';
 
 
 class CoverPageScreen extends ConsumerStatefulWidget {
@@ -246,28 +250,71 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
         ),
       );
 
-      final response = await http.post(
-        Uri.parse('https://ewumate-parser.azurewebsites.net/api/generate_pdf'),
-        headers: {
-          "Content-Type": "application/json",
-          if (token != null) "Authorization": "Bearer $token",
-        },
-        body: jsonEncode(payload),
-      );
+      final baseUrl = AppConfig.getAzureFunctionUrl;
+      http.Response? response;
+      String? networkError;
 
-      if (response.statusCode == 200) {
+      for (int attempt = 0; attempt < 2; attempt++) {
+        try {
+          response = await http.post(
+            Uri.parse('$baseUrl/api/generate_pdf'),
+            headers: {
+              "Content-Type": "application/json",
+              if (token != null) "Authorization": "Bearer $token",
+            },
+            body: jsonEncode(payload),
+          ).timeout(const Duration(seconds: 25));
+          networkError = null;
+          break;
+        } on SocketException catch (_) {
+          networkError = 'Unable to reach the PDF service. Please verify your internet connection or DNS and try again.';
+          if (attempt == 0) {
+            await Future.delayed(const Duration(seconds: 1));
+          }
+        } on http.ClientException catch (_) {
+          networkError = 'Network connection error while contacting PDF generator. Please try again.';
+          if (attempt == 0) {
+            await Future.delayed(const Duration(seconds: 1));
+          }
+        }
+      }
+
+      if (networkError != null) {
+        throw networkError;
+      }
+
+      if (response != null && response.statusCode == 200) {
         final bytes = response.bodyBytes;
+        final fileName = 'EWUmate_${_selectedTemplate}_${DateTime.now().millisecondsSinceEpoch}.pdf';
         
-        // Save to temporary file
-        final tempDir = await getTemporaryDirectory();
-        final filePath = '${tempDir.path}/academic_report_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        final file = File(filePath);
-        await file.writeAsBytes(bytes);
-        
-        // Open the file
-        await OpenFilex.open(filePath);
+        if (kIsWeb) {
+          // Web / PWA browser environment: trigger native browser blob download
+          final blob = html.Blob([bytes], 'application/pdf');
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.AnchorElement(href: url)
+            ..target = '_blank'
+            ..download = fileName;
+          anchor.click();
+          html.Url.revokeObjectUrl(url);
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Cover page downloaded successfully!', style: GoogleFonts.sora()),
+                backgroundColor: AppColors.surfaceNavyBlue,
+              ),
+            );
+          }
+        } else {
+          // Native mobile (Android / iOS): Save to temp directory and open
+          final tempDir = await getTemporaryDirectory();
+          final filePath = '${tempDir.path}/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(bytes);
+          await OpenFilex.open(filePath);
+        }
       } else {
-        throw 'Server returned error: ${response.body}';
+        throw 'Server returned error: ${response?.body ?? "Unknown error"}';
       }
     } catch (e) {
       if (mounted) {
@@ -565,9 +612,36 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
             _profileInitialized = true;
           }
           
+          final allSemestersAsync = ref.watch(semestersProvider);
           final semesterCode = currentSemAsync.value ?? 'Summer2026';
-          if (_semester.isEmpty && semesterCode != 'Unknown Semester') {
-             _semester = semesterCode.replaceAllMapped(RegExp(r'(\d+)'), (match) => ' ${match.group(0)}').trim();
+
+          // Auto-select active semester based on student track if not set yet
+          if (_semester.isEmpty) {
+            // Check active semester repository cache or current semester state
+            final activeSemAsync = ref.watch(academicStateProvider);
+            final currentCode = activeSemAsync.valueOrNull?.currentSemesterCode ?? semesterCode;
+            if (currentCode != 'Unknown Semester') {
+              _semester = CourseUtils.prettifySemesterCode(currentCode);
+            } else {
+              _semester = 'Summer 2026';
+            }
+          }
+
+          // Build semester dropdown options
+          final List<String> semesterOptions = [];
+          allSemestersAsync.whenData((list) {
+            for (final item in list) {
+              final title = (item is Map ? item['title'] : item.title)?.toString() ?? '';
+              if (title.isNotEmpty && !semesterOptions.contains(title)) {
+                semesterOptions.add(title);
+              }
+            }
+          });
+          if (semesterOptions.isEmpty) {
+            semesterOptions.addAll(['Summer 2026', 'Spring 2026', 'Fall 2026', 'Summer 2025']);
+          }
+          if (_semester.isNotEmpty && !semesterOptions.contains(_semester)) {
+            semesterOptions.insert(0, _semester);
           }
 
           return Form(
@@ -590,6 +664,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                       Theme(
                         data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
                         child: DropdownButtonFormField<String>(
+                          isExpanded: true,
                           initialValue: _selectedTemplate,
                           decoration: _inputDecoration(
                             labelText: 'Template Format',
@@ -599,7 +674,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                           style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
                           items: _templates.map((t) => DropdownMenuItem(
                             value: t['value'],
-                            child: Text(t['label']!, style: GoogleFonts.sora()),
+                            child: Text(t['label']!, style: GoogleFonts.sora(), overflow: TextOverflow.ellipsis),
                           )).toList(),
                           onChanged: (v) {
                             setState(() {
@@ -612,18 +687,30 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      TextFormField(
-                        key: ValueKey('semester_field_$_semester'),
-                        initialValue: _semester,
-                        style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
-                        decoration: _inputDecoration(
-                          labelText: 'Academic Semester',
-                          hintText: 'e.g. Summer 2026',
-                          prefixIcon: const Icon(Icons.event_note_rounded, color: AppColors.primaryCyan, size: 20),
+                      Theme(
+                        data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey('semester_dropdown_$_semester'),
+                          initialValue: semesterOptions.contains(_semester) ? _semester : semesterOptions.first,
+                          isExpanded: true,
+                          style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                          dropdownColor: AppColors.surfaceNavyBlue,
+                          decoration: _inputDecoration(
+                            labelText: 'Academic Semester',
+                            prefixIcon: const Icon(Icons.event_note_rounded, color: AppColors.primaryCyan, size: 20),
+                          ),
+                          items: semesterOptions.map((s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(s, style: GoogleFonts.sora(), overflow: TextOverflow.ellipsis),
+                          )).toList(),
+                          onChanged: (v) {
+                            if (v != null) {
+                              setState(() => _semester = v);
+                            }
+                          },
+                          onSaved: (v) => _semester = v ?? _semester,
+                          validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
                         ),
-                        onChanged: (v) => _semester = v,
-                        onSaved: (v) => _semester = v ?? '',
-                        validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
                       ),
                       if (['assignment', 'mps_assignment', 'project_report', 'group_project', 'term_paper'].contains(_selectedTemplate)) ...[
                         const SizedBox(height: 14),
@@ -681,6 +768,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                         Theme(
                           data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
                           child: DropdownButtonFormField<String>(
+                            isExpanded: true,
                             decoration: _inputDecoration(
                               labelText: 'Faculty Department (Header)',
                               prefixIcon: const Icon(Icons.account_balance_rounded, color: AppColors.primaryCyan, size: 20),
@@ -690,7 +778,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                             style: GoogleFonts.sora(color: Colors.white, fontSize: 12),
                             items: _departments.map((d) => DropdownMenuItem(
                               value: d,
-                              child: Text(d, style: GoogleFonts.sora(fontSize: 12)),
+                              child: Text(d, style: GoogleFonts.sora(fontSize: 12), overflow: TextOverflow.ellipsis),
                             )).toList(),
                             onChanged: (v) {
                               if (v != null) {
@@ -720,91 +808,134 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                         title: 'Primary Student',
                         subtitle: 'Details for lead submitter',
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              key: ValueKey('student_name_$_primaryName'),
-                              style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
-                              decoration: _inputDecoration(labelText: 'Full Name'),
-                              initialValue: _primaryName,
-                              onChanged: (v) => _primaryName = v,
-                              onSaved: (v) => _primaryName = v ?? '',
-                              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              key: ValueKey('student_id_$_primaryId'),
-                              style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
-                              decoration: _inputDecoration(labelText: 'Student ID'),
-                              initialValue: _primaryId,
-                              onChanged: (v) => _primaryId = v,
-                            ),
-                          ),
-                        ],
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 360;
+                          if (isNarrow) {
+                            return Column(
+                              children: [
+                                TextFormField(
+                                  key: ValueKey('student_name_$_primaryName'),
+                                  style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                                  decoration: _inputDecoration(labelText: 'Full Name'),
+                                  initialValue: _primaryName,
+                                  onChanged: (v) => _primaryName = v,
+                                  onSaved: (v) => _primaryName = v ?? '',
+                                  validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                                ),
+                                const SizedBox(height: 12),
+                                TextFormField(
+                                  key: ValueKey('student_id_$_primaryId'),
+                                  style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                                  decoration: _inputDecoration(labelText: 'Student ID'),
+                                  initialValue: _primaryId,
+                                  onChanged: (v) => _primaryId = v,
+                                ),
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  key: ValueKey('student_name_$_primaryName'),
+                                  style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                                  decoration: _inputDecoration(labelText: 'Full Name'),
+                                  initialValue: _primaryName,
+                                  onChanged: (v) => _primaryName = v,
+                                  onSaved: (v) => _primaryName = v ?? '',
+                                  validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextFormField(
+                                  key: ValueKey('student_id_$_primaryId'),
+                                  style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                                  decoration: _inputDecoration(labelText: 'Student ID'),
+                                  initialValue: _primaryId,
+                                  onChanged: (v) => _primaryId = v,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: _isLoadingPrograms 
-                              ? const Center(child: LinearProgressIndicator(color: AppColors.primaryCyan))
-                              : Theme(
-                                  data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
-                                  child: DropdownButtonFormField<String>(
-                                    decoration: _inputDecoration(labelText: 'Program'),
-                                    dropdownColor: AppColors.surfaceNavyBlue,
-                                    style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
-                                    initialValue: _programData.any((p) => p['name'] == _primaryProgram) 
-                                      ? _programData.firstWhere((p) => p['name'] == _primaryProgram)['program_code'] 
-                                      : null,
-                                    items: _programData.map((p) => DropdownMenuItem(
-                                      value: p['program_code'].toString(),
-                                      child: Text(p['program_code'].toString(), style: GoogleFonts.sora()),
-                                    )).toList(),
-                                    onChanged: (v) => _onProgramChanged(v!, true),
-                                  ),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 360;
+                          final programWidget = _isLoadingPrograms 
+                            ? const Center(child: LinearProgressIndicator(color: AppColors.primaryCyan))
+                            : Theme(
+                                data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
+                                child: DropdownButtonFormField<String>(
+                                  isExpanded: true,
+                                  decoration: _inputDecoration(labelText: 'Program'),
+                                  dropdownColor: AppColors.surfaceNavyBlue,
+                                  style: GoogleFonts.sora(color: Colors.white, fontSize: 13),
+                                  initialValue: _programData.any((p) => p['name'] == _primaryProgram) 
+                                    ? _programData.firstWhere((p) => p['name'] == _primaryProgram)['program_code'] 
+                                    : null,
+                                  items: _programData.map((p) => DropdownMenuItem(
+                                    value: p['program_code'].toString(),
+                                    child: Text(p['program_code'].toString(), style: GoogleFonts.sora(), overflow: TextOverflow.ellipsis),
+                                  )).toList(),
+                                  onChanged: (v) => _onProgramChanged(v!, true),
                                 ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.02),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                              ),
-                              child: Text(
-                                _primaryProgram.isEmpty ? 'Program Name' : _primaryProgram,
-                                style: GoogleFonts.sora(
-                                  fontSize: 13,
-                                  color: _primaryProgram.isEmpty ? Colors.white24 : Colors.white70,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              );
+
+                          final nameWidget = Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.02),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                             ),
-                          ),
-                        ],
+                            child: Text(
+                              _primaryProgram.isEmpty ? 'Program Name' : _primaryProgram,
+                              style: GoogleFonts.sora(
+                                fontSize: 13,
+                                color: _primaryProgram.isEmpty ? Colors.white24 : Colors.white70,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                programWidget,
+                                const SizedBox(height: 10),
+                                nameWidget,
+                              ],
+                            );
+                          }
+                          return Row(
+                            children: [
+                              Expanded(flex: 1, child: programWidget),
+                              const SizedBox(width: 10),
+                              Expanded(flex: 2, child: nameWidget),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
                       Theme(
                         data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
                         child: DropdownButtonFormField<String>(
                           key: ValueKey('primary_dept_$_primaryDept'),
+                          isExpanded: true,
                           decoration: _inputDecoration(labelText: 'Department'),
                           dropdownColor: AppColors.surfaceNavyBlue,
                           style: GoogleFonts.sora(color: Colors.white, fontSize: 12),
                           initialValue: _departments.contains(_primaryDept) ? _primaryDept : null,
                           items: _departments.map((d) => DropdownMenuItem(
                             value: d,
-                            child: Text(d, style: GoogleFonts.sora(fontSize: 12)),
+                            child: Text(d, style: GoogleFonts.sora(fontSize: 12), overflow: TextOverflow.ellipsis),
                           )).toList(),
                           onChanged: (v) => setState(() => _primaryDept = v!),
                         ),
@@ -1045,49 +1176,65 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                         onSaved: (v) => _courseTitle = v ?? '',
                       ),
                       const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: TextFormField(
-                              key: ValueKey('teacher_$_teacherName'),
-                              style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
-                              decoration: _inputDecoration(
-                                labelText: 'Instructor Name',
-                                prefixIcon: const Icon(Icons.badge_rounded, color: AppColors.primaryCyan, size: 20),
-                              ),
-                              initialValue: _teacherName,
-                              onChanged: (v) => _teacherName = v,
-                              onSaved: (v) => _teacherName = v ?? '',
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isNarrow = constraints.maxWidth < 360;
+                          final teacherField = TextFormField(
+                            key: ValueKey('teacher_$_teacherName'),
+                            style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
+                            decoration: _inputDecoration(
+                              labelText: 'Instructor Name',
+                              prefixIcon: const Icon(Icons.badge_rounded, color: AppColors.primaryCyan, size: 20),
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 2,
-                            child: Theme(
-                              data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
-                              child: DropdownButtonFormField<String>(
-                                decoration: _inputDecoration(labelText: 'Designation'),
-                                dropdownColor: AppColors.surfaceNavyBlue,
-                                style: GoogleFonts.sora(color: Colors.white, fontSize: 12),
-                                initialValue: _designations.contains(_designation) ? _designation : _designations.first,
-                                items: _designations.map((d) => DropdownMenuItem(
-                                  value: d,
-                                  child: Text(d, style: GoogleFonts.sora(fontSize: 12)),
-                                )).toList(),
-                                onChanged: (v) {
-                                  if (v != null) setState(() => _designation = v);
-                                },
-                              ),
+                            initialValue: _teacherName,
+                            onChanged: (v) => _teacherName = v,
+                            onSaved: (v) => _teacherName = v ?? '',
+                          );
+
+                          final designationDropdown = Theme(
+                            data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
+                            child: DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              decoration: _inputDecoration(labelText: 'Designation'),
+                              dropdownColor: AppColors.surfaceNavyBlue,
+                              style: GoogleFonts.sora(color: Colors.white, fontSize: 12),
+                              initialValue: _designations.contains(_designation) ? _designation : _designations.first,
+                              items: _designations.map((d) => DropdownMenuItem(
+                                value: d,
+                                child: Text(d, style: GoogleFonts.sora(fontSize: 12), overflow: TextOverflow.ellipsis),
+                              )).toList(),
+                              onChanged: (v) {
+                                if (v != null) setState(() => _designation = v);
+                              },
                             ),
-                          ),
-                        ],
+                          );
+
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                teacherField,
+                                const SizedBox(height: 12),
+                                designationDropdown,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(flex: 3, child: teacherField),
+                              const SizedBox(width: 10),
+                              Expanded(flex: 2, child: designationDropdown),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
                       Theme(
                         data: Theme.of(context).copyWith(canvasColor: AppColors.surfaceNavyBlue),
                         child: DropdownButtonFormField<String>(
                           key: ValueKey('dept_$_teacherDept'),
+                          isExpanded: true,
                           decoration: _inputDecoration(
                             labelText: 'Instructor Department',
                             prefixIcon: const Icon(Icons.corporate_fare_rounded, color: AppColors.primaryCyan, size: 20),
@@ -1099,7 +1246,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
                             : null,
                           items: _departments.map((d) => DropdownMenuItem(
                             value: d,
-                            child: Text(d, style: GoogleFonts.sora(fontSize: 12)),
+                            child: Text(d, style: GoogleFonts.sora(fontSize: 12), overflow: TextOverflow.ellipsis),
                           )).toList(),
                           onChanged: (v) {
                             if (v != null) {

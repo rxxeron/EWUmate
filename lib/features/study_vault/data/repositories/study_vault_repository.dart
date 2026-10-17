@@ -65,7 +65,7 @@ class StudyVaultRepository {
 
     // 0. Compute SHA-256 hash locally on device
     final fileHash = sha256.convert(fileBytes).toString();
-    final normalizedCourseCode = courseCode?.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
+    final normalizedCourseCode = courseCode?.trim().replaceAll(RegExp(r'\s+'), '').toUpperCase();
     final normalizedFacultyInitial = facultyInitial?.replaceAll(RegExp(r'[\s\.]'), '').toUpperCase();
 
     // 1. Get Resumable Upload URL or Check Duplicate from Edge Function
@@ -155,11 +155,11 @@ class StudyVaultRepository {
       if (normalizedCourseCode != null) {
         final courseRes = await _supabase
             .from('course_metadata')
-            .select('same_course')
+            .select('equivalent_code, same_course')
             .eq('code', normalizedCourseCode)
             .maybeSingle();
         if (courseRes != null) {
-          sameCourseCode = courseRes['same_course'] as String?;
+          sameCourseCode = (courseRes['equivalent_code'] ?? courseRes['same_course']) as String?;
         }
       }
     } catch (_) {

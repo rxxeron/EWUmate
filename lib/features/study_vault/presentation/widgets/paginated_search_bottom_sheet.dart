@@ -85,14 +85,25 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
 
     try {
       final offset = page * _pageSize;
+      final isCourseMeta = widget.tableName == 'course_metadata';
       var queryBuilder = Supabase.instance.client
           .from(widget.tableName)
-          .select('${widget.labelKey}, ${widget.subtitleKey}');
+          .select(isCourseMeta 
+              ? '${widget.labelKey}, ${widget.subtitleKey}, equivalent_code'
+              : '${widget.labelKey}, ${widget.subtitleKey}');
 
       if (_searchQuery.trim().isNotEmpty) {
         final q = _searchQuery.trim();
         final normalizedQ = q.replaceAll(RegExp(r'[\s\.-]'), '');
-        if (normalizedQ != q && normalizedQ.isNotEmpty) {
+        if (isCourseMeta) {
+          queryBuilder = queryBuilder.or(
+            '${widget.labelKey}.ilike.%$q%,'
+            '${widget.labelKey}.ilike.%$normalizedQ%,'
+            '${widget.subtitleKey}.ilike.%$q%,'
+            'equivalent_code.ilike.%$q%,'
+            'equivalent_code.ilike.%$normalizedQ%'
+          );
+        } else if (normalizedQ != q && normalizedQ.isNotEmpty) {
           queryBuilder = queryBuilder.or(
             '${widget.labelKey}.ilike.%$q%,'
             '${widget.labelKey}.ilike.%$normalizedQ%,'
@@ -110,9 +121,14 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
       final rows = response as List;
       final List<Map<String, dynamic>> fetchedItems = [];
       for (var row in rows) {
+        final equiv = isCourseMeta ? row['equivalent_code']?.toString() : null;
+        final sub = row[widget.subtitleKey]?.toString() ?? '';
+        final displaySubtitle = (equiv != null && equiv.isNotEmpty)
+            ? '$sub • Equiv: $equiv'
+            : sub;
         fetchedItems.add({
           'label': row[widget.labelKey]?.toString() ?? '',
-          'subtitle': row[widget.subtitleKey]?.toString() ?? '',
+          'subtitle': displaySubtitle,
         });
       }
 
@@ -143,13 +159,42 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
     }
   }
 
+  bool _isValidQuery(String q) {
+    final t = q.trim();
+    if (t.isEmpty) return true;
+    if (t.length >= 3) return true;
+    if (t.length == 2 && (t.toUpperCase() == 'CE' || t.toUpperCase() == 'CS')) {
+      return true;
+    }
+    return false;
+  }
+
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      setState(() {
-        _searchQuery = query;
-      });
-      _fetchPage(0, isNewSearch: true);
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final trimmed = query.trim();
+      final isValid = _isValidQuery(trimmed);
+
+      if (!isValid) {
+        // Shorter than 3 characters (and not 2-char dept code like CE/CS)
+        // Avoid spamming the database with 1-2 character broad searches.
+        if (_searchQuery.isNotEmpty) {
+          setState(() {
+            _searchQuery = "";
+          });
+          _fetchPage(0, isNewSearch: true);
+        } else {
+          setState(() {});
+        }
+        return;
+      }
+
+      if (_searchQuery != trimmed) {
+        setState(() {
+          _searchQuery = trimmed;
+        });
+        _fetchPage(0, isNewSearch: true);
+      }
     });
   }
 
@@ -207,6 +252,7 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
                     icon: const Icon(Icons.clear_rounded, color: Colors.white38),
                     onPressed: () {
                       _searchController.clear();
+                      setState(() {});
                       _onSearchChanged("");
                     },
                   )
@@ -226,9 +272,24 @@ class _PaginatedSearchBottomSheetState extends State<PaginatedSearchBottomSheet>
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             ),
-            onChanged: _onSearchChanged,
+            onChanged: (val) {
+              setState(() {});
+              _onSearchChanged(val);
+            },
           ),
-          const SizedBox(height: 16),
+          if (_searchController.text.trim().isNotEmpty && !_isValidQuery(_searchController.text.trim()))
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 6),
+              child: Text(
+                'Type at least 3 characters (e.g. CSE, ACT, CE)...',
+                style: TextStyle(
+                  color: Colors.cyanAccent.withValues(alpha: 0.75),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          const SizedBox(height: 14),
           Expanded(
             child: _isLoading
                 ? const Center(

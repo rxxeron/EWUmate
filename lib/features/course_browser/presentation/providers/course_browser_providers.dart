@@ -85,10 +85,14 @@ final paginatedCoursesProvider = AsyncNotifierProvider<PaginatedCoursesNotifier,
 );
 
 final courseSearchResultProvider = FutureProvider<List<CourseMetadata>>((ref) async {
-  final query = ref.watch(courseSearchQueryProvider);
+  final query = ref.watch(courseSearchQueryProvider).trim();
   final repo = ref.watch(courseRepositoryProvider);
   
   if (query.isEmpty) return [];
+  final isValid = query.length >= 3 || 
+      (query.length == 2 && ['CE', 'CS'].contains(query.toUpperCase()));
+  if (!isValid) return [];
+
   return repo.searchCourses(query);
 });
 

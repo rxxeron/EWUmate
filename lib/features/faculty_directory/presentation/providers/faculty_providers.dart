@@ -10,8 +10,11 @@ final facultyDirectoryProvider = FutureProvider<List<Faculty>>((ref) async {
   final selectedDept = ref.watch(facultyDepartmentFilterProvider);
   final repo = ref.watch(facultyRepositoryProvider);
   
+  final isValidQuery = query.length >= 3 || 
+      (query.length == 2 && ['CE', 'CS'].contains(query.toUpperCase()));
+
   List<Faculty> list;
-  if (query.isEmpty) {
+  if (!isValidQuery) {
     list = await repo.getAllFaculty();
   } else {
     list = await repo.searchFaculty(query);

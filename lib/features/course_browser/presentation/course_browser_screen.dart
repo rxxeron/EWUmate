@@ -26,6 +26,7 @@ class CourseBrowserScreen extends ConsumerStatefulWidget {
 class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
   late ScrollController _scrollController;
   Timer? _refreshTimer;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -54,7 +55,17 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
   void dispose() {
     _scrollController.dispose();
     _refreshTimer?.cancel();
+    _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String val) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        ref.read(courseSearchQueryProvider.notifier).state = val;
+      }
+    });
   }
 
   void _onScroll() {
@@ -105,7 +116,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
                       border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                     child: TextField(
-                      onChanged: (val) => ref.read(courseSearchQueryProvider.notifier).state = val,
+                      onChanged: _onSearchChanged,
                       style: GoogleFonts.sora(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Search course code (e.g. CSE101)...',
@@ -408,9 +419,11 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
   }
 
   Widget _buildAvailableList(String targetSem) {
-    final searchQuery = ref.watch(courseSearchQueryProvider);
+    final searchQuery = ref.watch(courseSearchQueryProvider).trim();
+    final hasValidQuery = searchQuery.length >= 3 || 
+        (searchQuery.length == 2 && ['CE', 'CS'].contains(searchQuery.toUpperCase()));
 
-    if (searchQuery.isNotEmpty) {
+    if (hasValidQuery) {
       final searchResult = ref.watch(courseSearchResultProvider);
       return searchResult.when(
         data: (courses) {

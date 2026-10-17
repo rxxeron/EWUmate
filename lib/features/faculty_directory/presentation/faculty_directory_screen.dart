@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,6 +36,8 @@ class _FacultyDirectoryScreenState extends ConsumerState<FacultyDirectoryScreen>
     'PHR',
   ];
 
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -47,9 +50,19 @@ class _FacultyDirectoryScreenState extends ConsumerState<FacultyDirectoryScreen>
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String val) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) {
+        ref.read(facultySearchQueryProvider.notifier).state = val;
+      }
+    });
   }
 
   @override
@@ -100,7 +113,7 @@ class _FacultyDirectoryScreenState extends ConsumerState<FacultyDirectoryScreen>
                 controller: _searchController,
                 focusNode: _searchFocusNode,
                 onChanged: (val) {
-                  ref.read(facultySearchQueryProvider.notifier).state = val;
+                  _onSearchChanged(val);
                   setState(() {});
                 },
                 style: GoogleFonts.sora(
@@ -142,6 +155,7 @@ class _FacultyDirectoryScreenState extends ConsumerState<FacultyDirectoryScreen>
                           onPressed: () {
                             HapticFeedback.lightImpact();
                             _searchController.clear();
+                            _searchDebounce?.cancel();
                             ref.read(facultySearchQueryProvider.notifier).state = '';
                             setState(() {});
                           },

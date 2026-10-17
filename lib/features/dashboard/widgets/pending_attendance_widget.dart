@@ -129,8 +129,20 @@ class PendingAttendanceWidget extends StatelessWidget {
             ...items.take(3).map((it) {
               final code = it['course_code'] ?? 'Unknown';
               final sessionType = it['session_type'] ?? 'Theory';
-              final dt = it['date'] as DateTime? ?? DateTime.now();
-              final dateStr = DateFormat('EEE, MMM d').format(dt);
+              final dt = it['date'] as DateTime? ?? 
+                  (it['dateStr'] != null ? DateTime.tryParse(it['dateStr'].toString()) : null) ?? 
+                  DateTime.now();
+              final now = DateTime.now();
+              final today = DateTime(now.year, now.month, now.day);
+              final classDate = DateTime(dt.year, dt.month, dt.day);
+              final String dateDisplay;
+              if (classDate == today) {
+                dateDisplay = 'Today';
+              } else if (classDate == today.subtract(const Duration(days: 1))) {
+                dateDisplay = 'Yesterday';
+              } else {
+                dateDisplay = DateFormat('EEE, MMM d').format(dt);
+              }
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -169,7 +181,7 @@ class PendingAttendanceWidget extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        dateStr,
+                        dateDisplay,
                         style: GoogleFonts.sora(
                           color: colors.secondaryText,
                           fontSize: 11,

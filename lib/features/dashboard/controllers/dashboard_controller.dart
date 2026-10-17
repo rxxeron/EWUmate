@@ -11,6 +11,7 @@ import '../../../core/models/task.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../../core/repositories/task_repository.dart';
 import '../../../core/services/cache_service.dart';
+import '../../../core/services/local_notification_scheduler.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/utils/refresh_utils.dart';
 import '../../../core/utils/time_utils.dart';
@@ -207,16 +208,23 @@ class DashboardController {
         // Try Hive cache first
         final cachedHolidays = cacheService.getMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays');
         if (cachedHolidays != null && cachedHolidays['events'] is List) {
-          return cachedHolidays['events'] as List;
+          final cachedAtStr = cachedHolidays['cached_at'] as String?;
+          final cachedAt = cachedAtStr != null ? DateTime.tryParse(cachedAtStr) : null;
+          if (cachedAt != null && DateTime.now().difference(cachedAt).inHours < 4) {
+            return cachedHolidays['events'] as List;
+          }
         }
         try {
           final res = await supabase.from(calendarTable).select();
           if (res.isNotEmpty) {
-            cacheService.setMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays', {'events': res});
+            cacheService.setMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays', {
+              'events': res,
+              'cached_at': DateTime.now().toIso8601String(),
+            });
           }
           return res;
         } catch (_) {
-          return <dynamic>[];
+          return (cachedHolidays?['events'] as List?) ?? <dynamic>[];
         }
       });
 
@@ -232,6 +240,26 @@ class DashboardController {
       final exceptions = results[2] as List;
       final progressData = results[3] as List<Map<String, dynamic>>;
 
+      // Trigger background sync for local reminders (Checksum-based, 0-cost if unchanged)
+      final userProfile = cacheService.getCachedProfile(currentUser.id);
+      final reminderSettings = userProfile?['reminder_settings'] as Map<String, dynamic>?;
+
+      ref.read(localNotificationSchedulerProvider).syncLocalReminders(
+        userId: currentUser.id,
+        semesterCode: state.semesterCode,
+        calendar: {
+          'events': holidays,
+          'classes_start_date': state.semConfig?['classes_start_date'],
+          'classes_end_date': state.semConfig?['classes_end_date'],
+        },
+        weeklyGrid: grid,
+        exceptions: exceptions,
+        userReminderSettings: reminderSettings,
+      ).catchError((e) {
+        if (kDebugMode) debugPrint('[DashboardController] Local reminder sync error: $e');
+        return 0;
+      });
+
       // Resolve classes_start_date & classes_end_date from Riverpod academicState / semConfig
       DateTime? startDate;
       DateTime? endDate;
@@ -240,8 +268,13 @@ class DashboardController {
         startDate = DateTime.tryParse(semConfig['classes_start_date']?.toString() ?? '');
         endDate = DateTime.tryParse(semConfig['classes_end_date']?.toString() ?? '');
       }
-      startDate ??= DateTime.now().subtract(const Duration(days: 45));
-      endDate ??= DateTime.now().add(const Duration(days: 45));
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final lookbackLimit = today.subtract(const Duration(days: 14));
+      if (startDate == null || startDate.isBefore(lookbackLimit)) {
+        startDate = lookbackLimit;
+      }
+      endDate ??= today.add(const Duration(days: 14));
 
       final Set<String> holidayDates = {};
       for (final ev in holidays) {
@@ -281,8 +314,6 @@ class DashboardController {
         'Sunday': DateTime.sunday,
       };
 
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
       final DateTime endLimit = endDate.isAfter(today) ? today : endDate;
 
       final List<Map<String, dynamic>> pendingItems = [];
@@ -449,7 +480,7 @@ class DashboardController {
       await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(currentUser.id, state.semesterCode, updatedMap);
 
       state.pendingAttendanceItems.removeWhere((i) =>
-          i['course_code'] == item['course_code'] &&
+          CourseUtils.areEquivalent(i['course_code'], item['course_code']) &&
           i['dateStr'] == dateStr &&
           i['session_type'] == sessionType);
       state.isSavingAttendance = false;
@@ -564,34 +595,38 @@ class DashboardController {
       orElse: () => <String, dynamic>{},
     );
 
-    if (courseMap.isNotEmpty) {
-      final updatedMap = Map<String, dynamic>.from(courseMap);
-      final marksData = Map<String, dynamic>.from(updatedMap['marks_data'] ?? {});
-      final attendance = Map<String, dynamic>.from(marksData['attendance'] ?? {});
-      final dates = Map<String, dynamic>.from(attendance['dates'] ?? {});
-      final types = Map<String, dynamic>.from(attendance['types'] ?? {});
+    final updatedMap = courseMap.isNotEmpty
+        ? Map<String, dynamic>.from(courseMap)
+        : <String, dynamic>{
+            'course_code': courseCode,
+            'marks_data': <String, dynamic>{},
+          };
 
-      final key = '${dateStr}_$sessionType';
-      dates[key] = 'joined';
-      types[key] = sessionType;
-      dates[dateStr] = 'joined';
-      types[dateStr] = sessionType;
+    final marksData = Map<String, dynamic>.from(updatedMap['marks_data'] ?? {});
+    final attendance = Map<String, dynamic>.from(marksData['attendance'] ?? {});
+    final dates = Map<String, dynamic>.from(attendance['dates'] ?? {});
+    final types = Map<String, dynamic>.from(attendance['types'] ?? {});
 
-      attendance['dates'] = dates;
-      attendance['types'] = types;
-      marksData['attendance'] = attendance;
-      updatedMap['marks_data'] = marksData;
+    final key = '${dateStr}_$sessionType';
+    dates[key] = 'joined';
+    types[key] = sessionType;
+    dates[dateStr] = 'joined';
+    types[dateStr] = sessionType;
 
-      await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(currentUser.id, state.semesterCode, updatedMap);
+    attendance['dates'] = dates;
+    attendance['types'] = types;
+    marksData['attendance'] = attendance;
+    updatedMap['marks_data'] = marksData;
 
-      state.pendingAttendanceItems.removeWhere((i) =>
-          i['course_code'] == courseCode &&
-          i['dateStr'] == dateStr &&
-          i['session_type'] == sessionType);
-      onStateChanged();
+    await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(currentUser.id, state.semesterCode, updatedMap);
 
-      ref.invalidate(semesterProgressDataProvider(state.semesterCode));
-    }
+    state.pendingAttendanceItems.removeWhere((i) =>
+        CourseUtils.areEquivalent(i['course_code'], courseCode) &&
+        i['dateStr'] == dateStr &&
+        i['session_type'] == sessionType);
+    onStateChanged();
+
+    ref.invalidate(semesterProgressDataProvider(state.semesterCode));
   }
 
   Future<void> markTaskCompleted({

@@ -165,8 +165,36 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
               );
             }
 
+            // 1. Sort snapshots descending by timestamp (newest first)
+            final sortedSnapshots = List<Map<String, dynamic>>.from(snapshots);
+            sortedSnapshots.sort((a, b) {
+              final aTime = DateTime.tryParse(a['timestamp']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+              final bTime = DateTime.tryParse(b['timestamp']?.toString() ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+              return bTime.compareTo(aTime);
+            });
+
+            // 2. Keep 1 list per calendar day (the most recent for that day)
+            // and cap to at most the last 7 distinct days
+            final seenDayKeys = <String>{};
+            final filteredSnapshots = <Map<String, dynamic>>[];
+
+            for (final s in sortedSnapshots) {
+              final ts = DateTime.tryParse(s['timestamp']?.toString() ?? '');
+              final dayKey = ts != null
+                  ? '${ts.year}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}'
+                  : (s['timestamp']?.toString() ?? 'unknown');
+
+              if (!seenDayKeys.contains(dayKey)) {
+                seenDayKeys.add(dayKey);
+                filteredSnapshots.add(s);
+                if (filteredSnapshots.length >= 7) {
+                  break;
+                }
+              }
+            }
+
             final grouped = <String, List<Map<String, dynamic>>>{};
-            for (final s in snapshots) {
+            for (final s in filteredSnapshots) {
               String rawSem = s['semester'] ?? 'Unknown';
               String sem = rawSem.replaceAllMapped(RegExp(r'(?<!\s)(\d{4})'), (match) => ' ${match.group(1)}').trim();
               grouped.putIfAbsent(sem, () => []).add(s);

@@ -42,12 +42,26 @@ class _StudyVaultScreenState extends ConsumerState<StudyVaultScreen> {
     super.dispose();
   }
 
+  bool _isValidSearchQuery(String query) {
+    final t = query.trim();
+    if (t.isEmpty) return true;
+    if (t.length >= 3) return true;
+    if (t.length == 2 && (t.toUpperCase() == 'CE' || t.toUpperCase() == 'CS')) {
+      return true;
+    }
+    return false;
+  }
+
   void _onSearchChanged(String query) {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 350), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final trimmed = query.trim();
+      final effectiveQuery = (_isValidSearchQuery(trimmed) && trimmed.isNotEmpty) ? trimmed : null;
+
       ref.read(vaultFiltersProvider.notifier).update((state) {
+        if (state['searchQuery'] == effectiveQuery) return state;
         final newState = Map<String, String?>.from(state);
-        newState['searchQuery'] = query.trim().isEmpty ? null : query;
+        newState['searchQuery'] = effectiveQuery;
         return newState;
       });
     });

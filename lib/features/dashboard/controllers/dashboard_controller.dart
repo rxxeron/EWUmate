@@ -215,7 +215,7 @@ class DashboardController {
           }
         }
         try {
-          final res = await supabase.from(calendarTable).select();
+          final res = await supabase.from(calendarTable).select().order('event_date');
           if (res.isNotEmpty) {
             cacheService.setMapData('dashboard_box', '${cleanSem}_${isBiSemester ? "bi" : "tri"}_holidays', {
               'events': res,
@@ -235,22 +235,31 @@ class DashboardController {
         ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(currentUser.id, state.semesterCode),
       ]);
 
-      grid = (results[0] as Map<String, dynamic>?)?['weekly_grid_cache'] as Map<String, dynamic>? ?? grid;
+      final rawGridRes = results[0];
+      if (rawGridRes is Map) {
+        final rawCache = rawGridRes['weekly_grid_cache'] ?? rawGridRes['weekly_grid'];
+        if (rawCache is Map) {
+          grid = Map<String, dynamic>.from(rawCache);
+        }
+      }
       final holidays = results[1] as List;
       final exceptions = results[2] as List;
       final progressData = results[3] as List<Map<String, dynamic>>;
 
-      // Trigger background sync for local reminders (Checksum-based, 0-cost if unchanged)
+      // Trigger background sync for local reminders (Checksum & date-aware, 0-cost if unchanged)
       final userProfile = cacheService.getCachedProfile(currentUser.id);
       final reminderSettings = userProfile?['reminder_settings'] as Map<String, dynamic>?;
+      final cachedSemState = cacheService.getMapData('dashboard_box', '${currentUser.id}_academicState');
+      final classesStartDate = state.semConfig?['classes_start_date'] ?? cachedSemState?['classes_start_date'];
+      final classesEndDate = state.semConfig?['classes_end_date'] ?? cachedSemState?['classes_end_date'];
 
       ref.read(localNotificationSchedulerProvider).syncLocalReminders(
         userId: currentUser.id,
         semesterCode: state.semesterCode,
         calendar: {
           'events': holidays,
-          'classes_start_date': state.semConfig?['classes_start_date'],
-          'classes_end_date': state.semConfig?['classes_end_date'],
+          'classes_start_date': classesStartDate,
+          'classes_end_date': classesEndDate,
         },
         weeklyGrid: grid,
         exceptions: exceptions,

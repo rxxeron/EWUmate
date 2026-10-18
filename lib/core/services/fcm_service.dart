@@ -122,6 +122,10 @@ class FCMService {
             if (payload != null && payload.isNotEmpty) {
               try {
                 final data = jsonDecode(payload);
+                final alertKey = data['alert_key'] as String?;
+                if (alertKey != null && alertKey.isNotEmpty) {
+                  _ref.read(localNotificationSchedulerProvider).markAlertDelivered(alertKey);
+                }
                 // Slight delay to let any foreground screen state settle
                 Future.delayed(const Duration(milliseconds: 200), () {
                   _handleIncomingAction(data['title'], data['body'], data['url'], data['image']);

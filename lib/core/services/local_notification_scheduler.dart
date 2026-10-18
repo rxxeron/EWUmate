@@ -41,6 +41,24 @@ class LocalNotificationScheduler {
     if (!_tzInitialized) {
       try {
         tz.initializeTimeZones();
+        // Configure local timezone location for Bangladesh Standard Time (BST, UTC+6)
+        try {
+          final offset = DateTime.now().timeZoneOffset;
+          if (offset.inHours == 6) {
+            tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
+          } else {
+            final locName = DateTime.now().timeZoneName;
+            if (tz.timeZoneDatabase.locations.containsKey(locName)) {
+              tz.setLocalLocation(tz.getLocation(locName));
+            } else {
+              tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
+            }
+          }
+        } catch (_) {
+          try {
+            tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
+          } catch (_) {}
+        }
         _tzInitialized = true;
       } catch (e) {
         if (kDebugMode) debugPrint('[LocalNotificationScheduler] Timezone init error: $e');
@@ -54,6 +72,10 @@ class LocalNotificationScheduler {
   }
 
   /// Checks if an alert key was scheduled or recently triggered locally (Anti-Duplication)
+  /// Only suppresses FCM push if:
+  /// 1. The alarm was already marked delivered in the last 45 minutes, OR
+  /// 2. The local alarm is scheduled to trigger within a narrow window (-2 min to +15 min).
+  /// Future alarms (e.g. 2 days ahead) will NOT suppress valid push alerts.
   bool isRecentlyScheduledOrDelivered(String alertKey) {
     if (alertKey.isEmpty) return false;
     try {
@@ -70,13 +92,61 @@ class LocalNotificationScheduler {
         }
       }
 
-      // Check active scheduled keys
+      // Check active scheduled keys within active trigger window
       final scheduled = box.get(_scheduledKeysBoxKey) as Map<dynamic, dynamic>? ?? {};
-      if (scheduled.containsKey(alertKey)) {
-        return true;
+      final scheduledTimeStr = scheduled[alertKey] as String?;
+      if (scheduledTimeStr != null) {
+        final st = DateTime.tryParse(scheduledTimeStr);
+        if (st != null) {
+          final diffMins = DateTime.now().difference(st).inMinutes;
+          // Suppress FCM ONLY if local alarm was scheduled within -2 to +15 minutes
+          if (diffMins >= -2 && diffMins <= 15) {
+            return true;
+          }
+        }
       }
     } catch (_) {}
     return false;
+  }
+
+  /// Scans previous scheduled keys and marks past alarms as delivered in Supabase
+  Future<void> reconcilePastScheduledAlarms() async {
+    try {
+      if (!Hive.isBoxOpen('routine_cache_box')) return;
+      final box = Hive.box('routine_cache_box');
+      final scheduled = box.get(_scheduledKeysBoxKey) as Map<dynamic, dynamic>? ?? {};
+      if (scheduled.isEmpty) return;
+
+      final now = DateTime.now();
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final deviceId = getDeviceId();
+      final List<Map<String, dynamic>> deliveredItems = [];
+
+      scheduled.forEach((key, val) {
+        final stStr = val?.toString();
+        if (stStr != null) {
+          final st = DateTime.tryParse(stStr);
+          if (st != null && st.isBefore(now)) {
+            deliveredItems.add({
+              'user_id': userId,
+              'device_id': deviceId,
+              'alert_key': key.toString(),
+              'status': 'delivered',
+              'dispatched_at': st.toUtc().toIso8601String(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            });
+          }
+        }
+      });
+
+      if (deliveredItems.isNotEmpty) {
+        await _supabase.from('local_notification_logs').upsert(
+          deliveredItems,
+          onConflict: 'user_id,device_id,alert_key',
+        );
+      }
+    } catch (_) {}
   }
 
   /// Records an alert key as delivered locally and syncs to Supabase log
@@ -85,8 +155,8 @@ class LocalNotificationScheduler {
       if (!Hive.isBoxOpen('routine_cache_box')) return;
       final box = Hive.box('routine_cache_box');
       final delivered = Map<String, dynamic>.from(box.get(_deliveredKeysBoxKey) as Map? ?? {});
-      final nowStr = DateTime.now().toIso8601String();
-      delivered[alertKey] = nowStr;
+      final nowUtcStr = DateTime.now().toUtc().toIso8601String();
+      delivered[alertKey] = DateTime.now().toIso8601String();
 
       // Clean up entries older than 24 hours
       final cutoff = DateTime.now().subtract(const Duration(hours: 24));
@@ -106,8 +176,8 @@ class LocalNotificationScheduler {
           'device_id': deviceId,
           'alert_key': alertKey,
           'status': 'delivered',
-          'dispatched_at': nowStr,
-          'updated_at': nowStr,
+          'dispatched_at': nowUtcStr,
+          'updated_at': nowUtcStr,
         }, onConflict: 'user_id,device_id,alert_key').then((_) {}).catchError((_) {});
       }
     } catch (_) {}
@@ -158,7 +228,7 @@ class LocalNotificationScheduler {
   }
 
   /// Synchronizes local class reminders for the rolling 7-day window.
-  /// Uses the 3 pillars and verifies checksum. If unchanged, skips re-scheduling.
+  /// Uses the 3 pillars and verifies checksum & date. If unchanged, skips re-scheduling.
   Future<int> syncLocalReminders({
     required String userId,
     required String semesterCode,
@@ -168,29 +238,47 @@ class LocalNotificationScheduler {
     Map<String, dynamic>? userReminderSettings,
     bool forceReschedule = false,
   }) async {
+    // If weekly grid is completely empty, skip to prevent wiping alarms on network/cache glitches
+    if (weeklyGrid.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('[LocalNotificationScheduler] weeklyGrid is empty. Skipping reminder sync to preserve existing alarms.');
+      }
+      return 0;
+    }
+
     final cacheService = _ref.read(routineCacheServiceProvider);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+
     final newChecksum = cacheService.calculateChecksum(
       calendar: calendar,
       weeklyGrid: weeklyGrid,
       exceptions: exceptions,
     );
 
-    final storedChecksum = cacheService.getStoredChecksum(userId, semesterCode);
+    final shouldRun = cacheService.shouldReschedule(
+      userId: userId,
+      semesterCode: semesterCode,
+      newChecksum: newChecksum,
+      todayDateStr: todayStr,
+      forceReschedule: forceReschedule,
+    );
 
-    if (!forceReschedule && storedChecksum != null && storedChecksum == newChecksum) {
+    if (!shouldRun) {
       if (kDebugMode) {
-        debugPrint('[LocalNotificationScheduler] Checksum match ($storedChecksum). Skipping re-schedule.');
+        debugPrint('[LocalNotificationScheduler] Checksum and date ($todayStr) unchanged. Skipping re-schedule.');
       }
       return 0; // Cache hit - no need to reschedule
     }
 
     _initTimezone();
 
+    // Reconcile past scheduled alarms as delivered before wiping
+    await reconcilePastScheduledAlarms();
+
     // Clear previous scheduled alarms before deploying fresh rolling 7-day schedule
     await cancelAllNotifications();
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
 
     // Resolve start & end limits
     DateTime? startDate = DateTime.tryParse(calendar['classes_start_date']?.toString() ?? '');
@@ -379,21 +467,40 @@ class LocalNotificationScheduler {
               iOS: iosDetails,
             );
 
-            await _notifications.zonedSchedule(
-              id: notifId,
-              title: title,
-              body: body,
-              scheduledDate: scheduledTz,
-              notificationDetails: details,
-              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-              payload: jsonEncode({
-                'title': title,
-                'body': body,
-                'alert_key': alertKey,
-                'course_code': cCode,
-                'trigger_time': triggerTime.toIso8601String(),
-              }),
-            );
+            try {
+              await _notifications.zonedSchedule(
+                id: notifId,
+                title: title,
+                body: body,
+                scheduledDate: scheduledTz,
+                notificationDetails: details,
+                androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+                payload: jsonEncode({
+                  'title': title,
+                  'body': body,
+                  'alert_key': alertKey,
+                  'course_code': cCode,
+                  'trigger_time': triggerTime.toIso8601String(),
+                }),
+              );
+            } catch (scheduleError) {
+              // Fallback to inexact scheduling if exact alarm permission is denied by OS
+              await _notifications.zonedSchedule(
+                id: notifId,
+                title: title,
+                body: body,
+                scheduledDate: scheduledTz,
+                notificationDetails: details,
+                androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+                payload: jsonEncode({
+                  'title': title,
+                  'body': body,
+                  'alert_key': alertKey,
+                  'course_code': cCode,
+                  'trigger_time': triggerTime.toIso8601String(),
+                }),
+              );
+            }
 
             scheduledKeysMap[alertKey] = triggerTime.toIso8601String();
             scheduledCount++;
@@ -405,9 +512,9 @@ class LocalNotificationScheduler {
               'alert_key': alertKey,
               'title': title,
               'body': body,
-              'trigger_at': triggerTime.toIso8601String(),
+              'trigger_at': triggerTime.toUtc().toIso8601String(),
               'status': 'scheduled',
-              'updated_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
             });
 
             if (earliestNextAlert == null || triggerTime.isBefore(earliestNextAlert)) {
@@ -422,10 +529,10 @@ class LocalNotificationScheduler {
               'alert_key': alertKey,
               'title': title,
               'body': body,
-              'trigger_at': triggerTime.toIso8601String(),
+              'trigger_at': triggerTime.toUtc().toIso8601String(),
               'status': 'failed',
               'error_message': e.toString(),
-              'updated_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
             });
           }
         }
@@ -439,7 +546,7 @@ class LocalNotificationScheduler {
       }
     } catch (_) {}
 
-    // Save cache & new checksum
+    // Save cache, new checksum & scheduled rolling date
     await cacheService.saveRoutineCache(
       userId: userId,
       semesterCode: semesterCode,
@@ -447,6 +554,7 @@ class LocalNotificationScheduler {
       weeklyGrid: weeklyGrid,
       exceptions: exceptions,
       checksum: newChecksum,
+      scheduledDateStr: todayStr,
     );
 
     // Record deployment state in Supabase database log table
@@ -522,15 +630,15 @@ class LocalNotificationScheduler {
         'checksum': checksum,
         'scheduled_count': scheduledCount,
         'active_keys': activeKeys.take(100).toList(),
-        'last_scheduled_at': DateTime.now().toIso8601String(),
+        'last_scheduled_at': DateTime.now().toUtc().toIso8601String(),
         'status': 'active',
         'metadata': {
-          'next_alert_time': nextAlertTime?.toIso8601String(),
-          'device_time': DateTime.now().toIso8601String(),
+          'next_alert_time': nextAlertTime?.toUtc().toIso8601String(),
+          'device_time': DateTime.now().toUtc().toIso8601String(),
           'app_version': appVersion,
           'os_version': kIsWeb ? 'web' : Platform.operatingSystemVersion,
         },
-        'updated_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id,device_id');
 
       if (kDebugMode) {

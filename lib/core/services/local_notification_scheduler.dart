@@ -32,9 +32,68 @@ class LocalNotificationScheduler {
   static const String _deliveredKeysBoxKey = 'delivered_alert_keys';
 
   bool _tzInitialized = false;
+  bool _isPluginInitialized = false;
 
   LocalNotificationScheduler(this._ref) {
     _initTimezone();
+  }
+
+  Future<void> ensureInitialized() async {
+    _initTimezone();
+    if (_isPluginInitialized) return;
+    try {
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const DarwinInitializationSettings initializationSettingsDarwin =
+          DarwinInitializationSettings();
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsDarwin,
+      );
+
+      await _notifications.initialize(
+        settings: initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) async {
+          final payload = response.payload;
+          if (payload != null && payload.isNotEmpty) {
+            try {
+              final data = jsonDecode(payload);
+              final alertKey = data['alert_key'] as String?;
+              if (alertKey != null && alertKey.isNotEmpty) {
+                await markAlertDelivered(alertKey);
+              }
+            } catch (_) {}
+          }
+        },
+      );
+
+      final androidImplementation = _notifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+      const AndroidNotificationChannel channelV1 = AndroidNotificationChannel(
+        'ewumate_high_priority_reminders_v1',
+        'Task Reminders',
+        description: 'Notifications for class and task timing',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      );
+      const AndroidNotificationChannel channelV2 = AndroidNotificationChannel(
+        channelId,
+        channelName,
+        description: channelDesc,
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      );
+
+      await androidImplementation?.createNotificationChannel(channelV1);
+      await androidImplementation?.createNotificationChannel(channelV2);
+
+      _isPluginInitialized = true;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[LocalNotificationScheduler] ensureInitialized error: $e');
+    }
   }
 
   void _initTimezone() {
@@ -109,42 +168,19 @@ class LocalNotificationScheduler {
     return false;
   }
 
-  /// Scans previous scheduled keys and marks past alarms as delivered in Supabase
-  Future<void> reconcilePastScheduledAlarms() async {
+  /// Scans Android active notifications currently sitting in the system tray and marks them delivered in Supabase
+  Future<void> syncActiveDeliveredNotifications() async {
     try {
-      if (!Hive.isBoxOpen('routine_cache_box')) return;
-      final box = Hive.box('routine_cache_box');
-      final scheduled = box.get(_scheduledKeysBoxKey) as Map<dynamic, dynamic>? ?? {};
-      if (scheduled.isEmpty) return;
-
-      final now = DateTime.now();
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return;
-      final deviceId = getDeviceId();
-      final List<Map<String, dynamic>> deliveredItems = [];
-
-      scheduled.forEach((key, val) {
-        final stStr = val?.toString();
-        if (stStr != null) {
-          final st = DateTime.tryParse(stStr);
-          if (st != null && st.isBefore(now)) {
-            deliveredItems.add({
-              'user_id': userId,
-              'device_id': deviceId,
-              'alert_key': key.toString(),
-              'status': 'delivered',
-              'dispatched_at': st.toUtc().toIso8601String(),
-              'updated_at': DateTime.now().toUtc().toIso8601String(),
-            });
+      final androidPlugin = _notifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final activeNotifs = await androidPlugin.getActiveNotifications();
+        for (final notif in activeNotifs) {
+          final tag = notif.tag;
+          if (tag != null && tag.isNotEmpty && tag.startsWith('c_')) {
+            await markAlertDelivered(tag);
           }
         }
-      });
-
-      if (deliveredItems.isNotEmpty) {
-        await _supabase.from('local_notification_logs').upsert(
-          deliveredItems,
-          onConflict: 'user_id,device_id,alert_key',
-        );
       }
     } catch (_) {}
   }
@@ -204,6 +240,7 @@ class LocalNotificationScheduler {
   /// Cancels all pending notifications
   Future<void> cancelAllNotifications() async {
     try {
+      await ensureInitialized();
       await _notifications.cancelAll();
       if (Hive.isBoxOpen('routine_cache_box')) {
         await Hive.box('routine_cache_box').delete(_scheduledKeysBoxKey);
@@ -246,6 +283,9 @@ class LocalNotificationScheduler {
       return 0;
     }
 
+    await ensureInitialized();
+    await syncActiveDeliveredNotifications();
+
     final cacheService = _ref.read(routineCacheServiceProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -255,6 +295,7 @@ class LocalNotificationScheduler {
       calendar: calendar,
       weeklyGrid: weeklyGrid,
       exceptions: exceptions,
+      userReminderSettings: userReminderSettings,
     );
 
     final shouldRun = cacheService.shouldReschedule(
@@ -271,11 +312,6 @@ class LocalNotificationScheduler {
       }
       return 0; // Cache hit - no need to reschedule
     }
-
-    _initTimezone();
-
-    // Reconcile past scheduled alarms as delivered before wiping
-    await reconcilePastScheduledAlarms();
 
     // Clear previous scheduled alarms before deploying fresh rolling 7-day schedule
     await cancelAllNotifications();

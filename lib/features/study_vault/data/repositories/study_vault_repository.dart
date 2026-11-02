@@ -123,6 +123,10 @@ class StudyVaultRepository {
     final user = _supabase.auth.currentUser;
     if (user == null) throw Exception('User not logged in');
 
+    if (driveFileId.startsWith('fallback-local-')) {
+      throw Exception('Failed to obtain a valid Google Drive file ID. Upload aborted.');
+    }
+
     // 3. Insert primary material entry (with file_hash)
     final basePayload = <String, dynamic>{
       'uploader_id': user.id,

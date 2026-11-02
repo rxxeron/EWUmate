@@ -50,11 +50,12 @@ class RoutineCacheService {
     return null;
   }
 
-  /// Calculates a deterministic SHA-256 composite checksum for the 3 pillars
+  /// Calculates a deterministic SHA-256 composite checksum for the 3 pillars and reminder settings
   String calculateChecksum({
     required Map<String, dynamic> calendar,
     required Map<String, dynamic> weeklyGrid,
     required List<dynamic> exceptions,
+    Map<String, dynamic>? userReminderSettings,
   }) {
     try {
       // Deterministically sort calendar events
@@ -86,6 +87,8 @@ class RoutineCacheService {
       buffer.write(jsonEncode(weeklyGrid));
       buffer.write(':::');
       buffer.write(jsonEncode(exList));
+      buffer.write(':::');
+      buffer.write(jsonEncode(userReminderSettings ?? {}));
 
       final bytes = utf8.encode(buffer.toString());
       final digest = sha256.convert(bytes);

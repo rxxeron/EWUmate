@@ -226,6 +226,11 @@ class FCMService {
           final scheduler = _ref.read(localNotificationSchedulerProvider);
           final notifId = alertKey.isNotEmpty ? scheduler.getNotificationId(alertKey) : notification.hashCode;
 
+          // Notification is delivered via FCM to the device, mark it delivered locally and in telemetry
+          if (alertKey.isNotEmpty) {
+            scheduler.markAlertDelivered(alertKey);
+          }
+
           _localNotifications.show(
             id: notifId,
             title: notification.title,
@@ -242,7 +247,7 @@ class FCMService {
               ),
               iOS: const DarwinNotificationDetails(presentAlert: true, presentSound: true),
             ),
-            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage}),
+            payload: jsonEncode({'title': notification.title, 'body': notification.body, 'url': routingUrl, 'image': notifImage, 'alert_key': alertKey}),
           );
         }
       });
@@ -484,6 +489,18 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
     final data = message.data;
     final userId = data['user_id'];
+    final alertKey = (data['alert_key'] ?? '').toString();
+
+    // If an alertKey is delivered in background, record it in delivered cache
+    if (alertKey.isNotEmpty) {
+      if (!Hive.isBoxOpen('routine_cache_box')) {
+        await Hive.openBox('routine_cache_box');
+      }
+      final rBox = Hive.box('routine_cache_box');
+      final delivered = Map<String, dynamic>.from(rBox.get('delivered_alert_keys') as Map? ?? {});
+      delivered[alertKey] = DateTime.now().toIso8601String();
+      await rBox.put('delivered_alert_keys', delivered);
+    }
 
     if (userId != null) {
       final newNotif = {

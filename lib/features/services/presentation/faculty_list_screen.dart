@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/providers/academic_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass_kit.dart';
+import 'faculty_pdf_viewer_screen.dart';
 
 class FacultyListScreen extends ConsumerStatefulWidget {
   const FacultyListScreen({super.key});
@@ -15,14 +15,32 @@ class FacultyListScreen extends ConsumerStatefulWidget {
 }
 
 class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
-  static const String driveFolderUrl = "https://drive.google.com/drive/folders/117C1TyXx4Q1q1ihcgJoE1xk7CzCYniSD";
+  static const String fallbackRoutineUrl = "https://drive.google.com/drive/folders/117C1TyXx4Q1q1ihcgJoE1xk7CzCYniSD";
+
+  void _openPdfViewer({
+    required BuildContext context,
+    required String pdfUrl,
+    required String title,
+    required String semester,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FacultyPdfViewerScreen(
+          pdfUrl: pdfUrl,
+          title: title,
+          semester: semester,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return FullGradientScaffold(
       appBar: AppBar(
         title: Text(
-          'Faculty List',
+          'Faculty Schedule & Routines',
           style: GoogleFonts.sora(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         backgroundColor: Colors.transparent,
@@ -46,7 +64,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       children: [
-        // Main Prominent Google Drive Folder Card
+        // Main Prominent In-App Protected Viewer Card
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -80,7 +98,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                         color: AppColors.primaryCyan.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.folder_shared_rounded, color: AppColors.primaryCyan, size: 28),
+                      child: const Icon(Icons.security_rounded, color: AppColors.primaryCyan, size: 28),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -88,7 +106,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Official Faculty List Drive',
+                            'Protected Schedule Reader',
                             style: GoogleFonts.sora(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
@@ -97,7 +115,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Access all faculty PDFs directly in Google Drive',
+                            'In-app PDF viewer with search • DRM screenshot & download locked',
                             style: GoogleFonts.sora(fontSize: 12, color: AppColors.secondaryText),
                           ),
                         ],
@@ -123,10 +141,30 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                     ],
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: () => launchUrl(Uri.parse(driveFolderUrl), mode: LaunchMode.externalApplication),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 18, color: Color(0xFF04101E)),
+                    onPressed: () {
+                      final snapshots = snapshotsAsync.valueOrNull ?? [];
+                      if (snapshots.isNotEmpty) {
+                        final s = snapshots.first;
+                        final targetUrl = s['drive_link'] ?? s['drive_folder_url'] ?? s['url'] ?? fallbackRoutineUrl;
+                        final sem = s['semester'] ?? 'Active Semester';
+                        _openPdfViewer(
+                          context: context,
+                          pdfUrl: targetUrl,
+                          title: 'Latest Faculty Schedule',
+                          semester: sem,
+                        );
+                      } else {
+                        _openPdfViewer(
+                          context: context,
+                          pdfUrl: fallbackRoutineUrl,
+                          title: 'Official Faculty Schedule',
+                          semester: 'Latest Term',
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.visibility_rounded, size: 18, color: Color(0xFF04101E)),
                     label: Text(
-                      'Open Google Drive Folder',
+                      'Open Latest Schedule (In-App)',
                       style: GoogleFonts.sora(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -149,7 +187,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
         const Padding(
           padding: EdgeInsets.only(left: 4, bottom: 12),
           child: Text(
-            'Faculty List Snapshots (Google Drive)',
+            'Faculty Schedule Archive (Protected In-App)',
             style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
           ),
         ),
@@ -208,7 +246,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
               itemCount: semesterList.length,
               itemBuilder: (context, index) {
                 final semester = semesterList[index];
-                final items = grouped[semester]!;
+                final items = grouped[semester] ?? [];
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,8 +272,10 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                       final i = entry.key;
                       final s = entry.value;
                       final ts = DateTime.tryParse(s['timestamp'] ?? '');
-                      final dateStr = ts != null ? '${ts.day}/${ts.month}/${ts.year} @ ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}' : 'Recently';
-                      final String targetUrl = s['drive_link'] ?? s['drive_folder_url'] ?? s['url'] ?? driveFolderUrl;
+                      final dateStr = ts != null
+                          ? '${ts.day}/${ts.month}/${ts.year} @ ${ts.hour.toString().padLeft(2, '0')}:${ts.minute.toString().padLeft(2, '0')}'
+                          : 'Recently';
+                      final String targetUrl = s['drive_link'] ?? s['drive_folder_url'] ?? s['url'] ?? fallbackRoutineUrl;
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -250,13 +290,13 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4285F4).withValues(alpha: 0.15),
+                              color: AppColors.primaryCyan.withValues(alpha: 0.15),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.add_to_drive_rounded, color: Color(0xFF4285F4), size: 20),
+                            child: const Icon(Icons.menu_book_rounded, color: AppColors.primaryCyan, size: 20),
                           ),
                           title: Text(
-                            i == 0 ? 'Current Faculty List (Drive)' : 'Faculty List Snapshot ($dateStr)',
+                            i == 0 ? 'Official Faculty Schedule' : 'Schedule Snapshot ($dateStr)',
                             style: TextStyle(
                               fontWeight: i == 0 ? FontWeight.w700 : FontWeight.w500,
                               fontSize: 14,
@@ -264,11 +304,16 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                             ),
                           ),
                           subtitle: Text(
-                            'Tap to open Google Drive',
+                            'Tap to search & view protected PDF in-app',
                             style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                           ),
-                          trailing: const Icon(Icons.open_in_new_rounded, color: Color(0xFF00E5FF), size: 18),
-                          onTap: () => launchUrl(Uri.parse(targetUrl), mode: LaunchMode.externalApplication),
+                          trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF00E5FF), size: 15),
+                          onTap: () => _openPdfViewer(
+                            context: context,
+                            pdfUrl: targetUrl,
+                            title: i == 0 ? '$semester Faculty Schedule' : '$semester Snapshot ($dateStr)',
+                            semester: semester,
+                          ),
                         ),
                       );
                     }),
@@ -277,7 +322,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primaryCyan)),
           error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
         ),
       ],

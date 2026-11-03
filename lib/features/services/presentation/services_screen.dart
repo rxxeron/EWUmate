@@ -65,7 +65,7 @@ class ServicesScreen extends ConsumerWidget {
       ),
       _ServiceItem(
         title: 'Faculty List (PDF)',
-        subtitle: 'Download complete list',
+        subtitle: 'Search & view protected routines',
         icon: Icons.description_rounded,
         accentColor: colors.primaryCyan,
         route: '/services/faculty-list',

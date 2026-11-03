@@ -175,6 +175,8 @@ class _FacultyDetailsScreenState extends ConsumerState<FacultyDetailsScreen> wit
                     delegate: _SliverTabBarDelegate(
                       TabBar(
                         controller: _tabController,
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
                         indicatorColor: AppColors.primaryCyan,
                         indicatorWeight: 3.0,
                         indicatorSize: TabBarIndicatorSize.label,

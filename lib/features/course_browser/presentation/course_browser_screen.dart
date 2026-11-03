@@ -15,6 +15,7 @@ import 'providers/course_browser_providers.dart';
 import '../../../core/utils/error_utils.dart';
 import '../../../core/widgets/onboarding_overlay.dart';
 import '../../../core/constants/onboarding_steps.dart';
+import '../../../core/services/screen_protection_service.dart';
 
 class CourseBrowserScreen extends ConsumerStatefulWidget {
   const CourseBrowserScreen({super.key});
@@ -42,6 +43,9 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        if (ref.read(selectedSemesterScopeProvider) == SemesterScope.upcoming) {
+          ScreenProtectionService.enableProtection();
+        }
         OnboardingOverlay.show(
           context: context,
           featureKey: OnboardingSteps.courseBrowserKey,
@@ -56,6 +60,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
     _scrollController.dispose();
     _refreshTimer?.cancel();
     _searchDebounce?.cancel();
+    ScreenProtectionService.disableProtection();
     super.dispose();
   }
 
@@ -168,6 +173,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
                       isActive: !isUpcoming,
                       onTap: () {
                         if (isUpcoming) {
+                          ScreenProtectionService.disableProtection();
                           ref.read(selectedSemesterScopeProvider.notifier).state = SemesterScope.active;
                           ref.invalidate(browserAvailableCoursesProvider);
                           ref.invalidate(userEnrollmentsProvider);
@@ -185,6 +191,7 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
                       isActive: isUpcoming,
                       onTap: () {
                         if (!isUpcoming) {
+                          ScreenProtectionService.enableProtection();
                           ref.read(selectedSemesterScopeProvider.notifier).state = SemesterScope.upcoming;
                           ref.invalidate(browserAvailableCoursesProvider);
                           ref.invalidate(userEnrollmentsProvider);
@@ -261,9 +268,13 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
                         ),
                         Text(
                           isUpcoming
-                              ? 'Tap Select on any course section to view details & save to upcoming enrollments.'
+                              ? '🔒 Protected View • Screenshot Blocking Active'
                               : 'Browse offerings & manage your enrolled classes.',
-                          style: GoogleFonts.sora(color: AppColors.secondaryText, fontSize: 11),
+                          style: GoogleFonts.sora(
+                            color: isUpcoming ? Colors.tealAccent.withValues(alpha: 0.9) : AppColors.secondaryText,
+                            fontSize: 11,
+                            fontWeight: isUpcoming ? FontWeight.w600 : FontWeight.normal,
+                          ),
                         ),
                       ],
                     ),

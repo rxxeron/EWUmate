@@ -14,3 +14,7 @@
 # Google Play Services & Firebase
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
+
+# PDFium / pdfrx
+-keep class com.pdfrx.** { *; }
+

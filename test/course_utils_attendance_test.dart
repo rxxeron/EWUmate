@@ -49,5 +49,30 @@ void main() {
       expect(CourseUtils.isSessionMarked(dates, '2026-09-10', 'Theory'), isTrue);
       expect(CourseUtils.isSessionMarked(dates, '2026-09-11', 'Theory'), isFalse);
     });
+
+    test('getCourseTitle dynamically resolves registered courses without hardcoding', () {
+      CourseUtils.clearDynamicTitles();
+
+      // Before registration, falls back to normalized code
+      expect(CourseUtils.getCourseTitle('cse 103'), 'CSE103');
+      expect(CourseUtils.getCourseTitle('MAT 101'), 'MAT101');
+      expect(CourseUtils.getCourseTitle(''), '');
+
+      // Register dynamic titles
+      CourseUtils.registerTitles({
+        'CSE103': 'Structured Programming',
+        'MAT101': 'Differential and Integral Calculus',
+      });
+
+      expect(CourseUtils.getCourseTitle('CSE103'), 'Structured Programming');
+      expect(CourseUtils.getCourseTitle('cse 103'), 'Structured Programming');
+      // Handles 4-digit OBE curriculum equivalence automatically
+      expect(CourseUtils.getCourseTitle('CSE7103'), 'Structured Programming');
+      expect(CourseUtils.getCourseTitle('MAT101'), 'Differential and Integral Calculus');
+      expect(CourseUtils.getCourseTitle('mat 7101'), 'Differential and Integral Calculus');
+
+      // Unregistered course safely returns normalized code
+      expect(CourseUtils.getCourseTitle('GEN226'), 'GEN226');
+    });
   });
 }

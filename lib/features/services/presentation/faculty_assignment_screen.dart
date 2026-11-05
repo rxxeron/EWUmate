@@ -178,14 +178,18 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
               for (final c in dayClasses) {
                 final cCode = (c['courseCode'] ?? c['course_code'] ?? '').toString().trim().toUpperCase();
                 final sec = (c['section'] ?? c['section_number'] ?? c['sec'] ?? '').toString().trim();
+                final cName = (c['courseName'] ?? c['course_name'] ?? c['title'] ?? '').toString().trim();
                 final key = '${cCode}_$sec';
                 if (cCode.isNotEmpty && !seen.contains(key)) {
                   seen.add(key);
+                  if (cName.isNotEmpty) {
+                    CourseUtils.registerTitles({cCode: cName});
+                  }
                   enrolled.add({
                     'course_code': cCode,
                     'section': sec.isEmpty ? '1' : sec,
                     'semester_code': cleanSem,
-                    'course_name': CourseUtils.getCourseTitle(cCode),
+                    'course_name': cName.isNotEmpty ? cName : CourseUtils.getCourseTitle(cCode),
                   });
                 }
               }
@@ -226,18 +230,37 @@ class _FacultyAssignmentScreenState extends ConsumerState<FacultyAssignmentScree
     try {
       final metaRes = await supabase
           .from('course_metadata')
-          .select('code')
+          .select('code, name')
           .order('code', ascending: true)
-          .limit(2000);
+          .limit(3000);
 
+      final Map<String, String> metaTitles = {};
       for (var row in metaRes as List) {
         final code = (row['code'] ?? '').toString().trim().toUpperCase();
-        if (code.isNotEmpty && RegExp(r'\d').hasMatch(code) && !sectionsMap.containsKey(code)) {
-          sectionsMap[code] = List.generate(20, (i) => (i + 1).toString());
+        final name = (row['name'] ?? '').toString().trim();
+        if (code.isNotEmpty && RegExp(r'\d').hasMatch(code)) {
+          if (!sectionsMap.containsKey(code)) {
+            sectionsMap[code] = List.generate(20, (i) => (i + 1).toString());
+          }
+          if (name.isNotEmpty) {
+            metaTitles[code] = name;
+          }
         }
+      }
+      if (metaTitles.isNotEmpty) {
+        CourseUtils.registerTitles(metaTitles);
       }
     } catch (e) {
       debugPrint('[FacultyAssignment] course_metadata error: $e');
+    }
+
+    // Refresh enrolled course names now that metadata is registered
+    for (var item in enrolled) {
+      final cCode = (item['course_code'] ?? '').toString();
+      final currentName = (item['course_name'] ?? '').toString();
+      if (currentName.isEmpty || currentName == cCode) {
+        item['course_name'] = CourseUtils.getCourseTitle(cCode);
+      }
     }
 
     final courseCodes = sectionsMap.keys.toList()..sort();

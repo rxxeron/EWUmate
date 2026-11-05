@@ -20,49 +20,35 @@ class CourseUtils {
     return base;
   }
 
-  /// Returns human-readable course title fallback or known title for standard codes
+  static final Map<String, String> _dynamicTitles = {};
+
+  /// Registers dynamic course titles into memory (from course_metadata, Redis, or semester catalog).
+  static void registerTitles(Map<String, String> titles) {
+    titles.forEach((code, title) {
+      final norm = normalize(code);
+      final cleanTitle = title.trim();
+      if (norm.isNotEmpty && cleanTitle.isNotEmpty) {
+        _dynamicTitles[norm] = cleanTitle;
+        final eq = getEquivalent(norm);
+        if (eq.isNotEmpty) {
+          _dynamicTitles.putIfAbsent(eq, () => cleanTitle);
+        }
+      }
+    });
+  }
+
+  /// Clears dynamically registered titles (useful for testing or cache reset).
+  static void clearDynamicTitles() {
+    _dynamicTitles.clear();
+  }
+
+  /// Returns human-readable course title if dynamically registered, or the normalized code.
   static String getCourseTitle(String code) {
     if (code.isEmpty) return '';
     final norm = normalize(code);
-    const titles = {
-      'CSE101': 'Introduction to Computer Science',
-      'CSE103': 'Structured Programming',
-      'CSE106': 'Data Structures',
-      'CSE207': 'Algorithms',
-      'CSE225': 'Data Communication',
-      'CSE246': 'Algorithms Analysis',
-      'CSE251': 'Computer Architecture',
-      'CSE301': 'Database Systems',
-      'CSE302': 'Database Systems Lab',
-      'CSE325': 'Operating Systems',
-      'CSE347': 'Information Systems',
-      'CSE350': 'Software Engineering',
-      'CSE405': 'Computer Networks',
-      'CSE407': 'Artificial Intelligence',
-      'CSE411': 'Compiler Design',
-      'CSE412': 'Web Programming',
-      'MAT101': 'Differential and Integral Calculus',
-      'MAT102': 'Coordinate Geometry & Linear Algebra',
-      'MAT104': 'Differential Equations & Special Functions',
-      'MAT205': 'Probability and Statistics',
-      'PHY101': 'Physics I',
-      'PHY102': 'Physics II',
-      'CHE101': 'Chemistry',
-      'ENG101': 'Basic English',
-      'ENG102': 'English Composition',
-      'ACT101': 'Financial Accounting',
-      'ECO101': 'Principles of Microeconomics',
-      'ECO102': 'Principles of Macroeconomics',
-      'BUS101': 'Introduction to Business',
-      'EEE101': 'Electrical Circuits',
-      'EEE102': 'Electrical Circuits Lab',
-      'EEE105': 'Electronics',
-      'EEE106': 'Electronics Lab',
-      'GEN226': 'Emergence of Bangladesh',
-    };
-    if (titles.containsKey(norm)) return titles[norm]!;
+    if (_dynamicTitles.containsKey(norm)) return _dynamicTitles[norm]!;
     final eq = getEquivalent(norm);
-    if (titles.containsKey(eq)) return titles[eq]!;
+    if (_dynamicTitles.containsKey(eq)) return _dynamicTitles[eq]!;
     return norm;
   }
 

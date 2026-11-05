@@ -6,6 +6,7 @@ import '../models/course_section.dart';
 import '../providers/supabase_provider.dart';
 import '../services/cache_service.dart';
 import '../services/redis_service.dart';
+import '../utils/course_utils.dart';
 
 part 'course_repository.g.dart';
 
@@ -32,7 +33,9 @@ class CourseRepository {
       if (isStale) {
         _fetchAllAndCache(offset, limit);
       }
-      return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+      final list = (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+      CourseUtils.registerTitles({for (var c in list) c.code: c.name});
+      return list;
     }
 
     return await _fetchAllAndCache(offset, limit);
@@ -44,6 +47,7 @@ class CourseRepository {
       final redisList = await _redis.getList('global:course_metadata');
       if (redisList != null && redisList.isNotEmpty) {
         final results = redisList.map((e) => CourseMetadata.fromJson(Map<String, dynamic>.from(e))).toList();
+        CourseUtils.registerTitles({for (var c in results) c.code: c.name});
         _cache.setMapData('course_catalog', 'full_list', {
           'data': results.map((e) => e.toJson()).toList(),
           'updated_at': DateTime.now().toIso8601String(),
@@ -91,10 +95,12 @@ class CourseRepository {
         ttl: const Duration(days: 7),
       );
 
+      CourseUtils.registerTitles({for (var c in allResults) c.code: c.name});
       return allResults;
     } catch (e) {
       if (kDebugMode) print('Failed to load courses from network: $e');
       // If we managed to fetch partial results, return them instead of discarding
+      CourseUtils.registerTitles({for (var c in allResults) c.code: c.name});
       return allResults;
     }
   }
@@ -251,7 +257,9 @@ class CourseRepository {
         // Trigger background sync if cache is older than 7 days
         _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);
       }
-      return (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+      final list = (cached['data'] as List).map((e) => CourseMetadata.fromJson(e)).toList();
+      CourseUtils.registerTitles({for (var c in list) c.code: c.name});
+      return list;
     }
 
     return await _fetchSemesterAndCache(semesterCode, cacheKey, serverVersion: serverVersion);

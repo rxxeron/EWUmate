@@ -386,10 +386,9 @@ class DashboardController {
             final templates = scheduledTemplates.where((t) => t['day'] == dayName).toList();
 
             for (final temp in templates) {
-              final sessionType = temp['type'] ?? 'Theory';
-              final key = '${dateStr}_$sessionType';
+              final sessionType = CourseUtils.normalizeSessionType(temp['type']?.toString());
 
-              if (!dates.containsKey(key) && !dates.containsKey(dateStr)) {
+              if (!CourseUtils.isSessionMarked(dates, dateStr, sessionType)) {
                 // If today, check if class period ended
                 if (d.year == today.year && d.month == today.month && d.day == today.day) {
                   final endTimeStr = temp['end_time'] ?? '';
@@ -418,10 +417,9 @@ class DashboardController {
           final dateStr = makeup['date']?.toString() ?? '';
           final mDate = DateTime.tryParse(dateStr);
           if (mDate != null && (mDate.isBefore(endLimit) || mDate.isAtSameMomentAs(endLimit))) {
-            final sessionType = makeup['session_type']?.toString() ?? makeup['sessionType']?.toString() ?? 'Theory';
-            final key = '${dateStr}_$sessionType';
+            final sessionType = CourseUtils.normalizeSessionType(makeup['session_type']?.toString() ?? makeup['sessionType']?.toString());
 
-            if (!dates.containsKey(key) && !dates.containsKey(dateStr)) {
+            if (!CourseUtils.isSessionMarked(dates, dateStr, sessionType)) {
               if (mDate.year == today.year && mDate.month == today.month && mDate.day == today.day) {
                 final endTimeStr = (makeup['end_time'] ?? makeup['endTime'] ?? '').toString();
                 if (endTimeStr.isNotEmpty) {
@@ -465,9 +463,23 @@ class DashboardController {
     onStateChanged();
 
     try {
-      final courseMap = item['course_map'] as Map<String, dynamic>;
       final dateStr = item['dateStr'] as String;
-      final sessionType = item['session_type'] as String;
+      final sessionType = CourseUtils.normalizeSessionType(item['session_type'] as String?);
+      final courseCode = (item['course_code'] as String).toUpperCase().replaceAll(' ', '');
+
+      // Fresh lookup from SemesterProgressRepository to avoid stale course_map overwrite
+      final progressData = await ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(
+        currentUser.id,
+        state.semesterCode,
+      );
+
+      final courseMap = progressData.firstWhere(
+        (c) => CourseUtils.areEquivalent(c['course_code'], courseCode),
+        orElse: () => item['course_map'] as Map<String, dynamic>? ?? <String, dynamic>{
+          'course_code': courseCode,
+          'semester_code': state.semesterCode,
+        },
+      );
 
       final updatedMap = Map<String, dynamic>.from(courseMap);
       final marksData = Map<String, dynamic>.from(updatedMap['marks_data'] ?? {});
@@ -486,12 +498,23 @@ class DashboardController {
       marksData['attendance'] = attendance;
       updatedMap['marks_data'] = marksData;
 
-      await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(currentUser.id, state.semesterCode, updatedMap);
+      await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(
+        currentUser.id,
+        state.semesterCode,
+        updatedMap,
+      );
+
+      // Keep pending attendance items up to date in case the user marks another session of the same course
+      for (final pi in state.pendingAttendanceItems) {
+        if (CourseUtils.areEquivalent(pi['course_code'], courseCode)) {
+          pi['course_map'] = updatedMap;
+        }
+      }
 
       state.pendingAttendanceItems.removeWhere((i) =>
-          CourseUtils.areEquivalent(i['course_code'], item['course_code']) &&
+          CourseUtils.areEquivalent(i['course_code'], courseCode) &&
           i['dateStr'] == dateStr &&
-          i['session_type'] == sessionType);
+          CourseUtils.normalizeSessionType(i['session_type'] as String?) == sessionType);
       state.isSavingAttendance = false;
       onStateChanged();
 
@@ -525,7 +548,7 @@ class DashboardController {
       for (final item in items) {
         final courseCode = (item['course_code'] as String).toUpperCase().replaceAll(' ', '');
         final dateStr = item['dateStr'] as String;
-        final sessionType = item['session_type'] as String;
+        final sessionType = CourseUtils.normalizeSessionType(item['session_type'] as String?);
 
         if (!accumulatedCourseUpdates.containsKey(courseCode)) {
           final courseMap = progressData.firstWhere(
@@ -566,8 +589,18 @@ class DashboardController {
 
       if (saveFutures.isNotEmpty) {
         await Future.wait(saveFutures);
+
+        for (final pi in state.pendingAttendanceItems) {
+          final pCode = (pi['course_code'] as String).toUpperCase().replaceAll(' ', '');
+          if (accumulatedCourseUpdates.containsKey(pCode)) {
+            pi['course_map'] = accumulatedCourseUpdates[pCode];
+          }
+        }
+
         state.pendingAttendanceItems.removeWhere((i) {
-          final key = '${(i['course_code'] as String).toUpperCase().replaceAll(' ', '')}_${i['dateStr']}_${i['session_type']}';
+          final cCode = (i['course_code'] as String).toUpperCase().replaceAll(' ', '');
+          final sType = CourseUtils.normalizeSessionType(i['session_type'] as String?);
+          final key = '${cCode}_${i['dateStr']}_$sType';
           return codesDatesAndTypes.contains(key);
         });
         state.isSavingAttendance = false;
@@ -594,8 +627,8 @@ class DashboardController {
     final currentUser = user;
     if (currentUser == null || state.semesterCode.isEmpty) return;
 
-    final dateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final sessionType = item.sessionType;
+    final targetDateStr = state.lastValidScheduleData?['dateStr'] ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final sessionType = CourseUtils.normalizeSessionType(item.sessionType);
     final courseCode = item.courseCode.toUpperCase().replaceAll(' ', '');
 
     final progressData = await ref.read(semesterProgressRepositoryProvider).getSemesterProgressData(currentUser.id, state.semesterCode);
@@ -616,11 +649,11 @@ class DashboardController {
     final dates = Map<String, dynamic>.from(attendance['dates'] ?? {});
     final types = Map<String, dynamic>.from(attendance['types'] ?? {});
 
-    final key = '${dateStr}_$sessionType';
+    final key = '${targetDateStr}_$sessionType';
     dates[key] = 'joined';
     types[key] = sessionType;
-    dates[dateStr] = 'joined';
-    types[dateStr] = sessionType;
+    dates[targetDateStr] = 'joined';
+    types[targetDateStr] = sessionType;
 
     attendance['dates'] = dates;
     attendance['types'] = types;
@@ -629,10 +662,16 @@ class DashboardController {
 
     await ref.read(semesterProgressRepositoryProvider).saveCourseMarks(currentUser.id, state.semesterCode, updatedMap);
 
+    for (final pi in state.pendingAttendanceItems) {
+      if (CourseUtils.areEquivalent(pi['course_code'], courseCode)) {
+        pi['course_map'] = updatedMap;
+      }
+    }
+
     state.pendingAttendanceItems.removeWhere((i) =>
         CourseUtils.areEquivalent(i['course_code'], courseCode) &&
-        i['dateStr'] == dateStr &&
-        i['session_type'] == sessionType);
+        i['dateStr'] == targetDateStr &&
+        CourseUtils.normalizeSessionType(i['session_type'] as String?) == sessionType);
     onStateChanged();
 
     ref.invalidate(semesterProgressDataProvider(state.semesterCode));

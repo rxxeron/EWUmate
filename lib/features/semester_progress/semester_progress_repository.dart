@@ -50,17 +50,18 @@ class SemesterProgressRepository {
   }
 
   Future<List<Map<String, dynamic>>> getSemesterProgressData(String userId, String semesterCode) async {
-    final cacheKey = 'marks_${userId}_$semesterCode';
+    final cleanSem = CourseUtils.cleanSemester(semesterCode);
+    final cacheKey = 'marks_${userId}_$cleanSem';
     
     // 1. Try cache first
     final cached = _cache.getMapData('semester_progress_box', cacheKey);
     if (cached != null && cached['data'] != null) {
       // Trigger background sync safely
-      _fetchProgressAndCache(userId, semesterCode, cacheKey).catchError((_) => <Map<String, dynamic>>[]);
+      _fetchProgressAndCache(userId, cleanSem, cacheKey).catchError((_) => <Map<String, dynamic>>[]);
       return List<Map<String, dynamic>>.from(cached['data']);
     }
 
-    return await _fetchProgressAndCache(userId, semesterCode, cacheKey);
+    return await _fetchProgressAndCache(userId, cleanSem, cacheKey);
   }
 
   Future<List<Map<String, dynamic>>> _fetchProgressAndCache(String userId, String semesterCode, String cacheKey) async {
@@ -101,7 +102,7 @@ class SemesterProgressRepository {
       // 3. Merge pending mutations from sync queue to prevent race conditions
       final queue = _cache.getSyncQueue(userId);
       final pendingMarks = queue
-          .where((item) => item['action'] == 'save_course_marks' && item['semesterCode'] == semesterCode)
+          .where((item) => item['action'] == 'save_course_marks' && CourseUtils.cleanSemester(item['semesterCode']?.toString() ?? '') == safeSem)
           .map((item) => Map<String, dynamic>.from(item['data']))
           .toList();
 
@@ -126,7 +127,7 @@ class SemesterProgressRepository {
           orElse: () => <String, dynamic>{
             'id': 'new_$normalizedCode', 
             'user_id': userId,
-            'semester_code': semesterCode,
+            'semester_code': safeSem,
             'course_code': code,
             'is_new': true,
           }
@@ -153,6 +154,7 @@ class SemesterProgressRepository {
   }
 
   Future<void> saveCourseMarks(String userId, String semesterCode, Map<String, dynamic> data) async {
+    final safeSem = CourseUtils.cleanSemester(semesterCode);
     try {
       // Use UPSERT for robustness (handles both insert and update automatically)
       // We must remove the temporary 'new_' ID if it exists
@@ -170,27 +172,28 @@ class SemesterProgressRepository {
 
       final res = await _supabase.from('semester_course_marks')
           .upsert(
-            {...data, 'semester_code': CourseUtils.cleanSemester(semesterCode)}, 
+            {...data, 'semester_code': safeSem}, 
             onConflict: 'user_id,semester_code,course_code'
           )
           .select()
           .single();
       
-      _updateProgressCache(userId, semesterCode, res);
+      _updateProgressCache(userId, safeSem, res);
     } catch (e) {
       if (kDebugMode) debugPrint('[SemesterProgress] Offline write queued: $e');
-      _updateProgressCache(userId, semesterCode, data);
+      _updateProgressCache(userId, safeSem, data);
       
       await _cache.enqueueMutation(userId, {
         'action': 'save_course_marks',
-        'semesterCode': semesterCode,
+        'semesterCode': safeSem,
         'data': data,
       });
     }
   }
   
   void _updateProgressCache(String userId, String semesterCode, Map<String, dynamic> data) {
-    final cacheKey = 'marks_${userId}_$semesterCode';
+    final cleanSem = CourseUtils.cleanSemester(semesterCode);
+    final cacheKey = 'marks_${userId}_$cleanSem';
     final cached = _cache.getMapData('semester_progress_box', cacheKey) ?? {'data': []};
     final list = List<Map<String, dynamic>>.from(cached['data'] ?? []);
     

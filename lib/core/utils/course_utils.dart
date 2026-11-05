@@ -87,6 +87,43 @@ class CourseUtils {
     return s;
   }
 
+  /// Centralized session type normalization ('Theory', 'Lab', 'Makeup')
+  static String normalizeSessionType(String? type) {
+    if (type == null || type.trim().isEmpty) return 'Theory';
+    final lower = type.trim().toLowerCase();
+    if (lower.contains('lab')) return 'Lab';
+    if (lower.contains('makeup')) return 'Makeup';
+    return 'Theory';
+  }
+
+  /// Determines whether an attendance session is marked for a specific date and session type.
+  /// Handles case-insensitive compound keys ('yyyy-MM-dd_Theory'), legacy single date keys ('yyyy-MM-dd'),
+  /// and distinguishes between Theory and Lab on the same calendar day.
+  static bool isSessionMarked(Map<dynamic, dynamic>? dates, String dateStr, String sessionType) {
+    if (dates == null || dates.isEmpty) return false;
+
+    final normType = normalizeSessionType(sessionType);
+    final expectedKey = '${dateStr}_$normType'.toLowerCase();
+
+    // 1. Direct or case-insensitive match on the compound key
+    for (final k in dates.keys) {
+      if (k.toString().toLowerCase() == expectedKey) {
+        return true;
+      }
+    }
+
+    // 2. Legacy fallback for plain dateStr ('yyyy-MM-dd') only if no other session
+    // type for this dateStr is recorded in the map.
+    final prefix = '${dateStr.toLowerCase()}_';
+    final hasOtherTypeKeyForDate = dates.keys.any((k) => k.toString().toLowerCase().startsWith(prefix));
+
+    if (!hasOtherTypeKeyForDate && dates.containsKey(dateStr)) {
+      return true;
+    }
+
+    return false;
+  }
+
   /// Determines if a semester is chronologically before Spring 2025.
   static bool isSemesterBeforeSpring2025(String? semester) {
     if (semester == null || semester.isEmpty) return true; // Default to older curriculum

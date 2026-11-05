@@ -39,6 +39,7 @@ class AttendanceCalendarService {
     }
 
     final resolvedTrack = CourseUtils.normalizeTrack(userTrack);
+    final cleanSem = CourseUtils.cleanSemester(semesterCode);
 
     // 1. Fetch active semester start/end dates (with 12h in-memory cache)
     DateTime startDate;
@@ -74,7 +75,7 @@ class AttendanceCalendarService {
         .from('user_semester_states')
         .select('weekly_grid_cache')
         .eq('user_id', user.id)
-        .eq('semester_code', semesterCode)
+        .inFilter('semester_code', [semesterCode, cleanSem])
         .maybeSingle();
     final grid = stateData?['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
 
@@ -101,7 +102,7 @@ class AttendanceCalendarService {
             final startTime = (c['startTime'] ?? c['start_time'] ?? '').toString();
             final endTime = (c['endTime'] ?? c['end_time'] ?? '').toString();
             final isLab = CourseUtils.isLab(startTime, endTime, code);
-            final type = c['type']?.toString() ?? (isLab ? 'Lab' : 'Theory');
+            final type = CourseUtils.normalizeSessionType(c['type']?.toString() ?? (isLab ? 'Lab' : 'Theory'));
             scheduledTemplates.add({
               'day': day,
               'type': type,
@@ -114,7 +115,7 @@ class AttendanceCalendarService {
     // 3. Fetch academic calendar holidays
     final tableName = CourseUtils.semesterTable(
       'calendar',
-      semesterCode,
+      cleanSem,
       cycleType: resolvedTrack,
     );
 
@@ -177,9 +178,10 @@ class AttendanceCalendarService {
         final dayName = DateFormat('EEEE').format(d);
         final dayTemplates = scheduledTemplates.where((t) => t['day'] == dayName).toList();
         for (final temp in dayTemplates) {
+          final sType = CourseUtils.normalizeSessionType(temp['type']);
           generatedSessions.add(AttendanceSession(
             DateTime(d.year, d.month, d.day),
-            temp['type'] ?? 'Theory',
+            sType,
           ));
         }
       }
@@ -195,12 +197,13 @@ class AttendanceCalendarService {
     // Populate scheduled day types first
     for (final session in generatedSessions) {
       final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
-      final key = '${dateStr}_${session.type}';
+      final sessionType = CourseUtils.normalizeSessionType(session.type);
+      final key = '${dateStr}_$sessionType';
       if (!dateTypes.containsKey(key)) {
-        dateTypes[key] = session.type;
+        dateTypes[key] = sessionType;
       }
       if (!dateTypes.containsKey(dateStr)) {
-        dateTypes[dateStr] = session.type; // legacy fallback
+        dateTypes[dateStr] = sessionType; // legacy fallback
       }
     }
 
@@ -210,7 +213,7 @@ class AttendanceCalendarService {
       final mDate = DateTime.tryParse(dateStr);
       if (mDate != null && (mDate.isBefore(endLimit) || mDate.isAtSameMomentAs(endLimit))) {
         final normalizedDate = DateTime(mDate.year, mDate.month, mDate.day);
-        final sessionType = makeup['session_type']?.toString() ?? makeup['sessionType']?.toString() ?? 'Theory';
+        final sessionType = CourseUtils.normalizeSessionType(makeup['session_type']?.toString() ?? makeup['sessionType']?.toString());
 
         final exists = generatedSessions.any((s) => s.date == normalizedDate && s.type == sessionType);
         if (!exists) {
@@ -232,8 +235,9 @@ class AttendanceCalendarService {
     // Auto-mark holidays and cancellations if not already set by user
     for (final session in generatedSessions) {
       final dateStr = DateFormat('yyyy-MM-dd').format(session.date);
-      final key = '${dateStr}_${session.type}';
-      if (!markedDates.containsKey(key) && !markedDates.containsKey(dateStr)) {
+      final sessionType = CourseUtils.normalizeSessionType(session.type);
+      final key = '${dateStr}_$sessionType';
+      if (!CourseUtils.isSessionMarked(markedDates, dateStr, sessionType)) {
         if (holidayDates.contains(dateStr)) {
           markedDates[key] = 'holiday';
         } else if (cancelledDates.contains(dateStr)) {

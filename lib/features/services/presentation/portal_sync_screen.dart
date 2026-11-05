@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/services/portal_service.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../../core/utils/course_utils.dart';
 import '../../../core/widgets/ewumate_app_bar.dart';
 import '../../../core/widgets/glass_kit.dart';
@@ -235,7 +236,7 @@ class _PortalSyncScreenState extends ConsumerState<PortalSyncScreen>
       }
 
       final azureRes = await http.post(
-        Uri.parse('https://ewumate-parser.azurewebsites.net/api/portal_sync_student'),
+        Uri.parse('${AppConfig.getAzureFunctionUrl}/api/portal_sync_student'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(requestPayload),
       ).timeout(const Duration(seconds: 35));

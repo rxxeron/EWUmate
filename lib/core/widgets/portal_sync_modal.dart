@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../config/supabase_config.dart';
 import '../../core/services/portal_service.dart';
 import '../../core/utils/course_utils.dart';
 import '../../features/auth/auth_providers.dart';
@@ -99,7 +100,7 @@ class _PortalSyncModalState extends ConsumerState<PortalSyncModal> {
 
       try {
         final gradeSheetRes = await http.post(
-          Uri.parse('https://ewumate-parser.azurewebsites.net/api/parse_grade_sheet'),
+          Uri.parse('${AppConfig.getAzureFunctionUrl}/api/parse_grade_sheet'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'student_id': studentId,

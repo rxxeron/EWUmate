@@ -1,23 +1,35 @@
 /// Utility class for time-related operations
 class TimeUtils {
-  /// Parses a time string (e.g., "8:30 AM", "2:00 PM") to minutes since midnight
+  /// Parses a time string (e.g., "8:30 AM", "2:00 PM", "4:50 PM - 6:20 PM") to minutes since midnight
   /// Returns minutes (0-1439) or 24*60 (1440) for invalid input
   static int parseTime(String? timeStr) {
     if (timeStr == null || timeStr.isEmpty) return 24 * 60;
 
     try {
-      final lower = timeStr.toLowerCase().trim();
+      // If time string is a range like "4:50 PM - 6:20 PM", take the start part
+      final effectiveStr = timeStr.contains('-') ? timeStr.split('-').first.trim() : timeStr.trim();
+      final lower = effectiveStr.toLowerCase();
       final isPm = lower.contains('pm');
       final isAm = lower.contains('am');
 
-      final clean = lower.replaceAll(RegExp(r'[a-z]'), '').trim();
+      final clean = lower.replaceAll(RegExp(r'[^0-9:]'), '').trim();
       final parts = clean.split(':');
+      if (parts.isEmpty || parts[0].isEmpty) return 24 * 60;
 
       int h = int.parse(parts[0]);
       final int m = (parts.length > 1) ? int.parse(parts[1]) : 0;
 
-      if (isPm && h < 12) h += 12;
-      if (isAm && h == 12) h = 0;
+      if (isPm && h < 12) {
+        h += 12;
+      } else if (isAm && h == 12) {
+        h = 0;
+      } else if (!isPm && !isAm) {
+        // Fallback heuristic: If AM/PM is omitted and hour is between 1 and 7,
+        // EWU university classes are afternoon/evening (e.g. 4:50 -> 4:50 PM).
+        if (h >= 1 && h <= 7) {
+          h += 12;
+        }
+      }
 
       return h * 60 + m;
     } catch (e) {

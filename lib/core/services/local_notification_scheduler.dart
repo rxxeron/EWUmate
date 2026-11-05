@@ -90,6 +90,11 @@ class LocalNotificationScheduler {
       await androidImplementation?.createNotificationChannel(channelV1);
       await androidImplementation?.createNotificationChannel(channelV2);
 
+      // Proactively request exact alarm permissions if needed on Android 13/14+
+      try {
+        await androidImplementation?.requestExactAlarmsPermission();
+      } catch (_) {}
+
       _isPluginInitialized = true;
     } catch (e) {
       if (kDebugMode) debugPrint('[LocalNotificationScheduler] ensureInitialized error: $e');
@@ -102,22 +107,8 @@ class LocalNotificationScheduler {
         tz.initializeTimeZones();
         // Configure local timezone location for Bangladesh Standard Time (BST, UTC+6)
         try {
-          final offset = DateTime.now().timeZoneOffset;
-          if (offset.inHours == 6) {
-            tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
-          } else {
-            final locName = DateTime.now().timeZoneName;
-            if (tz.timeZoneDatabase.locations.containsKey(locName)) {
-              tz.setLocalLocation(tz.getLocation(locName));
-            } else {
-              tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
-            }
-          }
-        } catch (_) {
-          try {
-            tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
-          } catch (_) {}
-        }
+          tz.setLocalLocation(tz.getLocation('Asia/Dhaka'));
+        } catch (_) {}
         _tzInitialized = true;
       } catch (e) {
         if (kDebugMode) debugPrint('[LocalNotificationScheduler] Timezone init error: $e');
@@ -287,9 +278,10 @@ class LocalNotificationScheduler {
     await syncActiveDeliveredNotifications();
 
     final cacheService = _ref.read(routineCacheServiceProvider);
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final todayStr = DateFormat('yyyy-MM-dd').format(today);
+    final dhaka = tz.getLocation('Asia/Dhaka');
+    final nowDhaka = tz.TZDateTime.now(dhaka);
+    final todayDhaka = tz.TZDateTime(dhaka, nowDhaka.year, nowDhaka.month, nowDhaka.day);
+    final todayStr = DateFormat('yyyy-MM-dd').format(todayDhaka);
 
     final newChecksum = cacheService.calculateChecksum(
       calendar: calendar,
@@ -319,8 +311,8 @@ class LocalNotificationScheduler {
     // Resolve start & end limits
     DateTime? startDate = DateTime.tryParse(calendar['classes_start_date']?.toString() ?? '');
     DateTime? endDate = DateTime.tryParse(calendar['classes_end_date']?.toString() ?? '');
-    startDate ??= today.subtract(const Duration(days: 30));
-    endDate ??= today.add(const Duration(days: 60));
+    startDate ??= todayDhaka.subtract(const Duration(days: 30));
+    endDate ??= todayDhaka.add(const Duration(days: 60));
 
     // Build holiday lookup
     final Set<String> holidayDates = {};
@@ -374,7 +366,7 @@ class LocalNotificationScheduler {
 
     // Schedule next 7 rolling days (Day 0 = today, up to Day 6)
     for (int offset = 0; offset < 7; offset++) {
-      final targetDate = today.add(Duration(days: offset));
+      final targetDate = todayDhaka.add(Duration(days: offset));
       final dateStr = DateFormat('yyyy-MM-dd').format(targetDate);
       final dayName = DateFormat('EEEE').format(targetDate);
 
@@ -419,7 +411,14 @@ class LocalNotificationScheduler {
         final startH = currentStartMinutes ~/ 60;
         final startM = currentStartMinutes % 60;
 
-        final classStart = DateTime(targetDate.year, targetDate.month, targetDate.day, startH, startM);
+        final classStartTz = tz.TZDateTime(
+          dhaka,
+          targetDate.year,
+          targetDate.month,
+          targetDate.day,
+          startH,
+          startM,
+        );
 
         final isFirstClass = (i == 0);
         int gapMinutes = 9999;
@@ -463,8 +462,8 @@ class LocalNotificationScheduler {
         }
 
         for (final m in configuredMinutes) {
-          final triggerTime = classStart.subtract(Duration(minutes: m));
-          if (triggerTime.isBefore(now)) continue; // Past trigger time
+          final scheduledTz = classStartTz.subtract(Duration(minutes: m));
+          if (scheduledTz.isBefore(nowDhaka)) continue; // Past trigger time
 
           final alertKey = 'c_${m}m:$cCode:$dateStr';
           final timeLeftText = _formatRemainingTime(m);
@@ -480,8 +479,6 @@ class LocalNotificationScheduler {
           final notifId = getNotificationId(alertKey);
 
           try {
-            final scheduledTz = tz.TZDateTime.from(triggerTime, tz.local);
-
             final androidDetails = AndroidNotificationDetails(
               channelId,
               channelName,
@@ -490,6 +487,8 @@ class LocalNotificationScheduler {
               priority: Priority.high,
               icon: '@mipmap/ic_launcher',
               tag: alertKey, // Android groups/replaces identical tags
+              category: AndroidNotificationCategory.reminder,
+              audioAttributesUsage: AudioAttributesUsage.notificationEvent,
             );
 
             const iosDetails = DarwinNotificationDetails(
@@ -516,7 +515,7 @@ class LocalNotificationScheduler {
                   'body': body,
                   'alert_key': alertKey,
                   'course_code': cCode,
-                  'trigger_time': triggerTime.toIso8601String(),
+                  'trigger_time': scheduledTz.toIso8601String(),
                 }),
               );
             } catch (scheduleError) {
@@ -533,12 +532,12 @@ class LocalNotificationScheduler {
                   'body': body,
                   'alert_key': alertKey,
                   'course_code': cCode,
-                  'trigger_time': triggerTime.toIso8601String(),
+                  'trigger_time': scheduledTz.toIso8601String(),
                 }),
               );
             }
 
-            scheduledKeysMap[alertKey] = triggerTime.toIso8601String();
+            scheduledKeysMap[alertKey] = scheduledTz.toIso8601String();
             scheduledCount++;
 
             localLogItems.add({
@@ -548,13 +547,13 @@ class LocalNotificationScheduler {
               'alert_key': alertKey,
               'title': title,
               'body': body,
-              'trigger_at': triggerTime.toUtc().toIso8601String(),
+              'trigger_at': scheduledTz.toUtc().toIso8601String(),
               'status': 'scheduled',
               'updated_at': DateTime.now().toUtc().toIso8601String(),
             });
 
-            if (earliestNextAlert == null || triggerTime.isBefore(earliestNextAlert)) {
-              earliestNextAlert = triggerTime;
+            if (earliestNextAlert == null || scheduledTz.isBefore(earliestNextAlert)) {
+              earliestNextAlert = scheduledTz;
             }
           } catch (e) {
             if (kDebugMode) debugPrint('[LocalNotificationScheduler] Error scheduling $alertKey: $e');
@@ -565,7 +564,7 @@ class LocalNotificationScheduler {
               'alert_key': alertKey,
               'title': title,
               'body': body,
-              'trigger_at': triggerTime.toUtc().toIso8601String(),
+              'trigger_at': scheduledTz.toUtc().toIso8601String(),
               'status': 'failed',
               'error_message': e.toString(),
               'updated_at': DateTime.now().toUtc().toIso8601String(),

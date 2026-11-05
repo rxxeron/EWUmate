@@ -176,12 +176,15 @@ class FCMService {
       final settings = await _messaging.getNotificationSettings();
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        final token = await _messaging.getToken();
+        // ignore: deprecated_member_use
+        // ignore: deprecated_member_use
+      final token = await _messaging.getToken();
         if (token != null) {
           await _saveTokenToDatabase(token);
         }
       }
       
+      // ignore: deprecated_member_use
       _tokenRefreshSub = _messaging.onTokenRefresh.listen((t) => _saveTokenToDatabase(t));
 
       _onMessageSub = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -302,6 +305,7 @@ class FCMService {
       _showStatusChip("Waiting for FCM Initialization...");
       await _initCompleter.future;
       _showStatusChip("Fetching token from Firebase...");
+      // ignore: deprecated_member_use
       final token = await _messaging.getToken();
       if (token != null) {
         _showStatusChip("Token fetched. Saving to database...");

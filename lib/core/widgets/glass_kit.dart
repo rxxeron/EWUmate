@@ -230,6 +230,7 @@ class GlassContainer extends StatelessWidget {
   final double blur;
   final double opacity;
   final double borderRadius;
+  final double borderWidth;
   final Color? borderColor;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress; // Added support
@@ -245,6 +246,7 @@ class GlassContainer extends StatelessWidget {
     this.blur = 10,
     this.opacity = 0.1,
     this.borderRadius = 20,
+    this.borderWidth = 1.0,
     this.borderColor,
     this.color,
     this.onTap,
@@ -268,7 +270,7 @@ class GlassContainer extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
                 color: borderColor ?? Colors.white.withValues(alpha: 0.2),
-                width: 1.0,
+                width: borderWidth,
               ),
               gradient: LinearGradient(
                 colors: [

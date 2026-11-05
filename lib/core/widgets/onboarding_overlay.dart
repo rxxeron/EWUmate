@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:glass_kit/glass_kit.dart';
+import 'glass_kit.dart';
 import '../services/tutorial_service.dart';
 
 class OnboardingOverlay extends StatelessWidget {
@@ -74,9 +74,10 @@ class _OnboardingDialogBodyState extends State<_OnboardingDialogBody> {
         child: GlassContainer(
           height: 440,
           width: double.infinity,
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: 32,
           borderWidth: 1.5,
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white,
+          opacity: 0.05,
           borderColor: Colors.white.withValues(alpha: 0.2),
           blur: 15,
           child: Column(

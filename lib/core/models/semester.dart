@@ -4,7 +4,7 @@ part 'semester.freezed.dart';
 part 'semester.g.dart';
 
 @freezed
-class Semester with _$Semester {
+abstract class Semester with _$Semester {
   const factory Semester({
     required String code,
     required String title,

@@ -6,9 +6,8 @@ part of 'semester_course_marks.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SemesterCourseMarksImpl _$$SemesterCourseMarksImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SemesterCourseMarksImpl(
+_SemesterCourseMarks _$SemesterCourseMarksFromJson(Map<String, dynamic> json) =>
+    _SemesterCourseMarks(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       semesterCode: json['semester_code'] as String,
@@ -58,8 +57,8 @@ _$SemesterCourseMarksImpl _$$SemesterCourseMarksImplFromJson(
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$SemesterCourseMarksImplToJson(
-        _$SemesterCourseMarksImpl instance) =>
+Map<String, dynamic> _$SemesterCourseMarksToJson(
+        _SemesterCourseMarks instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

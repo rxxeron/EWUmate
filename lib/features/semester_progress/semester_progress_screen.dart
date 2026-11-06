@@ -102,7 +102,7 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
   @override
   Widget build(BuildContext context) {
     final colors = context.ewuColors;
-    final allMeta = ref.watch(allCoursesProvider).valueOrNull ?? [];
+    final allMeta = ref.watch(allCoursesProvider).value ?? [];
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
     final allSemestersAsync = ref.watch(semestersProvider);
 
@@ -151,7 +151,7 @@ class _SemesterProgressScreenState extends ConsumerState<SemesterProgressScreen>
                   onTap: () => _showSemesterPicker(
                     context, 
                     activeSemCode, 
-                    allSemestersAsync.valueOrNull ?? [],
+                    allSemestersAsync.value ?? [],
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),

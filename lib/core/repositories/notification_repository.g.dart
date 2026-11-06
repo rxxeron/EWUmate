@@ -6,39 +6,87 @@ part of 'notification_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$notificationRepositoryHash() =>
-    r'327e1554c8c855de1591dfa3c0eeb560e0f2cf00';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [notificationRepository].
 @ProviderFor(notificationRepository)
-final notificationRepositoryProvider =
-    AutoDisposeProvider<NotificationRepository>.internal(
-  notificationRepository,
-  name: r'notificationRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$notificationRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final notificationRepositoryProvider = NotificationRepositoryProvider._();
 
-typedef NotificationRepositoryRef
-    = AutoDisposeProviderRef<NotificationRepository>;
-String _$userNotificationsHash() => r'7316a30aac64b523a2a88d1b393c46cd89403e86';
+final class NotificationRepositoryProvider extends $FunctionalProvider<
+    NotificationRepository,
+    NotificationRepository,
+    NotificationRepository> with $Provider<NotificationRepository> {
+  NotificationRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'notificationRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [userNotifications].
+  @override
+  String debugGetCreateSourceHash() => _$notificationRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<NotificationRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  NotificationRepository create(Ref ref) {
+    return notificationRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(NotificationRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<NotificationRepository>(value),
+    );
+  }
+}
+
+String _$notificationRepositoryHash() =>
+    r'8c750b025c27c67cc4903e934580484f8d66fb38';
+
 @ProviderFor(userNotifications)
-final userNotificationsProvider =
-    StreamProvider<List<model.Notification>>.internal(
-  userNotifications,
-  name: r'userNotificationsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$userNotificationsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final userNotificationsProvider = UserNotificationsProvider._();
 
-typedef UserNotificationsRef = StreamProviderRef<List<model.Notification>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class UserNotificationsProvider extends $FunctionalProvider<
+        AsyncValue<List<model.Notification>>,
+        List<model.Notification>,
+        Stream<List<model.Notification>>>
+    with
+        $FutureModifier<List<model.Notification>>,
+        $StreamProvider<List<model.Notification>> {
+  UserNotificationsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'userNotificationsProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$userNotificationsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<model.Notification>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<model.Notification>> create(Ref ref) {
+    return userNotifications(ref);
+  }
+}
+
+String _$userNotificationsHash() => r'eebd52319011dc931574270c3437050c6a6f4b7e';

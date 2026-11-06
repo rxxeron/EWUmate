@@ -78,17 +78,16 @@ class AuthRepository {
 
   // Google Sign In
   Future<AuthResponse> signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn(
+    final googleSignIn = GoogleSignIn.instance;
+    await googleSignIn.initialize(
       serverClientId: AppConfig.getGoogleWebClientId,
     );
 
     // Force the account picker
     await googleSignIn.signOut();
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) throw 'Login cancelled';
+    final googleUser = await googleSignIn.authenticate();
 
-    final googleAuth = await googleUser.authentication;
-    final accessToken = googleAuth.accessToken;
+    final googleAuth = googleUser.authentication;
     final idToken = googleAuth.idToken;
 
     if (idToken == null) throw 'No ID Token found.';
@@ -96,7 +95,6 @@ class AuthRepository {
     final response = await _supabase.auth.signInWithIdToken(
       provider: OAuthProvider.google,
       idToken: idToken,
-      accessToken: accessToken,
     );
 
     // Ensure profile exists immediately after login
@@ -132,18 +130,18 @@ class AuthRepository {
 }
 
 @riverpod
-AuthRepository authRepository(AuthRepositoryRef ref) {
+AuthRepository authRepository(Ref ref) {
   final cache = ref.watch(cacheServiceProvider);
   return AuthRepository(ref.watch(supabaseClientProvider), cache);
 }
 
 @riverpod
-Stream<AuthState> authState(AuthStateRef ref) {
+Stream<AuthState> authState(Ref ref) {
   return ref.watch(authRepositoryProvider).authStateChanges;
 }
 
 @riverpod
-User? currentUser(CurrentUserRef ref) {
+User? currentUser(Ref ref) {
   // Watch auth state changes to make this provider reactive
   final authState = ref.watch(authStateProvider).value;
   return authState?.session?.user ?? Supabase.instance.client.auth.currentUser;

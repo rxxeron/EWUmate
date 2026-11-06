@@ -6,66 +6,150 @@ part of 'task_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$taskRepositoryHash() => r'bca5e4152a8e16760cba91930c8f039cb4a24ae9';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [taskRepository].
 @ProviderFor(taskRepository)
-final taskRepositoryProvider = AutoDisposeProvider<TaskRepository>.internal(
-  taskRepository,
-  name: r'taskRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$taskRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final taskRepositoryProvider = TaskRepositoryProvider._();
 
-typedef TaskRepositoryRef = AutoDisposeProviderRef<TaskRepository>;
-String _$activeTasksConfigHash() => r'2691d365e902c1ccf70840da36096b720fb621f3';
+final class TaskRepositoryProvider
+    extends $FunctionalProvider<TaskRepository, TaskRepository, TaskRepository>
+    with $Provider<TaskRepository> {
+  TaskRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'taskRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [activeTasksConfig].
+  @override
+  String debugGetCreateSourceHash() => _$taskRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<TaskRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  TaskRepository create(Ref ref) {
+    return taskRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(TaskRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<TaskRepository>(value),
+    );
+  }
+}
+
+String _$taskRepositoryHash() => r'ad18cbe98edcc69337a096cea459a1d015087c8f';
+
 @ProviderFor(activeTasksConfig)
-final activeTasksConfigProvider =
-    AutoDisposeFutureProvider<List<Task>>.internal(
-  activeTasksConfig,
-  name: r'activeTasksConfigProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$activeTasksConfigHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final activeTasksConfigProvider = ActiveTasksConfigProvider._();
 
-typedef ActiveTasksConfigRef = AutoDisposeFutureProviderRef<List<Task>>;
-String _$allTasksStreamHash() => r'd9f991c9f3ef24de84e45ad8b511068eb1616ec1';
+final class ActiveTasksConfigProvider extends $FunctionalProvider<
+        AsyncValue<List<Task>>, List<Task>, FutureOr<List<Task>>>
+    with $FutureModifier<List<Task>>, $FutureProvider<List<Task>> {
+  ActiveTasksConfigProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'activeTasksConfigProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [allTasksStream].
+  @override
+  String debugGetCreateSourceHash() => _$activeTasksConfigHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Task>> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Task>> create(Ref ref) {
+    return activeTasksConfig(ref);
+  }
+}
+
+String _$activeTasksConfigHash() => r'd01486e6e05a38c38757d7405f8e4df4cb5352f6';
+
 @ProviderFor(allTasksStream)
-final allTasksStreamProvider = StreamProvider<List<Task>>.internal(
-  allTasksStream,
-  name: r'allTasksStreamProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$allTasksStreamHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final allTasksStreamProvider = AllTasksStreamProvider._();
 
-typedef AllTasksStreamRef = StreamProviderRef<List<Task>>;
-String _$userNotificationsHash() => r'0f5ac00b5c87baf692fe07e205028909638195ec';
+final class AllTasksStreamProvider extends $FunctionalProvider<
+        AsyncValue<List<Task>>, List<Task>, Stream<List<Task>>>
+    with $FutureModifier<List<Task>>, $StreamProvider<List<Task>> {
+  AllTasksStreamProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'allTasksStreamProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [userNotifications].
+  @override
+  String debugGetCreateSourceHash() => _$allTasksStreamHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Task>> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Task>> create(Ref ref) {
+    return allTasksStream(ref);
+  }
+}
+
+String _$allTasksStreamHash() => r'62390525e22529e38c70bb08c6664e14cf7b3163';
+
 @ProviderFor(userNotifications)
-final userNotificationsProvider = StreamProvider<List<Notification>>.internal(
-  userNotifications,
-  name: r'userNotificationsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$userNotificationsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final userNotificationsProvider = UserNotificationsProvider._();
 
-typedef UserNotificationsRef = StreamProviderRef<List<Notification>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class UserNotificationsProvider extends $FunctionalProvider<
+        AsyncValue<List<Notification>>,
+        List<Notification>,
+        Stream<List<Notification>>>
+    with
+        $FutureModifier<List<Notification>>,
+        $StreamProvider<List<Notification>> {
+  UserNotificationsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'userNotificationsProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$userNotificationsHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<Notification>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<Notification>> create(Ref ref) {
+    return userNotifications(ref);
+  }
+}
+
+String _$userNotificationsHash() => r'b1bcee306cec25deed8ad6d91b03c87a882e8ba6';

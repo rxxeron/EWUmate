@@ -76,11 +76,11 @@ class ScholarshipRepository {
 }
 
 @riverpod
-ScholarshipRepository scholarshipRepository(ScholarshipRepositoryRef ref) {
+ScholarshipRepository scholarshipRepository(Ref ref) {
   return ScholarshipRepository(ref.watch(supabaseClientProvider));
 }
 
 @riverpod
-Future<ScholarshipRule?> scholarshipPolicy(ScholarshipPolicyRef ref, String programId, {String? admittedSemester}) {
+Future<ScholarshipRule?> scholarshipPolicy(Ref ref, String programId, {String? admittedSemester}) {
   return ref.watch(scholarshipRepositoryProvider).getScholarshipPolicy(programId, admittedSemester: admittedSemester);
 }

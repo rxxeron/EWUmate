@@ -6,15 +6,14 @@ part of 'course_metadata.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$CourseMetadataImpl _$$CourseMetadataImplFromJson(Map<String, dynamic> json) =>
-    _$CourseMetadataImpl(
+_CourseMetadata _$CourseMetadataFromJson(Map<String, dynamic> json) =>
+    _CourseMetadata(
       code: json['code'] as String,
       name: json['name'] as String,
       creditVal: (json['credit_val'] as num).toDouble(),
     );
 
-Map<String, dynamic> _$$CourseMetadataImplToJson(
-        _$CourseMetadataImpl instance) =>
+Map<String, dynamic> _$CourseMetadataToJson(_CourseMetadata instance) =>
     <String, dynamic>{
       'code': instance.code,
       'name': instance.name,

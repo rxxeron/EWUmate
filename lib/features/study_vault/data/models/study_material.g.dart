@@ -6,8 +6,8 @@ part of 'study_material.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$StudyMaterialImpl _$$StudyMaterialImplFromJson(Map<String, dynamic> json) =>
-    _$StudyMaterialImpl(
+_StudyMaterial _$StudyMaterialFromJson(Map<String, dynamic> json) =>
+    _StudyMaterial(
       id: json['id'] as String,
       uploaderId: json['uploader_id'] as String,
       facultyInitial: json['faculty_initial'] as String?,
@@ -25,7 +25,7 @@ _$StudyMaterialImpl _$$StudyMaterialImplFromJson(Map<String, dynamic> json) =>
       uploaderName: json['uploader_name'] as String?,
     );
 
-Map<String, dynamic> _$$StudyMaterialImplToJson(_$StudyMaterialImpl instance) =>
+Map<String, dynamic> _$StudyMaterialToJson(_StudyMaterial instance) =>
     <String, dynamic>{
       'id': instance.id,
       'uploader_id': instance.uploaderId,

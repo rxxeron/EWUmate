@@ -352,7 +352,7 @@ class CourseRepository {
 }
 
 @riverpod
-CourseRepository courseRepository(CourseRepositoryRef ref) {
+CourseRepository courseRepository(Ref ref) {
   return CourseRepository(
     ref.watch(supabaseClientProvider),
     ref.watch(cacheServiceProvider),
@@ -361,18 +361,18 @@ CourseRepository courseRepository(CourseRepositoryRef ref) {
 }
 
 @riverpod
-Future<List<CourseMetadata>> allCourses(AllCoursesRef ref) {
+Future<List<CourseMetadata>> allCourses(Ref ref) {
   return ref.watch(courseRepositoryProvider).getAllCourses(limit: 3000);
 }
 
 @riverpod
-Future<List<CourseMetadata>> semesterCourses(SemesterCoursesRef ref, String semesterCode) {
+Future<List<CourseMetadata>> semesterCourses(Ref ref, String semesterCode) {
   return ref.watch(courseRepositoryProvider).getSemesterCourses(semesterCode);
 }
 
 @riverpod
 Future<List<CourseSection>> courseSections(
-  CourseSectionsRef ref, {
+  Ref ref, {
   required String semesterCode,
   required String courseCode,
 }) {

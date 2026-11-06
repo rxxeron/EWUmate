@@ -130,3 +130,6 @@ class AdvisingNotifier extends _$AdvisingNotifier {
     state = AdvisingState(selectedCourses: {});
   }
 }
+
+/// Backwards compatibility alias for `advisingProvider`
+final advisingNotifierProvider = advisingProvider;

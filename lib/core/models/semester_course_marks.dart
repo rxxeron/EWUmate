@@ -4,7 +4,7 @@ part 'semester_course_marks.freezed.dart';
 part 'semester_course_marks.g.dart';
 
 @freezed
-class SemesterCourseMarks with _$SemesterCourseMarks {
+abstract class SemesterCourseMarks with _$SemesterCourseMarks {
   const factory SemesterCourseMarks({
     required String id,
     @JsonKey(name: 'user_id') required String userId,

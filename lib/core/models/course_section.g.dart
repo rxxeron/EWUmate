@@ -6,8 +6,8 @@ part of 'course_section.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$CourseSessionImpl _$$CourseSessionImplFromJson(Map<String, dynamic> json) =>
-    _$CourseSessionImpl(
+_CourseSession _$CourseSessionFromJson(Map<String, dynamic> json) =>
+    _CourseSession(
       type: json['type'] as String? ?? 'Theory',
       day: json['day'] as String? ?? '',
       startTime: json['start_time'] as String? ?? '',
@@ -16,7 +16,7 @@ _$CourseSessionImpl _$$CourseSessionImplFromJson(Map<String, dynamic> json) =>
       faculty: json['faculty'] as String? ?? '',
     );
 
-Map<String, dynamic> _$$CourseSessionImplToJson(_$CourseSessionImpl instance) =>
+Map<String, dynamic> _$CourseSessionToJson(_CourseSession instance) =>
     <String, dynamic>{
       'type': instance.type,
       'day': instance.day,
@@ -26,8 +26,8 @@ Map<String, dynamic> _$$CourseSessionImplToJson(_$CourseSessionImpl instance) =>
       'faculty': instance.faculty,
     };
 
-_$CourseSectionImpl _$$CourseSectionImplFromJson(Map<String, dynamic> json) =>
-    _$CourseSectionImpl(
+_CourseSection _$CourseSectionFromJson(Map<String, dynamic> json) =>
+    _CourseSection(
       id: json['id'] as String,
       code: json['code'] as String? ?? '',
       courseName: json['course_name'] as String? ?? '',
@@ -43,7 +43,7 @@ _$CourseSectionImpl _$$CourseSectionImplFromJson(Map<String, dynamic> json) =>
       docId: json['doc_id'] as String? ?? '',
     );
 
-Map<String, dynamic> _$$CourseSectionImplToJson(_$CourseSectionImpl instance) =>
+Map<String, dynamic> _$CourseSectionToJson(_CourseSection instance) =>
     <String, dynamic>{
       'id': instance.id,
       'code': instance.code,

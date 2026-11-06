@@ -4,7 +4,7 @@ part 'semester_analytics.freezed.dart';
 part 'semester_analytics.g.dart';
 
 @freezed
-class SemesterAnalytics with _$SemesterAnalytics {
+abstract class SemesterAnalytics with _$SemesterAnalytics {
   const factory SemesterAnalytics({
     required String id,
     @JsonKey(name: 'user_id') required String userId,

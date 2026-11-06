@@ -6,35 +6,81 @@ part of 'profile_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileRepositoryHash() => r'877f1f2f1b65e64a78584d3706d4ba6ff74e09b8';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [profileRepository].
 @ProviderFor(profileRepository)
-final profileRepositoryProvider =
-    AutoDisposeProvider<ProfileRepository>.internal(
-  profileRepository,
-  name: r'profileRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$profileRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final profileRepositoryProvider = ProfileRepositoryProvider._();
 
-typedef ProfileRepositoryRef = AutoDisposeProviderRef<ProfileRepository>;
-String _$userProfileHash() => r'7c05be2b2ccda809eb2e8880c1b48ca09bc6c873';
+final class ProfileRepositoryProvider extends $FunctionalProvider<
+    ProfileRepository,
+    ProfileRepository,
+    ProfileRepository> with $Provider<ProfileRepository> {
+  ProfileRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'profileRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [userProfile].
+  @override
+  String debugGetCreateSourceHash() => _$profileRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProfileRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProfileRepository create(Ref ref) {
+    return profileRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProfileRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProfileRepository>(value),
+    );
+  }
+}
+
+String _$profileRepositoryHash() => r'1ffed8b36307a5a183773215871a4f787be3cbda';
+
 @ProviderFor(userProfile)
-final userProfileProvider = StreamProvider<Profile?>.internal(
-  userProfile,
-  name: r'userProfileProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$userProfileHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final userProfileProvider = UserProfileProvider._();
 
-typedef UserProfileRef = StreamProviderRef<Profile?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class UserProfileProvider extends $FunctionalProvider<
+        AsyncValue<Profile?>, Profile?, Stream<Profile?>>
+    with $FutureModifier<Profile?>, $StreamProvider<Profile?> {
+  UserProfileProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'userProfileProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$userProfileHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<Profile?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<Profile?> create(Ref ref) {
+    return userProfile(ref);
+  }
+}
+
+String _$userProfileHash() => r'fdffc6b3e819ddea9d6b41b672e205604ec956da';

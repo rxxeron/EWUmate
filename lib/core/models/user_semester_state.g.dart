@@ -6,9 +6,8 @@ part of 'user_semester_state.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$UserSemesterStateImpl _$$UserSemesterStateImplFromJson(
-        Map<String, dynamic> json) =>
-    _$UserSemesterStateImpl(
+_UserSemesterState _$UserSemesterStateFromJson(Map<String, dynamic> json) =>
+    _UserSemesterState(
       userId: json['user_id'] as String,
       semesterCode: json['semester_code'] as String,
       weeklyGridCache: json['weekly_grid_cache'] as Map<String, dynamic>?,
@@ -18,8 +17,7 @@ _$UserSemesterStateImpl _$$UserSemesterStateImplFromJson(
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$UserSemesterStateImplToJson(
-        _$UserSemesterStateImpl instance) =>
+Map<String, dynamic> _$UserSemesterStateToJson(_UserSemesterState instance) =>
     <String, dynamic>{
       'user_id': instance.userId,
       'semester_code': instance.semesterCode,

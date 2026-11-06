@@ -4,7 +4,7 @@ part 'enrollment.freezed.dart';
 part 'enrollment.g.dart';
 
 @freezed
-class Enrollment with _$Enrollment {
+abstract class Enrollment with _$Enrollment {
   const factory Enrollment({
     required String id,
     @JsonKey(name: 'user_id') required String userId,

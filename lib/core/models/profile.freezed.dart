@@ -1,6 +1,6 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
+// coverage:ignore-file
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'profile.dart';
@@ -9,270 +9,181 @@ part of 'profile.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-Profile _$ProfileFromJson(Map<String, dynamic> json) {
-  return _Profile.fromJson(json);
-}
 
 /// @nodoc
 mixin _$Profile {
-  String get id => throw _privateConstructorUsedError;
+  String get id;
   @JsonKey(name: 'student_id')
-  String? get studentId => throw _privateConstructorUsedError;
+  String? get studentId;
   @JsonKey(name: 'full_name')
-  String? get fullName => throw _privateConstructorUsedError;
-  String? get nickname => throw _privateConstructorUsedError;
+  String? get fullName;
+  String? get nickname;
   @JsonKey(name: 'program_code')
-  String? get programCode => throw _privateConstructorUsedError;
+  String? get programCode;
   @JsonKey(name: 'admitted_semester')
-  String? get admittedSemester => throw _privateConstructorUsedError;
-  double? get cgpa => throw _privateConstructorUsedError;
+  String? get admittedSemester;
+  double? get cgpa;
   @JsonKey(name: 'total_credits_earned')
-  double? get totalCreditsEarned => throw _privateConstructorUsedError;
+  double? get totalCreditsEarned;
   @JsonKey(name: 'photo_url')
-  String? get photoUrl => throw _privateConstructorUsedError;
+  String? get photoUrl;
   @JsonKey(name: 'onboarding_status')
-  String get onboardingStatus => throw _privateConstructorUsedError;
+  String get onboardingStatus;
   @JsonKey(name: 'semester_type')
-  String get semesterType => throw _privateConstructorUsedError;
+  String get semesterType;
   @JsonKey(name: 'department_name')
-  String? get departmentName => throw _privateConstructorUsedError;
+  String? get departmentName;
   @JsonKey(name: 'scholarship_status')
-  String? get scholarshipStatus => throw _privateConstructorUsedError;
+  String? get scholarshipStatus;
   @JsonKey(name: 'program_name')
-  String? get programName => throw _privateConstructorUsedError;
-  String? get track => throw _privateConstructorUsedError;
+  String? get programName;
+  String? get track;
   @JsonKey(name: 'enrolled_sections')
-  List<String> get enrolledSections => throw _privateConstructorUsedError;
+  List<String> get enrolledSections;
   @JsonKey(name: 'enrolled_sections_next')
-  List<String> get enrolledSectionsNext => throw _privateConstructorUsedError;
+  List<String> get enrolledSectionsNext;
   @JsonKey(name: 'enrolled_credits')
-  double get enrolledCredits => throw _privateConstructorUsedError;
+  double get enrolledCredits;
   @JsonKey(name: 'enrolled_credits_next')
-  double get enrolledCreditsNext => throw _privateConstructorUsedError;
+  double get enrolledCreditsNext;
   @JsonKey(name: 'past_history')
-  List<dynamic> get pastHistory => throw _privateConstructorUsedError;
+  List<dynamic> get pastHistory;
   @JsonKey(name: 'total_courses_completed')
-  int get totalCoursesCompleted => throw _privateConstructorUsedError;
+  int get totalCoursesCompleted;
   @JsonKey(name: 'last_active_at')
-  DateTime? get lastActiveAt => throw _privateConstructorUsedError;
+  DateTime? get lastActiveAt;
   @JsonKey(name: 'app_open_count')
-  int get appOpenCount => throw _privateConstructorUsedError;
+  int get appOpenCount;
   @JsonKey(name: 'app_version')
-  String? get appVersion => throw _privateConstructorUsedError;
+  String? get appVersion;
   @JsonKey(name: 'reminder_settings')
-  Map<String, dynamic> get reminderSettings =>
-      throw _privateConstructorUsedError;
+  Map<String, dynamic> get reminderSettings;
   @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt => throw _privateConstructorUsedError;
+  DateTime? get updatedAt;
   @JsonKey(name: 'created_at')
-  DateTime? get createdAt => throw _privateConstructorUsedError;
+  DateTime? get createdAt;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $ProfileCopyWith<Profile> get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $ProfileCopyWith<$Res> {
-  factory $ProfileCopyWith(Profile value, $Res Function(Profile) then) =
-      _$ProfileCopyWithImpl<$Res, Profile>;
-  @useResult
-  $Res call(
-      {String id,
-      @JsonKey(name: 'student_id') String? studentId,
-      @JsonKey(name: 'full_name') String? fullName,
-      String? nickname,
-      @JsonKey(name: 'program_code') String? programCode,
-      @JsonKey(name: 'admitted_semester') String? admittedSemester,
-      double? cgpa,
-      @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
-      @JsonKey(name: 'photo_url') String? photoUrl,
-      @JsonKey(name: 'onboarding_status') String onboardingStatus,
-      @JsonKey(name: 'semester_type') String semesterType,
-      @JsonKey(name: 'department_name') String? departmentName,
-      @JsonKey(name: 'scholarship_status') String? scholarshipStatus,
-      @JsonKey(name: 'program_name') String? programName,
-      String? track,
-      @JsonKey(name: 'enrolled_sections') List<String> enrolledSections,
-      @JsonKey(name: 'enrolled_sections_next')
-      List<String> enrolledSectionsNext,
-      @JsonKey(name: 'enrolled_credits') double enrolledCredits,
-      @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
-      @JsonKey(name: 'past_history') List<dynamic> pastHistory,
-      @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
-      @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
-      @JsonKey(name: 'app_open_count') int appOpenCount,
-      @JsonKey(name: 'app_version') String? appVersion,
-      @JsonKey(name: 'reminder_settings') Map<String, dynamic> reminderSettings,
-      @JsonKey(name: 'updated_at') DateTime? updatedAt,
-      @JsonKey(name: 'created_at') DateTime? createdAt});
-}
-
-/// @nodoc
-class _$ProfileCopyWithImpl<$Res, $Val extends Profile>
-    implements $ProfileCopyWith<$Res> {
-  _$ProfileCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $ProfileCopyWith<Profile> get copyWith =>
+      _$ProfileCopyWithImpl<Profile>(this as Profile, _$identity);
+
+  /// Serializes this Profile to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? id = null,
-    Object? studentId = freezed,
-    Object? fullName = freezed,
-    Object? nickname = freezed,
-    Object? programCode = freezed,
-    Object? admittedSemester = freezed,
-    Object? cgpa = freezed,
-    Object? totalCreditsEarned = freezed,
-    Object? photoUrl = freezed,
-    Object? onboardingStatus = null,
-    Object? semesterType = null,
-    Object? departmentName = freezed,
-    Object? scholarshipStatus = freezed,
-    Object? programName = freezed,
-    Object? track = freezed,
-    Object? enrolledSections = null,
-    Object? enrolledSectionsNext = null,
-    Object? enrolledCredits = null,
-    Object? enrolledCreditsNext = null,
-    Object? pastHistory = null,
-    Object? totalCoursesCompleted = null,
-    Object? lastActiveAt = freezed,
-    Object? appOpenCount = null,
-    Object? appVersion = freezed,
-    Object? reminderSettings = null,
-    Object? updatedAt = freezed,
-    Object? createdAt = freezed,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      studentId: freezed == studentId
-          ? _value.studentId
-          : studentId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      fullName: freezed == fullName
-          ? _value.fullName
-          : fullName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      nickname: freezed == nickname
-          ? _value.nickname
-          : nickname // ignore: cast_nullable_to_non_nullable
-              as String?,
-      programCode: freezed == programCode
-          ? _value.programCode
-          : programCode // ignore: cast_nullable_to_non_nullable
-              as String?,
-      admittedSemester: freezed == admittedSemester
-          ? _value.admittedSemester
-          : admittedSemester // ignore: cast_nullable_to_non_nullable
-              as String?,
-      cgpa: freezed == cgpa
-          ? _value.cgpa
-          : cgpa // ignore: cast_nullable_to_non_nullable
-              as double?,
-      totalCreditsEarned: freezed == totalCreditsEarned
-          ? _value.totalCreditsEarned
-          : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
-              as double?,
-      photoUrl: freezed == photoUrl
-          ? _value.photoUrl
-          : photoUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      onboardingStatus: null == onboardingStatus
-          ? _value.onboardingStatus
-          : onboardingStatus // ignore: cast_nullable_to_non_nullable
-              as String,
-      semesterType: null == semesterType
-          ? _value.semesterType
-          : semesterType // ignore: cast_nullable_to_non_nullable
-              as String,
-      departmentName: freezed == departmentName
-          ? _value.departmentName
-          : departmentName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      scholarshipStatus: freezed == scholarshipStatus
-          ? _value.scholarshipStatus
-          : scholarshipStatus // ignore: cast_nullable_to_non_nullable
-              as String?,
-      programName: freezed == programName
-          ? _value.programName
-          : programName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      track: freezed == track
-          ? _value.track
-          : track // ignore: cast_nullable_to_non_nullable
-              as String?,
-      enrolledSections: null == enrolledSections
-          ? _value.enrolledSections
-          : enrolledSections // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      enrolledSectionsNext: null == enrolledSectionsNext
-          ? _value.enrolledSectionsNext
-          : enrolledSectionsNext // ignore: cast_nullable_to_non_nullable
-              as List<String>,
-      enrolledCredits: null == enrolledCredits
-          ? _value.enrolledCredits
-          : enrolledCredits // ignore: cast_nullable_to_non_nullable
-              as double,
-      enrolledCreditsNext: null == enrolledCreditsNext
-          ? _value.enrolledCreditsNext
-          : enrolledCreditsNext // ignore: cast_nullable_to_non_nullable
-              as double,
-      pastHistory: null == pastHistory
-          ? _value.pastHistory
-          : pastHistory // ignore: cast_nullable_to_non_nullable
-              as List<dynamic>,
-      totalCoursesCompleted: null == totalCoursesCompleted
-          ? _value.totalCoursesCompleted
-          : totalCoursesCompleted // ignore: cast_nullable_to_non_nullable
-              as int,
-      lastActiveAt: freezed == lastActiveAt
-          ? _value.lastActiveAt
-          : lastActiveAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      appOpenCount: null == appOpenCount
-          ? _value.appOpenCount
-          : appOpenCount // ignore: cast_nullable_to_non_nullable
-              as int,
-      appVersion: freezed == appVersion
-          ? _value.appVersion
-          : appVersion // ignore: cast_nullable_to_non_nullable
-              as String?,
-      reminderSettings: null == reminderSettings
-          ? _value.reminderSettings
-          : reminderSettings // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ) as $Val);
+  bool operator ==(Object other) {
+    final _this = this as Profile;
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is Profile &&
+            (identical(other.id, _this.id) || other.id == _this.id) &&
+            (identical(other.studentId, _this.studentId) ||
+                other.studentId == _this.studentId) &&
+            (identical(other.fullName, _this.fullName) ||
+                other.fullName == _this.fullName) &&
+            (identical(other.nickname, _this.nickname) ||
+                other.nickname == _this.nickname) &&
+            (identical(other.programCode, _this.programCode) ||
+                other.programCode == _this.programCode) &&
+            (identical(other.admittedSemester, _this.admittedSemester) ||
+                other.admittedSemester == _this.admittedSemester) &&
+            (identical(other.cgpa, _this.cgpa) || other.cgpa == _this.cgpa) &&
+            (identical(other.totalCreditsEarned, _this.totalCreditsEarned) ||
+                other.totalCreditsEarned == _this.totalCreditsEarned) &&
+            (identical(other.photoUrl, _this.photoUrl) ||
+                other.photoUrl == _this.photoUrl) &&
+            (identical(other.onboardingStatus, _this.onboardingStatus) ||
+                other.onboardingStatus == _this.onboardingStatus) &&
+            (identical(other.semesterType, _this.semesterType) ||
+                other.semesterType == _this.semesterType) &&
+            (identical(other.departmentName, _this.departmentName) ||
+                other.departmentName == _this.departmentName) &&
+            (identical(other.scholarshipStatus, _this.scholarshipStatus) ||
+                other.scholarshipStatus == _this.scholarshipStatus) &&
+            (identical(other.programName, _this.programName) ||
+                other.programName == _this.programName) &&
+            (identical(other.track, _this.track) ||
+                other.track == _this.track) &&
+            const DeepCollectionEquality()
+                .equals(other.enrolledSections, _this.enrolledSections) &&
+            const DeepCollectionEquality().equals(
+                other.enrolledSectionsNext, _this.enrolledSectionsNext) &&
+            (identical(other.enrolledCredits, _this.enrolledCredits) ||
+                other.enrolledCredits == _this.enrolledCredits) &&
+            (identical(other.enrolledCreditsNext, _this.enrolledCreditsNext) ||
+                other.enrolledCreditsNext == _this.enrolledCreditsNext) &&
+            const DeepCollectionEquality()
+                .equals(other.pastHistory, _this.pastHistory) &&
+            (identical(
+                    other.totalCoursesCompleted, _this.totalCoursesCompleted) ||
+                other.totalCoursesCompleted == _this.totalCoursesCompleted) &&
+            (identical(other.lastActiveAt, _this.lastActiveAt) ||
+                other.lastActiveAt == _this.lastActiveAt) &&
+            (identical(other.appOpenCount, _this.appOpenCount) ||
+                other.appOpenCount == _this.appOpenCount) &&
+            (identical(other.appVersion, _this.appVersion) ||
+                other.appVersion == _this.appVersion) &&
+            const DeepCollectionEquality()
+                .equals(other.reminderSettings, _this.reminderSettings) &&
+            (identical(other.updatedAt, _this.updatedAt) ||
+                other.updatedAt == _this.updatedAt) &&
+            (identical(other.createdAt, _this.createdAt) ||
+                other.createdAt == _this.createdAt));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode {
+    final _this = this as Profile;
+    return Object.hashAll([
+      runtimeType,
+      _this.id,
+      _this.studentId,
+      _this.fullName,
+      _this.nickname,
+      _this.programCode,
+      _this.admittedSemester,
+      _this.cgpa,
+      _this.totalCreditsEarned,
+      _this.photoUrl,
+      _this.onboardingStatus,
+      _this.semesterType,
+      _this.departmentName,
+      _this.scholarshipStatus,
+      _this.programName,
+      _this.track,
+      const DeepCollectionEquality().hash(_this.enrolledSections),
+      const DeepCollectionEquality().hash(_this.enrolledSectionsNext),
+      _this.enrolledCredits,
+      _this.enrolledCreditsNext,
+      const DeepCollectionEquality().hash(_this.pastHistory),
+      _this.totalCoursesCompleted,
+      _this.lastActiveAt,
+      _this.appOpenCount,
+      _this.appVersion,
+      const DeepCollectionEquality().hash(_this.reminderSettings),
+      _this.updatedAt,
+      _this.createdAt
+    ]);
+  }
+
+  @override
+  String toString() {
+    final _this = this as Profile;
+    return 'Profile(id: ${_this.id}, studentId: ${_this.studentId}, fullName: ${_this.fullName}, nickname: ${_this.nickname}, programCode: ${_this.programCode}, admittedSemester: ${_this.admittedSemester}, cgpa: ${_this.cgpa}, totalCreditsEarned: ${_this.totalCreditsEarned}, photoUrl: ${_this.photoUrl}, onboardingStatus: ${_this.onboardingStatus}, semesterType: ${_this.semesterType}, departmentName: ${_this.departmentName}, scholarshipStatus: ${_this.scholarshipStatus}, programName: ${_this.programName}, track: ${_this.track}, enrolledSections: ${_this.enrolledSections}, enrolledSectionsNext: ${_this.enrolledSectionsNext}, enrolledCredits: ${_this.enrolledCredits}, enrolledCreditsNext: ${_this.enrolledCreditsNext}, pastHistory: ${_this.pastHistory}, totalCoursesCompleted: ${_this.totalCoursesCompleted}, lastActiveAt: ${_this.lastActiveAt}, appOpenCount: ${_this.appOpenCount}, appVersion: ${_this.appVersion}, reminderSettings: ${_this.reminderSettings}, updatedAt: ${_this.updatedAt}, createdAt: ${_this.createdAt})';
   }
 }
 
 /// @nodoc
-abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
-  factory _$$ProfileImplCopyWith(
-          _$ProfileImpl value, $Res Function(_$ProfileImpl) then) =
-      __$$ProfileImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $ProfileCopyWith<$Res> {
+  factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) =
+      _$ProfileCopyWithImpl;
   @useResult
   $Res call(
       {String id,
@@ -306,13 +217,14 @@ abstract class _$$ProfileImplCopyWith<$Res> implements $ProfileCopyWith<$Res> {
 }
 
 /// @nodoc
-class __$$ProfileImplCopyWithImpl<$Res>
-    extends _$ProfileCopyWithImpl<$Res, _$ProfileImpl>
-    implements _$$ProfileImplCopyWith<$Res> {
-  __$$ProfileImplCopyWithImpl(
-      _$ProfileImpl _value, $Res Function(_$ProfileImpl) _then)
-      : super(_value, _then);
+class _$ProfileCopyWithImpl<$Res> implements $ProfileCopyWith<$Res> {
+  _$ProfileCopyWithImpl(this._self, this._then);
 
+  final Profile _self;
+  final $Res Function(Profile) _then;
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -344,123 +256,451 @@ class __$$ProfileImplCopyWithImpl<$Res>
     Object? updatedAt = freezed,
     Object? createdAt = freezed,
   }) {
-    return _then(_$ProfileImpl(
+    return _then(Profile(
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
       studentId: freezed == studentId
-          ? _value.studentId
+          ? _self.studentId
           : studentId // ignore: cast_nullable_to_non_nullable
               as String?,
       fullName: freezed == fullName
-          ? _value.fullName
+          ? _self.fullName
           : fullName // ignore: cast_nullable_to_non_nullable
               as String?,
       nickname: freezed == nickname
-          ? _value.nickname
+          ? _self.nickname
           : nickname // ignore: cast_nullable_to_non_nullable
               as String?,
       programCode: freezed == programCode
-          ? _value.programCode
+          ? _self.programCode
           : programCode // ignore: cast_nullable_to_non_nullable
               as String?,
       admittedSemester: freezed == admittedSemester
-          ? _value.admittedSemester
+          ? _self.admittedSemester
           : admittedSemester // ignore: cast_nullable_to_non_nullable
               as String?,
       cgpa: freezed == cgpa
-          ? _value.cgpa
+          ? _self.cgpa
           : cgpa // ignore: cast_nullable_to_non_nullable
               as double?,
       totalCreditsEarned: freezed == totalCreditsEarned
-          ? _value.totalCreditsEarned
+          ? _self.totalCreditsEarned
           : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
               as double?,
       photoUrl: freezed == photoUrl
-          ? _value.photoUrl
+          ? _self.photoUrl
           : photoUrl // ignore: cast_nullable_to_non_nullable
               as String?,
       onboardingStatus: null == onboardingStatus
-          ? _value.onboardingStatus
+          ? _self.onboardingStatus
           : onboardingStatus // ignore: cast_nullable_to_non_nullable
               as String,
       semesterType: null == semesterType
-          ? _value.semesterType
+          ? _self.semesterType
           : semesterType // ignore: cast_nullable_to_non_nullable
               as String,
       departmentName: freezed == departmentName
-          ? _value.departmentName
+          ? _self.departmentName
           : departmentName // ignore: cast_nullable_to_non_nullable
               as String?,
       scholarshipStatus: freezed == scholarshipStatus
-          ? _value.scholarshipStatus
+          ? _self.scholarshipStatus
           : scholarshipStatus // ignore: cast_nullable_to_non_nullable
               as String?,
       programName: freezed == programName
-          ? _value.programName
+          ? _self.programName
           : programName // ignore: cast_nullable_to_non_nullable
               as String?,
       track: freezed == track
-          ? _value.track
+          ? _self.track
           : track // ignore: cast_nullable_to_non_nullable
               as String?,
       enrolledSections: null == enrolledSections
-          ? _value._enrolledSections
+          ? _self.enrolledSections
           : enrolledSections // ignore: cast_nullable_to_non_nullable
               as List<String>,
       enrolledSectionsNext: null == enrolledSectionsNext
-          ? _value._enrolledSectionsNext
+          ? _self.enrolledSectionsNext
           : enrolledSectionsNext // ignore: cast_nullable_to_non_nullable
               as List<String>,
       enrolledCredits: null == enrolledCredits
-          ? _value.enrolledCredits
+          ? _self.enrolledCredits
           : enrolledCredits // ignore: cast_nullable_to_non_nullable
               as double,
       enrolledCreditsNext: null == enrolledCreditsNext
-          ? _value.enrolledCreditsNext
+          ? _self.enrolledCreditsNext
           : enrolledCreditsNext // ignore: cast_nullable_to_non_nullable
               as double,
       pastHistory: null == pastHistory
-          ? _value._pastHistory
+          ? _self.pastHistory
           : pastHistory // ignore: cast_nullable_to_non_nullable
               as List<dynamic>,
       totalCoursesCompleted: null == totalCoursesCompleted
-          ? _value.totalCoursesCompleted
+          ? _self.totalCoursesCompleted
           : totalCoursesCompleted // ignore: cast_nullable_to_non_nullable
               as int,
       lastActiveAt: freezed == lastActiveAt
-          ? _value.lastActiveAt
+          ? _self.lastActiveAt
           : lastActiveAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       appOpenCount: null == appOpenCount
-          ? _value.appOpenCount
+          ? _self.appOpenCount
           : appOpenCount // ignore: cast_nullable_to_non_nullable
               as int,
       appVersion: freezed == appVersion
-          ? _value.appVersion
+          ? _self.appVersion
           : appVersion // ignore: cast_nullable_to_non_nullable
               as String?,
       reminderSettings: null == reminderSettings
-          ? _value._reminderSettings
+          ? _self.reminderSettings
           : reminderSettings // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>,
       updatedAt: freezed == updatedAt
-          ? _value.updatedAt
+          ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       createdAt: freezed == createdAt
-          ? _value.createdAt
+          ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [Profile].
+extension ProfilePatterns on Profile {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_Profile value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Profile() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_Profile value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Profile():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_Profile value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Profile() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            String id,
+            @JsonKey(name: 'student_id') String? studentId,
+            @JsonKey(name: 'full_name') String? fullName,
+            String? nickname,
+            @JsonKey(name: 'program_code') String? programCode,
+            @JsonKey(name: 'admitted_semester') String? admittedSemester,
+            double? cgpa,
+            @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+            @JsonKey(name: 'photo_url') String? photoUrl,
+            @JsonKey(name: 'onboarding_status') String onboardingStatus,
+            @JsonKey(name: 'semester_type') String semesterType,
+            @JsonKey(name: 'department_name') String? departmentName,
+            @JsonKey(name: 'scholarship_status') String? scholarshipStatus,
+            @JsonKey(name: 'program_name') String? programName,
+            String? track,
+            @JsonKey(name: 'enrolled_sections') List<String> enrolledSections,
+            @JsonKey(name: 'enrolled_sections_next')
+            List<String> enrolledSectionsNext,
+            @JsonKey(name: 'enrolled_credits') double enrolledCredits,
+            @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
+            @JsonKey(name: 'past_history') List<dynamic> pastHistory,
+            @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+            @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+            @JsonKey(name: 'app_open_count') int appOpenCount,
+            @JsonKey(name: 'app_version') String? appVersion,
+            @JsonKey(name: 'reminder_settings')
+            Map<String, dynamic> reminderSettings,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt,
+            @JsonKey(name: 'created_at') DateTime? createdAt)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _Profile() when $default != null:
+        return $default(
+            _that.id,
+            _that.studentId,
+            _that.fullName,
+            _that.nickname,
+            _that.programCode,
+            _that.admittedSemester,
+            _that.cgpa,
+            _that.totalCreditsEarned,
+            _that.photoUrl,
+            _that.onboardingStatus,
+            _that.semesterType,
+            _that.departmentName,
+            _that.scholarshipStatus,
+            _that.programName,
+            _that.track,
+            _that.enrolledSections,
+            _that.enrolledSectionsNext,
+            _that.enrolledCredits,
+            _that.enrolledCreditsNext,
+            _that.pastHistory,
+            _that.totalCoursesCompleted,
+            _that.lastActiveAt,
+            _that.appOpenCount,
+            _that.appVersion,
+            _that.reminderSettings,
+            _that.updatedAt,
+            _that.createdAt);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            String id,
+            @JsonKey(name: 'student_id') String? studentId,
+            @JsonKey(name: 'full_name') String? fullName,
+            String? nickname,
+            @JsonKey(name: 'program_code') String? programCode,
+            @JsonKey(name: 'admitted_semester') String? admittedSemester,
+            double? cgpa,
+            @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+            @JsonKey(name: 'photo_url') String? photoUrl,
+            @JsonKey(name: 'onboarding_status') String onboardingStatus,
+            @JsonKey(name: 'semester_type') String semesterType,
+            @JsonKey(name: 'department_name') String? departmentName,
+            @JsonKey(name: 'scholarship_status') String? scholarshipStatus,
+            @JsonKey(name: 'program_name') String? programName,
+            String? track,
+            @JsonKey(name: 'enrolled_sections') List<String> enrolledSections,
+            @JsonKey(name: 'enrolled_sections_next')
+            List<String> enrolledSectionsNext,
+            @JsonKey(name: 'enrolled_credits') double enrolledCredits,
+            @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
+            @JsonKey(name: 'past_history') List<dynamic> pastHistory,
+            @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+            @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+            @JsonKey(name: 'app_open_count') int appOpenCount,
+            @JsonKey(name: 'app_version') String? appVersion,
+            @JsonKey(name: 'reminder_settings')
+            Map<String, dynamic> reminderSettings,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt,
+            @JsonKey(name: 'created_at') DateTime? createdAt)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Profile():
+        return $default(
+            _that.id,
+            _that.studentId,
+            _that.fullName,
+            _that.nickname,
+            _that.programCode,
+            _that.admittedSemester,
+            _that.cgpa,
+            _that.totalCreditsEarned,
+            _that.photoUrl,
+            _that.onboardingStatus,
+            _that.semesterType,
+            _that.departmentName,
+            _that.scholarshipStatus,
+            _that.programName,
+            _that.track,
+            _that.enrolledSections,
+            _that.enrolledSectionsNext,
+            _that.enrolledCredits,
+            _that.enrolledCreditsNext,
+            _that.pastHistory,
+            _that.totalCoursesCompleted,
+            _that.lastActiveAt,
+            _that.appOpenCount,
+            _that.appVersion,
+            _that.reminderSettings,
+            _that.updatedAt,
+            _that.createdAt);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            String id,
+            @JsonKey(name: 'student_id') String? studentId,
+            @JsonKey(name: 'full_name') String? fullName,
+            String? nickname,
+            @JsonKey(name: 'program_code') String? programCode,
+            @JsonKey(name: 'admitted_semester') String? admittedSemester,
+            double? cgpa,
+            @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+            @JsonKey(name: 'photo_url') String? photoUrl,
+            @JsonKey(name: 'onboarding_status') String onboardingStatus,
+            @JsonKey(name: 'semester_type') String semesterType,
+            @JsonKey(name: 'department_name') String? departmentName,
+            @JsonKey(name: 'scholarship_status') String? scholarshipStatus,
+            @JsonKey(name: 'program_name') String? programName,
+            String? track,
+            @JsonKey(name: 'enrolled_sections') List<String> enrolledSections,
+            @JsonKey(name: 'enrolled_sections_next')
+            List<String> enrolledSectionsNext,
+            @JsonKey(name: 'enrolled_credits') double enrolledCredits,
+            @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
+            @JsonKey(name: 'past_history') List<dynamic> pastHistory,
+            @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+            @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+            @JsonKey(name: 'app_open_count') int appOpenCount,
+            @JsonKey(name: 'app_version') String? appVersion,
+            @JsonKey(name: 'reminder_settings')
+            Map<String, dynamic> reminderSettings,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt,
+            @JsonKey(name: 'created_at') DateTime? createdAt)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _Profile() when $default != null:
+        return $default(
+            _that.id,
+            _that.studentId,
+            _that.fullName,
+            _that.nickname,
+            _that.programCode,
+            _that.admittedSemester,
+            _that.cgpa,
+            _that.totalCreditsEarned,
+            _that.photoUrl,
+            _that.onboardingStatus,
+            _that.semesterType,
+            _that.departmentName,
+            _that.scholarshipStatus,
+            _that.programName,
+            _that.track,
+            _that.enrolledSections,
+            _that.enrolledSectionsNext,
+            _that.enrolledCredits,
+            _that.enrolledCreditsNext,
+            _that.pastHistory,
+            _that.totalCoursesCompleted,
+            _that.lastActiveAt,
+            _that.appOpenCount,
+            _that.appVersion,
+            _that.reminderSettings,
+            _that.updatedAt,
+            _that.createdAt);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$ProfileImpl implements _Profile {
-  const _$ProfileImpl(
+class _Profile implements Profile {
+  const _Profile(
       {required this.id,
       @JsonKey(name: 'student_id') this.studentId,
       @JsonKey(name: 'full_name') this.fullName,
@@ -477,27 +717,26 @@ class _$ProfileImpl implements _Profile {
       @JsonKey(name: 'program_name') this.programName,
       this.track,
       @JsonKey(name: 'enrolled_sections')
-      final List<String> enrolledSections = const [],
+      List<String> enrolledSections = const [],
       @JsonKey(name: 'enrolled_sections_next')
-      final List<String> enrolledSectionsNext = const [],
+      List<String> enrolledSectionsNext = const [],
       @JsonKey(name: 'enrolled_credits') this.enrolledCredits = 0.0,
       @JsonKey(name: 'enrolled_credits_next') this.enrolledCreditsNext = 0.0,
-      @JsonKey(name: 'past_history') final List<dynamic> pastHistory = const [],
+      @JsonKey(name: 'past_history') List<dynamic> pastHistory = const [],
       @JsonKey(name: 'total_courses_completed') this.totalCoursesCompleted = 0,
       @JsonKey(name: 'last_active_at') this.lastActiveAt,
       @JsonKey(name: 'app_open_count') this.appOpenCount = 0,
       @JsonKey(name: 'app_version') this.appVersion,
       @JsonKey(name: 'reminder_settings')
-      final Map<String, dynamic> reminderSettings = const {},
+      Map<String, dynamic> reminderSettings = const {},
       @JsonKey(name: 'updated_at') this.updatedAt,
       @JsonKey(name: 'created_at') this.createdAt})
       : _enrolledSections = enrolledSections,
         _enrolledSectionsNext = enrolledSectionsNext,
         _pastHistory = pastHistory,
         _reminderSettings = reminderSettings;
-
-  factory _$ProfileImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ProfileImplFromJson(json);
+  factory _Profile.fromJson(Map<String, dynamic> json) =>
+      _$ProfileFromJson(json);
 
   @override
   final String id;
@@ -603,16 +842,26 @@ class _$ProfileImpl implements _Profile {
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
 
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, appVersion: $appVersion, reminderSettings: $reminderSettings, updatedAt: $updatedAt, createdAt: $createdAt)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$ProfileCopyWith<_Profile> get copyWith =>
+      __$ProfileCopyWithImpl<_Profile>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$ProfileToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$ProfileImpl &&
+            other is _Profile &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.studentId, studentId) ||
                 other.studentId == studentId) &&
@@ -641,15 +890,15 @@ class _$ProfileImpl implements _Profile {
                 other.programName == programName) &&
             (identical(other.track, track) || other.track == track) &&
             const DeepCollectionEquality()
-                .equals(other._enrolledSections, _enrolledSections) &&
+                .equals(other.enrolledSections, _enrolledSections) &&
             const DeepCollectionEquality()
-                .equals(other._enrolledSectionsNext, _enrolledSectionsNext) &&
+                .equals(other.enrolledSectionsNext, _enrolledSectionsNext) &&
             (identical(other.enrolledCredits, enrolledCredits) ||
                 other.enrolledCredits == enrolledCredits) &&
             (identical(other.enrolledCreditsNext, enrolledCreditsNext) ||
                 other.enrolledCreditsNext == enrolledCreditsNext) &&
             const DeepCollectionEquality()
-                .equals(other._pastHistory, _pastHistory) &&
+                .equals(other.pastHistory, _pastHistory) &&
             (identical(other.totalCoursesCompleted, totalCoursesCompleted) ||
                 other.totalCoursesCompleted == totalCoursesCompleted) &&
             (identical(other.lastActiveAt, lastActiveAt) ||
@@ -659,173 +908,242 @@ class _$ProfileImpl implements _Profile {
             (identical(other.appVersion, appVersion) ||
                 other.appVersion == appVersion) &&
             const DeepCollectionEquality()
-                .equals(other._reminderSettings, _reminderSettings) &&
+                .equals(other.reminderSettings, _reminderSettings) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        id,
-        studentId,
-        fullName,
-        nickname,
-        programCode,
-        admittedSemester,
-        cgpa,
-        totalCreditsEarned,
-        photoUrl,
-        onboardingStatus,
-        semesterType,
-        departmentName,
-        scholarshipStatus,
-        programName,
-        track,
-        const DeepCollectionEquality().hash(_enrolledSections),
-        const DeepCollectionEquality().hash(_enrolledSectionsNext),
-        enrolledCredits,
-        enrolledCreditsNext,
-        const DeepCollectionEquality().hash(_pastHistory),
-        totalCoursesCompleted,
-        lastActiveAt,
-        appOpenCount,
-        appVersion,
-        const DeepCollectionEquality().hash(_reminderSettings),
-        updatedAt,
-        createdAt
-      ]);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>
-      __$$ProfileImplCopyWithImpl<_$ProfileImpl>(this, _$identity);
+  int get hashCode {
+    return Object.hashAll([
+      runtimeType,
+      id,
+      studentId,
+      fullName,
+      nickname,
+      programCode,
+      admittedSemester,
+      cgpa,
+      totalCreditsEarned,
+      photoUrl,
+      onboardingStatus,
+      semesterType,
+      departmentName,
+      scholarshipStatus,
+      programName,
+      track,
+      const DeepCollectionEquality().hash(_enrolledSections),
+      const DeepCollectionEquality().hash(_enrolledSectionsNext),
+      enrolledCredits,
+      enrolledCreditsNext,
+      const DeepCollectionEquality().hash(_pastHistory),
+      totalCoursesCompleted,
+      lastActiveAt,
+      appOpenCount,
+      appVersion,
+      const DeepCollectionEquality().hash(_reminderSettings),
+      updatedAt,
+      createdAt
+    ]);
+  }
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$$ProfileImplToJson(
-      this,
-    );
+  String toString() {
+    return 'Profile(id: $id, studentId: $studentId, fullName: $fullName, nickname: $nickname, programCode: $programCode, admittedSemester: $admittedSemester, cgpa: $cgpa, totalCreditsEarned: $totalCreditsEarned, photoUrl: $photoUrl, onboardingStatus: $onboardingStatus, semesterType: $semesterType, departmentName: $departmentName, scholarshipStatus: $scholarshipStatus, programName: $programName, track: $track, enrolledSections: $enrolledSections, enrolledSectionsNext: $enrolledSectionsNext, enrolledCredits: $enrolledCredits, enrolledCreditsNext: $enrolledCreditsNext, pastHistory: $pastHistory, totalCoursesCompleted: $totalCoursesCompleted, lastActiveAt: $lastActiveAt, appOpenCount: $appOpenCount, appVersion: $appVersion, reminderSettings: $reminderSettings, updatedAt: $updatedAt, createdAt: $createdAt)';
   }
 }
 
-abstract class _Profile implements Profile {
-  const factory _Profile(
-      {required final String id,
-      @JsonKey(name: 'student_id') final String? studentId,
-      @JsonKey(name: 'full_name') final String? fullName,
-      final String? nickname,
-      @JsonKey(name: 'program_code') final String? programCode,
-      @JsonKey(name: 'admitted_semester') final String? admittedSemester,
-      final double? cgpa,
-      @JsonKey(name: 'total_credits_earned') final double? totalCreditsEarned,
-      @JsonKey(name: 'photo_url') final String? photoUrl,
-      @JsonKey(name: 'onboarding_status') final String onboardingStatus,
-      @JsonKey(name: 'semester_type') final String semesterType,
-      @JsonKey(name: 'department_name') final String? departmentName,
-      @JsonKey(name: 'scholarship_status') final String? scholarshipStatus,
-      @JsonKey(name: 'program_name') final String? programName,
-      final String? track,
-      @JsonKey(name: 'enrolled_sections') final List<String> enrolledSections,
+/// @nodoc
+abstract mixin class _$ProfileCopyWith<$Res> implements $ProfileCopyWith<$Res> {
+  factory _$ProfileCopyWith(_Profile value, $Res Function(_Profile) _then) =
+      __$ProfileCopyWithImpl;
+  @override
+  @useResult
+  $Res call(
+      {String id,
+      @JsonKey(name: 'student_id') String? studentId,
+      @JsonKey(name: 'full_name') String? fullName,
+      String? nickname,
+      @JsonKey(name: 'program_code') String? programCode,
+      @JsonKey(name: 'admitted_semester') String? admittedSemester,
+      double? cgpa,
+      @JsonKey(name: 'total_credits_earned') double? totalCreditsEarned,
+      @JsonKey(name: 'photo_url') String? photoUrl,
+      @JsonKey(name: 'onboarding_status') String onboardingStatus,
+      @JsonKey(name: 'semester_type') String semesterType,
+      @JsonKey(name: 'department_name') String? departmentName,
+      @JsonKey(name: 'scholarship_status') String? scholarshipStatus,
+      @JsonKey(name: 'program_name') String? programName,
+      String? track,
+      @JsonKey(name: 'enrolled_sections') List<String> enrolledSections,
       @JsonKey(name: 'enrolled_sections_next')
-      final List<String> enrolledSectionsNext,
-      @JsonKey(name: 'enrolled_credits') final double enrolledCredits,
-      @JsonKey(name: 'enrolled_credits_next') final double enrolledCreditsNext,
-      @JsonKey(name: 'past_history') final List<dynamic> pastHistory,
-      @JsonKey(name: 'total_courses_completed') final int totalCoursesCompleted,
-      @JsonKey(name: 'last_active_at') final DateTime? lastActiveAt,
-      @JsonKey(name: 'app_open_count') final int appOpenCount,
-      @JsonKey(name: 'app_version') final String? appVersion,
-      @JsonKey(name: 'reminder_settings')
-      final Map<String, dynamic> reminderSettings,
-      @JsonKey(name: 'updated_at') final DateTime? updatedAt,
-      @JsonKey(name: 'created_at') final DateTime? createdAt}) = _$ProfileImpl;
-
-  factory _Profile.fromJson(Map<String, dynamic> json) = _$ProfileImpl.fromJson;
-
-  @override
-  String get id;
-  @override
-  @JsonKey(name: 'student_id')
-  String? get studentId;
-  @override
-  @JsonKey(name: 'full_name')
-  String? get fullName;
-  @override
-  String? get nickname;
-  @override
-  @JsonKey(name: 'program_code')
-  String? get programCode;
-  @override
-  @JsonKey(name: 'admitted_semester')
-  String? get admittedSemester;
-  @override
-  double? get cgpa;
-  @override
-  @JsonKey(name: 'total_credits_earned')
-  double? get totalCreditsEarned;
-  @override
-  @JsonKey(name: 'photo_url')
-  String? get photoUrl;
-  @override
-  @JsonKey(name: 'onboarding_status')
-  String get onboardingStatus;
-  @override
-  @JsonKey(name: 'semester_type')
-  String get semesterType;
-  @override
-  @JsonKey(name: 'department_name')
-  String? get departmentName;
-  @override
-  @JsonKey(name: 'scholarship_status')
-  String? get scholarshipStatus;
-  @override
-  @JsonKey(name: 'program_name')
-  String? get programName;
-  @override
-  String? get track;
-  @override
-  @JsonKey(name: 'enrolled_sections')
-  List<String> get enrolledSections;
-  @override
-  @JsonKey(name: 'enrolled_sections_next')
-  List<String> get enrolledSectionsNext;
-  @override
-  @JsonKey(name: 'enrolled_credits')
-  double get enrolledCredits;
-  @override
-  @JsonKey(name: 'enrolled_credits_next')
-  double get enrolledCreditsNext;
-  @override
-  @JsonKey(name: 'past_history')
-  List<dynamic> get pastHistory;
-  @override
-  @JsonKey(name: 'total_courses_completed')
-  int get totalCoursesCompleted;
-  @override
-  @JsonKey(name: 'last_active_at')
-  DateTime? get lastActiveAt;
-  @override
-  @JsonKey(name: 'app_open_count')
-  int get appOpenCount;
-  @override
-  @JsonKey(name: 'app_version')
-  String? get appVersion;
-  @override
-  @JsonKey(name: 'reminder_settings')
-  Map<String, dynamic> get reminderSettings;
-  @override
-  @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt;
-  @override
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
-  @override
-  @JsonKey(ignore: true)
-  _$$ProfileImplCopyWith<_$ProfileImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+      List<String> enrolledSectionsNext,
+      @JsonKey(name: 'enrolled_credits') double enrolledCredits,
+      @JsonKey(name: 'enrolled_credits_next') double enrolledCreditsNext,
+      @JsonKey(name: 'past_history') List<dynamic> pastHistory,
+      @JsonKey(name: 'total_courses_completed') int totalCoursesCompleted,
+      @JsonKey(name: 'last_active_at') DateTime? lastActiveAt,
+      @JsonKey(name: 'app_open_count') int appOpenCount,
+      @JsonKey(name: 'app_version') String? appVersion,
+      @JsonKey(name: 'reminder_settings') Map<String, dynamic> reminderSettings,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt,
+      @JsonKey(name: 'created_at') DateTime? createdAt});
 }
+
+/// @nodoc
+class __$ProfileCopyWithImpl<$Res> implements _$ProfileCopyWith<$Res> {
+  __$ProfileCopyWithImpl(this._self, this._then);
+
+  final _Profile _self;
+  final $Res Function(_Profile) _then;
+
+  /// Create a copy of Profile
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? studentId = freezed,
+    Object? fullName = freezed,
+    Object? nickname = freezed,
+    Object? programCode = freezed,
+    Object? admittedSemester = freezed,
+    Object? cgpa = freezed,
+    Object? totalCreditsEarned = freezed,
+    Object? photoUrl = freezed,
+    Object? onboardingStatus = null,
+    Object? semesterType = null,
+    Object? departmentName = freezed,
+    Object? scholarshipStatus = freezed,
+    Object? programName = freezed,
+    Object? track = freezed,
+    Object? enrolledSections = null,
+    Object? enrolledSectionsNext = null,
+    Object? enrolledCredits = null,
+    Object? enrolledCreditsNext = null,
+    Object? pastHistory = null,
+    Object? totalCoursesCompleted = null,
+    Object? lastActiveAt = freezed,
+    Object? appOpenCount = null,
+    Object? appVersion = freezed,
+    Object? reminderSettings = null,
+    Object? updatedAt = freezed,
+    Object? createdAt = freezed,
+  }) {
+    return _then(_Profile(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      studentId: freezed == studentId
+          ? _self.studentId
+          : studentId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      fullName: freezed == fullName
+          ? _self.fullName
+          : fullName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      nickname: freezed == nickname
+          ? _self.nickname
+          : nickname // ignore: cast_nullable_to_non_nullable
+              as String?,
+      programCode: freezed == programCode
+          ? _self.programCode
+          : programCode // ignore: cast_nullable_to_non_nullable
+              as String?,
+      admittedSemester: freezed == admittedSemester
+          ? _self.admittedSemester
+          : admittedSemester // ignore: cast_nullable_to_non_nullable
+              as String?,
+      cgpa: freezed == cgpa
+          ? _self.cgpa
+          : cgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      totalCreditsEarned: freezed == totalCreditsEarned
+          ? _self.totalCreditsEarned
+          : totalCreditsEarned // ignore: cast_nullable_to_non_nullable
+              as double?,
+      photoUrl: freezed == photoUrl
+          ? _self.photoUrl
+          : photoUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
+      onboardingStatus: null == onboardingStatus
+          ? _self.onboardingStatus
+          : onboardingStatus // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterType: null == semesterType
+          ? _self.semesterType
+          : semesterType // ignore: cast_nullable_to_non_nullable
+              as String,
+      departmentName: freezed == departmentName
+          ? _self.departmentName
+          : departmentName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scholarshipStatus: freezed == scholarshipStatus
+          ? _self.scholarshipStatus
+          : scholarshipStatus // ignore: cast_nullable_to_non_nullable
+              as String?,
+      programName: freezed == programName
+          ? _self.programName
+          : programName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      track: freezed == track
+          ? _self.track
+          : track // ignore: cast_nullable_to_non_nullable
+              as String?,
+      enrolledSections: null == enrolledSections
+          ? _self._enrolledSections
+          : enrolledSections // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      enrolledSectionsNext: null == enrolledSectionsNext
+          ? _self._enrolledSectionsNext
+          : enrolledSectionsNext // ignore: cast_nullable_to_non_nullable
+              as List<String>,
+      enrolledCredits: null == enrolledCredits
+          ? _self.enrolledCredits
+          : enrolledCredits // ignore: cast_nullable_to_non_nullable
+              as double,
+      enrolledCreditsNext: null == enrolledCreditsNext
+          ? _self.enrolledCreditsNext
+          : enrolledCreditsNext // ignore: cast_nullable_to_non_nullable
+              as double,
+      pastHistory: null == pastHistory
+          ? _self._pastHistory
+          : pastHistory // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>,
+      totalCoursesCompleted: null == totalCoursesCompleted
+          ? _self.totalCoursesCompleted
+          : totalCoursesCompleted // ignore: cast_nullable_to_non_nullable
+              as int,
+      lastActiveAt: freezed == lastActiveAt
+          ? _self.lastActiveAt
+          : lastActiveAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      appOpenCount: null == appOpenCount
+          ? _self.appOpenCount
+          : appOpenCount // ignore: cast_nullable_to_non_nullable
+              as int,
+      appVersion: freezed == appVersion
+          ? _self.appVersion
+          : appVersion // ignore: cast_nullable_to_non_nullable
+              as String?,
+      reminderSettings: null == reminderSettings
+          ? _self._reminderSettings
+          : reminderSettings // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>,
+      updatedAt: freezed == updatedAt
+          ? _self.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      createdAt: freezed == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
+  }
+}
+
+// dart format on

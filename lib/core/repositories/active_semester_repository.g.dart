@@ -6,23 +6,49 @@ part of 'active_semester_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$activeSemesterRepositoryHash() =>
-    r'5faea2bd360d06c50a8a50e2e50204cfc58357dd';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [activeSemesterRepository].
 @ProviderFor(activeSemesterRepository)
-final activeSemesterRepositoryProvider =
-    AutoDisposeProvider<ActiveSemesterRepository>.internal(
-  activeSemesterRepository,
-  name: r'activeSemesterRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$activeSemesterRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final activeSemesterRepositoryProvider = ActiveSemesterRepositoryProvider._();
 
-typedef ActiveSemesterRepositoryRef
-    = AutoDisposeProviderRef<ActiveSemesterRepository>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class ActiveSemesterRepositoryProvider extends $FunctionalProvider<
+    ActiveSemesterRepository,
+    ActiveSemesterRepository,
+    ActiveSemesterRepository> with $Provider<ActiveSemesterRepository> {
+  ActiveSemesterRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'activeSemesterRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeSemesterRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ActiveSemesterRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ActiveSemesterRepository create(Ref ref) {
+    return activeSemesterRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ActiveSemesterRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ActiveSemesterRepository>(value),
+    );
+  }
+}
+
+String _$activeSemesterRepositoryHash() =>
+    r'0a63013cc1bad43fc447e960d26c9f184487ad6b';

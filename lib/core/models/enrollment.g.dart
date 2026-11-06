@@ -6,8 +6,7 @@ part of 'enrollment.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$EnrollmentImpl _$$EnrollmentImplFromJson(Map<String, dynamic> json) =>
-    _$EnrollmentImpl(
+_Enrollment _$EnrollmentFromJson(Map<String, dynamic> json) => _Enrollment(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       semesterCode: json['semester_code'] as String,
@@ -22,7 +21,7 @@ _$EnrollmentImpl _$$EnrollmentImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$EnrollmentImplToJson(_$EnrollmentImpl instance) =>
+Map<String, dynamic> _$EnrollmentToJson(_Enrollment instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

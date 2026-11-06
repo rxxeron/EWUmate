@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
@@ -21,7 +21,7 @@ class AcademicYearsTimeline extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.ewuColors;
-    final runningSemesterCode = ref.watch(academicStateProvider).valueOrNull?.currentSemesterCode;
+    final runningSemesterCode = ref.watch(academicStateProvider).value?.currentSemesterCode;
     final livePredictedSgpa = ref.watch(projectedSGPAProvider);
 
     return asyncYears.when(
@@ -41,7 +41,7 @@ class AcademicYearsTimeline extends ConsumerWidget {
 
         return Column(
           children: years.map((ay) {
-            final awards = awardsAsync.valueOrNull ?? [];
+            final awards = awardsAsync.value ?? [];
             final ayAward = awards.where((a) => a.forYear == ay.yearNumber + 1).firstOrNull;
 
             return Container(

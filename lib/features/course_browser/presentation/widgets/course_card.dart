@@ -193,7 +193,7 @@ class _CourseCardState extends ConsumerState<CourseCard> {
     final scope = ref.watch(selectedSemesterScopeProvider);
     final isUpcoming = scope == SemesterScope.upcoming;
     final targetSemCodeAsync = ref.watch(selectedBrowserSemesterCodeProvider);
-    final targetSemCode = targetSemCodeAsync.valueOrNull ?? 'Spring2026';
+    final targetSemCode = targetSemCodeAsync.value ?? 'Spring2026';
     final sectionsAsync = ref.watch(courseSectionsProvider(semesterCode: targetSemCode, courseCode: widget.course.code));
     
     final enrollmentsDetailsAsync = ref.watch(userEnrollmentDetailsProvider);

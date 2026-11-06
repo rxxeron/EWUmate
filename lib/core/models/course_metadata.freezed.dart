@@ -1,6 +1,6 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
+// coverage:ignore-file
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'course_metadata.dart';
@@ -9,81 +9,59 @@ part of 'course_metadata.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-CourseMetadata _$CourseMetadataFromJson(Map<String, dynamic> json) {
-  return _CourseMetadata.fromJson(json);
-}
 
 /// @nodoc
 mixin _$CourseMetadata {
-  String get code => throw _privateConstructorUsedError;
-  String get name => throw _privateConstructorUsedError;
+  String get code;
+  String get name;
   @JsonKey(name: 'credit_val')
-  double get creditVal => throw _privateConstructorUsedError;
+  double get creditVal;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $CourseMetadataCopyWith<CourseMetadata> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $CourseMetadataCopyWith<$Res> {
-  factory $CourseMetadataCopyWith(
-          CourseMetadata value, $Res Function(CourseMetadata) then) =
-      _$CourseMetadataCopyWithImpl<$Res, CourseMetadata>;
-  @useResult
-  $Res call(
-      {String code,
-      String name,
-      @JsonKey(name: 'credit_val') double creditVal});
-}
-
-/// @nodoc
-class _$CourseMetadataCopyWithImpl<$Res, $Val extends CourseMetadata>
-    implements $CourseMetadataCopyWith<$Res> {
-  _$CourseMetadataCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of CourseMetadata
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $CourseMetadataCopyWith<CourseMetadata> get copyWith =>
+      _$CourseMetadataCopyWithImpl<CourseMetadata>(
+          this as CourseMetadata, _$identity);
+
+  /// Serializes this CourseMetadata to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? code = null,
-    Object? name = null,
-    Object? creditVal = null,
-  }) {
-    return _then(_value.copyWith(
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
-              as String,
-      creditVal: null == creditVal
-          ? _value.creditVal
-          : creditVal // ignore: cast_nullable_to_non_nullable
-              as double,
-    ) as $Val);
+  bool operator ==(Object other) {
+    final _this = this as CourseMetadata;
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is CourseMetadata &&
+            (identical(other.code, _this.code) || other.code == _this.code) &&
+            (identical(other.name, _this.name) || other.name == _this.name) &&
+            (identical(other.creditVal, _this.creditVal) ||
+                other.creditVal == _this.creditVal));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode {
+    final _this = this as CourseMetadata;
+    return Object.hash(runtimeType, _this.code, _this.name, _this.creditVal);
+  }
+
+  @override
+  String toString() {
+    final _this = this as CourseMetadata;
+    return 'CourseMetadata(code: ${_this.code}, name: ${_this.name}, creditVal: ${_this.creditVal})';
   }
 }
 
 /// @nodoc
-abstract class _$$CourseMetadataImplCopyWith<$Res>
-    implements $CourseMetadataCopyWith<$Res> {
-  factory _$$CourseMetadataImplCopyWith(_$CourseMetadataImpl value,
-          $Res Function(_$CourseMetadataImpl) then) =
-      __$$CourseMetadataImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $CourseMetadataCopyWith<$Res> {
+  factory $CourseMetadataCopyWith(
+          CourseMetadata value, $Res Function(CourseMetadata) _then) =
+      _$CourseMetadataCopyWithImpl;
   @useResult
   $Res call(
       {String code,
@@ -92,13 +70,15 @@ abstract class _$$CourseMetadataImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$CourseMetadataImplCopyWithImpl<$Res>
-    extends _$CourseMetadataCopyWithImpl<$Res, _$CourseMetadataImpl>
-    implements _$$CourseMetadataImplCopyWith<$Res> {
-  __$$CourseMetadataImplCopyWithImpl(
-      _$CourseMetadataImpl _value, $Res Function(_$CourseMetadataImpl) _then)
-      : super(_value, _then);
+class _$CourseMetadataCopyWithImpl<$Res>
+    implements $CourseMetadataCopyWith<$Res> {
+  _$CourseMetadataCopyWithImpl(this._self, this._then);
 
+  final CourseMetadata _self;
+  final $Res Function(CourseMetadata) _then;
+
+  /// Create a copy of CourseMetadata
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -106,33 +86,195 @@ class __$$CourseMetadataImplCopyWithImpl<$Res>
     Object? name = null,
     Object? creditVal = null,
   }) {
-    return _then(_$CourseMetadataImpl(
+    return _then(CourseMetadata(
       code: null == code
-          ? _value.code
+          ? _self.code
           : code // ignore: cast_nullable_to_non_nullable
               as String,
       name: null == name
-          ? _value.name
+          ? _self.name
           : name // ignore: cast_nullable_to_non_nullable
               as String,
       creditVal: null == creditVal
-          ? _value.creditVal
+          ? _self.creditVal
           : creditVal // ignore: cast_nullable_to_non_nullable
               as double,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [CourseMetadata].
+extension CourseMetadataPatterns on CourseMetadata {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_CourseMetadata value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_CourseMetadata value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_CourseMetadata value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(String code, String name,
+            @JsonKey(name: 'credit_val') double creditVal)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata() when $default != null:
+        return $default(_that.code, _that.name, _that.creditVal);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(String code, String name,
+            @JsonKey(name: 'credit_val') double creditVal)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata():
+        return $default(_that.code, _that.name, _that.creditVal);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(String code, String name,
+            @JsonKey(name: 'credit_val') double creditVal)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseMetadata() when $default != null:
+        return $default(_that.code, _that.name, _that.creditVal);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$CourseMetadataImpl implements _CourseMetadata {
-  const _$CourseMetadataImpl(
+class _CourseMetadata implements CourseMetadata {
+  const _CourseMetadata(
       {required this.code,
       required this.name,
       @JsonKey(name: 'credit_val') required this.creditVal});
-
-  factory _$CourseMetadataImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CourseMetadataImplFromJson(json);
+  factory _CourseMetadata.fromJson(Map<String, dynamic> json) =>
+      _$CourseMetadataFromJson(json);
 
   @override
   final String code;
@@ -142,60 +284,90 @@ class _$CourseMetadataImpl implements _CourseMetadata {
   @JsonKey(name: 'credit_val')
   final double creditVal;
 
+  /// Create a copy of CourseMetadata
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'CourseMetadata(code: $code, name: $name, creditVal: $creditVal)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$CourseMetadataCopyWith<_CourseMetadata> get copyWith =>
+      __$CourseMetadataCopyWithImpl<_CourseMetadata>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$CourseMetadataToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CourseMetadataImpl &&
+            other is _CourseMetadata &&
             (identical(other.code, code) || other.code == code) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.creditVal, creditVal) ||
                 other.creditVal == creditVal));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, code, name, creditVal);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CourseMetadataImplCopyWith<_$CourseMetadataImpl> get copyWith =>
-      __$$CourseMetadataImplCopyWithImpl<_$CourseMetadataImpl>(
-          this, _$identity);
+  int get hashCode {
+    return Object.hash(runtimeType, code, name, creditVal);
+  }
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$$CourseMetadataImplToJson(
-      this,
-    );
+  String toString() {
+    return 'CourseMetadata(code: $code, name: $name, creditVal: $creditVal)';
   }
 }
 
-abstract class _CourseMetadata implements CourseMetadata {
-  const factory _CourseMetadata(
-          {required final String code,
-          required final String name,
-          @JsonKey(name: 'credit_val') required final double creditVal}) =
-      _$CourseMetadataImpl;
-
-  factory _CourseMetadata.fromJson(Map<String, dynamic> json) =
-      _$CourseMetadataImpl.fromJson;
-
+/// @nodoc
+abstract mixin class _$CourseMetadataCopyWith<$Res>
+    implements $CourseMetadataCopyWith<$Res> {
+  factory _$CourseMetadataCopyWith(
+          _CourseMetadata value, $Res Function(_CourseMetadata) _then) =
+      __$CourseMetadataCopyWithImpl;
   @override
-  String get code;
-  @override
-  String get name;
-  @override
-  @JsonKey(name: 'credit_val')
-  double get creditVal;
-  @override
-  @JsonKey(ignore: true)
-  _$$CourseMetadataImplCopyWith<_$CourseMetadataImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @useResult
+  $Res call(
+      {String code,
+      String name,
+      @JsonKey(name: 'credit_val') double creditVal});
 }
+
+/// @nodoc
+class __$CourseMetadataCopyWithImpl<$Res>
+    implements _$CourseMetadataCopyWith<$Res> {
+  __$CourseMetadataCopyWithImpl(this._self, this._then);
+
+  final _CourseMetadata _self;
+  final $Res Function(_CourseMetadata) _then;
+
+  /// Create a copy of CourseMetadata
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? code = null,
+    Object? name = null,
+    Object? creditVal = null,
+  }) {
+    return _then(_CourseMetadata(
+      code: null == code
+          ? _self.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      name: null == name
+          ? _self.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      creditVal: null == creditVal
+          ? _self.creditVal
+          : creditVal // ignore: cast_nullable_to_non_nullable
+              as double,
+    ));
+  }
+}
+
+// dart format on

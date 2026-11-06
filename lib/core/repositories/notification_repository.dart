@@ -155,14 +155,14 @@ class NotificationRepository {
 }
 
 @riverpod
-NotificationRepository notificationRepository(NotificationRepositoryRef ref) {
+NotificationRepository notificationRepository(Ref ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
   return NotificationRepository(supabase, cache);
 }
 
 @Riverpod(keepAlive: true)
-Stream<List<model.Notification>> userNotifications(UserNotificationsRef ref) {
+Stream<List<model.Notification>> userNotifications(Ref ref) {
   final user = ref.watch(currentUserProvider);
   if (user == null) {
     return const Stream.empty();

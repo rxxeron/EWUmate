@@ -87,11 +87,11 @@ class _CourseBrowserScreenState extends ConsumerState<CourseBrowserScreen> {
 
     final currentSemAsync = ref.watch(currentSemCodeProvider);
     final nextSemAsync = ref.watch(nextSemCodeProvider);
-    final currentSem = currentSemAsync.valueOrNull ?? '';
-    final nextSem = nextSemAsync.valueOrNull ?? '';
+    final currentSem = currentSemAsync.value ?? '';
+    final nextSem = nextSemAsync.value ?? '';
 
     final targetSemAsync = ref.watch(selectedBrowserSemesterCodeProvider);
-    final targetSem = targetSemAsync.valueOrNull ?? (isUpcoming ? nextSem : currentSem);
+    final targetSem = targetSemAsync.value ?? (isUpcoming ? nextSem : currentSem);
 
     return FullGradientScaffold(
       appBar: AppBar(

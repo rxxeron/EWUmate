@@ -6,19 +6,46 @@ part of 'cache_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$cacheServiceHash() => r'94ae18746ed90b7f55d4072563e9d88f33ddaf85';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [cacheService].
 @ProviderFor(cacheService)
-final cacheServiceProvider = Provider<CacheService>.internal(
-  cacheService,
-  name: r'cacheServiceProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$cacheServiceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final cacheServiceProvider = CacheServiceProvider._();
 
-typedef CacheServiceRef = ProviderRef<CacheService>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class CacheServiceProvider
+    extends $FunctionalProvider<CacheService, CacheService, CacheService>
+    with $Provider<CacheService> {
+  CacheServiceProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'cacheServiceProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$cacheServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<CacheService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  CacheService create(Ref ref) {
+    return cacheService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CacheService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CacheService>(value),
+    );
+  }
+}
+
+String _$cacheServiceHash() => r'84442d4ee25bf8cce884bb123b7675291b9c2248';

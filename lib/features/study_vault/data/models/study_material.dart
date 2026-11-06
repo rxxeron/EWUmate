@@ -4,7 +4,7 @@ part 'study_material.freezed.dart';
 part 'study_material.g.dart';
 
 @freezed
-class StudyMaterial with _$StudyMaterial {
+abstract class StudyMaterial with _$StudyMaterial {
   const factory StudyMaterial({
     required String id,
     @JsonKey(name: 'uploader_id') required String uploaderId,

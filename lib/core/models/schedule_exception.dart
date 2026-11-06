@@ -4,7 +4,7 @@ part 'schedule_exception.freezed.dart';
 part 'schedule_exception.g.dart';
 
 @freezed
-class ScheduleException with _$ScheduleException {
+abstract class ScheduleException with _$ScheduleException {
   const factory ScheduleException({
     required String id,
     @JsonKey(name: 'user_id') required String userId,

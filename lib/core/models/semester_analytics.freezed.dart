@@ -1,6 +1,6 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
+// coverage:ignore-file
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'semester_analytics.dart';
@@ -9,153 +9,109 @@ part of 'semester_analytics.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-SemesterAnalytics _$SemesterAnalyticsFromJson(Map<String, dynamic> json) {
-  return _SemesterAnalytics.fromJson(json);
-}
 
 /// @nodoc
 mixin _$SemesterAnalytics {
-  String get id => throw _privateConstructorUsedError;
+  String get id;
   @JsonKey(name: 'user_id')
-  String get userId => throw _privateConstructorUsedError;
+  String get userId;
   @JsonKey(name: 'semester_code')
-  String get semesterCode => throw _privateConstructorUsedError;
+  String get semesterCode;
   @JsonKey(name: 'live_sgpa')
-  double? get liveSgpa => throw _privateConstructorUsedError;
+  double? get liveSgpa;
   @JsonKey(name: 'live_cgpa')
-  double? get liveCgpa => throw _privateConstructorUsedError;
-  double? get target => throw _privateConstructorUsedError;
+  double? get liveCgpa;
+  double? get target;
   @JsonKey(name: 'required_credit')
-  double? get requiredCredit => throw _privateConstructorUsedError;
+  double? get requiredCredit;
   @JsonKey(name: 'completed_credit')
-  double? get completedCredit => throw _privateConstructorUsedError;
+  double? get completedCredit;
   @JsonKey(name: 'taken_in_this_sem')
-  double? get takenInThisSem => throw _privateConstructorUsedError;
+  double? get takenInThisSem;
   @JsonKey(name: 'credits_left')
-  double? get creditsLeft => throw _privateConstructorUsedError;
+  double? get creditsLeft;
   @JsonKey(name: 'created_at')
-  DateTime? get createdAt => throw _privateConstructorUsedError;
+  DateTime? get createdAt;
   @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt => throw _privateConstructorUsedError;
+  DateTime? get updatedAt;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $SemesterAnalyticsCopyWith<SemesterAnalytics> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $SemesterAnalyticsCopyWith<$Res> {
-  factory $SemesterAnalyticsCopyWith(
-          SemesterAnalytics value, $Res Function(SemesterAnalytics) then) =
-      _$SemesterAnalyticsCopyWithImpl<$Res, SemesterAnalytics>;
-  @useResult
-  $Res call(
-      {String id,
-      @JsonKey(name: 'user_id') String userId,
-      @JsonKey(name: 'semester_code') String semesterCode,
-      @JsonKey(name: 'live_sgpa') double? liveSgpa,
-      @JsonKey(name: 'live_cgpa') double? liveCgpa,
-      double? target,
-      @JsonKey(name: 'required_credit') double? requiredCredit,
-      @JsonKey(name: 'completed_credit') double? completedCredit,
-      @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
-      @JsonKey(name: 'credits_left') double? creditsLeft,
-      @JsonKey(name: 'created_at') DateTime? createdAt,
-      @JsonKey(name: 'updated_at') DateTime? updatedAt});
-}
-
-/// @nodoc
-class _$SemesterAnalyticsCopyWithImpl<$Res, $Val extends SemesterAnalytics>
-    implements $SemesterAnalyticsCopyWith<$Res> {
-  _$SemesterAnalyticsCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of SemesterAnalytics
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $SemesterAnalyticsCopyWith<SemesterAnalytics> get copyWith =>
+      _$SemesterAnalyticsCopyWithImpl<SemesterAnalytics>(
+          this as SemesterAnalytics, _$identity);
+
+  /// Serializes this SemesterAnalytics to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? id = null,
-    Object? userId = null,
-    Object? semesterCode = null,
-    Object? liveSgpa = freezed,
-    Object? liveCgpa = freezed,
-    Object? target = freezed,
-    Object? requiredCredit = freezed,
-    Object? completedCredit = freezed,
-    Object? takenInThisSem = freezed,
-    Object? creditsLeft = freezed,
-    Object? createdAt = freezed,
-    Object? updatedAt = freezed,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      userId: null == userId
-          ? _value.userId
-          : userId // ignore: cast_nullable_to_non_nullable
-              as String,
-      semesterCode: null == semesterCode
-          ? _value.semesterCode
-          : semesterCode // ignore: cast_nullable_to_non_nullable
-              as String,
-      liveSgpa: freezed == liveSgpa
-          ? _value.liveSgpa
-          : liveSgpa // ignore: cast_nullable_to_non_nullable
-              as double?,
-      liveCgpa: freezed == liveCgpa
-          ? _value.liveCgpa
-          : liveCgpa // ignore: cast_nullable_to_non_nullable
-              as double?,
-      target: freezed == target
-          ? _value.target
-          : target // ignore: cast_nullable_to_non_nullable
-              as double?,
-      requiredCredit: freezed == requiredCredit
-          ? _value.requiredCredit
-          : requiredCredit // ignore: cast_nullable_to_non_nullable
-              as double?,
-      completedCredit: freezed == completedCredit
-          ? _value.completedCredit
-          : completedCredit // ignore: cast_nullable_to_non_nullable
-              as double?,
-      takenInThisSem: freezed == takenInThisSem
-          ? _value.takenInThisSem
-          : takenInThisSem // ignore: cast_nullable_to_non_nullable
-              as double?,
-      creditsLeft: freezed == creditsLeft
-          ? _value.creditsLeft
-          : creditsLeft // ignore: cast_nullable_to_non_nullable
-              as double?,
-      createdAt: freezed == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updatedAt: freezed == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-    ) as $Val);
+  bool operator ==(Object other) {
+    final _this = this as SemesterAnalytics;
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is SemesterAnalytics &&
+            (identical(other.id, _this.id) || other.id == _this.id) &&
+            (identical(other.userId, _this.userId) ||
+                other.userId == _this.userId) &&
+            (identical(other.semesterCode, _this.semesterCode) ||
+                other.semesterCode == _this.semesterCode) &&
+            (identical(other.liveSgpa, _this.liveSgpa) ||
+                other.liveSgpa == _this.liveSgpa) &&
+            (identical(other.liveCgpa, _this.liveCgpa) ||
+                other.liveCgpa == _this.liveCgpa) &&
+            (identical(other.target, _this.target) ||
+                other.target == _this.target) &&
+            (identical(other.requiredCredit, _this.requiredCredit) ||
+                other.requiredCredit == _this.requiredCredit) &&
+            (identical(other.completedCredit, _this.completedCredit) ||
+                other.completedCredit == _this.completedCredit) &&
+            (identical(other.takenInThisSem, _this.takenInThisSem) ||
+                other.takenInThisSem == _this.takenInThisSem) &&
+            (identical(other.creditsLeft, _this.creditsLeft) ||
+                other.creditsLeft == _this.creditsLeft) &&
+            (identical(other.createdAt, _this.createdAt) ||
+                other.createdAt == _this.createdAt) &&
+            (identical(other.updatedAt, _this.updatedAt) ||
+                other.updatedAt == _this.updatedAt));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode {
+    final _this = this as SemesterAnalytics;
+    return Object.hash(
+        runtimeType,
+        _this.id,
+        _this.userId,
+        _this.semesterCode,
+        _this.liveSgpa,
+        _this.liveCgpa,
+        _this.target,
+        _this.requiredCredit,
+        _this.completedCredit,
+        _this.takenInThisSem,
+        _this.creditsLeft,
+        _this.createdAt,
+        _this.updatedAt);
+  }
+
+  @override
+  String toString() {
+    final _this = this as SemesterAnalytics;
+    return 'SemesterAnalytics(id: ${_this.id}, userId: ${_this.userId}, semesterCode: ${_this.semesterCode}, liveSgpa: ${_this.liveSgpa}, liveCgpa: ${_this.liveCgpa}, target: ${_this.target}, requiredCredit: ${_this.requiredCredit}, completedCredit: ${_this.completedCredit}, takenInThisSem: ${_this.takenInThisSem}, creditsLeft: ${_this.creditsLeft}, createdAt: ${_this.createdAt}, updatedAt: ${_this.updatedAt})';
   }
 }
 
 /// @nodoc
-abstract class _$$SemesterAnalyticsImplCopyWith<$Res>
-    implements $SemesterAnalyticsCopyWith<$Res> {
-  factory _$$SemesterAnalyticsImplCopyWith(_$SemesterAnalyticsImpl value,
-          $Res Function(_$SemesterAnalyticsImpl) then) =
-      __$$SemesterAnalyticsImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $SemesterAnalyticsCopyWith<$Res> {
+  factory $SemesterAnalyticsCopyWith(
+          SemesterAnalytics value, $Res Function(SemesterAnalytics) _then) =
+      _$SemesterAnalyticsCopyWithImpl;
   @useResult
   $Res call(
       {String id,
@@ -173,13 +129,15 @@ abstract class _$$SemesterAnalyticsImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$SemesterAnalyticsImplCopyWithImpl<$Res>
-    extends _$SemesterAnalyticsCopyWithImpl<$Res, _$SemesterAnalyticsImpl>
-    implements _$$SemesterAnalyticsImplCopyWith<$Res> {
-  __$$SemesterAnalyticsImplCopyWithImpl(_$SemesterAnalyticsImpl _value,
-      $Res Function(_$SemesterAnalyticsImpl) _then)
-      : super(_value, _then);
+class _$SemesterAnalyticsCopyWithImpl<$Res>
+    implements $SemesterAnalyticsCopyWith<$Res> {
+  _$SemesterAnalyticsCopyWithImpl(this._self, this._then);
 
+  final SemesterAnalytics _self;
+  final $Res Function(SemesterAnalytics) _then;
+
+  /// Create a copy of SemesterAnalytics
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -196,63 +154,295 @@ class __$$SemesterAnalyticsImplCopyWithImpl<$Res>
     Object? createdAt = freezed,
     Object? updatedAt = freezed,
   }) {
-    return _then(_$SemesterAnalyticsImpl(
+    return _then(SemesterAnalytics(
       id: null == id
-          ? _value.id
+          ? _self.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
       userId: null == userId
-          ? _value.userId
+          ? _self.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
       semesterCode: null == semesterCode
-          ? _value.semesterCode
+          ? _self.semesterCode
           : semesterCode // ignore: cast_nullable_to_non_nullable
               as String,
       liveSgpa: freezed == liveSgpa
-          ? _value.liveSgpa
+          ? _self.liveSgpa
           : liveSgpa // ignore: cast_nullable_to_non_nullable
               as double?,
       liveCgpa: freezed == liveCgpa
-          ? _value.liveCgpa
+          ? _self.liveCgpa
           : liveCgpa // ignore: cast_nullable_to_non_nullable
               as double?,
       target: freezed == target
-          ? _value.target
+          ? _self.target
           : target // ignore: cast_nullable_to_non_nullable
               as double?,
       requiredCredit: freezed == requiredCredit
-          ? _value.requiredCredit
+          ? _self.requiredCredit
           : requiredCredit // ignore: cast_nullable_to_non_nullable
               as double?,
       completedCredit: freezed == completedCredit
-          ? _value.completedCredit
+          ? _self.completedCredit
           : completedCredit // ignore: cast_nullable_to_non_nullable
               as double?,
       takenInThisSem: freezed == takenInThisSem
-          ? _value.takenInThisSem
+          ? _self.takenInThisSem
           : takenInThisSem // ignore: cast_nullable_to_non_nullable
               as double?,
       creditsLeft: freezed == creditsLeft
-          ? _value.creditsLeft
+          ? _self.creditsLeft
           : creditsLeft // ignore: cast_nullable_to_non_nullable
               as double?,
       createdAt: freezed == createdAt
-          ? _value.createdAt
+          ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
       updatedAt: freezed == updatedAt
-          ? _value.updatedAt
+          ? _self.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime?,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [SemesterAnalytics].
+extension SemesterAnalyticsPatterns on SemesterAnalytics {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_SemesterAnalytics value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_SemesterAnalytics value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_SemesterAnalytics value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            String id,
+            @JsonKey(name: 'user_id') String userId,
+            @JsonKey(name: 'semester_code') String semesterCode,
+            @JsonKey(name: 'live_sgpa') double? liveSgpa,
+            @JsonKey(name: 'live_cgpa') double? liveCgpa,
+            double? target,
+            @JsonKey(name: 'required_credit') double? requiredCredit,
+            @JsonKey(name: 'completed_credit') double? completedCredit,
+            @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+            @JsonKey(name: 'credits_left') double? creditsLeft,
+            @JsonKey(name: 'created_at') DateTime? createdAt,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics() when $default != null:
+        return $default(
+            _that.id,
+            _that.userId,
+            _that.semesterCode,
+            _that.liveSgpa,
+            _that.liveCgpa,
+            _that.target,
+            _that.requiredCredit,
+            _that.completedCredit,
+            _that.takenInThisSem,
+            _that.creditsLeft,
+            _that.createdAt,
+            _that.updatedAt);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            String id,
+            @JsonKey(name: 'user_id') String userId,
+            @JsonKey(name: 'semester_code') String semesterCode,
+            @JsonKey(name: 'live_sgpa') double? liveSgpa,
+            @JsonKey(name: 'live_cgpa') double? liveCgpa,
+            double? target,
+            @JsonKey(name: 'required_credit') double? requiredCredit,
+            @JsonKey(name: 'completed_credit') double? completedCredit,
+            @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+            @JsonKey(name: 'credits_left') double? creditsLeft,
+            @JsonKey(name: 'created_at') DateTime? createdAt,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics():
+        return $default(
+            _that.id,
+            _that.userId,
+            _that.semesterCode,
+            _that.liveSgpa,
+            _that.liveCgpa,
+            _that.target,
+            _that.requiredCredit,
+            _that.completedCredit,
+            _that.takenInThisSem,
+            _that.creditsLeft,
+            _that.createdAt,
+            _that.updatedAt);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            String id,
+            @JsonKey(name: 'user_id') String userId,
+            @JsonKey(name: 'semester_code') String semesterCode,
+            @JsonKey(name: 'live_sgpa') double? liveSgpa,
+            @JsonKey(name: 'live_cgpa') double? liveCgpa,
+            double? target,
+            @JsonKey(name: 'required_credit') double? requiredCredit,
+            @JsonKey(name: 'completed_credit') double? completedCredit,
+            @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+            @JsonKey(name: 'credits_left') double? creditsLeft,
+            @JsonKey(name: 'created_at') DateTime? createdAt,
+            @JsonKey(name: 'updated_at') DateTime? updatedAt)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _SemesterAnalytics() when $default != null:
+        return $default(
+            _that.id,
+            _that.userId,
+            _that.semesterCode,
+            _that.liveSgpa,
+            _that.liveCgpa,
+            _that.target,
+            _that.requiredCredit,
+            _that.completedCredit,
+            _that.takenInThisSem,
+            _that.creditsLeft,
+            _that.createdAt,
+            _that.updatedAt);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
-  const _$SemesterAnalyticsImpl(
+class _SemesterAnalytics implements SemesterAnalytics {
+  const _SemesterAnalytics(
       {required this.id,
       @JsonKey(name: 'user_id') required this.userId,
       @JsonKey(name: 'semester_code') required this.semesterCode,
@@ -265,9 +455,8 @@ class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
       @JsonKey(name: 'credits_left') this.creditsLeft,
       @JsonKey(name: 'created_at') this.createdAt,
       @JsonKey(name: 'updated_at') this.updatedAt});
-
-  factory _$SemesterAnalyticsImpl.fromJson(Map<String, dynamic> json) =>
-      _$$SemesterAnalyticsImplFromJson(json);
+  factory _SemesterAnalytics.fromJson(Map<String, dynamic> json) =>
+      _$SemesterAnalyticsFromJson(json);
 
   @override
   final String id;
@@ -304,16 +493,26 @@ class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
   @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
 
+  /// Create a copy of SemesterAnalytics
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'SemesterAnalytics(id: $id, userId: $userId, semesterCode: $semesterCode, liveSgpa: $liveSgpa, liveCgpa: $liveCgpa, target: $target, requiredCredit: $requiredCredit, completedCredit: $completedCredit, takenInThisSem: $takenInThisSem, creditsLeft: $creditsLeft, createdAt: $createdAt, updatedAt: $updatedAt)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$SemesterAnalyticsCopyWith<_SemesterAnalytics> get copyWith =>
+      __$SemesterAnalyticsCopyWithImpl<_SemesterAnalytics>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$SemesterAnalyticsToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$SemesterAnalyticsImpl &&
+            other is _SemesterAnalytics &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userId, userId) || other.userId == userId) &&
             (identical(other.semesterCode, semesterCode) ||
@@ -337,93 +536,131 @@ class _$SemesterAnalyticsImpl implements _SemesterAnalytics {
                 other.updatedAt == updatedAt));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      userId,
-      semesterCode,
-      liveSgpa,
-      liveCgpa,
-      target,
-      requiredCredit,
-      completedCredit,
-      takenInThisSem,
-      creditsLeft,
-      createdAt,
-      updatedAt);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$SemesterAnalyticsImplCopyWith<_$SemesterAnalyticsImpl> get copyWith =>
-      __$$SemesterAnalyticsImplCopyWithImpl<_$SemesterAnalyticsImpl>(
-          this, _$identity);
+  int get hashCode {
+    return Object.hash(
+        runtimeType,
+        id,
+        userId,
+        semesterCode,
+        liveSgpa,
+        liveCgpa,
+        target,
+        requiredCredit,
+        completedCredit,
+        takenInThisSem,
+        creditsLeft,
+        createdAt,
+        updatedAt);
+  }
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$$SemesterAnalyticsImplToJson(
-      this,
-    );
+  String toString() {
+    return 'SemesterAnalytics(id: $id, userId: $userId, semesterCode: $semesterCode, liveSgpa: $liveSgpa, liveCgpa: $liveCgpa, target: $target, requiredCredit: $requiredCredit, completedCredit: $completedCredit, takenInThisSem: $takenInThisSem, creditsLeft: $creditsLeft, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }
 
-abstract class _SemesterAnalytics implements SemesterAnalytics {
-  const factory _SemesterAnalytics(
-          {required final String id,
-          @JsonKey(name: 'user_id') required final String userId,
-          @JsonKey(name: 'semester_code') required final String semesterCode,
-          @JsonKey(name: 'live_sgpa') final double? liveSgpa,
-          @JsonKey(name: 'live_cgpa') final double? liveCgpa,
-          final double? target,
-          @JsonKey(name: 'required_credit') final double? requiredCredit,
-          @JsonKey(name: 'completed_credit') final double? completedCredit,
-          @JsonKey(name: 'taken_in_this_sem') final double? takenInThisSem,
-          @JsonKey(name: 'credits_left') final double? creditsLeft,
-          @JsonKey(name: 'created_at') final DateTime? createdAt,
-          @JsonKey(name: 'updated_at') final DateTime? updatedAt}) =
-      _$SemesterAnalyticsImpl;
-
-  factory _SemesterAnalytics.fromJson(Map<String, dynamic> json) =
-      _$SemesterAnalyticsImpl.fromJson;
-
+/// @nodoc
+abstract mixin class _$SemesterAnalyticsCopyWith<$Res>
+    implements $SemesterAnalyticsCopyWith<$Res> {
+  factory _$SemesterAnalyticsCopyWith(
+          _SemesterAnalytics value, $Res Function(_SemesterAnalytics) _then) =
+      __$SemesterAnalyticsCopyWithImpl;
   @override
-  String get id;
-  @override
-  @JsonKey(name: 'user_id')
-  String get userId;
-  @override
-  @JsonKey(name: 'semester_code')
-  String get semesterCode;
-  @override
-  @JsonKey(name: 'live_sgpa')
-  double? get liveSgpa;
-  @override
-  @JsonKey(name: 'live_cgpa')
-  double? get liveCgpa;
-  @override
-  double? get target;
-  @override
-  @JsonKey(name: 'required_credit')
-  double? get requiredCredit;
-  @override
-  @JsonKey(name: 'completed_credit')
-  double? get completedCredit;
-  @override
-  @JsonKey(name: 'taken_in_this_sem')
-  double? get takenInThisSem;
-  @override
-  @JsonKey(name: 'credits_left')
-  double? get creditsLeft;
-  @override
-  @JsonKey(name: 'created_at')
-  DateTime? get createdAt;
-  @override
-  @JsonKey(name: 'updated_at')
-  DateTime? get updatedAt;
-  @override
-  @JsonKey(ignore: true)
-  _$$SemesterAnalyticsImplCopyWith<_$SemesterAnalyticsImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @useResult
+  $Res call(
+      {String id,
+      @JsonKey(name: 'user_id') String userId,
+      @JsonKey(name: 'semester_code') String semesterCode,
+      @JsonKey(name: 'live_sgpa') double? liveSgpa,
+      @JsonKey(name: 'live_cgpa') double? liveCgpa,
+      double? target,
+      @JsonKey(name: 'required_credit') double? requiredCredit,
+      @JsonKey(name: 'completed_credit') double? completedCredit,
+      @JsonKey(name: 'taken_in_this_sem') double? takenInThisSem,
+      @JsonKey(name: 'credits_left') double? creditsLeft,
+      @JsonKey(name: 'created_at') DateTime? createdAt,
+      @JsonKey(name: 'updated_at') DateTime? updatedAt});
 }
+
+/// @nodoc
+class __$SemesterAnalyticsCopyWithImpl<$Res>
+    implements _$SemesterAnalyticsCopyWith<$Res> {
+  __$SemesterAnalyticsCopyWithImpl(this._self, this._then);
+
+  final _SemesterAnalytics _self;
+  final $Res Function(_SemesterAnalytics) _then;
+
+  /// Create a copy of SemesterAnalytics
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? userId = null,
+    Object? semesterCode = null,
+    Object? liveSgpa = freezed,
+    Object? liveCgpa = freezed,
+    Object? target = freezed,
+    Object? requiredCredit = freezed,
+    Object? completedCredit = freezed,
+    Object? takenInThisSem = freezed,
+    Object? creditsLeft = freezed,
+    Object? createdAt = freezed,
+    Object? updatedAt = freezed,
+  }) {
+    return _then(_SemesterAnalytics(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _self.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      semesterCode: null == semesterCode
+          ? _self.semesterCode
+          : semesterCode // ignore: cast_nullable_to_non_nullable
+              as String,
+      liveSgpa: freezed == liveSgpa
+          ? _self.liveSgpa
+          : liveSgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      liveCgpa: freezed == liveCgpa
+          ? _self.liveCgpa
+          : liveCgpa // ignore: cast_nullable_to_non_nullable
+              as double?,
+      target: freezed == target
+          ? _self.target
+          : target // ignore: cast_nullable_to_non_nullable
+              as double?,
+      requiredCredit: freezed == requiredCredit
+          ? _self.requiredCredit
+          : requiredCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      completedCredit: freezed == completedCredit
+          ? _self.completedCredit
+          : completedCredit // ignore: cast_nullable_to_non_nullable
+              as double?,
+      takenInThisSem: freezed == takenInThisSem
+          ? _self.takenInThisSem
+          : takenInThisSem // ignore: cast_nullable_to_non_nullable
+              as double?,
+      creditsLeft: freezed == creditsLeft
+          ? _self.creditsLeft
+          : creditsLeft // ignore: cast_nullable_to_non_nullable
+              as double?,
+      createdAt: freezed == createdAt
+          ? _self.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updatedAt: freezed == updatedAt
+          ? _self.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+    ));
+  }
+}
+
+// dart format on

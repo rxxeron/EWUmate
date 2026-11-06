@@ -116,7 +116,7 @@ class FacultyRepository {
 }
 
 @riverpod
-FacultyRepository facultyRepository(FacultyRepositoryRef ref) {
+FacultyRepository facultyRepository(Ref ref) {
   return FacultyRepository(
     ref.watch(supabaseClientProvider),
     ref.watch(cacheServiceProvider),
@@ -124,13 +124,13 @@ FacultyRepository facultyRepository(FacultyRepositoryRef ref) {
 }
 
 @riverpod
-Future<List<Faculty>> allFaculty(AllFacultyRef ref) {
+Future<List<Faculty>> allFaculty(Ref ref) {
   return ref.watch(facultyRepositoryProvider).getAllFaculty();
 }
 
 @riverpod
 Future<List<CourseSection>> facultySections(
-  FacultySectionsRef ref, {
+  Ref ref, {
   required String initials,
   required String semesterCode,
 }) {

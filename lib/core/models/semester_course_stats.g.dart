@@ -6,9 +6,8 @@ part of 'semester_course_stats.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SemesterCourseStatsImpl _$$SemesterCourseStatsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SemesterCourseStatsImpl(
+_SemesterCourseStats _$SemesterCourseStatsFromJson(Map<String, dynamic> json) =>
+    _SemesterCourseStats(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       semester: json['semester'] as String,
@@ -21,8 +20,8 @@ _$SemesterCourseStatsImpl _$$SemesterCourseStatsImplFromJson(
           : DateTime.parse(json['last_updated'] as String),
     );
 
-Map<String, dynamic> _$$SemesterCourseStatsImplToJson(
-        _$SemesterCourseStatsImpl instance) =>
+Map<String, dynamic> _$SemesterCourseStatsToJson(
+        _SemesterCourseStats instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

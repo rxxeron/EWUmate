@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:ewumate/core/theme/app_colors.dart';
@@ -77,7 +77,7 @@ class GoalInputGrid extends ConsumerWidget {
             final cleanCode = course.courseCode.toUpperCase().replaceAll(' ', '');
             final currentGoal = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
             final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
-            final gradeScaleMap = ref.watch(gradeScaleMapProvider(policy)).valueOrNull ?? {};
+            final gradeScaleMap = ref.watch(gradeScaleMapProvider(policy)).value ?? {};
 
             final double evaluatedMarks = course.totalEvaluated;
             final double obtained = course.totalObtained;

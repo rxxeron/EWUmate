@@ -87,10 +87,10 @@ class CgpaHeroDialCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.ewuColors;
-    final policy = policyAsync.valueOrNull;
+    final policy = policyAsync.value;
 
-    final summariesRaw = ref.watch(allSemesterSummariesProvider).valueOrNull ?? [];
-    final academicState = ref.watch(academicStateProvider).valueOrNull;
+    final summariesRaw = ref.watch(allSemesterSummariesProvider).value ?? [];
+    final academicState = ref.watch(academicStateProvider).value;
     final String? runningCode = academicState?.currentSemesterCode;
     final String? nextCode = academicState?.nextSemesterCode;
 
@@ -99,7 +99,7 @@ class CgpaHeroDialCard extends ConsumerWidget {
 
     final localProjectedSgpa = ref.watch(projectedSGPAProvider);
     final predictedSgpa = (localProjectedSgpa > 0) ? localProjectedSgpa : (analytics?.liveSgpa ?? 0.0);
-    final predictedCgpa = ref.watch(projectedCGPAProvider).valueOrNull ?? profile?.cgpa ?? 0.0;
+    final predictedCgpa = ref.watch(projectedCGPAProvider).value ?? profile?.cgpa ?? 0.0;
     final enrolledCredits = ref.watch(currentEnrolledCreditsProvider);
 
     final targetTier = ref.watch(scholarshipTargetProvider);

@@ -619,7 +619,7 @@ class _CoverPageScreenState extends ConsumerState<CoverPageScreen> {
           if (_semester.isEmpty) {
             // Check active semester repository cache or current semester state
             final activeSemAsync = ref.watch(academicStateProvider);
-            final currentCode = activeSemAsync.valueOrNull?.currentSemesterCode ?? semesterCode;
+            final currentCode = activeSemAsync.value?.currentSemesterCode ?? semesterCode;
             if (currentCode != 'Unknown Semester') {
               _semester = CourseUtils.prettifySemesterCode(currentCode);
             } else {

@@ -1,6 +1,6 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// ignore_for_file: type=lint
+// coverage:ignore-file
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'course_section.dart';
@@ -9,103 +9,69 @@ part of 'course_section.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
-CourseSession _$CourseSessionFromJson(Map<String, dynamic> json) {
-  return _CourseSession.fromJson(json);
-}
 
 /// @nodoc
 mixin _$CourseSession {
-  String get type => throw _privateConstructorUsedError;
-  String get day => throw _privateConstructorUsedError;
+  String get type;
+  String get day;
   @JsonKey(name: 'start_time')
-  String get startTime => throw _privateConstructorUsedError;
+  String get startTime;
   @JsonKey(name: 'end_time')
-  String get endTime => throw _privateConstructorUsedError;
-  String get room => throw _privateConstructorUsedError;
-  String get faculty => throw _privateConstructorUsedError;
+  String get endTime;
+  String get room;
+  String get faculty;
 
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $CourseSessionCopyWith<CourseSession> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $CourseSessionCopyWith<$Res> {
-  factory $CourseSessionCopyWith(
-          CourseSession value, $Res Function(CourseSession) then) =
-      _$CourseSessionCopyWithImpl<$Res, CourseSession>;
-  @useResult
-  $Res call(
-      {String type,
-      String day,
-      @JsonKey(name: 'start_time') String startTime,
-      @JsonKey(name: 'end_time') String endTime,
-      String room,
-      String faculty});
-}
-
-/// @nodoc
-class _$CourseSessionCopyWithImpl<$Res, $Val extends CourseSession>
-    implements $CourseSessionCopyWith<$Res> {
-  _$CourseSessionCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
+  /// Create a copy of CourseSession
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @pragma('vm:prefer-inline')
+  $CourseSessionCopyWith<CourseSession> get copyWith =>
+      _$CourseSessionCopyWithImpl<CourseSession>(
+          this as CourseSession, _$identity);
+
+  /// Serializes this CourseSession to a JSON map.
+  Map<String, dynamic> toJson();
+
   @override
-  $Res call({
-    Object? type = null,
-    Object? day = null,
-    Object? startTime = null,
-    Object? endTime = null,
-    Object? room = null,
-    Object? faculty = null,
-  }) {
-    return _then(_value.copyWith(
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      day: null == day
-          ? _value.day
-          : day // ignore: cast_nullable_to_non_nullable
-              as String,
-      startTime: null == startTime
-          ? _value.startTime
-          : startTime // ignore: cast_nullable_to_non_nullable
-              as String,
-      endTime: null == endTime
-          ? _value.endTime
-          : endTime // ignore: cast_nullable_to_non_nullable
-              as String,
-      room: null == room
-          ? _value.room
-          : room // ignore: cast_nullable_to_non_nullable
-              as String,
-      faculty: null == faculty
-          ? _value.faculty
-          : faculty // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+  bool operator ==(Object other) {
+    final _this = this as CourseSession;
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is CourseSession &&
+            (identical(other.type, _this.type) || other.type == _this.type) &&
+            (identical(other.day, _this.day) || other.day == _this.day) &&
+            (identical(other.startTime, _this.startTime) ||
+                other.startTime == _this.startTime) &&
+            (identical(other.endTime, _this.endTime) ||
+                other.endTime == _this.endTime) &&
+            (identical(other.room, _this.room) || other.room == _this.room) &&
+            (identical(other.faculty, _this.faculty) ||
+                other.faculty == _this.faculty));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode {
+    final _this = this as CourseSession;
+    return Object.hash(runtimeType, _this.type, _this.day, _this.startTime,
+        _this.endTime, _this.room, _this.faculty);
+  }
+
+  @override
+  String toString() {
+    final _this = this as CourseSession;
+    return 'CourseSession(type: ${_this.type}, day: ${_this.day}, startTime: ${_this.startTime}, endTime: ${_this.endTime}, room: ${_this.room}, faculty: ${_this.faculty})';
   }
 }
 
 /// @nodoc
-abstract class _$$CourseSessionImplCopyWith<$Res>
-    implements $CourseSessionCopyWith<$Res> {
-  factory _$$CourseSessionImplCopyWith(
-          _$CourseSessionImpl value, $Res Function(_$CourseSessionImpl) then) =
-      __$$CourseSessionImplCopyWithImpl<$Res>;
-  @override
+abstract mixin class $CourseSessionCopyWith<$Res> {
+  factory $CourseSessionCopyWith(
+          CourseSession value, $Res Function(CourseSession) _then) =
+      _$CourseSessionCopyWithImpl;
   @useResult
   $Res call(
       {String type,
@@ -117,13 +83,15 @@ abstract class _$$CourseSessionImplCopyWith<$Res>
 }
 
 /// @nodoc
-class __$$CourseSessionImplCopyWithImpl<$Res>
-    extends _$CourseSessionCopyWithImpl<$Res, _$CourseSessionImpl>
-    implements _$$CourseSessionImplCopyWith<$Res> {
-  __$$CourseSessionImplCopyWithImpl(
-      _$CourseSessionImpl _value, $Res Function(_$CourseSessionImpl) _then)
-      : super(_value, _then);
+class _$CourseSessionCopyWithImpl<$Res>
+    implements $CourseSessionCopyWith<$Res> {
+  _$CourseSessionCopyWithImpl(this._self, this._then);
 
+  final CourseSession _self;
+  final $Res Function(CourseSession) _then;
+
+  /// Create a copy of CourseSession
+  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -134,48 +102,228 @@ class __$$CourseSessionImplCopyWithImpl<$Res>
     Object? room = null,
     Object? faculty = null,
   }) {
-    return _then(_$CourseSessionImpl(
+    return _then(CourseSession(
       type: null == type
-          ? _value.type
+          ? _self.type
           : type // ignore: cast_nullable_to_non_nullable
               as String,
       day: null == day
-          ? _value.day
+          ? _self.day
           : day // ignore: cast_nullable_to_non_nullable
               as String,
       startTime: null == startTime
-          ? _value.startTime
+          ? _self.startTime
           : startTime // ignore: cast_nullable_to_non_nullable
               as String,
       endTime: null == endTime
-          ? _value.endTime
+          ? _self.endTime
           : endTime // ignore: cast_nullable_to_non_nullable
               as String,
       room: null == room
-          ? _value.room
+          ? _self.room
           : room // ignore: cast_nullable_to_non_nullable
               as String,
       faculty: null == faculty
-          ? _value.faculty
+          ? _self.faculty
           : faculty // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
 }
 
+/// Adds pattern-matching-related methods to [CourseSession].
+extension CourseSessionPatterns on CourseSession {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_CourseSession value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_CourseSession value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_CourseSession value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            String type,
+            String day,
+            @JsonKey(name: 'start_time') String startTime,
+            @JsonKey(name: 'end_time') String endTime,
+            String room,
+            String faculty)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession() when $default != null:
+        return $default(_that.type, _that.day, _that.startTime, _that.endTime,
+            _that.room, _that.faculty);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            String type,
+            String day,
+            @JsonKey(name: 'start_time') String startTime,
+            @JsonKey(name: 'end_time') String endTime,
+            String room,
+            String faculty)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession():
+        return $default(_that.type, _that.day, _that.startTime, _that.endTime,
+            _that.room, _that.faculty);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            String type,
+            String day,
+            @JsonKey(name: 'start_time') String startTime,
+            @JsonKey(name: 'end_time') String endTime,
+            String room,
+            String faculty)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSession() when $default != null:
+        return $default(_that.type, _that.day, _that.startTime, _that.endTime,
+            _that.room, _that.faculty);
+      case _:
+        return null;
+    }
+  }
+}
+
 /// @nodoc
 @JsonSerializable()
-class _$CourseSessionImpl implements _CourseSession {
-  const _$CourseSessionImpl(
+class _CourseSession implements CourseSession {
+  const _CourseSession(
       {this.type = 'Theory',
       this.day = '',
       @JsonKey(name: 'start_time') this.startTime = '',
       @JsonKey(name: 'end_time') this.endTime = '',
       this.room = '',
       this.faculty = ''});
-
-  factory _$CourseSessionImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CourseSessionImplFromJson(json);
+  factory _CourseSession.fromJson(Map<String, dynamic> json) =>
+      _$CourseSessionFromJson(json);
 
   @override
   @JsonKey()
@@ -196,16 +344,26 @@ class _$CourseSessionImpl implements _CourseSession {
   @JsonKey()
   final String faculty;
 
+  /// Create a copy of CourseSession
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'CourseSession(type: $type, day: $day, startTime: $startTime, endTime: $endTime, room: $room, faculty: $faculty)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$CourseSessionCopyWith<_CourseSession> get copyWith =>
+      __$CourseSessionCopyWithImpl<_CourseSession>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$CourseSessionToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CourseSessionImpl &&
+            other is _CourseSession &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.day, day) || other.day == day) &&
             (identical(other.startTime, startTime) ||
@@ -215,263 +373,475 @@ class _$CourseSessionImpl implements _CourseSession {
             (identical(other.faculty, faculty) || other.faculty == faculty));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, type, day, startTime, endTime, room, faculty);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CourseSessionImplCopyWith<_$CourseSessionImpl> get copyWith =>
-      __$$CourseSessionImplCopyWithImpl<_$CourseSessionImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CourseSessionImplToJson(
-      this,
-    );
+  int get hashCode {
+    return Object.hash(
+        runtimeType, type, day, startTime, endTime, room, faculty);
   }
-}
-
-abstract class _CourseSession implements CourseSession {
-  const factory _CourseSession(
-      {final String type,
-      final String day,
-      @JsonKey(name: 'start_time') final String startTime,
-      @JsonKey(name: 'end_time') final String endTime,
-      final String room,
-      final String faculty}) = _$CourseSessionImpl;
-
-  factory _CourseSession.fromJson(Map<String, dynamic> json) =
-      _$CourseSessionImpl.fromJson;
 
   @override
-  String get type;
-  @override
-  String get day;
-  @override
-  @JsonKey(name: 'start_time')
-  String get startTime;
-  @override
-  @JsonKey(name: 'end_time')
-  String get endTime;
-  @override
-  String get room;
-  @override
-  String get faculty;
-  @override
-  @JsonKey(ignore: true)
-  _$$CourseSessionImplCopyWith<_$CourseSessionImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-CourseSection _$CourseSectionFromJson(Map<String, dynamic> json) {
-  return _CourseSection.fromJson(json);
-}
-
-/// @nodoc
-mixin _$CourseSection {
-  String get id => throw _privateConstructorUsedError;
-  String get code => throw _privateConstructorUsedError;
-  @JsonKey(name: 'course_name')
-  String get courseName => throw _privateConstructorUsedError;
-  @JsonKey(name: 'faculty_initials')
-  String get facultyInitials => throw _privateConstructorUsedError;
-  String get section => throw _privateConstructorUsedError;
-  String get capacity => throw _privateConstructorUsedError;
-  String get credits => throw _privateConstructorUsedError;
-  String get semester => throw _privateConstructorUsedError;
-  List<CourseSession> get sessions => throw _privateConstructorUsedError;
-  @JsonKey(name: 'doc_id')
-  String get docId => throw _privateConstructorUsedError;
-
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
-  $CourseSectionCopyWith<CourseSection> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $CourseSectionCopyWith<$Res> {
-  factory $CourseSectionCopyWith(
-          CourseSection value, $Res Function(CourseSection) then) =
-      _$CourseSectionCopyWithImpl<$Res, CourseSection>;
-  @useResult
-  $Res call(
-      {String id,
-      String code,
-      @JsonKey(name: 'course_name') String courseName,
-      @JsonKey(name: 'faculty_initials') String facultyInitials,
-      String section,
-      String capacity,
-      String credits,
-      String semester,
-      List<CourseSession> sessions,
-      @JsonKey(name: 'doc_id') String docId});
-}
-
-/// @nodoc
-class _$CourseSectionCopyWithImpl<$Res, $Val extends CourseSection>
-    implements $CourseSectionCopyWith<$Res> {
-  _$CourseSectionCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? code = null,
-    Object? courseName = null,
-    Object? facultyInitials = null,
-    Object? section = null,
-    Object? capacity = null,
-    Object? credits = null,
-    Object? semester = null,
-    Object? sessions = null,
-    Object? docId = null,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as String,
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
-              as String,
-      courseName: null == courseName
-          ? _value.courseName
-          : courseName // ignore: cast_nullable_to_non_nullable
-              as String,
-      facultyInitials: null == facultyInitials
-          ? _value.facultyInitials
-          : facultyInitials // ignore: cast_nullable_to_non_nullable
-              as String,
-      section: null == section
-          ? _value.section
-          : section // ignore: cast_nullable_to_non_nullable
-              as String,
-      capacity: null == capacity
-          ? _value.capacity
-          : capacity // ignore: cast_nullable_to_non_nullable
-              as String,
-      credits: null == credits
-          ? _value.credits
-          : credits // ignore: cast_nullable_to_non_nullable
-              as String,
-      semester: null == semester
-          ? _value.semester
-          : semester // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessions: null == sessions
-          ? _value.sessions
-          : sessions // ignore: cast_nullable_to_non_nullable
-              as List<CourseSession>,
-      docId: null == docId
-          ? _value.docId
-          : docId // ignore: cast_nullable_to_non_nullable
-              as String,
-    ) as $Val);
+  String toString() {
+    return 'CourseSession(type: $type, day: $day, startTime: $startTime, endTime: $endTime, room: $room, faculty: $faculty)';
   }
 }
 
 /// @nodoc
-abstract class _$$CourseSectionImplCopyWith<$Res>
-    implements $CourseSectionCopyWith<$Res> {
-  factory _$$CourseSectionImplCopyWith(
-          _$CourseSectionImpl value, $Res Function(_$CourseSectionImpl) then) =
-      __$$CourseSectionImplCopyWithImpl<$Res>;
+abstract mixin class _$CourseSessionCopyWith<$Res>
+    implements $CourseSessionCopyWith<$Res> {
+  factory _$CourseSessionCopyWith(
+          _CourseSession value, $Res Function(_CourseSession) _then) =
+      __$CourseSessionCopyWithImpl;
   @override
   @useResult
   $Res call(
-      {String id,
-      String code,
-      @JsonKey(name: 'course_name') String courseName,
-      @JsonKey(name: 'faculty_initials') String facultyInitials,
-      String section,
-      String capacity,
-      String credits,
-      String semester,
-      List<CourseSession> sessions,
-      @JsonKey(name: 'doc_id') String docId});
+      {String type,
+      String day,
+      @JsonKey(name: 'start_time') String startTime,
+      @JsonKey(name: 'end_time') String endTime,
+      String room,
+      String faculty});
 }
 
 /// @nodoc
-class __$$CourseSectionImplCopyWithImpl<$Res>
-    extends _$CourseSectionCopyWithImpl<$Res, _$CourseSectionImpl>
-    implements _$$CourseSectionImplCopyWith<$Res> {
-  __$$CourseSectionImplCopyWithImpl(
-      _$CourseSectionImpl _value, $Res Function(_$CourseSectionImpl) _then)
-      : super(_value, _then);
+class __$CourseSessionCopyWithImpl<$Res>
+    implements _$CourseSessionCopyWith<$Res> {
+  __$CourseSessionCopyWithImpl(this._self, this._then);
 
-  @pragma('vm:prefer-inline')
+  final _CourseSession _self;
+  final $Res Function(_CourseSession) _then;
+
+  /// Create a copy of CourseSession
+  /// with the given fields replaced by the non-null parameter values.
   @override
+  @pragma('vm:prefer-inline')
   $Res call({
-    Object? id = null,
-    Object? code = null,
-    Object? courseName = null,
-    Object? facultyInitials = null,
-    Object? section = null,
-    Object? capacity = null,
-    Object? credits = null,
-    Object? semester = null,
-    Object? sessions = null,
-    Object? docId = null,
+    Object? type = null,
+    Object? day = null,
+    Object? startTime = null,
+    Object? endTime = null,
+    Object? room = null,
+    Object? faculty = null,
   }) {
-    return _then(_$CourseSectionImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
+    return _then(_CourseSession(
+      type: null == type
+          ? _self.type
+          : type // ignore: cast_nullable_to_non_nullable
               as String,
-      code: null == code
-          ? _value.code
-          : code // ignore: cast_nullable_to_non_nullable
+      day: null == day
+          ? _self.day
+          : day // ignore: cast_nullable_to_non_nullable
               as String,
-      courseName: null == courseName
-          ? _value.courseName
-          : courseName // ignore: cast_nullable_to_non_nullable
+      startTime: null == startTime
+          ? _self.startTime
+          : startTime // ignore: cast_nullable_to_non_nullable
               as String,
-      facultyInitials: null == facultyInitials
-          ? _value.facultyInitials
-          : facultyInitials // ignore: cast_nullable_to_non_nullable
+      endTime: null == endTime
+          ? _self.endTime
+          : endTime // ignore: cast_nullable_to_non_nullable
               as String,
-      section: null == section
-          ? _value.section
-          : section // ignore: cast_nullable_to_non_nullable
+      room: null == room
+          ? _self.room
+          : room // ignore: cast_nullable_to_non_nullable
               as String,
-      capacity: null == capacity
-          ? _value.capacity
-          : capacity // ignore: cast_nullable_to_non_nullable
-              as String,
-      credits: null == credits
-          ? _value.credits
-          : credits // ignore: cast_nullable_to_non_nullable
-              as String,
-      semester: null == semester
-          ? _value.semester
-          : semester // ignore: cast_nullable_to_non_nullable
-              as String,
-      sessions: null == sessions
-          ? _value._sessions
-          : sessions // ignore: cast_nullable_to_non_nullable
-              as List<CourseSession>,
-      docId: null == docId
-          ? _value.docId
-          : docId // ignore: cast_nullable_to_non_nullable
+      faculty: null == faculty
+          ? _self.faculty
+          : faculty // ignore: cast_nullable_to_non_nullable
               as String,
     ));
   }
 }
 
 /// @nodoc
+mixin _$CourseSection {
+  String get id;
+  String get code;
+  @JsonKey(name: 'course_name')
+  String get courseName;
+  @JsonKey(name: 'faculty_initials')
+  String get facultyInitials;
+  String get section;
+  String get capacity;
+  String get credits;
+  String get semester;
+  List<CourseSession> get sessions;
+  @JsonKey(name: 'doc_id')
+  String get docId;
+
+  /// Create a copy of CourseSection
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  $CourseSectionCopyWith<CourseSection> get copyWith =>
+      _$CourseSectionCopyWithImpl<CourseSection>(
+          this as CourseSection, _$identity);
+
+  /// Serializes this CourseSection to a JSON map.
+  Map<String, dynamic> toJson();
+
+  @override
+  bool operator ==(Object other) {
+    final _this = this as CourseSection;
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is CourseSection &&
+            (identical(other.id, _this.id) || other.id == _this.id) &&
+            (identical(other.code, _this.code) || other.code == _this.code) &&
+            (identical(other.courseName, _this.courseName) ||
+                other.courseName == _this.courseName) &&
+            (identical(other.facultyInitials, _this.facultyInitials) ||
+                other.facultyInitials == _this.facultyInitials) &&
+            (identical(other.section, _this.section) ||
+                other.section == _this.section) &&
+            (identical(other.capacity, _this.capacity) ||
+                other.capacity == _this.capacity) &&
+            (identical(other.credits, _this.credits) ||
+                other.credits == _this.credits) &&
+            (identical(other.semester, _this.semester) ||
+                other.semester == _this.semester) &&
+            const DeepCollectionEquality()
+                .equals(other.sessions, _this.sessions) &&
+            (identical(other.docId, _this.docId) ||
+                other.docId == _this.docId));
+  }
+
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  int get hashCode {
+    final _this = this as CourseSection;
+    return Object.hash(
+        runtimeType,
+        _this.id,
+        _this.code,
+        _this.courseName,
+        _this.facultyInitials,
+        _this.section,
+        _this.capacity,
+        _this.credits,
+        _this.semester,
+        const DeepCollectionEquality().hash(_this.sessions),
+        _this.docId);
+  }
+
+  @override
+  String toString() {
+    final _this = this as CourseSection;
+    return 'CourseSection(id: ${_this.id}, code: ${_this.code}, courseName: ${_this.courseName}, facultyInitials: ${_this.facultyInitials}, section: ${_this.section}, capacity: ${_this.capacity}, credits: ${_this.credits}, semester: ${_this.semester}, sessions: ${_this.sessions}, docId: ${_this.docId})';
+  }
+}
+
+/// @nodoc
+abstract mixin class $CourseSectionCopyWith<$Res> {
+  factory $CourseSectionCopyWith(
+          CourseSection value, $Res Function(CourseSection) _then) =
+      _$CourseSectionCopyWithImpl;
+  @useResult
+  $Res call(
+      {String id,
+      String code,
+      @JsonKey(name: 'course_name') String courseName,
+      @JsonKey(name: 'faculty_initials') String facultyInitials,
+      String section,
+      String capacity,
+      String credits,
+      String semester,
+      List<CourseSession> sessions,
+      @JsonKey(name: 'doc_id') String docId});
+}
+
+/// @nodoc
+class _$CourseSectionCopyWithImpl<$Res>
+    implements $CourseSectionCopyWith<$Res> {
+  _$CourseSectionCopyWithImpl(this._self, this._then);
+
+  final CourseSection _self;
+  final $Res Function(CourseSection) _then;
+
+  /// Create a copy of CourseSection
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? id = null,
+    Object? code = null,
+    Object? courseName = null,
+    Object? facultyInitials = null,
+    Object? section = null,
+    Object? capacity = null,
+    Object? credits = null,
+    Object? semester = null,
+    Object? sessions = null,
+    Object? docId = null,
+  }) {
+    return _then(CourseSection(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      code: null == code
+          ? _self.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseName: null == courseName
+          ? _self.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String,
+      facultyInitials: null == facultyInitials
+          ? _self.facultyInitials
+          : facultyInitials // ignore: cast_nullable_to_non_nullable
+              as String,
+      section: null == section
+          ? _self.section
+          : section // ignore: cast_nullable_to_non_nullable
+              as String,
+      capacity: null == capacity
+          ? _self.capacity
+          : capacity // ignore: cast_nullable_to_non_nullable
+              as String,
+      credits: null == credits
+          ? _self.credits
+          : credits // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _self.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      sessions: null == sessions
+          ? _self.sessions
+          : sessions // ignore: cast_nullable_to_non_nullable
+              as List<CourseSession>,
+      docId: null == docId
+          ? _self.docId
+          : docId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+/// Adds pattern-matching-related methods to [CourseSection].
+extension CourseSectionPatterns on CourseSection {
+  /// A variant of `map` that fallback to returning `orElse`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>(
+    TResult Function(_CourseSection value)? $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection() when $default != null:
+        return $default(_that);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// Callbacks receives the raw object, upcasted.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case final Subclass2 value:
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>(
+    TResult Function(_CourseSection value) $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection():
+        return $default(_that);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `map` that fallback to returning `null`.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case final Subclass value:
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>(
+    TResult? Function(_CourseSection value)? $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection() when $default != null:
+        return $default(_that);
+      case _:
+        return null;
+    }
+  }
+
+  /// A variant of `when` that fallback to an `orElse` callback.
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return orElse();
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>(
+    TResult Function(
+            String id,
+            String code,
+            @JsonKey(name: 'course_name') String courseName,
+            @JsonKey(name: 'faculty_initials') String facultyInitials,
+            String section,
+            String capacity,
+            String credits,
+            String semester,
+            List<CourseSession> sessions,
+            @JsonKey(name: 'doc_id') String docId)?
+        $default, {
+    required TResult orElse(),
+  }) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection() when $default != null:
+        return $default(
+            _that.id,
+            _that.code,
+            _that.courseName,
+            _that.facultyInitials,
+            _that.section,
+            _that.capacity,
+            _that.credits,
+            _that.semester,
+            _that.sessions,
+            _that.docId);
+      case _:
+        return orElse();
+    }
+  }
+
+  /// A `switch`-like method, using callbacks.
+  ///
+  /// As opposed to `map`, this offers destructuring.
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case Subclass2(:final field2):
+  ///     return ...;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>(
+    TResult Function(
+            String id,
+            String code,
+            @JsonKey(name: 'course_name') String courseName,
+            @JsonKey(name: 'faculty_initials') String facultyInitials,
+            String section,
+            String capacity,
+            String credits,
+            String semester,
+            List<CourseSession> sessions,
+            @JsonKey(name: 'doc_id') String docId)
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection():
+        return $default(
+            _that.id,
+            _that.code,
+            _that.courseName,
+            _that.facultyInitials,
+            _that.section,
+            _that.capacity,
+            _that.credits,
+            _that.semester,
+            _that.sessions,
+            _that.docId);
+      case _:
+        throw StateError('Unexpected subclass');
+    }
+  }
+
+  /// A variant of `when` that fallback to returning `null`
+  ///
+  /// It is equivalent to doing:
+  /// ```dart
+  /// switch (sealedClass) {
+  ///   case Subclass(:final field):
+  ///     return ...;
+  ///   case _:
+  ///     return null;
+  /// }
+  /// ```
+
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>(
+    TResult? Function(
+            String id,
+            String code,
+            @JsonKey(name: 'course_name') String courseName,
+            @JsonKey(name: 'faculty_initials') String facultyInitials,
+            String section,
+            String capacity,
+            String credits,
+            String semester,
+            List<CourseSession> sessions,
+            @JsonKey(name: 'doc_id') String docId)?
+        $default,
+  ) {
+    final _that = this;
+    switch (_that) {
+      case _CourseSection() when $default != null:
+        return $default(
+            _that.id,
+            _that.code,
+            _that.courseName,
+            _that.facultyInitials,
+            _that.section,
+            _that.capacity,
+            _that.credits,
+            _that.semester,
+            _that.sessions,
+            _that.docId);
+      case _:
+        return null;
+    }
+  }
+}
+
+/// @nodoc
 @JsonSerializable()
-class _$CourseSectionImpl implements _CourseSection {
-  const _$CourseSectionImpl(
+class _CourseSection implements CourseSection {
+  const _CourseSection(
       {required this.id,
       this.code = '',
       @JsonKey(name: 'course_name') this.courseName = '',
@@ -480,12 +850,11 @@ class _$CourseSectionImpl implements _CourseSection {
       this.capacity = '',
       this.credits = '3.0',
       this.semester = '',
-      final List<CourseSession> sessions = const [],
+      List<CourseSession> sessions = const [],
       @JsonKey(name: 'doc_id') this.docId = ''})
       : _sessions = sessions;
-
-  factory _$CourseSectionImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CourseSectionImplFromJson(json);
+  factory _CourseSection.fromJson(Map<String, dynamic> json) =>
+      _$CourseSectionFromJson(json);
 
   @override
   final String id;
@@ -523,16 +892,26 @@ class _$CourseSectionImpl implements _CourseSection {
   @JsonKey(name: 'doc_id')
   final String docId;
 
+  /// Create a copy of CourseSection
+  /// with the given fields replaced by the non-null parameter values.
   @override
-  String toString() {
-    return 'CourseSection(id: $id, code: $code, courseName: $courseName, facultyInitials: $facultyInitials, section: $section, capacity: $capacity, credits: $credits, semester: $semester, sessions: $sessions, docId: $docId)';
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @pragma('vm:prefer-inline')
+  _$CourseSectionCopyWith<_CourseSection> get copyWith =>
+      __$CourseSectionCopyWithImpl<_CourseSection>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$CourseSectionToJson(
+      this,
+    );
   }
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is _$CourseSectionImpl &&
+            other is _CourseSection &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.code, code) || other.code == code) &&
             (identical(other.courseName, courseName) ||
@@ -545,80 +924,121 @@ class _$CourseSectionImpl implements _CourseSection {
             (identical(other.credits, credits) || other.credits == credits) &&
             (identical(other.semester, semester) ||
                 other.semester == semester) &&
-            const DeepCollectionEquality().equals(other._sessions, _sessions) &&
+            const DeepCollectionEquality().equals(other.sessions, _sessions) &&
             (identical(other.docId, docId) || other.docId == docId));
   }
 
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      id,
-      code,
-      courseName,
-      facultyInitials,
-      section,
-      capacity,
-      credits,
-      semester,
-      const DeepCollectionEquality().hash(_sessions),
-      docId);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$CourseSectionImplCopyWith<_$CourseSectionImpl> get copyWith =>
-      __$$CourseSectionImplCopyWithImpl<_$CourseSectionImpl>(this, _$identity);
+  int get hashCode {
+    return Object.hash(
+        runtimeType,
+        id,
+        code,
+        courseName,
+        facultyInitials,
+        section,
+        capacity,
+        credits,
+        semester,
+        const DeepCollectionEquality().hash(_sessions),
+        docId);
+  }
 
   @override
-  Map<String, dynamic> toJson() {
-    return _$$CourseSectionImplToJson(
-      this,
-    );
+  String toString() {
+    return 'CourseSection(id: $id, code: $code, courseName: $courseName, facultyInitials: $facultyInitials, section: $section, capacity: $capacity, credits: $credits, semester: $semester, sessions: $sessions, docId: $docId)';
   }
 }
 
-abstract class _CourseSection implements CourseSection {
-  const factory _CourseSection(
-      {required final String id,
-      final String code,
-      @JsonKey(name: 'course_name') final String courseName,
-      @JsonKey(name: 'faculty_initials') final String facultyInitials,
-      final String section,
-      final String capacity,
-      final String credits,
-      final String semester,
-      final List<CourseSession> sessions,
-      @JsonKey(name: 'doc_id') final String docId}) = _$CourseSectionImpl;
-
-  factory _CourseSection.fromJson(Map<String, dynamic> json) =
-      _$CourseSectionImpl.fromJson;
-
+/// @nodoc
+abstract mixin class _$CourseSectionCopyWith<$Res>
+    implements $CourseSectionCopyWith<$Res> {
+  factory _$CourseSectionCopyWith(
+          _CourseSection value, $Res Function(_CourseSection) _then) =
+      __$CourseSectionCopyWithImpl;
   @override
-  String get id;
-  @override
-  String get code;
-  @override
-  @JsonKey(name: 'course_name')
-  String get courseName;
-  @override
-  @JsonKey(name: 'faculty_initials')
-  String get facultyInitials;
-  @override
-  String get section;
-  @override
-  String get capacity;
-  @override
-  String get credits;
-  @override
-  String get semester;
-  @override
-  List<CourseSession> get sessions;
-  @override
-  @JsonKey(name: 'doc_id')
-  String get docId;
-  @override
-  @JsonKey(ignore: true)
-  _$$CourseSectionImplCopyWith<_$CourseSectionImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+  @useResult
+  $Res call(
+      {String id,
+      String code,
+      @JsonKey(name: 'course_name') String courseName,
+      @JsonKey(name: 'faculty_initials') String facultyInitials,
+      String section,
+      String capacity,
+      String credits,
+      String semester,
+      List<CourseSession> sessions,
+      @JsonKey(name: 'doc_id') String docId});
 }
+
+/// @nodoc
+class __$CourseSectionCopyWithImpl<$Res>
+    implements _$CourseSectionCopyWith<$Res> {
+  __$CourseSectionCopyWithImpl(this._self, this._then);
+
+  final _CourseSection _self;
+  final $Res Function(_CourseSection) _then;
+
+  /// Create a copy of CourseSection
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $Res call({
+    Object? id = null,
+    Object? code = null,
+    Object? courseName = null,
+    Object? facultyInitials = null,
+    Object? section = null,
+    Object? capacity = null,
+    Object? credits = null,
+    Object? semester = null,
+    Object? sessions = null,
+    Object? docId = null,
+  }) {
+    return _then(_CourseSection(
+      id: null == id
+          ? _self.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      code: null == code
+          ? _self.code
+          : code // ignore: cast_nullable_to_non_nullable
+              as String,
+      courseName: null == courseName
+          ? _self.courseName
+          : courseName // ignore: cast_nullable_to_non_nullable
+              as String,
+      facultyInitials: null == facultyInitials
+          ? _self.facultyInitials
+          : facultyInitials // ignore: cast_nullable_to_non_nullable
+              as String,
+      section: null == section
+          ? _self.section
+          : section // ignore: cast_nullable_to_non_nullable
+              as String,
+      capacity: null == capacity
+          ? _self.capacity
+          : capacity // ignore: cast_nullable_to_non_nullable
+              as String,
+      credits: null == credits
+          ? _self.credits
+          : credits // ignore: cast_nullable_to_non_nullable
+              as String,
+      semester: null == semester
+          ? _self.semester
+          : semester // ignore: cast_nullable_to_non_nullable
+              as String,
+      sessions: null == sessions
+          ? _self._sessions
+          : sessions // ignore: cast_nullable_to_non_nullable
+              as List<CourseSession>,
+      docId: null == docId
+          ? _self.docId
+          : docId // ignore: cast_nullable_to_non_nullable
+              as String,
+    ));
+  }
+}
+
+// dart format on

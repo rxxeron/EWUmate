@@ -4,7 +4,7 @@ part 'user_semester_state.freezed.dart';
 part 'user_semester_state.g.dart';
 
 @freezed
-class UserSemesterState with _$UserSemesterState {
+abstract class UserSemesterState with _$UserSemesterState {
   const factory UserSemesterState({
     @JsonKey(name: 'user_id') required String userId,
     @JsonKey(name: 'semester_code') required String semesterCode,

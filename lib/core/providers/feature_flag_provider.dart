@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../providers/supabase_provider.dart';
 import '../repositories/active_semester_repository.dart';
@@ -13,7 +14,7 @@ final isAdEnabledForProvider = Provider.family<bool, String>((ref, screenName) {
 });
 
 @riverpod
-Future<bool> isAdvisingOpen(IsAdvisingOpenRef ref) async {
+Future<bool> isAdvisingOpen(Ref ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (profile == null) return false;
 
@@ -27,7 +28,7 @@ Future<bool> isAdvisingOpen(IsAdvisingOpenRef ref) async {
 }
 
 @riverpod
-Future<bool> isNextSemesterOpen(IsNextSemesterOpenRef ref) async {
+Future<bool> isNextSemesterOpen(Ref ref) async {
   final profile = await ref.watch(profileProvider.future);
   if (profile == null) return false;
 

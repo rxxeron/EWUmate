@@ -6,333 +6,261 @@ part of 'course_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$courseRepositoryHash() => r'254627a506a75c133dc0b648f0c5d3b5d07a4062';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [courseRepository].
 @ProviderFor(courseRepository)
-final courseRepositoryProvider = AutoDisposeProvider<CourseRepository>.internal(
-  courseRepository,
-  name: r'courseRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$courseRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final courseRepositoryProvider = CourseRepositoryProvider._();
 
-typedef CourseRepositoryRef = AutoDisposeProviderRef<CourseRepository>;
-String _$allCoursesHash() => r'4c14015d3bce64dad346645c24c4315f1478e7ed';
-
-/// See also [allCourses].
-@ProviderFor(allCourses)
-final allCoursesProvider =
-    AutoDisposeFutureProvider<List<CourseMetadata>>.internal(
-  allCourses,
-  name: r'allCoursesProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$allCoursesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef AllCoursesRef = AutoDisposeFutureProviderRef<List<CourseMetadata>>;
-String _$semesterCoursesHash() => r'448914ab02c395ee60f307d51c85b9b10b9990d2';
-
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-/// See also [semesterCourses].
-@ProviderFor(semesterCourses)
-const semesterCoursesProvider = SemesterCoursesFamily();
-
-/// See also [semesterCourses].
-class SemesterCoursesFamily extends Family<AsyncValue<List<CourseMetadata>>> {
-  /// See also [semesterCourses].
-  const SemesterCoursesFamily();
-
-  /// See also [semesterCourses].
-  SemesterCoursesProvider call(
-    String semesterCode,
-  ) {
-    return SemesterCoursesProvider(
-      semesterCode,
-    );
-  }
-
-  @override
-  SemesterCoursesProvider getProviderOverride(
-    covariant SemesterCoursesProvider provider,
-  ) {
-    return call(
-      provider.semesterCode,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'semesterCoursesProvider';
-}
-
-/// See also [semesterCourses].
-class SemesterCoursesProvider
-    extends AutoDisposeFutureProvider<List<CourseMetadata>> {
-  /// See also [semesterCourses].
-  SemesterCoursesProvider(
-    String semesterCode,
-  ) : this._internal(
-          (ref) => semesterCourses(
-            ref as SemesterCoursesRef,
-            semesterCode,
-          ),
-          from: semesterCoursesProvider,
-          name: r'semesterCoursesProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$semesterCoursesHash,
-          dependencies: SemesterCoursesFamily._dependencies,
-          allTransitiveDependencies:
-              SemesterCoursesFamily._allTransitiveDependencies,
-          semesterCode: semesterCode,
+final class CourseRepositoryProvider extends $FunctionalProvider<
+    CourseRepository,
+    CourseRepository,
+    CourseRepository> with $Provider<CourseRepository> {
+  CourseRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'courseRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  SemesterCoursesProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.semesterCode,
-  }) : super.internal();
+  @override
+  String debugGetCreateSourceHash() => _$courseRepositoryHash();
 
-  final String semesterCode;
+  @$internal
+  @override
+  $ProviderElement<CourseRepository> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
 
   @override
-  Override overrideWith(
-    FutureOr<List<CourseMetadata>> Function(SemesterCoursesRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: SemesterCoursesProvider._internal(
-        (ref) => create(ref as SemesterCoursesRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        semesterCode: semesterCode,
-      ),
-    );
+  CourseRepository create(Ref ref) {
+    return courseRepository(ref);
   }
 
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CourseRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CourseRepository>(value),
+    );
+  }
+}
+
+String _$courseRepositoryHash() => r'653bb98093683beb3fec7fb2bde4475d7561a32e';
+
+@ProviderFor(allCourses)
+final allCoursesProvider = AllCoursesProvider._();
+
+final class AllCoursesProvider extends $FunctionalProvider<
+        AsyncValue<List<CourseMetadata>>,
+        List<CourseMetadata>,
+        FutureOr<List<CourseMetadata>>>
+    with
+        $FutureModifier<List<CourseMetadata>>,
+        $FutureProvider<List<CourseMetadata>> {
+  AllCoursesProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'allCoursesProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
   @override
-  AutoDisposeFutureProviderElement<List<CourseMetadata>> createElement() {
-    return _SemesterCoursesProviderElement(this);
+  String debugGetCreateSourceHash() => _$allCoursesHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<CourseMetadata>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<CourseMetadata>> create(Ref ref) {
+    return allCourses(ref);
+  }
+}
+
+String _$allCoursesHash() => r'2530f396f831eb58a1d88b129efc0c80176f59a6';
+
+@ProviderFor(semesterCourses)
+final semesterCoursesProvider = SemesterCoursesFamily._();
+
+final class SemesterCoursesProvider extends $FunctionalProvider<
+        AsyncValue<List<CourseMetadata>>,
+        List<CourseMetadata>,
+        FutureOr<List<CourseMetadata>>>
+    with
+        $FutureModifier<List<CourseMetadata>>,
+        $FutureProvider<List<CourseMetadata>> {
+  SemesterCoursesProvider._(
+      {required SemesterCoursesFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'semesterCoursesProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$semesterCoursesHash();
+
+  @override
+  String toString() {
+    return r'semesterCoursesProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<CourseMetadata>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<CourseMetadata>> create(Ref ref) {
+    final argument = this.argument as String;
+    return semesterCourses(
+      ref,
+      argument,
+    );
   }
 
   @override
   bool operator ==(Object other) {
-    return other is SemesterCoursesProvider &&
-        other.semesterCode == semesterCode;
+    return other is SemesterCoursesProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, semesterCode.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-mixin SemesterCoursesRef on AutoDisposeFutureProviderRef<List<CourseMetadata>> {
-  /// The parameter `semesterCode` of this provider.
-  String get semesterCode;
-}
+String _$semesterCoursesHash() => r'2f2e99d9b9788bcda7af9426cefad974e0a1c96a';
 
-class _SemesterCoursesProviderElement
-    extends AutoDisposeFutureProviderElement<List<CourseMetadata>>
-    with SemesterCoursesRef {
-  _SemesterCoursesProviderElement(super.provider);
+final class SemesterCoursesFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<CourseMetadata>>, String> {
+  SemesterCoursesFamily._()
+      : super(
+          retry: null,
+          name: r'semesterCoursesProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  SemesterCoursesProvider call(
+    String semesterCode,
+  ) =>
+      SemesterCoursesProvider._(argument: semesterCode, from: this);
 
   @override
-  String get semesterCode => (origin as SemesterCoursesProvider).semesterCode;
+  String toString() => r'semesterCoursesProvider';
 }
 
-String _$courseSectionsHash() => r'8b33904542159f2415e4e172b8808cdc33155603';
-
-/// See also [courseSections].
 @ProviderFor(courseSections)
-const courseSectionsProvider = CourseSectionsFamily();
+final courseSectionsProvider = CourseSectionsFamily._();
 
-/// See also [courseSections].
-class CourseSectionsFamily extends Family<AsyncValue<List<CourseSection>>> {
-  /// See also [courseSections].
-  const CourseSectionsFamily();
+final class CourseSectionsProvider extends $FunctionalProvider<
+        AsyncValue<List<CourseSection>>,
+        List<CourseSection>,
+        FutureOr<List<CourseSection>>>
+    with
+        $FutureModifier<List<CourseSection>>,
+        $FutureProvider<List<CourseSection>> {
+  CourseSectionsProvider._(
+      {required CourseSectionsFamily super.from,
+      required ({
+        String semesterCode,
+        String courseCode,
+      })
+          super.argument})
+      : super(
+          retry: null,
+          name: r'courseSectionsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-  /// See also [courseSections].
+  @override
+  String debugGetCreateSourceHash() => _$courseSectionsHash();
+
+  @override
+  String toString() {
+    return r'courseSectionsProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<CourseSection>> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<CourseSection>> create(Ref ref) {
+    final argument = this.argument as ({
+      String semesterCode,
+      String courseCode,
+    });
+    return courseSections(
+      ref,
+      semesterCode: argument.semesterCode,
+      courseCode: argument.courseCode,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CourseSectionsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$courseSectionsHash() => r'54abdc946ecf4cfdcf6ee0a56db04169e1c85b6d';
+
+final class CourseSectionsFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+            FutureOr<List<CourseSection>>,
+            ({
+              String semesterCode,
+              String courseCode,
+            })> {
+  CourseSectionsFamily._()
+      : super(
+          retry: null,
+          name: r'courseSectionsProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
   CourseSectionsProvider call({
     required String semesterCode,
     required String courseCode,
-  }) {
-    return CourseSectionsProvider(
-      semesterCode: semesterCode,
-      courseCode: courseCode,
-    );
-  }
-
-  @override
-  CourseSectionsProvider getProviderOverride(
-    covariant CourseSectionsProvider provider,
-  ) {
-    return call(
-      semesterCode: provider.semesterCode,
-      courseCode: provider.courseCode,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'courseSectionsProvider';
-}
-
-/// See also [courseSections].
-class CourseSectionsProvider
-    extends AutoDisposeFutureProvider<List<CourseSection>> {
-  /// See also [courseSections].
-  CourseSectionsProvider({
-    required String semesterCode,
-    required String courseCode,
-  }) : this._internal(
-          (ref) => courseSections(
-            ref as CourseSectionsRef,
-            semesterCode: semesterCode,
-            courseCode: courseCode,
-          ),
-          from: courseSectionsProvider,
-          name: r'courseSectionsProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$courseSectionsHash,
-          dependencies: CourseSectionsFamily._dependencies,
-          allTransitiveDependencies:
-              CourseSectionsFamily._allTransitiveDependencies,
-          semesterCode: semesterCode,
-          courseCode: courseCode,
-        );
-
-  CourseSectionsProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.semesterCode,
-    required this.courseCode,
-  }) : super.internal();
-
-  final String semesterCode;
-  final String courseCode;
-
-  @override
-  Override overrideWith(
-    FutureOr<List<CourseSection>> Function(CourseSectionsRef provider) create,
-  ) {
-    return ProviderOverride(
-      origin: this,
-      override: CourseSectionsProvider._internal(
-        (ref) => create(ref as CourseSectionsRef),
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
+  }) =>
+      CourseSectionsProvider._(argument: (
         semesterCode: semesterCode,
         courseCode: courseCode,
-      ),
-    );
-  }
+      ), from: this);
 
   @override
-  AutoDisposeFutureProviderElement<List<CourseSection>> createElement() {
-    return _CourseSectionsProviderElement(this);
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return other is CourseSectionsProvider &&
-        other.semesterCode == semesterCode &&
-        other.courseCode == courseCode;
-  }
-
-  @override
-  int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, semesterCode.hashCode);
-    hash = _SystemHash.combine(hash, courseCode.hashCode);
-
-    return _SystemHash.finish(hash);
-  }
+  String toString() => r'courseSectionsProvider';
 }
-
-mixin CourseSectionsRef on AutoDisposeFutureProviderRef<List<CourseSection>> {
-  /// The parameter `semesterCode` of this provider.
-  String get semesterCode;
-
-  /// The parameter `courseCode` of this provider.
-  String get courseCode;
-}
-
-class _CourseSectionsProviderElement
-    extends AutoDisposeFutureProviderElement<List<CourseSection>>
-    with CourseSectionsRef {
-  _CourseSectionsProviderElement(super.provider);
-
-  @override
-  String get semesterCode => (origin as CourseSectionsProvider).semesterCode;
-  @override
-  String get courseCode => (origin as CourseSectionsProvider).courseCode;
-}
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member

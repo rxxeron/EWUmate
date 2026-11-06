@@ -85,7 +85,7 @@ class _CourseProgressDetailScreenState
     });
 
     try {
-      final profile = ref.read(userProfileProvider).valueOrNull;
+      final profile = ref.read(userProfileProvider).value;
       final courseCode = (widget.courseData['course_code'] ?? '').toString();
 
       final result = await AttendanceCalendarService.generateSessions(

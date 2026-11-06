@@ -78,7 +78,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     if (user != null && _semesterCode != null) {
       final cacheService = ref.read(cacheServiceProvider);
       final repo = ref.read(dashboardRepositoryProvider);
-      final profile = ref.read(userProfileProvider).valueOrNull;
+      final profile = ref.read(userProfileProvider).value;
       final safeSem = CourseUtils.cleanSemester(_semesterCode!);
 
       final now = DateTime.now();
@@ -114,8 +114,8 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     final currentSemAsync = ref.watch(currentSemesterCodeProvider);
-    final userTasks = ref.watch(allTasksStreamProvider).valueOrNull ?? [];
-    final profile = ref.watch(userProfileProvider).valueOrNull;
+    final userTasks = ref.watch(allTasksStreamProvider).value ?? [];
+    final profile = ref.watch(userProfileProvider).value;
 
     return currentSemAsync.when(
       data: (semCode) {

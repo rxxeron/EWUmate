@@ -101,7 +101,7 @@ class DashboardRepository {
 }
 
 @riverpod
-DashboardRepository dashboardRepository(DashboardRepositoryRef ref) {
+DashboardRepository dashboardRepository(Ref ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
   return DashboardRepository(supabase, cache);
@@ -110,7 +110,7 @@ DashboardRepository dashboardRepository(DashboardRepositoryRef ref) {
 // Quick provider to get dashboard state for current user.
 // Assuming semester code is 'Spring2026' for testing purposes, but this should be fetched from active_semester later.
 @riverpod
-Future<SemesterAnalytics?> currentAnalytics(CurrentAnalyticsRef ref) async {
+Future<SemesterAnalytics?> currentAnalytics(Ref ref) async {
   final repo = ref.watch(dashboardRepositoryProvider);
   final user = ref.watch(currentUserProvider);
   if (user == null) return null;
@@ -122,7 +122,7 @@ Future<SemesterAnalytics?> currentAnalytics(CurrentAnalyticsRef ref) async {
 
 @riverpod
 Future<UserSemesterState?> currentSemesterState(
-  CurrentSemesterStateRef ref,
+  Ref ref,
 ) async {
   final repo = ref.watch(dashboardRepositoryProvider);
   final user = ref.watch(currentUserProvider);

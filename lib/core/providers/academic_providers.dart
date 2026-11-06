@@ -59,12 +59,12 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
 
 final currentSemesterCodeProvider = FutureProvider<String?>((ref) async {
   final asyncState = ref.watch(academicStateProvider);
-  return asyncState.valueOrNull?.currentSemesterCode;
+  return asyncState.value?.currentSemesterCode;
 });
 
 final nextSemesterCodeProvider = FutureProvider<String?>((ref) async {
   final asyncState = ref.watch(academicStateProvider);
-  return asyncState.valueOrNull?.nextSemesterCode;
+  return asyncState.value?.nextSemesterCode;
 });
 
 final semestersProvider = FutureProvider<List<dynamic>>((ref) async {

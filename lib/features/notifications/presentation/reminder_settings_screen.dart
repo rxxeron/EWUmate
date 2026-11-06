@@ -45,7 +45,7 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
       // Get current active semester code
       String? activeSem;
       try {
-        final academicState = ref.read(academicStateProvider).valueOrNull ??
+        final academicState = ref.read(academicStateProvider).value ??
             await ref.read(academicStateProvider.future);
         activeSem = academicState?.currentSemesterCode;
       } catch (e) {
@@ -55,7 +55,7 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
       // If activeSem is still null, fetch from active_semester table
       if (activeSem == null) {
         try {
-          final profile = ref.read(userProfileProvider).valueOrNull;
+          final profile = ref.read(userProfileProvider).value;
           final track = CourseUtils.normalizeTrack(profile?.track);
           final semRes = await supabase
               .from('active_semester')
@@ -114,7 +114,7 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
 
       // 3. Fallback to profile.enrolledSections only if still empty
       if (coursesSet.isEmpty) {
-        final profile = ref.read(userProfileProvider).valueOrNull;
+        final profile = ref.read(userProfileProvider).value;
         if (profile != null) {
           for (final s in profile.enrolledSections) {
             final code = s.split('-').first.trim().toUpperCase();
@@ -125,7 +125,7 @@ class _ReminderSettingsScreenState extends ConsumerState<ReminderSettingsScreen>
     }
 
     final sorted = coursesSet.toList()..sort();
-    final profile = ref.read(userProfileProvider).valueOrNull;
+    final profile = ref.read(userProfileProvider).value;
 
     if (mounted) {
       setState(() {

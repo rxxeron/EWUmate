@@ -4,7 +4,7 @@ part 'program.freezed.dart';
 part 'program.g.dart';
 
 @freezed
-class Program with _$Program {
+abstract class Program with _$Program {
   const factory Program({
     @JsonKey(name: 'program_code') required String programCode,
     required String name,

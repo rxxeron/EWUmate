@@ -6,9 +6,8 @@ part of 'semester_summary.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SemesterSummaryImpl _$$SemesterSummaryImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SemesterSummaryImpl(
+_SemesterSummary _$SemesterSummaryFromJson(Map<String, dynamic> json) =>
+    _SemesterSummary(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       semesterCode: json['semester_code'] as String,
@@ -22,8 +21,7 @@ _$SemesterSummaryImpl _$$SemesterSummaryImplFromJson(
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$SemesterSummaryImplToJson(
-        _$SemesterSummaryImpl instance) =>
+Map<String, dynamic> _$SemesterSummaryToJson(_SemesterSummary instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

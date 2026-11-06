@@ -6,56 +6,126 @@ part of 'dashboard_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$dashboardRepositoryHash() =>
-    r'499ad7ee7bee68377f5e9b210bf69021297e0069';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [dashboardRepository].
 @ProviderFor(dashboardRepository)
-final dashboardRepositoryProvider =
-    AutoDisposeProvider<DashboardRepository>.internal(
-  dashboardRepository,
-  name: r'dashboardRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$dashboardRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final dashboardRepositoryProvider = DashboardRepositoryProvider._();
 
-typedef DashboardRepositoryRef = AutoDisposeProviderRef<DashboardRepository>;
-String _$currentAnalyticsHash() => r'25fe1597b482dcb02daef796cede578b6c6cc4ea';
+final class DashboardRepositoryProvider extends $FunctionalProvider<
+    DashboardRepository,
+    DashboardRepository,
+    DashboardRepository> with $Provider<DashboardRepository> {
+  DashboardRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'dashboardRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [currentAnalytics].
+  @override
+  String debugGetCreateSourceHash() => _$dashboardRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<DashboardRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  DashboardRepository create(Ref ref) {
+    return dashboardRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(DashboardRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<DashboardRepository>(value),
+    );
+  }
+}
+
+String _$dashboardRepositoryHash() =>
+    r'fa4ee127b630576464af0dc660c12feb3a2d89f8';
+
 @ProviderFor(currentAnalytics)
-final currentAnalyticsProvider =
-    AutoDisposeFutureProvider<SemesterAnalytics?>.internal(
-  currentAnalytics,
-  name: r'currentAnalyticsProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentAnalyticsHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final currentAnalyticsProvider = CurrentAnalyticsProvider._();
 
-typedef CurrentAnalyticsRef = AutoDisposeFutureProviderRef<SemesterAnalytics?>;
-String _$currentSemesterStateHash() =>
-    r'4c44ed412c233fbfcd7a3f3fa5bb58f4b34d3a98';
+final class CurrentAnalyticsProvider extends $FunctionalProvider<
+        AsyncValue<SemesterAnalytics?>,
+        SemesterAnalytics?,
+        FutureOr<SemesterAnalytics?>>
+    with
+        $FutureModifier<SemesterAnalytics?>,
+        $FutureProvider<SemesterAnalytics?> {
+  CurrentAnalyticsProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'currentAnalyticsProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [currentSemesterState].
+  @override
+  String debugGetCreateSourceHash() => _$currentAnalyticsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<SemesterAnalytics?> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<SemesterAnalytics?> create(Ref ref) {
+    return currentAnalytics(ref);
+  }
+}
+
+String _$currentAnalyticsHash() => r'bc7b408f99e3908d421810ef8aed818d8bb7f74a';
+
 @ProviderFor(currentSemesterState)
-final currentSemesterStateProvider =
-    AutoDisposeFutureProvider<UserSemesterState?>.internal(
-  currentSemesterState,
-  name: r'currentSemesterStateProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentSemesterStateHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final currentSemesterStateProvider = CurrentSemesterStateProvider._();
 
-typedef CurrentSemesterStateRef
-    = AutoDisposeFutureProviderRef<UserSemesterState?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class CurrentSemesterStateProvider extends $FunctionalProvider<
+        AsyncValue<UserSemesterState?>,
+        UserSemesterState?,
+        FutureOr<UserSemesterState?>>
+    with
+        $FutureModifier<UserSemesterState?>,
+        $FutureProvider<UserSemesterState?> {
+  CurrentSemesterStateProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'currentSemesterStateProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$currentSemesterStateHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<UserSemesterState?> $createElement(
+          $ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<UserSemesterState?> create(Ref ref) {
+    return currentSemesterState(ref);
+  }
+}
+
+String _$currentSemesterStateHash() =>
+    r'2510b44b8d6afdffa612349c844746d0ac9d6fc2';

@@ -6,58 +6,127 @@ part of 'progress_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$progressRepositoryHash() =>
-    r'bfa8254dc3b034fb03119a5592a8f7b8e3df1e7b';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [progressRepository].
 @ProviderFor(progressRepository)
-final progressRepositoryProvider =
-    AutoDisposeProvider<ProgressRepository>.internal(
-  progressRepository,
-  name: r'progressRepositoryProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$progressRepositoryHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final progressRepositoryProvider = ProgressRepositoryProvider._();
 
-typedef ProgressRepositoryRef = AutoDisposeProviderRef<ProgressRepository>;
-String _$currentSemesterMarksHash() =>
-    r'bfdf86f845b6c370058a83b4e3ed1bf4efd591d7';
+final class ProgressRepositoryProvider extends $FunctionalProvider<
+    ProgressRepository,
+    ProgressRepository,
+    ProgressRepository> with $Provider<ProgressRepository> {
+  ProgressRepositoryProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'progressRepositoryProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [currentSemesterMarks].
+  @override
+  String debugGetCreateSourceHash() => _$progressRepositoryHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProgressRepository> $createElement(
+          $ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProgressRepository create(Ref ref) {
+    return progressRepository(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProgressRepository value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProgressRepository>(value),
+    );
+  }
+}
+
+String _$progressRepositoryHash() =>
+    r'bdc006a677a5100580fe042b5e3be9266c7ac761';
+
 @ProviderFor(currentSemesterMarks)
-final currentSemesterMarksProvider =
-    AutoDisposeStreamProvider<List<SemesterCourseMarks>>.internal(
-  currentSemesterMarks,
-  name: r'currentSemesterMarksProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$currentSemesterMarksHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final currentSemesterMarksProvider = CurrentSemesterMarksProvider._();
 
-typedef CurrentSemesterMarksRef
-    = AutoDisposeStreamProviderRef<List<SemesterCourseMarks>>;
-String _$allSemesterSummariesHash() =>
-    r'2e2ca7cc5072cfeddf903ab5a97c268cccc8ec71';
+final class CurrentSemesterMarksProvider extends $FunctionalProvider<
+        AsyncValue<List<SemesterCourseMarks>>,
+        List<SemesterCourseMarks>,
+        Stream<List<SemesterCourseMarks>>>
+    with
+        $FutureModifier<List<SemesterCourseMarks>>,
+        $StreamProvider<List<SemesterCourseMarks>> {
+  CurrentSemesterMarksProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'currentSemesterMarksProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [allSemesterSummaries].
+  @override
+  String debugGetCreateSourceHash() => _$currentSemesterMarksHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<SemesterCourseMarks>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<SemesterCourseMarks>> create(Ref ref) {
+    return currentSemesterMarks(ref);
+  }
+}
+
+String _$currentSemesterMarksHash() =>
+    r'b0af93c206b26bfc41eb3cee5f04c19a8caacbbd';
+
 @ProviderFor(allSemesterSummaries)
-final allSemesterSummariesProvider =
-    AutoDisposeStreamProvider<List<SemesterSummary>>.internal(
-  allSemesterSummaries,
-  name: r'allSemesterSummariesProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$allSemesterSummariesHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final allSemesterSummariesProvider = AllSemesterSummariesProvider._();
 
-typedef AllSemesterSummariesRef
-    = AutoDisposeStreamProviderRef<List<SemesterSummary>>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class AllSemesterSummariesProvider extends $FunctionalProvider<
+        AsyncValue<List<SemesterSummary>>,
+        List<SemesterSummary>,
+        Stream<List<SemesterSummary>>>
+    with
+        $FutureModifier<List<SemesterSummary>>,
+        $StreamProvider<List<SemesterSummary>> {
+  AllSemesterSummariesProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'allSemesterSummariesProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$allSemesterSummariesHash();
+
+  @$internal
+  @override
+  $StreamProviderElement<List<SemesterSummary>> $createElement(
+          $ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
+
+  @override
+  Stream<List<SemesterSummary>> create(Ref ref) {
+    return allSemesterSummaries(ref);
+  }
+}
+
+String _$allSemesterSummariesHash() =>
+    r'3553a23f191c83ce107c0e27d5664c24b28939fa';

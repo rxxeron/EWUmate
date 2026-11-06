@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:ewumate/core/models/profile.dart';
 import 'package:ewumate/core/models/semester_summary.dart';
@@ -249,7 +250,7 @@ class GoalGradesNotifier extends StateNotifier<Map<String, String>> {
     state = {...state, courseCode: grade, normalizedCode: grade};
 
     // Persist to DB
-    final marks = ref.read(currentSemesterMarksProvider).valueOrNull ?? [];
+    final marks = ref.read(currentSemesterMarksProvider).value ?? [];
     final courseMark = marks
         .where((m) => m.courseCode.toUpperCase().replaceAll(' ', '') == normalizedCode)
         .firstOrNull;
@@ -302,8 +303,8 @@ final projectedSGPAProvider = Provider<double>((ref) {
   final currentMarksAsync = ref.watch(currentSemesterMarksProvider);
   final allCoursesAsync = ref.watch(allCoursesProvider);
 
-  final marks = currentMarksAsync.valueOrNull ?? [];
-  final allMetadata = allCoursesAsync.valueOrNull ?? [];
+  final marks = currentMarksAsync.value ?? [];
+  final allMetadata = allCoursesAsync.value ?? [];
 
   if (marks.isEmpty) return 0.0;
 
@@ -318,7 +319,7 @@ final projectedSGPAProvider = Provider<double>((ref) {
     final credits = meta?.creditVal ?? 3.0;
 
     final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
-    final scale = ref.watch(gradePointMapProvider(policy)).valueOrNull;
+    final scale = ref.watch(gradePointMapProvider(policy)).value;
 
     // Check both normalized and raw code
     String goalGrade = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
@@ -344,7 +345,7 @@ final projectedSGPAProvider = Provider<double>((ref) {
 
 /// Calculates the projected CGPA combining past CGPA and predicted SGPA with retake replacement.
 final currentEnrolledCreditsProvider = Provider<double>((ref) {
-  final profile = ref.watch(userProfileProvider).valueOrNull;
+  final profile = ref.watch(userProfileProvider).value;
   return profile?.enrolledCredits ?? 0.0;
 });
 
@@ -357,16 +358,16 @@ final projectedCGPAProvider = FutureProvider<double>((ref) async {
       .getProfile(user.id);
   if (profile == null) return 0.0;
 
-  final marks = ref.watch(currentSemesterMarksProvider).valueOrNull ?? [];
+  final marks = ref.watch(currentSemesterMarksProvider).value ?? [];
   final goals = ref.watch(goalGradesProvider);
-  final allMetadata = ref.watch(allCoursesProvider).valueOrNull ?? [];
-  final summaries = ref.watch(allSemesterSummariesProvider).valueOrNull ?? [];
+  final allMetadata = ref.watch(allCoursesProvider).value ?? [];
+  final summaries = ref.watch(allSemesterSummariesProvider).value ?? [];
 
   // If no enrolled marks, return current CGPA
   if (marks.isEmpty) return profile.cgpa ?? 0.0;
 
   // 1. Gather all past completed courses across completed semester summaries
-  final academicState = ref.watch(academicStateProvider).valueOrNull;
+  final academicState = ref.watch(academicStateProvider).value;
   final runningCode = academicState?.currentSemesterCode;
   final nextCode = academicState?.nextSemesterCode;
 
@@ -422,7 +423,7 @@ final projectedCGPAProvider = FutureProvider<double>((ref) async {
     final credits = meta?.creditVal ?? 3.0;
 
     final policy = GradeHelper.getPolicyForSemester(course.semesterCode);
-    final scale = ref.watch(gradePointMapProvider(policy)).valueOrNull;
+    final scale = ref.watch(gradePointMapProvider(policy)).value;
 
     final goalGrade = goals[cleanCode] ?? goals[course.courseCode] ?? course.gradeGoal ?? 'A';
     double gradePoint = 0.0;

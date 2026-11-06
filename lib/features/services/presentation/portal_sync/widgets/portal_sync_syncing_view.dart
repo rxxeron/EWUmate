@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class PortalSyncSyncingView extends StatelessWidget {
   final Animation<double> rotationAnimation;

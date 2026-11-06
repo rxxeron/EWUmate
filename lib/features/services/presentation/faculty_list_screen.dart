@@ -142,7 +142,7 @@ class _FacultyListScreenState extends ConsumerState<FacultyListScreen> {
                   ),
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      final snapshots = snapshotsAsync.valueOrNull ?? [];
+                      final snapshots = snapshotsAsync.value ?? [];
                       if (snapshots.isNotEmpty) {
                         final s = snapshots.first;
                         final targetUrl = s['drive_link'] ?? s['drive_folder_url'] ?? s['url'] ?? fallbackRoutineUrl;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -57,64 +58,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (res.session == null) {
         // Email verification is required and pending
         if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppColors.surfaceNavyBlue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-              ),
-              title: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryCyan.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.mark_email_unread_rounded,
-                      color: AppColors.primaryCyan,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    "Verify Email",
-                    style: GoogleFonts.sora(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-              content: Text(
-                "A verification link has been sent to your student email. Please check your inbox and verify your email before logging in.",
-                style: GoogleFonts.sora(
-                  color: AppColors.secondaryText,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    context.go('/login');
-                  },
-                  child: Text(
-                    "Back to Login",
-                    style: GoogleFonts.sora(
-                      color: AppColors.primaryCyan,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          await _showOtpVerificationDialog(
+            context,
+            _emailController.text.trim(),
+            res.user!.id,
           );
         }
       } else {
@@ -166,6 +113,266 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _showOtpVerificationDialog(
+    BuildContext parentContext,
+    String email,
+    String uid,
+  ) async {
+    final otpController = TextEditingController();
+    final otpFormKey = GlobalKey<FormState>();
+    bool isVerifying = false;
+    bool isResending = false;
+
+    await showDialog(
+      context: parentContext,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.surfaceNavyBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCyan.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.mark_email_unread_rounded,
+                      color: AppColors.primaryCyan,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "Enter 6-Digit Code",
+                      style: GoogleFonts.sora(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: otpFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      "We sent a 6-digit verification code to:\n$email",
+                      style: GoogleFonts.sora(
+                        color: AppColors.secondaryText,
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: otpController,
+                      keyboardType: TextInputType.number,
+                      textAlign: TextAlign.center,
+                      maxLength: 6,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(6),
+                      ],
+                      style: GoogleFonts.sora(
+                        color: Colors.white,
+                        letterSpacing: 8,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      decoration: InputDecoration(
+                        counterText: "",
+                        hintText: "••••••",
+                        hintStyle: GoogleFonts.sora(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          letterSpacing: 8,
+                        ),
+                        filled: true,
+                        fillColor: AppColors.primaryNavy.withValues(alpha: 0.5),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: AppColors.primaryCyan,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().length != 6) {
+                          return "Please enter the 6-digit code";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: isResending
+                              ? null
+                              : () async {
+                                  setDialogState(() => isResending = true);
+                                  try {
+                                    await Supabase.instance.client.auth.resend(
+                                      type: OtpType.signup,
+                                      email: email,
+                                    );
+                                    if (dialogContext.mounted) {
+                                      ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
+                                        content: Text(
+                                          "New 6-digit code sent to your email!",
+                                          style: GoogleFonts.sora(),
+                                        ),
+                                        backgroundColor: AppColors.primaryCyan,
+                                      ));
+                                    }
+                                  } catch (e) {
+                                    if (dialogContext.mounted) {
+                                      ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
+                                        content: Text(
+                                          AuthErrorUtils.getFriendlyMessage(e),
+                                          style: GoogleFonts.sora(),
+                                        ),
+                                        backgroundColor: AppColors.error,
+                                      ));
+                                    }
+                                  } finally {
+                                    setDialogState(() => isResending = false);
+                                  }
+                                },
+                          child: Text(
+                            isResending ? "Sending..." : "Resend Code",
+                            style: GoogleFonts.sora(
+                              color: AppColors.primaryCyan,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: Text(
+                            "Change Email",
+                            style: GoogleFonts.sora(
+                              color: AppColors.secondaryText,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: isVerifying
+                        ? null
+                        : () async {
+                            if (!otpFormKey.currentState!.validate()) return;
+                            setDialogState(() => isVerifying = true);
+                            try {
+                              final response = await Supabase.instance.client.auth.verifyOTP(
+                                email: email,
+                                token: otpController.text.trim(),
+                                type: OtpType.signup,
+                              );
+
+                              if (response.user != null) {
+                                final verifiedUid = response.user!.id;
+                                await Supabase.instance.client.from('profiles').upsert({
+                                  'id': verifiedUid,
+                                  'full_name': _fullNameController.text.trim(),
+                                  'nickname': _nicknameController.text.trim(),
+                                  'student_id': _studentIdController.text.trim(),
+                                  'onboarding_status': 'registered',
+                                });
+
+                                if (dialogContext.mounted) {
+                                  Navigator.pop(dialogContext);
+                                }
+                                if (parentContext.mounted) {
+                                  ScaffoldMessenger.of(parentContext).showSnackBar(SnackBar(
+                                    content: Text(
+                                      "Email verified successfully! Welcome to EWUmate.",
+                                      style: GoogleFonts.sora(),
+                                    ),
+                                    backgroundColor: AppColors.success,
+                                  ));
+                                  parentContext.go('/onboarding/program');
+                                }
+                              }
+                            } catch (e) {
+                              if (dialogContext.mounted) {
+                                ScaffoldMessenger.of(dialogContext).showSnackBar(SnackBar(
+                                  content: Text(
+                                    AuthErrorUtils.getFriendlyMessage(e),
+                                    style: GoogleFonts.sora(),
+                                  ),
+                                  backgroundColor: AppColors.error,
+                                ));
+                              }
+                            } finally {
+                              setDialogState(() => isVerifying = false);
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryCyan,
+                      foregroundColor: AppColors.primaryNavy,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: isVerifying
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.primaryNavy,
+                            ),
+                          )
+                        : Text(
+                            "Verify & Continue",
+                            style: GoogleFonts.sora(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override

@@ -1,4 +1,4 @@
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/repositories/course_repository.dart';
 import '../../../core/repositories/schedule_repository.dart';
 import '../../../core/repositories/progress_repository.dart';

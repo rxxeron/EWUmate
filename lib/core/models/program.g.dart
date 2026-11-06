@@ -6,8 +6,7 @@ part of 'program.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ProgramImpl _$$ProgramImplFromJson(Map<String, dynamic> json) =>
-    _$ProgramImpl(
+_Program _$ProgramFromJson(Map<String, dynamic> json) => _Program(
       programCode: json['program_code'] as String,
       name: json['name'] as String,
       track: json['track'] as String,
@@ -16,8 +15,7 @@ _$ProgramImpl _$$ProgramImplFromJson(Map<String, dynamic> json) =>
       departmentName: json['department_name'] as String?,
     );
 
-Map<String, dynamic> _$$ProgramImplToJson(_$ProgramImpl instance) =>
-    <String, dynamic>{
+Map<String, dynamic> _$ProgramToJson(_Program instance) => <String, dynamic>{
       'program_code': instance.programCode,
       'name': instance.name,
       'track': instance.track,

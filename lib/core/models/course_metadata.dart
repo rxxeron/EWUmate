@@ -4,7 +4,7 @@ part 'course_metadata.freezed.dart';
 part 'course_metadata.g.dart';
 
 @freezed
-class CourseMetadata with _$CourseMetadata {
+abstract class CourseMetadata with _$CourseMetadata {
   const factory CourseMetadata({
     required String code,
     required String name,

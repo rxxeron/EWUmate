@@ -4,7 +4,7 @@ part 'course_section.freezed.dart';
 part 'course_section.g.dart';
 
 @freezed
-class CourseSession with _$CourseSession {
+abstract class CourseSession with _$CourseSession {
   const factory CourseSession({
     @Default('Theory') String type,
     @Default('') String day,
@@ -19,7 +19,7 @@ class CourseSession with _$CourseSession {
 }
 
 @freezed
-class CourseSection with _$CourseSection {
+abstract class CourseSection with _$CourseSection {
   const factory CourseSection({
     required String id,
     @Default('') String code,

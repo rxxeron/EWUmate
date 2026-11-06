@@ -241,7 +241,7 @@ class TaskRepository {
 }
 
 @riverpod
-TaskRepository taskRepository(TaskRepositoryRef ref) {
+TaskRepository taskRepository(Ref ref) {
   return TaskRepository(
     ref.watch(supabaseClientProvider), 
     ref.watch(cacheServiceProvider)
@@ -249,7 +249,7 @@ TaskRepository taskRepository(TaskRepositoryRef ref) {
 }
 
 @riverpod
-Future<List<Task>> activeTasksConfig(ActiveTasksConfigRef ref) async {
+Future<List<Task>> activeTasksConfig(Ref ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return [];
   final semCode = ref.watch(currentSemesterCodeProvider).value;
@@ -257,7 +257,7 @@ Future<List<Task>> activeTasksConfig(ActiveTasksConfigRef ref) async {
 }
 
 @Riverpod(keepAlive: true)
-Stream<List<Task>> allTasksStream(AllTasksStreamRef ref) {
+Stream<List<Task>> allTasksStream(Ref ref) {
   final user = ref.watch(currentUserProvider);
   final semCode = ref.watch(currentSemesterCodeProvider).value ?? 'Summer2026';
   if (user == null) return const Stream.empty();
@@ -265,7 +265,7 @@ Stream<List<Task>> allTasksStream(AllTasksStreamRef ref) {
 }
 
 @Riverpod(keepAlive: true)
-Stream<List<Notification>> userNotifications(UserNotificationsRef ref) {        
+Stream<List<Notification>> userNotifications(Ref ref) {        
   final user = ref.watch(currentUserProvider);
   if (user == null) return const Stream.empty();
   return ref.watch(taskRepositoryProvider).streamNotifications(user.id);        

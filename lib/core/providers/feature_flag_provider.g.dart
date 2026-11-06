@@ -6,36 +6,72 @@ part of 'feature_flag_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$isAdvisingOpenHash() => r'ce15698a430bba28084311269ee1af6cd3b3af7a';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [isAdvisingOpen].
 @ProviderFor(isAdvisingOpen)
-final isAdvisingOpenProvider = AutoDisposeFutureProvider<bool>.internal(
-  isAdvisingOpen,
-  name: r'isAdvisingOpenProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$isAdvisingOpenHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final isAdvisingOpenProvider = IsAdvisingOpenProvider._();
 
-typedef IsAdvisingOpenRef = AutoDisposeFutureProviderRef<bool>;
-String _$isNextSemesterOpenHash() =>
-    r'b1d9e35b4bae823b26e4488088d0fee5f94d4d65';
+final class IsAdvisingOpenProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  IsAdvisingOpenProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'isAdvisingOpenProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
 
-/// See also [isNextSemesterOpen].
+  @override
+  String debugGetCreateSourceHash() => _$isAdvisingOpenHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return isAdvisingOpen(ref);
+  }
+}
+
+String _$isAdvisingOpenHash() => r'0b4d90f3f9c3356acb8bc2a1ec30a238fe4954aa';
+
 @ProviderFor(isNextSemesterOpen)
-final isNextSemesterOpenProvider = AutoDisposeFutureProvider<bool>.internal(
-  isNextSemesterOpen,
-  name: r'isNextSemesterOpenProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$isNextSemesterOpenHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+final isNextSemesterOpenProvider = IsNextSemesterOpenProvider._();
 
-typedef IsNextSemesterOpenRef = AutoDisposeFutureProviderRef<bool>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+final class IsNextSemesterOpenProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  IsNextSemesterOpenProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'isNextSemesterOpenProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$isNextSemesterOpenHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    return isNextSemesterOpen(ref);
+  }
+}
+
+String _$isNextSemesterOpenHash() =>
+    r'd3cd3ff03a2ce7749a32ee263b3c98f013435a5b';

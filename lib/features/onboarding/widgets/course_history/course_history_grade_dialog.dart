@@ -13,7 +13,7 @@ class CourseHistoryGradeDialog {
   }) {
     final policy = GradeHelper.getPolicyForSemester(currentSemester);
     final scaleAsync = ref.read(gradeScaleListProvider);
-    final scale = scaleAsync.valueOrNull ?? [];
+    final scale = scaleAsync.value ?? [];
 
     List<String> grades = scale
         .where((s) => s.policy == policy)

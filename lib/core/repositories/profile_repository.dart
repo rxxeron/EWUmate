@@ -272,7 +272,7 @@ class ProfileRepository {
 }
 
 @riverpod
-ProfileRepository profileRepository(ProfileRepositoryRef ref) {
+ProfileRepository profileRepository(Ref ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
   final dashboardRepo = ref.watch(dashboardRepositoryProvider);
@@ -280,7 +280,7 @@ ProfileRepository profileRepository(ProfileRepositoryRef ref) {
 }
 
 @Riverpod(keepAlive: true)
-Stream<Profile?> userProfile(UserProfileRef ref) {
+Stream<Profile?> userProfile(Ref ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final user = supabase.auth.currentUser;
   if (user == null) return Stream.value(null);

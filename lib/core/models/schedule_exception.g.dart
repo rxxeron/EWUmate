@@ -6,9 +6,8 @@ part of 'schedule_exception.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ScheduleExceptionImpl _$$ScheduleExceptionImplFromJson(
-        Map<String, dynamic> json) =>
-    _$ScheduleExceptionImpl(
+_ScheduleException _$ScheduleExceptionFromJson(Map<String, dynamic> json) =>
+    _ScheduleException(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       type: json['type'] as String,
@@ -21,8 +20,7 @@ _$ScheduleExceptionImpl _$$ScheduleExceptionImplFromJson(
       metadata: json['metadata'] as Map<String, dynamic>?,
     );
 
-Map<String, dynamic> _$$ScheduleExceptionImplToJson(
-        _$ScheduleExceptionImpl instance) =>
+Map<String, dynamic> _$ScheduleExceptionToJson(_ScheduleException instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

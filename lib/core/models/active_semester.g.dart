@@ -6,8 +6,8 @@ part of 'active_semester.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$ActiveSemesterImpl _$$ActiveSemesterImplFromJson(Map<String, dynamic> json) =>
-    _$ActiveSemesterImpl(
+_ActiveSemester _$ActiveSemesterFromJson(Map<String, dynamic> json) =>
+    _ActiveSemester(
       track: json['track'] as String,
       currentSemesterCode: json['current_semester_code'] as String?,
       nextSemesterCode: json['next_semester_code'] as String?,
@@ -46,8 +46,7 @@ _$ActiveSemesterImpl _$$ActiveSemesterImplFromJson(Map<String, dynamic> json) =>
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$ActiveSemesterImplToJson(
-        _$ActiveSemesterImpl instance) =>
+Map<String, dynamic> _$ActiveSemesterToJson(_ActiveSemester instance) =>
     <String, dynamic>{
       'track': instance.track,
       'current_semester_code': instance.currentSemesterCode,

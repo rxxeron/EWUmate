@@ -188,7 +188,7 @@ class ProgressRepository {
 }
 
 @riverpod
-ProgressRepository progressRepository(ProgressRepositoryRef ref) {
+ProgressRepository progressRepository(Ref ref) {
   final supabase = ref.watch(supabaseClientProvider);
   final cache = ref.watch(cacheServiceProvider);
   return ProgressRepository(supabase, cache);
@@ -196,7 +196,7 @@ ProgressRepository progressRepository(ProgressRepositoryRef ref) {
 
 @riverpod
 Stream<List<SemesterCourseMarks>> currentSemesterMarks(
-  CurrentSemesterMarksRef ref,
+  Ref ref,
 ) async* {
   final user = ref.watch(currentUserProvider);
   if (user == null) {
@@ -229,7 +229,7 @@ Stream<List<SemesterCourseMarks>> currentSemesterMarks(
 
 @riverpod
 Stream<List<SemesterSummary>> allSemesterSummaries(
-  AllSemesterSummariesRef ref,
+  Ref ref,
 ) async* {
   final user = ref.watch(currentUserProvider);
   if (user == null) {

@@ -6,9 +6,8 @@ part of 'semester_analytics.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$SemesterAnalyticsImpl _$$SemesterAnalyticsImplFromJson(
-        Map<String, dynamic> json) =>
-    _$SemesterAnalyticsImpl(
+_SemesterAnalytics _$SemesterAnalyticsFromJson(Map<String, dynamic> json) =>
+    _SemesterAnalytics(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       semesterCode: json['semester_code'] as String,
@@ -27,8 +26,7 @@ _$SemesterAnalyticsImpl _$$SemesterAnalyticsImplFromJson(
           : DateTime.parse(json['updated_at'] as String),
     );
 
-Map<String, dynamic> _$$SemesterAnalyticsImplToJson(
-        _$SemesterAnalyticsImpl instance) =>
+Map<String, dynamic> _$SemesterAnalyticsToJson(_SemesterAnalytics instance) =>
     <String, dynamic>{
       'id': instance.id,
       'user_id': instance.userId,

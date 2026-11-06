@@ -4,7 +4,7 @@ part 'active_semester.freezed.dart';
 part 'active_semester.g.dart';
 
 @freezed
-class ActiveSemester with _$ActiveSemester {
+abstract class ActiveSemester with _$ActiveSemester {
   const factory ActiveSemester({
     required String track,
     @JsonKey(name: 'current_semester_code') String? currentSemesterCode,

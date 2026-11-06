@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/repositories/course_repository.dart';
 import '../../../../core/repositories/profile_repository.dart';
@@ -58,6 +59,7 @@ class PaginatedCoursesNotifier extends AsyncNotifier<List<CourseMetadata>> {
   Future<void> loadMore() async {
     if (!_hasMore || state.isLoading || state.isRefreshing) return;
 
+    // ignore: invalid_use_of_internal_member
     state = const AsyncLoading<List<CourseMetadata>>().copyWithPrevious(state);
     
     try {

@@ -87,7 +87,7 @@ class _SemesterSummaryScreenState extends ConsumerState<SemesterSummaryScreen>
     final currentMarksAsync = ref.watch(currentSemesterMarksProvider);
     final academicYearsAsync = ref.watch(academicYearsFutureProvider);
     final awardsAsync = ref.watch(awardedScholarshipProvider);
-    final summariesRaw = ref.watch(allSemesterSummariesProvider).valueOrNull ?? [];
+    final summariesRaw = ref.watch(allSemesterSummariesProvider).value ?? [];
 
     return FullGradientScaffold(
       appBar: AppBar(

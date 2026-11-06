@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../../../core/repositories/faculty_repository.dart';
 import '../../../../core/models/faculty.dart';
 

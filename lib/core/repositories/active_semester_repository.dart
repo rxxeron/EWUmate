@@ -85,7 +85,7 @@ class ActiveSemesterRepository {
 }
 
 @riverpod
-ActiveSemesterRepository activeSemesterRepository(ActiveSemesterRepositoryRef ref) {
+ActiveSemesterRepository activeSemesterRepository(Ref ref) {
   return ActiveSemesterRepository(
     ref.watch(supabaseClientProvider),
     ref.watch(redisServiceProvider),

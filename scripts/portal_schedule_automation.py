@@ -108,8 +108,13 @@ class EWUPortalScraper:
 
 
 if __name__ == "__main__":
-    username = "2025-2-50-009"
-    password = "Rhrakib12@#"
+    import os
+    username = os.environ.get("PORTAL_STUDENT_ID", "")
+    password = os.environ.get("PORTAL_PASSWORD", "")
+
+    if not username or not password:
+        print("Please set PORTAL_STUDENT_ID and PORTAL_PASSWORD environment variables.")
+        exit(1)
 
     scraper = EWUPortalScraper(username, password)
     print(f"Logging in as {username}...")

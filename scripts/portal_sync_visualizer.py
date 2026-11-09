@@ -49,8 +49,8 @@ def add_log(msg):
 
 # Sidebar
 st.sidebar.title("Portal Login")
-portal_id = st.sidebar.text_input("Student ID", value="2025250009")
-portal_pass = st.sidebar.text_input("Password", type="password", value="rHrakib12@#")
+portal_id = st.sidebar.text_input("Student ID", value=os.environ.get("PORTAL_STUDENT_ID", ""))
+portal_pass = st.sidebar.text_input("Password", type="password", value=os.environ.get("PORTAL_PASSWORD", ""))
 semester_season = st.sidebar.selectbox("Semester", ["Spring", "Summer", "Fall"])
 semester_year = st.sidebar.selectbox("Year", ["2025", "2026", "2027"])
 target_semester = f"{semester_season}-{semester_year}"

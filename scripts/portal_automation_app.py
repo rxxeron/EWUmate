@@ -45,12 +45,12 @@ class ScraperApp:
         
         tk.Label(config_frame, text="Student ID:").grid(row=0, column=0, sticky="w", pady=5)
         self.ent_id = ttk.Entry(config_frame, width=20)
-        self.ent_id.insert(0, "2025250009")
+        self.ent_id.insert(0, os.environ.get("PORTAL_STUDENT_ID", ""))
         self.ent_id.grid(row=0, column=1, padx=10)
         
         tk.Label(config_frame, text="Password:").grid(row=0, column=2, sticky="w", pady=5)
         self.ent_pass = ttk.Entry(config_frame, show="*", width=20)
-        self.ent_pass.insert(0, "rHrakib12@#")
+        self.ent_pass.insert(0, os.environ.get("PORTAL_PASSWORD", ""))
         self.ent_pass.grid(row=0, column=3, padx=10)
         
         tk.Label(config_frame, text="Semester:").grid(row=1, column=0, sticky="w", pady=5)

@@ -144,6 +144,21 @@ class LocalNotificationScheduler {
 
       // Check active scheduled keys within active trigger window
       final scheduled = box.get(_scheduledKeysBoxKey) as Map<dynamic, dynamic>? ?? {};
+
+      // If this incoming push is for a course/date where a 5m reminder is scheduled locally (back-to-back),
+      // suppress any stale higher-minute push alerts (e.g. 60m, 30m, 15m, 10m)!
+      if (alertKey.startsWith('c_') && !alertKey.startsWith('c_5m:')) {
+        final parts = alertKey.split(':');
+        if (parts.length >= 3) {
+          final coursePart = parts[1];
+          final datePart = parts[2];
+          final fiveMinKey = 'c_5m:$coursePart:$datePart';
+          if (scheduled.containsKey(fiveMinKey)) {
+            return true;
+          }
+        }
+      }
+
       final scheduledTimeStr = scheduled[alertKey] as String?;
       if (scheduledTimeStr != null) {
         final st = DateTime.tryParse(scheduledTimeStr);
@@ -424,8 +439,28 @@ class LocalNotificationScheduler {
         int gapMinutes = 9999;
         if (!isFirstClass) {
           final prevClass = activeClasses[i - 1];
-          final prevEndTimeStr = (prevClass['endTime'] ?? prevClass['end_time'] ?? prevClass['startTime'] ?? '').toString();
-          final prevEndMinutes = TimeUtils.parseTime(prevEndTimeStr);
+          final prevStartTimeStr = (prevClass['startTime'] ?? prevClass['start_time'] ?? '').toString();
+          final prevStartMinutes = TimeUtils.parseTime(prevStartTimeStr);
+
+          int prevEndMinutes = 0;
+          final prevEndTimeStr = (prevClass['endTime'] ?? prevClass['end_time'] ?? '').toString().trim();
+          final prevTimeRange = (prevClass['time'] ?? '').toString().trim();
+
+          if (prevEndTimeStr.isNotEmpty && prevEndTimeStr != 'TBA') {
+            final effectiveEnd = prevEndTimeStr.contains('-') ? prevEndTimeStr.split('-').last.trim() : prevEndTimeStr;
+            prevEndMinutes = TimeUtils.parseTime(effectiveEnd);
+          } else if (prevTimeRange.contains('-')) {
+            final effectiveEnd = prevTimeRange.split('-').last.trim();
+            prevEndMinutes = TimeUtils.parseTime(effectiveEnd);
+          }
+
+          // Fallback if missing, invalid, or <= start time (e.g. 1440 or 0):
+          // EWU classes: Lab = 180 min, Theory = 90 min
+          if (prevEndMinutes <= prevStartMinutes || prevEndMinutes >= 1440) {
+            final isLab = (prevClass['type'] ?? '').toString().toLowerCase().contains('lab');
+            prevEndMinutes = prevStartMinutes + (isLab ? 180 : 90);
+          }
+
           gapMinutes = (currentStartMinutes - prevEndMinutes).clamp(0, 9999);
         }
 

@@ -314,7 +314,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 25),
+                            delay: Duration.zero,
                             child: DashboardBannerTray(
                               showUpdateBanner: state.showUpdateBanner,
                               updateUrl: state.isPlayStoreUser
@@ -332,14 +332,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 75),
+                            delay: const Duration(milliseconds: 20),
                             child: DashboardExamTimeline(
                               tasks: state.tasks,
                               onExamTap: (exam) => _showTaskEditor(exam),
                             ),
                           ),
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 150),
+                            delay: const Duration(milliseconds: 40),
                             child: DashboardOverdueCheckpoint(
                               tasks: state.tasks,
                               onComplete: (taskId) => _controller.markTaskCompleted(ref: ref, taskId: taskId),
@@ -348,11 +348,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           const FadeInSlide(
-                            delay: Duration(milliseconds: 200),
+                            delay: Duration(milliseconds: 60),
                             child: RemotePromoBanner(),
                           ),
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 250),
+                            delay: const Duration(milliseconds: 80),
                             child: DashboardScheduleTimeline(
                               data: DashboardLogic.processDashboardData(state.lastValidScheduleData!),
                               onScheduleManagerTap: () => context.push('/schedule-manager'),
@@ -361,7 +361,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           const SizedBox(height: 16),
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 350),
+                            delay: const Duration(milliseconds: 100),
                             child: PendingAttendanceWidget(
                               items: state.pendingAttendanceItems,
                               isSaving: state.isSavingAttendance,
@@ -370,7 +370,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                           FadeInSlide(
-                            delay: const Duration(milliseconds: 450),
+                            delay: const Duration(milliseconds: 120),
                             child: DashboardTasksPreview(
                               tasks: state.tasks,
                               onSeeAll: widget.onSeeAllTasks ?? () => context.push('/tasks'),

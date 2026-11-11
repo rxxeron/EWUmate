@@ -38,10 +38,18 @@ final academicStateProvider = StreamProvider<AcademicState?>((ref) async* {
   }
 
   try {
-    // 2. Fetch fresh active semester directly from the database
-    final profile = await ref.watch(profileRepositoryProvider).getProfile(user.id).timeout(const Duration(seconds: 8));
-    final track = CourseUtils.normalizeTrack(profile?.track);
-    final semesterData = await ref.watch(activeSemesterRepositoryProvider).getActiveSemester(track).timeout(const Duration(seconds: 8));
+    // 2. Fetch fresh active semester concurrently
+    final cachedProfile = cacheService.getCachedProfile(user.id);
+    final knownTrack = CourseUtils.normalizeTrack(cachedProfile?['track'] ?? cachedSem?['track']);
+
+    final profileFuture = ref.read(profileRepositoryProvider).getProfile(user.id).timeout(const Duration(seconds: 6));
+    final semesterFuture = ref.read(activeSemesterRepositoryProvider).getActiveSemester(knownTrack).timeout(const Duration(seconds: 6));
+
+    final results = await Future.wait<dynamic>([profileFuture, semesterFuture]);
+    final profile = results[0];
+    final semesterData = results[1] as Map<String, dynamic>;
+    final track = CourseUtils.normalizeTrack(profile?.track ?? knownTrack);
+
     final stateDict = {
       ...semesterData,
       'track': track,

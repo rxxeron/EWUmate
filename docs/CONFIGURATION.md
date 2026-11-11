@@ -9,7 +9,7 @@ The mobile client, Azure Functions, and automation scripts require configuration
 |---|---|---|---|
 | `SUPABASE_URL` | **Required** | `https://jwygjihrbwxhehijldiz.supabase.co` | Base URL of the Supabase project instance. Used for authentication and PostgreSQL data queries. |
 | `SUPABASE_ANON_KEY` | **Required** | Public Anon JWT | Anonymous public API key for Supabase client initialization. |
-| `AZURE_FUNCTION_URL` | **Required** | `https://ewumate-parser.azurewebsites.net` | Base URL for deployed Azure Functions hosting routine generation and scrapers. |
+| `AZURE_FUNCTION_URL` | **Required** | `https://ewumate-parser-api.azurewebsites.net` | Base URL for deployed Azure Functions hosting routine generation and scrapers. |
 | `GOOGLE_WEB_CLIENT_ID` | **Required** | Embedded in `AppConfig` | OAuth 2.0 Web Client ID registered in Google Cloud Console for Google Sign-In. |
 | `GOOGLE_ANDROID_CLIENT_ID` | Optional | None | OAuth 2.0 Android Client ID for native Android Google Play authentication. |
 | `UPSTASH_REDIS_REST_URL` | Optional | None | REST API endpoint URL for Upstash Redis database instance used for course caching. |
@@ -23,7 +23,7 @@ Standard key-value environment configuration parsed by `flutter_dotenv`:
 ```env
 SUPABASE_URL=https://jwygjihrbwxhehijldiz.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key_here
-AZURE_FUNCTION_URL=https://ewumate-parser.azurewebsites.net
+AZURE_FUNCTION_URL=https://ewumate-parser-api.azurewebsites.net
 GOOGLE_WEB_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 GOOGLE_ANDROID_CLIENT_ID=your_google_android_client_id.apps.googleusercontent.com
 UPSTASH_REDIS_REST_URL=https://your-upstash-redis.upstash.io
@@ -81,7 +81,7 @@ class AppConfig {
 
   static String get getAzureFunctionUrl {
     final val = _env('AZURE_FUNCTION_URL');
-    return val.isNotEmpty ? val : 'https://ewumate-parser.azurewebsites.net';
+    return val.isNotEmpty ? val : 'https://ewumate-parser-api.azurewebsites.net';
   }
 
   static String get getGoogleWebClientId {

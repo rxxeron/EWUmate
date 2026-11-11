@@ -40,7 +40,7 @@ Follow these steps to clone the repository and install all required client depen
    ```env
    SUPABASE_URL=https://jwygjihrbwxhehijldiz.supabase.co
    SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
-   AZURE_FUNCTION_URL=https://ewumate-parser.azurewebsites.net
+   AZURE_FUNCTION_URL=https://ewumate-parser-api.azurewebsites.net
    GOOGLE_WEB_CLIENT_ID=561956344734-ulqeqls9u4h1hmpec41l9lufk336a9ga.apps.googleusercontent.com
    ```
 

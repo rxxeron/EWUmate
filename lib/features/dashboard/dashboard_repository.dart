@@ -235,14 +235,11 @@ class DashboardRepository {
               ?.toString();
 
       if (weeklyGrid.isEmpty) {
-        try {
-          // Normalize the semester code before sync call
-          final safeCode = semesterCode.replaceAll(' ', '').replaceAll('_', '');
-          debugPrint('[Dashboard] Triggering sync-schedule (No-JWT) for: $safeCode');
-          
+        // Run edge function sync asynchronously in background without halting the dashboard thread
+        unawaited(() async {
           try {
-            // Manual HTTP call to bypass the automatic JWT/Authorization header injection
-            // which was triggering 401 Invalid JWT errors.
+            final safeCode = semesterCode.replaceAll(' ', '').replaceAll('_', '');
+            debugPrint('[Dashboard] Triggering background sync-schedule (No-JWT) for: $safeCode');
             final functionsUrl = '${AppConfig.getSupabaseUrl}/functions/v1';
             final uri = Uri.parse('$functionsUrl/sync-schedule');
             await http.post(
@@ -257,27 +254,9 @@ class DashboardRepository {
               }),
             );
           } catch (e) {
-             debugPrint('[Dashboard] Manual sync call failed: $e');
+            debugPrint('[Dashboard] Background sync call failed: $e');
           }
-          
-          // Wait for the edge function to finish writing to the database
-          await Future.delayed(const Duration(seconds: 4));
-          
-          // Re-fetch with a slight delay if needed, though await should handle it
-          final freshState = await _supabase
-              .from('user_semester_states')
-              .select('weekly_grid_cache')
-              .eq('user_id', effectiveUserId)
-              .eq('semester_code', semesterCode)
-              .maybeSingle();
-              
-          if (freshState != null && freshState['weekly_grid_cache'] != null) {
-            weeklyGrid =
-                freshState['weekly_grid_cache'] as Map<String, dynamic>? ?? {};
-          }
-        } catch (e) {
-          debugPrint('DashboardRepository: sync-schedule error: $e');
-        }
+        }());
       }
 
       // 2. Evaluate Standard (Tri) Track Local State
@@ -436,7 +415,7 @@ class DashboardRepository {
       };
 
       final cache = _cache;
-      if (cache != null && weeklyGrid.isNotEmpty) {
+      if (cache != null) {
         final cachePayload = {...payload, 'date': date.toIso8601String()};
         final safeSem = CourseUtils.cleanSemester(semesterCode);
         cache.cacheDashboardSchedule(effectiveUserId, safeSem, cachePayload, dateStr: dateStr);

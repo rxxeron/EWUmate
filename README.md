@@ -331,7 +331,7 @@ The application resolves configuration settings at runtime using `flutter_dotenv
 |---|---|---|---|
 | `SUPABASE_URL` | **Required** | `https://jwygjihrbwxhehijldiz.supabase.co` | Supabase project endpoint for Auth, Realtime, and PostgreSQL. |
 | `SUPABASE_ANON_KEY` | **Required** | Embedded Public Anon JWT | Anonymous public API token for client-side Supabase requests. |
-| `AZURE_FUNCTION_URL` | **Required** | `https://ewumate-parser.azurewebsites.net` | Base URL for deployed Azure Functions microservices. |
+| `AZURE_FUNCTION_URL` | **Required** | `https://ewumate-parser-api.azurewebsites.net` | Base URL for deployed Azure Functions microservices. |
 | `GOOGLE_WEB_CLIENT_ID` | **Required** | `561956344734-ulqeqls...` | OAuth 2.0 Web Client ID registered in Google Cloud Console. |
 | `GOOGLE_ANDROID_CLIENT_ID` | Optional | `None` | Android OAuth 2.0 Client ID for native Google Play services. |
 | `UPSTASH_REDIS_REST_URL` | Optional | `None` | Upstash Redis REST endpoint for edge course catalog caching. |
@@ -341,7 +341,7 @@ The application resolves configuration settings at runtime using `flutter_dotenv
 ```env
 SUPABASE_URL=https://jwygjihrbwxhehijldiz.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6...
-AZURE_FUNCTION_URL=https://ewumate-parser.azurewebsites.net
+AZURE_FUNCTION_URL=https://ewumate-parser-api.azurewebsites.net
 GOOGLE_WEB_CLIENT_ID=561956344734-ulqeqls9u4h1hmpec41l9lufk336a9ga.apps.googleusercontent.com
 GOOGLE_ANDROID_CLIENT_ID=your_android_client_id.apps.googleusercontent.com
 UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
@@ -528,7 +528,7 @@ lib/
 - **Class `AppConfig`:**
   - `getSupabaseUrl`: Retrieves `SUPABASE_URL` from `.env` via `flutter_dotenv`. Falls back to production URL `https://jwygjihrbwxhehijldiz.supabase.co`.
   - `getSupabaseAnonKey`: Retrieves `SUPABASE_ANON_KEY`. Falls back to production anonymous public key with JWT expiration.
-  - `getAzureFunctionUrl`: Retrieves `AZURE_FUNCTION_URL`. Falls back to `https://ewumate-parser.azurewebsites.net`.
+  - `getAzureFunctionUrl`: Retrieves `AZURE_FUNCTION_URL`. Falls back to `https://ewumate-parser-api.azurewebsites.net`.
   - `getGoogleWebClientId`: Retrieves `GOOGLE_WEB_CLIENT_ID` for Google Sign-In authentication (`561956344734-ulqeqls9u4h1hmpec41l9lufk336a9ga.apps.googleusercontent.com`).
 - **Class `SupabaseConfig`:**
   - `initialize()`: Boots `dotenv.load(fileName: ".env")` and calls `Supabase.initialize(...)` with `publishableKey` and `url`. Safeguards against null keys in production environments.

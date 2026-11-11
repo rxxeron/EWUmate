@@ -11,7 +11,7 @@ This document details the build pipelines, release procedures, deployment target
 2. **React Admin Panel**:
    - Deployed to GitHub Pages via automated CI/CD pipeline (`admin_panel/`).
 3. **Azure Functions Microservices**:
-   - Deployed to Azure App Service (`https://ewumate-parser.azurewebsites.net`) running Python 3.10/3.11 Linux Consumption plan. <!-- VERIFY: Azure Subscription and Resource Group name for function app -->
+   - Deployed to Azure App Service (`https://ewumate-parser-api.azurewebsites.net`) running Python 3.10/3.11 Linux Consumption plan.
 4. **Supabase PostgreSQL & Edge Functions**:
    - Managed Supabase Cloud instance with schema migrations and RLS policies. <!-- VERIFY: Supabase project ID jwygjihrbwxhehijldiz deployment pipeline -->
 

@@ -1,7 +1,7 @@
 <!-- generated-by: gsd-doc-writer -->
 # API Reference
 
-The EWUmate backend exposes HTTP microservices hosted on Microsoft Azure Functions (`ewumate-parser.azurewebsites.net`) and Supabase PostgreSQL Edge Functions. These services power schedule generation, portal data scraping, document rendering, and semester lifecycle operations.
+The EWUmate backend exposes HTTP microservices hosted on Microsoft Azure Functions (`ewumate-parser-api.azurewebsites.net`) and Supabase PostgreSQL Edge Functions. These services power schedule generation, portal data scraping, document rendering, and semester lifecycle operations.
 
 ## Authentication
 

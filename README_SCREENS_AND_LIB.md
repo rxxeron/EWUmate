@@ -102,7 +102,7 @@ lib/
 - **Class `AppConfig`:**
   - `getSupabaseUrl`: Retrieves `SUPABASE_URL` from `.env` via `flutter_dotenv`. Falls back to production URL `https://jwygjihrbwxhehijldiz.supabase.co`.
   - `getSupabaseAnonKey`: Retrieves `SUPABASE_ANON_KEY`. Falls back to production anonymous public key with JWT expiration.
-  - `getAzureFunctionUrl`: Retrieves `AZURE_FUNCTION_URL`. Falls back to `https://ewumate-parser.azurewebsites.net`.
+  - `getAzureFunctionUrl`: Retrieves `AZURE_FUNCTION_URL`. Falls back to `https://ewumate-parser-api.azurewebsites.net`.
   - `getGoogleWebClientId`: Retrieves `GOOGLE_WEB_CLIENT_ID` for Google Sign-In authentication (`561956344734-ulqeqls9u4h1hmpec41l9lufk336a9ga.apps.googleusercontent.com`).
 - **Class `SupabaseConfig`:**
   - `initialize()`: Boots `dotenv.load(fileName: ".env")` and calls `Supabase.initialize(...)` with `publishableKey` and `url`. Safeguards against null keys in production environments.
